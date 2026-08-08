@@ -15,6 +15,7 @@ import {
   Crosshair,
   Target,
   Car,
+  ChevronUp,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -415,9 +416,11 @@ function isValidScore(aStr, bStr) {
   const b = parseInt(bStr || "0", 10);
   const w = Math.max(a, b);
   const l = Math.min(a, b);
-  if (w < 13) return false;
-  if (l >= 12) return w - l >= 2;
-  return true;
+  // < 12 en face : la manche s'arrête pile à 13 (13-x, x<12).
+  if (l < 12) return w === 13;
+  // >= 12-12 : ça continue jusqu'à ce qu'une équipe ait exactement 2 manches d'avance
+  // (12-14, 14-12, puis 13-15, 15-13, etc. si ça continue encore).
+  return w - l === 2;
 }
 
 function TeamLogo({ code, apiLogo, accent, tbd }) {
@@ -475,10 +478,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div style={{ color: "#555", fontSize: "9.5px", marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
         </div>
         {running ? (
-          <span className="flex items-center gap-1.5" style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}>
+          <button
+            onClick={() => window.open("https://www.twitch.tv/valorant_emea", "_blank", "noopener,noreferrer")}
+            className="flex items-center gap-1.5"
+            style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+          >
             <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
             LIVE
-          </span>
+          </button>
         ) : finished ? (
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
@@ -992,6 +999,30 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   );
 }
 
+function ScrollToTopButton({ visible, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="absolute rounded-full flex items-center justify-center"
+      style={{
+        right: "16px",
+        bottom: "84px",
+        width: "40px",
+        height: "40px",
+        background: "#CCF71D",
+        zIndex: 40,
+        boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(8px)",
+        pointerEvents: visible ? "auto" : "none",
+        transition: "opacity 1s ease, transform 1s ease",
+      }}
+    >
+      <ChevronUp size={20} color="#000" strokeWidth={2.6} />
+    </button>
+  );
+}
+
 export default function ClutchApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [selectedRegions, setSelectedRegions] = useState(["EMEA"]);
@@ -1007,6 +1038,36 @@ export default function ClutchApp() {
   const [notifyRegions, setNotifyRegions] = useState({ EMEA: true, PACIFIC: true, AMERICAS: true, CN: true });
   const [otherNotifs, setOtherNotifs] = useState({ events: true, bets: true, matchStart: true, matchEnd: false });
   const [favoriteTeam, setFavoriteTeam] = useState("");
+
+  const scrollRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
+  const hideTimerRef = useRef(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  function handleContentScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.scrollTop;
+    const goingUp = top < lastScrollTopRef.current - 2;
+    const goingDown = top > lastScrollTopRef.current + 2;
+    const farEnough = top > 400;
+    lastScrollTopRef.current = top;
+
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+
+    if (goingUp && farEnough) {
+      setShowScrollTop(true);
+      hideTimerRef.current = setTimeout(() => setShowScrollTop(false), 2000);
+    } else if (goingDown || !farEnough) {
+      setShowScrollTop(false);
+    }
+  }
+
+  function scrollContentToTop() {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: 0, behavior: "smooth" });
+    setShowScrollTop(false);
+  }
 
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
@@ -1125,7 +1186,7 @@ export default function ClutchApp() {
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
-      let next = { ...cur, [team]: digit };
+      const next = { ...cur, [team]: digit };
       const a = next.seriesA;
       const b = next.seriesB;
       if (a !== "" && b !== "") {
@@ -1133,13 +1194,11 @@ export default function ClutchApp() {
         const bn = parseInt(b, 10);
         const validPairs = [[2, 0], [2, 1], [1, 2], [0, 2]];
         const ok = validPairs.some(([x, y]) => x === an && y === bn);
-        if (!ok) {
-          next = { ...next, [team]: "0" };
-          return { ...prev, [matchId]: next };
+        if (ok) {
+          const count = an + bn;
+          const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
+          return { ...prev, [matchId]: { ...next, games, expanded: true } };
         }
-        const count = an + bn;
-        const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
-        return { ...prev, [matchId]: { ...next, games, expanded: true } };
       }
       return { ...prev, [matchId]: next };
     });
@@ -1174,7 +1233,7 @@ export default function ClutchApp() {
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
-        <div className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
+        <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
           {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} T={T} />}
           {activeTab === "valorant" && (
             <ValorantTab
@@ -1198,6 +1257,8 @@ export default function ClutchApp() {
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" Icon={NAV_RL_ICON} T={T} />}
           {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} />}
         </div>
+
+        <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
 
         <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
           {navItems.map((item) => {
