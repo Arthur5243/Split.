@@ -11,10 +11,117 @@ import {
   X,
   CalendarDays,
   Chrome,
+  Crosshair,
+  Target,
+  Car,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
+
+// Icônes de la nav du bas (remplacent d'anciennes images perdues lors de la
+// compression des images ; pas de fichier supplémentaire à héberger).
+const NAV_VALORANT_ICON = Crosshair;
+const NAV_CSGO_ICON = Target;
+const NAV_RL_ICON = Car;
+
+// Régions VCT suivies par l'app (couleurs d'accent par région)
+const REGIONS = [
+  { key: "EMEA", accent: "#5865F2" },
+  { key: "PACIFIC", accent: "#FF6B6B" },
+  { key: "AMERICAS", accent: "#FFC93C" },
+  { key: "CN", accent: "#4ECDC4" },
+];
+
+// Catégories de jeux affichées dans le classement
+const CATS = ["VALORANT", "CSGO", "RL"];
+
+// Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
+// vide par défaut, les logos viennent normalement de match.team1Logo/team2Logo.
+const LOGOS = {};
+
+// Langues disponibles dans le sélecteur
+const LANGS = [
+  { code: "fr", flag: "🇫🇷", label: "Français" },
+  { code: "en", flag: "🇬🇧", label: "English" },
+  { code: "es", flag: "🇪🇸", label: "Español" },
+  { code: "it", flag: "🇮🇹", label: "Italiano" },
+  { code: "ja", flag: "🇯🇵", label: "日本語" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch" },
+  { code: "cn", flag: "🇨🇳", label: "中文" },
+];
+
+// Locale Intl pour le formatage des dates par langue
+const LOCALE_MAP = {
+  fr: "fr-FR",
+  en: "en-US",
+  es: "es-ES",
+  it: "it-IT",
+  ja: "ja-JP",
+  de: "de-DE",
+  cn: "zh-CN",
+};
+
+const STR = {
+  fr: {
+    navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Classement",
+    newsLabel: "News", newsBadge: "Annonce", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
+    classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
+    calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
+    regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
+    today: "Aujourd'hui", tomorrow: "Demain",
+    teamsTbc: "Équipes à confirmer",
+    seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
+    scoreInvalid: "13 pts min, 2 pts d'écart après 12",
+    placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
+    classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
+    classementEmptySub: "Personne n'a encore fait de pronostic. Sois le premier à grimper au classement !",
+    catFilterLabel: "Catégories",
+    settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
+    settingsNotifOtherTitle: "Autres notifications",
+    settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
+    settingsNotifMatchStart: "Un match commence", settingsNotifMatchEnd: "Un match est terminé",
+    settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
+    settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
+    calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt",
+    calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
+  },
+  en: {
+    navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
+    newsLabel: "News", newsBadge: "Announcement", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
+    classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
+    calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
+    regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
+    today: "Today", tomorrow: "Tomorrow",
+    teamsTbc: "Teams TBC",
+    seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
+    scoreInvalid: "13 pts min, 2 pt gap after 12",
+    placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
+    classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
+    classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
+    catFilterLabel: "Categories",
+    settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
+    settingsNotifOtherTitle: "Other notifications",
+    settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
+    settingsNotifMatchStart: "A match starts", settingsNotifMatchEnd: "A match has ended",
+    settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
+    settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
+    calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon",
+    calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
+  },
+  es: {
+    navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Clasificación",
+    newsLabel: "News", newsBadge: "Anuncio", newsTitle: "3 MASTERS EN 2027", newsSub: "Un tercer torneo Masters se añadiría al calendario de la próxima temporada.",
+    classementLabel: "Clasificación", seeAll: "Ver todo", classementEmptyHome: "0 pronosticadores clasificados por ahora. ¡Sé el primero!",
+    calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
+    regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
+    today: "Hoy", tomorrow: "Mañana",
+    teamsTbc: "Equipos por confirmar",
+    seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
+    scoreInvalid: "13 pts mín, 2 pts de diferencia tras 12",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
     classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
@@ -660,11 +767,11 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   );
 }
 
-function PlaceholderTab({ label, imgSrc, T }) {
+function PlaceholderTab({ label, Icon, T }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: "560px" }}>
       <div className="rounded-full flex items-center justify-center mb-4" style={{ width: "72px", height: "72px", background: "#fff" }}>
-        <img src={imgSrc} alt={label} style={{ width: "34px", height: "34px", objectFit: "contain" }} />
+        <Icon size={34} color="#111" strokeWidth={2.2} />
       </div>
       <h2 className="font-black" style={{ color: "#111", fontSize: "20px" }}>{label}</h2>
       <p style={{ color: "#555", fontSize: "13px" }} className="mt-2">{T.placeholderSoon.replace("{label}", label)}</p>
@@ -1052,9 +1159,9 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_ICON },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_ICON },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_ICON },
+    { key: "valorant", label: T.navValorant, Icon: NAV_VALORANT_ICON },
+    { key: "csgo", label: T.navCsgo, Icon: NAV_CSGO_ICON },
+    { key: "rocketleague", label: T.navRl, Icon: NAV_RL_ICON },
     { key: "classement", label: T.navClassement, Icon: Trophy },
   ];
 
@@ -1083,8 +1190,8 @@ export default function ClutchApp() {
               loading={dataLoading}
             />
           )}
-          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" imgSrc={NAV_CSGO_ICON} T={T} />}
-          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" imgSrc={NAV_RL_ICON} T={T} />}
+          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" Icon={NAV_CSGO_ICON} T={T} />}
+          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" Icon={NAV_RL_ICON} T={T} />}
           {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} />}
         </div>
 
