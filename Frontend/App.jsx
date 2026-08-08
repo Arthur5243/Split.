@@ -35,6 +35,14 @@ const REGIONS = [
   { key: "CN", accent: "#FF2D6B" },
 ];
 
+// Chaînes Twitch officielles par région (pattern valorant_[region])
+const REGION_TWITCH = {
+  EMEA: "valorant_emea",
+  AMERICAS: "valorant_americas",
+  PACIFIC: "valorant_pacific",
+  CN: "valorant_cn",
+};
+
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
 
@@ -468,6 +476,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const expanded = pred && pred.expanded;
   const games = (pred && pred.games) || [];
 
+  // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
+  const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
+
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
       <div className="flex items-center justify-between px-4 pt-3">
@@ -479,7 +490,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
         {running ? (
           <button
-            onClick={() => window.open("https://www.twitch.tv/valorant_emea", "_blank", "noopener,noreferrer")}
+            onClick={() => window.open("https://www.twitch.tv/" + twitchChannel, "_blank", "noopener,noreferrer")}
             className="flex items-center gap-1.5"
             style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
           >
