@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
+import oddsRouter from "./odds.js";
 
 const app = express();
 app.use(cors());
+app.use(oddsRouter);
 
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
