@@ -96,6 +96,7 @@ const STR = {
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
+    statusUpcoming: "Matchs à venir",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
@@ -120,6 +121,7 @@ const STR = {
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
+    statusUpcoming: "Upcoming matches",
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Clasificación",
@@ -144,6 +146,7 @@ const STR = {
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
+    statusUpcoming: "Próximos partidos",
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Classifica",
@@ -168,6 +171,7 @@ const STR = {
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
+    statusUpcoming: "Prossime partite",
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "ランキング",
@@ -192,6 +196,7 @@ const STR = {
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
+    statusUpcoming: "今後の試合",
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Rangliste",
@@ -216,6 +221,7 @@ const STR = {
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
+    statusUpcoming: "Bevorstehende Spiele",
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "排行榜",
@@ -240,6 +246,7 @@ const STR = {
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
+    statusUpcoming: "即将进行的比赛",
   },
 };
 
@@ -735,7 +742,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
               className="rounded-full"
               style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
             >
-              {s === "upcoming" ? T.calendarSoon : T.calendarDone}
+              {s === "upcoming" ? T.statusUpcoming : T.calendarDone}
             </button>
           );
         })}
