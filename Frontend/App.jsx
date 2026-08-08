@@ -358,11 +358,14 @@ const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 function classifyRegion(text) {
   const t = (text || "").toLowerCase();
+  // On exclut le circuit féminin VCT Game Changers, l'API PandaScore le renvoie
+  // mélangé avec le circuit principal (même mots-clés de région).
+  if (t.includes("game changers")) return null;
   if (t.includes("america")) return "AMERICAS";
   if (t.includes("pacific")) return "PACIFIC";
   if (t.includes("emea")) return "EMEA";
   if (t.includes("china")) return "CN";
-  return null; // ligue non suivie (Game Changers NA, etc.) -> on l'ignore
+  return null; // ligue non suivie -> on l'ignore
 }
 
 function teamCode(opp) {
