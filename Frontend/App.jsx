@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Home,
@@ -27,10 +28,10 @@ const NAV_RL_ICON = Car;
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
-  { key: "EMEA", accent: "#5865F2" },
-  { key: "PACIFIC", accent: "#FF6B6B" },
-  { key: "AMERICAS", accent: "#FFC93C" },
-  { key: "CN", accent: "#4ECDC4" },
+  { key: "EMEA", accent: "#C4F000" },
+  { key: "AMERICAS", accent: "#FF5A1F" },
+  { key: "PACIFIC", accent: "#1DE9D8" },
+  { key: "CN", accent: "#FF2D6B" },
 ];
 
 // Catégories de jeux affichées dans le classement
