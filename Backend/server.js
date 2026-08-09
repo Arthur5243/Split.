@@ -128,6 +128,117 @@ app.get("/api/match-history", (req, res) => {
   }
 });
 
+// --- Page secrète : export en masse de tous les matchs Valorant 2025-2026 ---
+// Accessible via /admin/export-matches?key=TA_CLE (définis ADMIN_KEY dans les
+// variables Railway). Va chercher toutes les pages PandaScore, filtre les
+// matchs incomplets (pas de date ou pas de score), et affiche le résultat
+// dans une page avec un bouton "Copier tout" pour coller direct dans
+// Backend/data/matches.json sur GitHub, depuis le téléphone.
+const ADMIN_KEY = process.env.ADMIN_KEY;
+
+function toStoredShape(raw, index) {
+  const t1 = raw.opponents?.[0]?.opponent;
+  const t2 = raw.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return null;
+
+  const date = raw.begin_at ? raw.begin_at.slice(0, 10) : null;
+  if (!date) return null; // pas de date exploitable -> on jette
+
+  const results = raw.results || [];
+  const r1 = results.find((r) => r.team_id === t1.id);
+  const r2 = results.find((r) => r.team_id === t2.id);
+  if (!r1 || !r2) return null; // pas de score -> match pas vraiment terminé
+  if (r1.score === 0 && r2.score === 0) return null; // 0-0 = pas joué
+
+  const winner =
+    raw.winner?.name ||
+    (r1.score > r2.score ? t1.name : r2.score > r1.score ? t2.name : null);
+
+  return {
+    match_id: index + 1,
+    pandascore_id: raw.id,
+    tournament_id: raw.tournament?.id ? "PANDA_" + raw.tournament.id : "PANDA_UNKNOWN",
+    tournament_name: raw.tournament?.name || raw.league?.name || "Unknown",
+    tier: raw.league?.name || "Unknown",
+    region: "AUTO",
+    date,
+    stage: raw.serie?.full_name || raw.name || "Unknown",
+    team1: t1.name,
+    team2: t2.name,
+    score: r1.score + "-" + r2.score,
+    winner,
+  };
+}
+
+async function fetchAllPastMatches() {
+  const all = [];
+  const MAX_PAGES = 30; // 30 x 100 = 3000 matchs max, largement assez pour 2025-2026
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = await pandaFetch(
+      "/valorant/matches/past?per_page=100&page=" + page + "&sort=-begin_at"
+    );
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    all.push(...batch);
+    // dès qu'on tombe avant 2025, plus la peine de continuer (résultats triés desc)
+    const oldest = batch[batch.length - 1];
+    if (oldest?.begin_at && oldest.begin_at.slice(0, 4) < "2025") break;
+  }
+  return all;
+}
+
+app.get("/admin/export-matches", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) {
+    return res.status(403).send("Accès refusé.");
+  }
+
+  try {
+    const raw = await fetchAllPastMatches();
+
+    const inRange = raw.filter((m) => {
+      const y = m.begin_at ? m.begin_at.slice(0, 4) : null;
+      return y === "2025" || y === "2026";
+    });
+
+    const seen = new Set();
+    const cleaned = [];
+    for (const m of inRange) {
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      cleaned.push(m);
+    }
+    cleaned.sort((a, b) => (a.begin_at || "").localeCompare(b.begin_at || ""));
+
+    const formatted = cleaned.map(toStoredShape).filter(Boolean);
+    const json = JSON.stringify(formatted, null, 2);
+
+    res.type("html").send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export matchs</title></head>
+<body style="font-family:sans-serif;padding:12px;">
+<h3>${formatted.length} matchs trouvés (2025-2026)</h3>
+<button onclick="copyIt()" style="width:100%;padding:16px;font-size:16px;background:#22c55e;color:white;border:none;border-radius:8px;margin-bottom:10px;">📋 Copier tout</button>
+<div id="status" style="text-align:center;margin-bottom:10px;color:#666;"></div>
+<textarea id="data" readonly style="width:100%;height:70vh;box-sizing:border-box;font-family:monospace;font-size:12px;">${json}</textarea>
+<script>
+function copyIt() {
+  const el = document.getElementById('data');
+  el.select();
+  el.setSelectionRange(0, 999999999);
+  navigator.clipboard.writeText(el.value).then(() => {
+    document.getElementById('status').textContent = '✅ Copié !';
+  }).catch(() => {
+    document.execCommand('copy');
+    document.getElementById('status').textContent = '✅ Copié (fallback) !';
+  });
+}
+</script>
+</body></html>`);
+  } catch (e) {
+    console.error("export-matches error:", e.message);
+    res.status(502).send("Erreur PandaScore : " + e.message);
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "split-app-backend" });
 });
