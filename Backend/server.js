@@ -255,6 +255,104 @@ app.get("/admin/export-matches", async (req, res) => {
   }
 });
 
+// Rejoue exactement le calcul de cotes du front (même formule, même
+// pondération), mais direct côté backend avec les données actuelles de
+// matches.json. Sert à isoler si le souci vient de la donnée/calcul (dans ce
+// cas ce sera plat ici aussi) ou du transport backend -> app (dans ce cas ici
+// ce sera un vrai écart, pas 50/50).
+// Usage : /admin/compute-odds?team1=Gentle Mates&team2=Eintracht Frankfurt
+const ODDS_GENERAL_LIMIT = 20;
+const ODDS_H2H_LIMIT = 10;
+const ODDS_H2H_MIN_SAMPLE = 3;
+const ODDS_H2H_WEIGHT = 0.35;
+const ODDS_PRIOR_WEIGHT = 4;
+
+function norm(s) {
+  return (s || "").trim().toLowerCase();
+}
+
+function teamResultDbg(m, teamName) {
+  const t = norm(teamName);
+  const [s1, s2] = (m.score || "").split("-").map((x) => parseInt(x.trim(), 10));
+  if (Number.isNaN(s1) || Number.isNaN(s2)) return null;
+  if (norm(m.team1) === t) return s1 > s2 ? "W" : s1 < s2 ? "L" : null;
+  if (norm(m.team2) === t) return s2 > s1 ? "W" : s2 < s1 ? "L" : null;
+  return null;
+}
+
+function recentWinrateDbg(teamName, matches, limit) {
+  const sorted = [...matches].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  let wins = 0, played = 0;
+  const used = [];
+  for (const m of sorted) {
+    if (played >= limit) break;
+    const r = teamResultDbg(m, teamName);
+    if (r == null) continue;
+    played++;
+    used.push({ date: m.date, team1: m.team1, team2: m.team2, score: m.score, result: r });
+    if (r === "W") wins++;
+  }
+  return { wins, played, used };
+}
+
+function h2hWinrateDbg(a, b, matches, limit) {
+  const an = norm(a), bn = norm(b);
+  const filt = matches.filter(
+    (m) => (norm(m.team1) === an && norm(m.team2) === bn) || (norm(m.team1) === bn && norm(m.team2) === an)
+  );
+  const sorted = filt.sort((x, y) => (y.date || "").localeCompare(x.date || ""));
+  let wins = 0, played = 0;
+  for (const m of sorted) {
+    if (played >= limit) break;
+    const r = teamResultDbg(m, a);
+    if (r == null) continue;
+    played++;
+    if (r === "W") wins++;
+  }
+  return { wins, played };
+}
+
+function shrinkDbg(wins, played) {
+  return (wins + ODDS_PRIOR_WEIGHT * 0.5) / (played + ODDS_PRIOR_WEIGHT);
+}
+
+app.get("/admin/compute-odds", (req, res) => {
+  try {
+    const team1 = req.query.team1;
+    const team2 = req.query.team2;
+    if (!team1 || !team2) return res.status(400).json({ error: "team1 et team2 requis" });
+
+    const matches = JSON.parse(fs.readFileSync(MATCHES_PATH, "utf-8"));
+
+    const gen1 = recentWinrateDbg(team1, matches, ODDS_GENERAL_LIMIT);
+    const gen2 = recentWinrateDbg(team2, matches, ODDS_GENERAL_LIMIT);
+    let wr1 = shrinkDbg(gen1.wins, gen1.played);
+    let wr2 = shrinkDbg(gen2.wins, gen2.played);
+
+    const h2h = h2hWinrateDbg(team1, team2, matches, ODDS_H2H_LIMIT);
+    if (h2h.played >= ODDS_H2H_MIN_SAMPLE) {
+      const h2hWr1 = h2h.wins / h2h.played;
+      wr1 = wr1 * (1 - ODDS_H2H_WEIGHT) + h2hWr1 * ODDS_H2H_WEIGHT;
+      wr2 = wr2 * (1 - ODDS_H2H_WEIGHT) + (1 - h2hWr1) * ODDS_H2H_WEIGHT;
+    }
+
+    const total = wr1 + wr2;
+    const p1 = total > 0 ? wr1 / total : 0.5;
+
+    res.json({
+      team1,
+      team2,
+      odds1_pct: Math.round(p1 * 100),
+      odds2_pct: 100 - Math.round(p1 * 100),
+      team1_forme: { victoires: gen1.wins, matchs_trouves: gen1.played, derniers_matchs: gen1.used },
+      team2_forme: { victoires: gen2.wins, matchs_trouves: gen2.played },
+      face_a_face: h2h,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "split-app-backend" });
 });
