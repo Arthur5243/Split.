@@ -397,7 +397,7 @@ function transformMatch(m) {
   const t2 = opponents[1] && opponents[1].opponent;
   const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
   const d = beginRaw ? new Date(beginRaw) : null;
-  const regionText = (m.serie && (m.serie.full_name || m.serie.name)) || (m.league && m.league.name) || "";
+  const regionText = [m.serie?.full_name, m.serie?.name, m.league?.name].filter(Boolean).join(" ");
   const region = classifyRegion(regionText);
   const results = m.results || [];
   const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
