@@ -426,6 +426,105 @@ function isTbd(m) {
   return m.team1 === "TBD" || m.team2 === "TBD";
 }
 
+// --- Système de cotes maison (remplace l'API /api/odds qui renvoyait tout à 0%) ---
+// Principe (winrate simple) :
+//   winrate = victoires sur les N derniers matchs / N
+//   cote brute = 1 / winrate
+//   cote finale = cote brute * 0.90 (marge façon bookmaker)
+// On calcule le winrate sur les 20 derniers matchs de chaque équipe, et on le
+// pondère avec les 10 derniers face-à-face contre l'adversaire du jour quand
+// il y en a assez pour être représentatif.
+const ODDS_GENERAL_LIMIT = 20;
+const ODDS_H2H_LIMIT = 10;
+const ODDS_H2H_MIN_SAMPLE = 3; // en dessous de 3 confrontations, pas assez fiable
+const ODDS_H2H_WEIGHT = 0.35; // poids du face-à-face dans le mélange
+
+function matchSortKey(m) {
+  return (m.day || "") + (m.time || "");
+}
+
+// Résultat d'une équipe sur UN match terminé : "W", "L", ou null si non exploitable.
+function teamResult(m, teamCode) {
+  if (m.status !== "finished" || m.score1 == null || m.score2 == null) return null;
+  if (m.team1 === teamCode) return m.score1 > m.score2 ? "W" : m.score1 < m.score2 ? "L" : null;
+  if (m.team2 === teamCode) return m.score2 > m.score1 ? "W" : m.score2 < m.score1 ? "L" : null;
+  return null;
+}
+
+// Winrate d'une équipe sur ses N derniers matchs terminés (toutes confrontations confondues).
+function recentWinrate(teamCode, finishedMatches, limit) {
+  const sorted = [...finishedMatches].sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
+  let wins = 0;
+  let played = 0;
+  for (const m of sorted) {
+    if (played >= limit) break;
+    const r = teamResult(m, teamCode);
+    if (r == null) continue;
+    played++;
+    if (r === "W") wins++;
+  }
+  return { wins, played };
+}
+
+// Winrate de teamA spécifiquement contre teamB, sur leurs N dernières confrontations directes.
+function headToHeadWinrate(teamA, teamB, finishedMatches, limit) {
+  const sorted = finishedMatches
+    .filter((m) => (m.team1 === teamA && m.team2 === teamB) || (m.team1 === teamB && m.team2 === teamA))
+    .sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
+  let wins = 0;
+  let played = 0;
+  for (const m of sorted) {
+    if (played >= limit) break;
+    const r = teamResult(m, teamA);
+    if (r == null) continue;
+    played++;
+    if (r === "W") wins++;
+  }
+  return { wins, played };
+}
+
+// Calcule les cotes (% affiché + cote décimale façon bookmaker) pour un match donné,
+// à partir de l'historique des matchs terminés déjà récupérés côté app.
+function computeMatchOdds(match, finishedMatches) {
+  const gen1 = recentWinrate(match.team1, finishedMatches, ODDS_GENERAL_LIMIT);
+  const gen2 = recentWinrate(match.team2, finishedMatches, ODDS_GENERAL_LIMIT);
+  // Pas d'historique connu -> 50/50 par défaut plutôt qu'un 0% qui ne veut rien dire.
+  let wr1 = gen1.played > 0 ? gen1.wins / gen1.played : 0.5;
+  let wr2 = gen2.played > 0 ? gen2.wins / gen2.played : 0.5;
+
+  const h2h = headToHeadWinrate(match.team1, match.team2, finishedMatches, ODDS_H2H_LIMIT);
+  if (h2h.played >= ODDS_H2H_MIN_SAMPLE) {
+    const h2hWr1 = h2h.wins / h2h.played;
+    wr1 = wr1 * (1 - ODDS_H2H_WEIGHT) + h2hWr1 * ODDS_H2H_WEIGHT;
+    wr2 = wr2 * (1 - ODDS_H2H_WEIGHT) + (1 - h2hWr1) * ODDS_H2H_WEIGHT;
+  }
+
+  // Normalisation pour que les deux probabilités se répondent (somme = 100%).
+  const total = wr1 + wr2;
+  let p1 = total > 0 ? wr1 / total : 0.5;
+  // Garde-fou : jamais 0% ni 100% pile, pour garder un peu d'incertitude.
+  p1 = Math.min(0.92, Math.max(0.08, p1));
+  const p2 = 1 - p1;
+
+  const margin = 0.9;
+  return {
+    odds1: Math.round(p1 * 100),
+    odds2: Math.round(p2 * 100),
+    cote1: Math.round((1 / p1) * margin * 100) / 100,
+    cote2: Math.round((1 / p2) * margin * 100) / 100,
+  };
+}
+
+// Applique le calcul ci-dessus à une liste de matchs (upcoming/live), en s'appuyant
+// sur l'historique des matchs terminés pour établir la forme de chaque équipe.
+function attachComputedOdds(matches, finishedMatches) {
+  return matches.map((m) => {
+    if (isTbd(m)) return { ...m, odds1: 0, odds2: 0, cote1: null, cote2: null };
+    const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, finishedMatches);
+    return { ...m, odds1, odds2, cote1, cote2 };
+  });
+}
+
 function isValidScore(aStr, bStr) {
   const a = parseInt(aStr || "0", 10);
   const b = parseInt(bStr || "0", 10);
@@ -1171,51 +1270,30 @@ export default function ClutchApp() {
       return res.json();
     }
 
-    // Cotes -> % : normalisation des clés (accents, casse, espaces) + repli sur
-    // l'acronyme de l'équipe si le nom complet ne matche pas exactement le
-    // dictionnaire renvoyé par /api/odds. Avant, un simple .toLowerCase() sur
-    // le nom complet ratait quasi tous les matches -> 0% partout.
-    function normalizeOddsKey(s) {
-      return (s || "")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .trim()
-        .toLowerCase();
-    }
-    function attachOdds(matches, oddsByTeam) {
-      const raw = oddsByTeam || {};
-      const dict = {};
-      Object.keys(raw).forEach((k) => {
-        dict[normalizeOddsKey(k)] = raw[k];
-      });
-      function lookup(name, code) {
-        const byName = name ? dict[normalizeOddsKey(name)] : undefined;
-        if (byName != null) return byName;
-        const byCode = code ? dict[normalizeOddsKey(code)] : undefined;
-        return byCode != null ? byCode : null;
-      }
-      return matches.map((m) => {
-        const n1 = lookup(m.team1Name, m.team1);
-        const n2 = lookup(m.team2Name, m.team2);
-        return { ...m, odds1: n1 != null ? n1 : 0, odds2: n2 != null ? n2 : 0 };
-      });
-    }
-
     async function load() {
       try {
-        const [up, li, pa, odds] = await Promise.all([
+        const [up, li, pa, history] = await Promise.all([
           fetchJson("/api/valorant-upcoming"),
           fetchJson("/api/valorant-live"),
           fetchJson("/api/valorant-results"),
-          fetchJson("/api/odds").catch(() => null), // jamais bloquant : fallback 0% géré dans attachOdds
+          // Historique complet accumulé côté backend (mini base de données qui
+          // grossit à chaque nouveau résultat). Pas encore déployé -> on ne
+          // bloque jamais dessus, on retombe simplement sur les résultats
+          // récents (paT) ci-dessous. Jamais de donnée inventée dans les deux cas.
+          fetchJson("/api/match-history").catch(() => null),
         ]);
         if (cancelled) return;
         const upT = Array.isArray(up) ? up.map(transformMatch).filter((m) => m.region) : [];
         const liT = Array.isArray(li) ? li.map(transformMatch).filter((m) => m.region) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatch).filter((m) => m.region) : [];
-        setUpcomingMatches(attachOdds(upT, odds));
-        setLiveMatches(attachOdds(liT, odds));
-        setResultsMatches(attachOdds(paT, odds));
+        const historyT = Array.isArray(history) ? history.map(transformMatch).filter((m) => m.region) : [];
+        // On prend la source qui a le plus de matchs exploitables : dès que le
+        // backend expose l'historique accumulé (/api/match-history), il devient
+        // naturellement plus riche que la fenêtre récente et prend le relais.
+        const finishedMatches = historyT.length > paT.length ? historyT : paT;
+        setUpcomingMatches(attachComputedOdds(upT, finishedMatches));
+        setLiveMatches(attachComputedOdds(liT, finishedMatches));
+        setResultsMatches(paT);
       } catch (e) {
         // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
       } finally {
