@@ -211,28 +211,12 @@ app.get("/admin/export-matches", async (req, res) => {
     const formatted = cleaned.map(toStoredShape).filter(Boolean);
     const json = JSON.stringify(formatted, null, 2);
 
-    res.type("html").send(`<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Export matchs</title></head>
-<body style="font-family:sans-serif;padding:12px;">
-<h3>${formatted.length} matchs trouvés (2025-2026)</h3>
-<button onclick="copyIt()" style="width:100%;padding:16px;font-size:16px;background:#22c55e;color:white;border:none;border-radius:8px;margin-bottom:10px;">📋 Copier tout</button>
-<div id="status" style="text-align:center;margin-bottom:10px;color:#666;"></div>
-<textarea id="data" readonly style="width:100%;height:70vh;box-sizing:border-box;font-family:monospace;font-size:12px;">${json}</textarea>
-<script>
-function copyIt() {
-  const el = document.getElementById('data');
-  el.select();
-  el.setSelectionRange(0, 999999999);
-  navigator.clipboard.writeText(el.value).then(() => {
-    document.getElementById('status').textContent = '✅ Copié !';
-  }).catch(() => {
-    document.execCommand('copy');
-    document.getElementById('status').textContent = '✅ Copié (fallback) !';
-  });
-}
-</script>
-</body></html>`);
+    // Téléchargement direct plutôt que copier-coller : plus fiable sur mobile
+    // quand le JSON est gros (le clipboard mobile plante souvent en silence
+    // au-delà de quelques centaines de Ko).
+    console.log(`export-matches: ${formatted.length} matchs, ${json.length} caractères`);
+    res.setHeader("Content-Disposition", 'attachment; filename="matches.json"');
+    res.type("application/json").send(json);
   } catch (e) {
     console.error("export-matches error:", e.message);
     res.status(502).send("Erreur PandaScore : " + e.message);
