@@ -427,8 +427,8 @@ function isTbd(m) {
 }
 
 // --- Système de cotes maison (remplace l'API /api/odds qui renvoyait tout à 0%) ---
-// Principe (winrate simple) :
-//   winrate = victoires sur les N derniers matchs / N
+// Principe (winrate lissé) :
+//   winrate = (victoires + PRIOR_WEIGHT*0.5) / (matchs joués + PRIOR_WEIGHT)
 //   cote brute = 1 / winrate
 //   cote finale = cote brute * 0.90 (marge façon bookmaker)
 // On calcule le winrate sur les 20 derniers matchs de chaque équipe, et on le
@@ -438,27 +438,41 @@ const ODDS_GENERAL_LIMIT = 20;
 const ODDS_H2H_LIMIT = 10;
 const ODDS_H2H_MIN_SAMPLE = 3; // en dessous de 3 confrontations, pas assez fiable
 const ODDS_H2H_WEIGHT = 0.35; // poids du face-à-face dans le mélange
+// Lissage bayésien : équivalent d'ajouter ODDS_PRIOR_WEIGHT matchs fictifs à 50/50.
+// Avec 2-3 matchs connus, le winrate reste prudent (proche de 50%) ; avec les
+// 15-20 matchs qu'une équipe VCT/VCL établie a dans l'historique, le winrate
+// réel domine largement -> Fnatic (très bon historique) et GiantX (historique
+// moyen) ne se retrouvent plus jamais à égalité artificielle.
+const ODDS_PRIOR_WEIGHT = 4;
 
 function matchSortKey(m) {
   return (m.day || "") + (m.time || "");
 }
 
+function normTeamName(name) {
+  return (name || "").trim().toLowerCase();
+}
+
 // Résultat d'une équipe sur UN match terminé : "W", "L", ou null si non exploitable.
-function teamResult(m, teamCode) {
+// Identification par NOM COMPLET (team1Name/team2Name), pas par le code 4 lettres :
+// le code vient de l'acronyme PandaScore côté matchs live/upcoming, mais n'existe
+// pas côté historique (matches.json) -> les deux ne matchaient jamais entre eux.
+function teamResult(m, teamName) {
   if (m.status !== "finished" || m.score1 == null || m.score2 == null) return null;
-  if (m.team1 === teamCode) return m.score1 > m.score2 ? "W" : m.score1 < m.score2 ? "L" : null;
-  if (m.team2 === teamCode) return m.score2 > m.score1 ? "W" : m.score2 < m.score1 ? "L" : null;
+  const target = normTeamName(teamName);
+  if (normTeamName(m.team1Name) === target) return m.score1 > m.score2 ? "W" : m.score1 < m.score2 ? "L" : null;
+  if (normTeamName(m.team2Name) === target) return m.score2 > m.score1 ? "W" : m.score2 < m.score1 ? "L" : null;
   return null;
 }
 
 // Winrate d'une équipe sur ses N derniers matchs terminés (toutes confrontations confondues).
-function recentWinrate(teamCode, finishedMatches, limit) {
+function recentWinrate(teamName, finishedMatches, limit) {
   const sorted = [...finishedMatches].sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
   let wins = 0;
   let played = 0;
   for (const m of sorted) {
     if (played >= limit) break;
-    const r = teamResult(m, teamCode);
+    const r = teamResult(m, teamName);
     if (r == null) continue;
     played++;
     if (r === "W") wins++;
@@ -467,15 +481,21 @@ function recentWinrate(teamCode, finishedMatches, limit) {
 }
 
 // Winrate de teamA spécifiquement contre teamB, sur leurs N dernières confrontations directes.
-function headToHeadWinrate(teamA, teamB, finishedMatches, limit) {
+function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
+  const a = normTeamName(teamAName);
+  const b = normTeamName(teamBName);
   const sorted = finishedMatches
-    .filter((m) => (m.team1 === teamA && m.team2 === teamB) || (m.team1 === teamB && m.team2 === teamA))
-    .sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
+    .filter((m) => {
+      const n1 = normTeamName(m.team1Name);
+      const n2 = normTeamName(m.team2Name);
+      return (n1 === a && n2 === b) || (n1 === b && n2 === a);
+    })
+    .sort((x, y) => matchSortKey(y).localeCompare(matchSortKey(x)));
   let wins = 0;
   let played = 0;
   for (const m of sorted) {
     if (played >= limit) break;
-    const r = teamResult(m, teamA);
+    const r = teamResult(m, teamAName);
     if (r == null) continue;
     played++;
     if (r === "W") wins++;
@@ -483,16 +503,22 @@ function headToHeadWinrate(teamA, teamB, finishedMatches, limit) {
   return { wins, played };
 }
 
+// Lissage bayésien : winrate réel mélangé à un prior 50/50 pondéré par
+// ODDS_PRIOR_WEIGHT, pour rester prudent sur les petits échantillons sans
+// jamais retomber sur un plat 50/50 dès qu'il y a un minimum d'historique.
+function shrinkWinrate(wins, played) {
+  return (wins + ODDS_PRIOR_WEIGHT * 0.5) / (played + ODDS_PRIOR_WEIGHT);
+}
+
 // Calcule les cotes (% affiché + cote décimale façon bookmaker) pour un match donné,
 // à partir de l'historique des matchs terminés déjà récupérés côté app.
 function computeMatchOdds(match, finishedMatches) {
-  const gen1 = recentWinrate(match.team1, finishedMatches, ODDS_GENERAL_LIMIT);
-  const gen2 = recentWinrate(match.team2, finishedMatches, ODDS_GENERAL_LIMIT);
-  // Pas d'historique connu -> 50/50 par défaut plutôt qu'un 0% qui ne veut rien dire.
-  let wr1 = gen1.played > 0 ? gen1.wins / gen1.played : 0.5;
-  let wr2 = gen2.played > 0 ? gen2.wins / gen2.played : 0.5;
+  const gen1 = recentWinrate(match.team1Name, finishedMatches, ODDS_GENERAL_LIMIT);
+  const gen2 = recentWinrate(match.team2Name, finishedMatches, ODDS_GENERAL_LIMIT);
+  let wr1 = shrinkWinrate(gen1.wins, gen1.played);
+  let wr2 = shrinkWinrate(gen2.wins, gen2.played);
 
-  const h2h = headToHeadWinrate(match.team1, match.team2, finishedMatches, ODDS_H2H_LIMIT);
+  const h2h = headToHeadWinrate(match.team1Name, match.team2Name, finishedMatches, ODDS_H2H_LIMIT);
   if (h2h.played >= ODDS_H2H_MIN_SAMPLE) {
     const h2hWr1 = h2h.wins / h2h.played;
     wr1 = wr1 * (1 - ODDS_H2H_WEIGHT) + h2hWr1 * ODDS_H2H_WEIGHT;
@@ -503,7 +529,7 @@ function computeMatchOdds(match, finishedMatches) {
   const total = wr1 + wr2;
   let p1 = total > 0 ? wr1 / total : 0.5;
   // Garde-fou : jamais 0% ni 100% pile, pour garder un peu d'incertitude.
-  p1 = Math.min(0.92, Math.max(0.08, p1));
+  p1 = Math.min(0.95, Math.max(0.05, p1));
   const p2 = 1 - p1;
 
   const margin = 0.9;
