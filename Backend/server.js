@@ -192,6 +192,16 @@ function toStoredShape(raw, index) {
   };
 }
 
+// Tournois communautaires/amateurs à exclure : leur niveau n'a rien à voir
+// avec le VCT pro et ils polluent le calcul de forme des équipes. Ajoute
+// d'autres noms ici si t'en repères d'autres via /admin/check-team.
+const TIER_DENYLIST = ["project blender"];
+
+function isNoiseTier(raw) {
+  const tier = (raw.league?.name || "").toLowerCase();
+  return TIER_DENYLIST.some((bad) => tier.includes(bad));
+}
+
 async function fetchAllPastMatches() {
   const all = [];
   const MAX_PAGES = 30; // 30 x 100 = 3000 matchs max, largement assez pour 2025-2026
@@ -218,7 +228,7 @@ app.get("/admin/export-matches", async (req, res) => {
 
     const inRange = raw.filter((m) => {
       const y = m.begin_at ? m.begin_at.slice(0, 4) : null;
-      return y === "2025" || y === "2026";
+      return (y === "2025" || y === "2026") && !isNoiseTier(m);
     });
 
     const seen = new Set();
