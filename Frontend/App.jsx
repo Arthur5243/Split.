@@ -510,6 +510,27 @@ function shrinkWinrate(wins, played) {
   return (wins + ODDS_PRIOR_WEIGHT * 0.5) / (played + ODDS_PRIOR_WEIGHT);
 }
 
+// Petit hash déterministe (pas de vrai hasard : mêmes équipes -> même décalage
+// à chaque calcul, mais différent d'un affrontement à l'autre).
+function hashString(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h << 5) - h + s.charCodeAt(i);
+    h |= 0;
+  }
+  return h;
+}
+
+// Décalage entre -delta et +delta, propre à un affrontement (basé sur les deux
+// noms d'équipe). Sert à éviter que deux équipes sans historique connu
+// affichent systématiquement le même 50/50 (ou 46/54...) tout rond, comme si
+// c'était calculé au cordeau match après match.
+function pairJitter(nameA, nameB, delta) {
+  const h = hashString(normTeamName(nameA) + "|" + normTeamName(nameB));
+  const frac = (((h % 1000) + 1000) % 1000) / 1000; // 0 -> 1, stable pour la paire
+  return (frac * 2 - 1) * delta; // -delta -> +delta
+}
+
 // Calcule les cotes (% affiché + cote décimale façon bookmaker) pour un match donné,
 // à partir de l'historique des matchs terminés déjà récupérés côté app.
 function computeMatchOdds(match, finishedMatches) {
@@ -528,14 +549,27 @@ function computeMatchOdds(match, finishedMatches) {
   // Normalisation pour que les deux probabilités se répondent (somme = 100%).
   const total = wr1 + wr2;
   let p1 = total > 0 ? wr1 / total : 0.5;
+
+  // Décalage déterministe par paire d'équipes : plus fort quand on a peu de
+  // données réelles (échantillon faible des deux côtés), plus léger sinon.
+  // Ça casse les 50/50 et 46/54 identiques d'un match sans historique à
+  // l'autre, sans jamais changer de valeur au rechargement.
+  const knownSample = gen1.played + gen2.played;
+  const jitterDelta = knownSample < 4 ? 0.07 : knownSample < 10 ? 0.03 : 0.015;
+  p1 += pairJitter(match.team1Name, match.team2Name, jitterDelta);
+
   // Garde-fou : jamais 0% ni 100% pile, pour garder un peu d'incertitude.
   p1 = Math.min(0.95, Math.max(0.05, p1));
-  const p2 = 1 - p1;
+
+  // odds2 dérivé de odds1 (pas arrondi séparément) pour garantir une somme à 100%.
+  const odds1 = Math.round(p1 * 100);
+  const odds2 = 100 - odds1;
+  const p2 = odds2 / 100;
 
   const margin = 0.9;
   return {
-    odds1: Math.round(p1 * 100),
-    odds2: Math.round(p2 * 100),
+    odds1,
+    odds2,
     cote1: Math.round((1 / p1) * margin * 100) / 100,
     cote2: Math.round((1 / p2) * margin * 100) / 100,
   };
