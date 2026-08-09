@@ -96,7 +96,7 @@ const STR = {
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
-    statusUpcoming: "Match à venir",
+    statusUpcoming: "Matchs à venir",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
@@ -443,9 +443,17 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
-      style={{ width: "44px", height: "44px", background: "#1c1c1c", border: "1px solid " + (tbd ? "#333" : accent + "55"), color: tbd ? "#555" : "#fff", fontSize: "10.5px", overflow: "hidden" }}
+      style={{ width: "44px", height: "44px", background: "#1c1c1c", border: "1px solid " + (tbd ? "#444" : accent + "80"), color: tbd ? "#555" : "#fff", fontSize: "10.5px", overflow: "hidden" }}
     >
-      {src ? <img src={src} alt={code} style={{ width: "70%", height: "70%", objectFit: "contain" }} /> : code}
+      {src ? (
+        <img
+          src={src}
+          alt={code}
+          style={{ width: "70%", height: "70%", objectFit: "contain", filter: "brightness(0) invert(1)" }}
+        />
+      ) : (
+        code
+      )}
     </div>
   );
 }
@@ -487,13 +495,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
+    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: "1px solid #333" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
           <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             {match.league} • {match.phase}
           </span>
-          <div style={{ color: "#555", fontSize: "9.5px", marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
+          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
         </div>
         {running ? (
           <button
@@ -596,6 +604,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const dragStartX = useRef(null);
   const slideCount = 3;
 
@@ -625,13 +634,22 @@ function NewsCarousel({ T }) {
   return (
     <div
       className="relative rounded-2xl overflow-hidden mb-6"
-      style={{ height: "150px", background: "#000", touchAction: "pan-y" }}
+      style={{ height: "150px", background: "#141414", touchAction: "pan-y" }}
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
       {activeSlide === 0 && (
         <>
-          <img src={NEWS_IMAGE} alt="" draggable="false" className="absolute inset-0" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img
+            src={NEWS_IMAGE}
+            alt=""
+            draggable="false"
+            loading="eager"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+            className="absolute inset-0"
+            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.35s ease" }}
+          />
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000000 100%)" }}
@@ -1104,13 +1122,32 @@ export default function ClutchApp() {
       return res.json();
     }
 
-    // Cotes -> % : si l'API des cotes est down / pas connectée / renvoie rien,
-    // on met quand même 0% pour les deux équipes plutôt que de rien afficher.
+    // Cotes -> % : normalisation des clés (accents, casse, espaces) + repli sur
+    // l'acronyme de l'équipe si le nom complet ne matche pas exactement le
+    // dictionnaire renvoyé par /api/odds. Avant, un simple .toLowerCase() sur
+    // le nom complet ratait quasi tous les matches -> 0% partout.
+    function normalizeOddsKey(s) {
+      return (s || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+    }
     function attachOdds(matches, oddsByTeam) {
-      const dict = oddsByTeam || {};
+      const raw = oddsByTeam || {};
+      const dict = {};
+      Object.keys(raw).forEach((k) => {
+        dict[normalizeOddsKey(k)] = raw[k];
+      });
+      function lookup(name, code) {
+        const byName = name ? dict[normalizeOddsKey(name)] : undefined;
+        if (byName != null) return byName;
+        const byCode = code ? dict[normalizeOddsKey(code)] : undefined;
+        return byCode != null ? byCode : null;
+      }
       return matches.map((m) => {
-        const n1 = m.team1Name ? dict[m.team1Name.toLowerCase()] : null;
-        const n2 = m.team2Name ? dict[m.team2Name.toLowerCase()] : null;
+        const n1 = lookup(m.team1Name, m.team1);
+        const n2 = lookup(m.team2Name, m.team2);
         return { ...m, odds1: n1 != null ? n1 : 0, odds2: n2 != null ? n2 : 0 };
       });
     }
