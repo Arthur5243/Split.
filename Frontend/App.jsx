@@ -434,8 +434,8 @@ function isTbd(m) {
 // On calcule le winrate sur les 20 derniers matchs de chaque équipe, et on le
 // pondère avec les 10 derniers face-à-face contre l'adversaire du jour quand
 // il y en a assez pour être représentatif.
-const ODDS_GENERAL_LIMIT = 20;
-const ODDS_H2H_LIMIT = 10;
+const ODDS_GENERAL_LIMIT = 29;
+const ODDS_H2H_LIMIT = 13;
 const ODDS_H2H_MIN_SAMPLE = 3; // en dessous de 3 confrontations, pas assez fiable
 const ODDS_H2H_WEIGHT = 0.35; // poids du face-à-face dans le mélange
 // Lissage bayésien : équivalent d'ajouter ODDS_PRIOR_WEIGHT matchs fictifs à 50/50.
