@@ -96,7 +96,7 @@ const STR = {
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
-    statusUpcoming: "Matchs à venir",
+    statusUpcoming: "Match à venir",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
