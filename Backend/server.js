@@ -128,6 +128,28 @@ app.get("/api/match-history", (req, res) => {
   }
 });
 
+// Petite page de diag, pour vérifier vite fait (sans ouvrir le gros JSON)
+// que l'historique est bien là et qu'une équipe précise y apparaît.
+// Ex: /admin/check-team?name=Gentle Mates
+app.get("/admin/check-team", (req, res) => {
+  try {
+    const raw = fs.readFileSync(MATCHES_PATH, "utf-8");
+    const matches = JSON.parse(raw);
+    const q = (req.query.name || "").toLowerCase();
+    const matching = matches.filter(
+      (m) => m.team1?.toLowerCase().includes(q) || m.team2?.toLowerCase().includes(q)
+    );
+    res.json({
+      total_matches_in_file: matches.length,
+      recherche: q,
+      trouves: matching.length,
+      exemples: matching.slice(0, 5),
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- Page secrète : export en masse de tous les matchs Valorant 2025-2026 ---
 // Accessible via /admin/export-matches?key=TA_CLE (définis ADMIN_KEY dans les
 // variables Railway). Va chercher toutes les pages PandaScore, filtre les
