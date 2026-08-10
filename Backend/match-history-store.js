@@ -20,8 +20,11 @@
  * Le code ci-dessous reste le plus simple à brancher direct sur Railway.
  */
 
-const Database = require("better-sqlite3");
-const path = require("path");
+import Database from "better-sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "matches.db");
 const db = new Database(DB_PATH);
@@ -109,22 +112,4 @@ function getTeamHistory(teamCode, limit = 50) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
-module.exports = { storeFinishedMatches, getFullHistory, getTeamHistory };
-
-/**
- * Branchement dans tes routes existantes (exemple avec Express) :
- *
- *   const { storeFinishedMatches, getFullHistory } = require("./match-history-store");
- *
- *   app.get("/api/valorant-results", async (req, res) => {
- *     const matches = await fetchFromPandaScore(...);      // ton code existant
- *     storeFinishedMatches(matches.map(transformMatch));    // <- une ligne ajoutée
- *     res.json(matches);                                    // réponse inchangée
- *   });
- *
- *   // Nouvel endpoint que le frontend appelle déjà (fallback silencieux tant
- *   // qu'il n'existe pas) :
- *   app.get("/api/match-history", (req, res) => {
- *     res.json(getFullHistory());
- *   });
- */
+export { storeFinishedMatches, getFullHistory, getTeamHistory };
