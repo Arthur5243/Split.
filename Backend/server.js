@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -98,6 +99,7 @@ function toPandaScoreShape(m, index) {
     id: m.pandascore_id || "hist_" + m.match_id,
     begin_at: m.date ? m.date + "T00:00:00Z" : null,
     status: "finished",
+    tier: m.tier || null, // niveau du tournoi (VCT, VCL, etc.) — sert à pondérer les cotes côté front
     serie: { full_name: m.tournament_name, name: m.tournament_name },
     league: { name: "EMEA" }, // libellé neutre juste pour passer classifyRegion(), jamais affiché
     opponents: [
