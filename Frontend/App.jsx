@@ -425,6 +425,10 @@ function transformMatch(m) {
     // le winrate — battre une petite équipe en tournoi régional ne doit pas
     // compter pareil que battre une équipe VCT.
     tier: m.tier || (m.league && m.league.name) || null,
+    // Score détaillé par map (13-9 etc.), récupéré via vlr.gg côté backend
+    // (/api/valorant-results). Sans cette ligne, la donnée existe dans la
+    // réponse brute du backend mais se perd ici avant d'arriver à MatchCard.
+    map_scores: m.map_scores || null,
   };
 }
 
