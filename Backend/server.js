@@ -1,4 +1,5 @@
 
+
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -95,22 +96,65 @@ function toHistoryRow(m) {
   };
 }
 
+// Cache du résultat ENRICHI (avec map_scores), séparé du petit cache
+// PandaScore brut (60s) ci-dessus. But : le front repoll toutes les 60s, donc
+// sans ce cache-là on relance un balayage complet de vlr.gg à CHAQUE poll —
+// c'est ce qui a fini par faire bloquer l'IP Railway. Les scores d'un match
+// terminé ne changent jamais, donc une fenêtre large (10 min) ne coûte rien
+// en fraîcheur perçue.
+let enrichedResultsCache = null; // { data, time }
+const ENRICHED_RESULTS_TTL_MS = 10 * 60 * 1000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Exécute `fn` sur chaque item avec au plus `limit` appels en vol en même
+// temps, au lieu d'un Promise.allSettled qui tire tout d'un coup (jusqu'à 50
+// requêtes simultanées vers vlr.gg juste après un redeploy = ressemble à une
+// attaque, circuit breaker qui saute côté vlr.gg). Un pool de 3 reste rapide
+// tout en étant beaucoup plus discret.
+async function mapWithConcurrency(items, limit, fn) {
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const i = cursor++;
+      await fn(items[i]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+async function enrichWithMapScores(data) {
+  const finished = data.filter((m) => m.status === "finished");
+  await mapWithConcurrency(finished, 3, async (m) => {
+    const t1 = m.opponents?.[0]?.opponent?.name;
+    const t2 = m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || "").slice(0, 10);
+    if (!t1 || !t2 || !date) return;
+    try {
+      m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
+    } catch (e) {
+      m.map_scores = null;
+    }
+    await sleep(150); // laisse respirer vlr.gg entre 2 matchs, même dans le pool
+  });
+}
+
 app.get("/api/valorant-results", async (req, res) => {
   try {
+    const now = Date.now();
+    if (enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS) {
+      return res.json(enrichedResultsCache.data);
+    }
+
     const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
 
     // Ajoute le score par manche (13-9) via vlr.gg quand c'est trouvable.
     // Échec silencieux par match : jamais de crash si un match n'est pas trouvé.
-    await Promise.allSettled(
-      data.map(async (m) => {
-        if (m.status !== "finished") return;
-        const t1 = m.opponents?.[0]?.opponent?.name;
-        const t2 = m.opponents?.[1]?.opponent?.name;
-        const date = (m.begin_at || "").slice(0, 10);
-        if (!t1 || !t2 || !date) return;
-        m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
-      })
-    );
+    await enrichWithMapScores(data);
+
+    enrichedResultsCache = { data, time: now };
 
     // Accumule les matchs terminés dans la mini base SQLite (voir
     // match-history-store.js). N'affecte pas la réponse ni /api/match-history
@@ -122,6 +166,9 @@ app.get("/api/valorant-results", async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error(e);
+    // Si le sweep échoue mais qu'on a un cache même périmé, mieux vaut le
+    // servir que de renvoyer une erreur au front.
+    if (enrichedResultsCache) return res.json(enrichedResultsCache.data);
     res.status(502).json({ error: "Impossible de récupérer les résultats." });
   }
 });
