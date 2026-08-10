@@ -5,6 +5,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
+import { getMapScores } from "./vlr-scores.js";
+import { storeFinishedMatches, getFullHistory, getTeamHistory } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -66,9 +68,57 @@ app.get("/api/valorant-live", async (req, res) => {
   }
 });
 
+// Convertit un match brut PandaScore (tel que renvoyé par /valorant/matches/past)
+// vers le format attendu par match-history-store.js. Pas de logique front ici
+// (pas de classifyRegion/teamCode) : juste les champs directement disponibles.
+function toHistoryRow(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return null;
+  const results = m.results || [];
+  const r1 = results.find((r) => r.team_id === t1.id);
+  const r2 = results.find((r) => r.team_id === t2.id);
+  return {
+    id: String(m.id),
+    team1: t1.name,
+    team2: t2.name,
+    team1Name: t1.name,
+    team2Name: t2.name,
+    score1: r1 ? r1.score : null,
+    score2: r2 ? r2.score : null,
+    status: m.status,
+    region: null,
+    league: m.league?.name || null,
+    phase: m.serie?.full_name || null,
+    day: (m.begin_at || "").slice(0, 10),
+    time: (m.begin_at || "").slice(11, 16),
+  };
+}
+
 app.get("/api/valorant-results", async (req, res) => {
   try {
     const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
+
+    // Ajoute le score par manche (13-9) via vlr.gg quand c'est trouvable.
+    // Échec silencieux par match : jamais de crash si un match n'est pas trouvé.
+    await Promise.allSettled(
+      data.map(async (m) => {
+        if (m.status !== "finished") return;
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        const date = (m.begin_at || "").slice(0, 10);
+        if (!t1 || !t2 || !date) return;
+        m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
+      })
+    );
+
+    // Accumule les matchs terminés dans la mini base SQLite (voir
+    // match-history-store.js). N'affecte pas la réponse ni /api/match-history
+    // pour l'instant — c'est un stock qui s'accumule en parallèle, en attendant
+    // qu'on décide comment le fusionner avec l'historique statique matches.json.
+    const rows = data.map(toHistoryRow).filter(Boolean);
+    storeFinishedMatches(rows);
+
     res.json(data);
   } catch (e) {
     console.error(e);
@@ -350,6 +400,18 @@ app.get("/admin/compute-odds", (req, res) => {
       team2_forme: { victoires: gen2.wins, matchs_trouves: gen2.played },
       face_a_face: h2h,
     });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Visibilité sur la mini base SQLite qui s'accumule en tâche de fond à chaque
+// appel de /api/valorant-results (voir match-history-store.js). Ne remplace
+// PAS /api/match-history (qui sert toujours matches.json, les 2553 matchs
+// importés) — sert juste à vérifier que l'accumulation fonctionne bien.
+app.get("/admin/live-history-count", (req, res) => {
+  try {
+    res.json({ matchs_accumules: getFullHistory(100000).length });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
