@@ -419,6 +419,11 @@ function transformMatch(m) {
     status: m.status || "not_started",
     score1: score1,
     score2: score2,
+    // Niveau du tournoi : champ dédié côté historique custom, sinon le vrai nom
+    // de ligue PandaScore (matchs live/upcoming/valorant-results). Sert à pondérer
+    // le winrate — battre une petite équipe en tournoi régional ne doit pas
+    // compter pareil que battre une équipe VCT.
+    tier: m.tier || (m.league && m.league.name) || null,
   };
 }
 
@@ -438,6 +443,26 @@ const ODDS_GENERAL_LIMIT = 29;
 const ODDS_H2H_LIMIT = 13;
 const ODDS_H2H_MIN_SAMPLE = 3; // en dessous de 3 confrontations, pas assez fiable
 const ODDS_H2H_WEIGHT = 0.35; // poids du face-à-face dans le mélange
+
+// Poids d'un match selon le niveau du tournoi : battre une équipe en petit
+// tournoi régional ne doit pas compter pareil que battre une équipe VCT.
+// Recherche par sous-chaîne (insensible à la casse) sur le libellé du tournoi.
+const TIER_WEIGHTS = [
+  { match: "vct", weight: 1 },
+  { match: "champions", weight: 1 },
+  { match: "masters", weight: 0.9 },
+  { match: "esports world cup", weight: 0.9 },
+  { match: "vcl", weight: 0.5 },
+];
+const DEFAULT_TIER_WEIGHT = 0.35; // tournois non reconnus / petits circuits locaux
+
+function tierWeight(tierLabel) {
+  const t = (tierLabel || "").toLowerCase();
+  for (const { match, weight } of TIER_WEIGHTS) {
+    if (t.includes(match)) return weight;
+  }
+  return DEFAULT_TIER_WEIGHT;
+}
 // Lissage bayésien : équivalent d'ajouter ODDS_PRIOR_WEIGHT matchs fictifs à 50/50.
 // Avec 2-3 matchs connus, le winrate reste prudent (proche de 50%) ; avec les
 // 15-20 matchs qu'une équipe VCT/VCL établie a dans l'historique, le winrate
@@ -465,22 +490,31 @@ function teamResult(m, teamName) {
   return null;
 }
 
-// Winrate d'une équipe sur ses N derniers matchs terminés (toutes confrontations confondues).
+// Winrate BRUT d'une équipe sur ses N derniers matchs terminés (toutes confrontations
+// confondues), + le poids moyen du niveau de tournoi sur cette fenêtre (voir tierWeight).
+// Le poids n'est PAS utilisé pour gonfler/réduire artificiellement le nombre de
+// matchs pris en compte (la fenêtre "N derniers matchs" reste réelle) : il sert
+// ensuite à rabattre le winrate vers 50% quand la forme vient surtout de petits
+// tournois (voir qualityAdjustedWinrate).
 function recentWinrate(teamName, finishedMatches, limit) {
   const sorted = [...finishedMatches].sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
   let wins = 0;
   let played = 0;
+  let weightSum = 0;
   for (const m of sorted) {
     if (played >= limit) break;
     const r = teamResult(m, teamName);
     if (r == null) continue;
     played++;
+    weightSum += tierWeight(m.tier);
     if (r === "W") wins++;
   }
-  return { wins, played };
+  return { wins, played, weightSum };
 }
 
-// Winrate de teamA spécifiquement contre teamB, sur leurs N dernières confrontations directes.
+// Winrate BRUT de teamA spécifiquement contre teamB, sur leurs N dernières
+// confrontations directes, + le poids moyen de tournoi sur ces confrontations
+// (même logique que recentWinrate).
 function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
   const a = normTeamName(teamAName);
   const b = normTeamName(teamBName);
@@ -493,14 +527,16 @@ function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
     .sort((x, y) => matchSortKey(y).localeCompare(matchSortKey(x)));
   let wins = 0;
   let played = 0;
+  let weightSum = 0;
   for (const m of sorted) {
     if (played >= limit) break;
     const r = teamResult(m, teamAName);
     if (r == null) continue;
     played++;
+    weightSum += tierWeight(m.tier);
     if (r === "W") wins++;
   }
-  return { wins, played };
+  return { wins, played, weightSum };
 }
 
 // Lissage bayésien : winrate réel mélangé à un prior 50/50 pondéré par
@@ -508,6 +544,16 @@ function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
 // jamais retomber sur un plat 50/50 dès qu'il y a un minimum d'historique.
 function shrinkWinrate(wins, played) {
   return (wins + ODDS_PRIOR_WEIGHT * 0.5) / (played + ODDS_PRIOR_WEIGHT);
+}
+
+// Rabat le winrate (déjà lissé) vers 50% en fonction du niveau moyen des matchs
+// qui le composent : un excellent winrate obtenu surtout contre des petites
+// équipes régionales (poids de tournoi faible) est traité avec méfiance, un
+// winrate obtenu en VCT (poids 1) n'est quasiment pas touché.
+function qualityAdjustedWinrate(wins, played, weightSum) {
+  const raw = shrinkWinrate(wins, played);
+  const avgWeight = played > 0 ? weightSum / played : 0;
+  return raw * avgWeight + 0.5 * (1 - avgWeight);
 }
 
 // Petit hash déterministe (pas de vrai hasard : mêmes équipes -> même décalage
@@ -536,12 +582,12 @@ function pairJitter(nameA, nameB, delta) {
 function computeMatchOdds(match, finishedMatches) {
   const gen1 = recentWinrate(match.team1Name, finishedMatches, ODDS_GENERAL_LIMIT);
   const gen2 = recentWinrate(match.team2Name, finishedMatches, ODDS_GENERAL_LIMIT);
-  let wr1 = shrinkWinrate(gen1.wins, gen1.played);
-  let wr2 = shrinkWinrate(gen2.wins, gen2.played);
+  let wr1 = qualityAdjustedWinrate(gen1.wins, gen1.played, gen1.weightSum);
+  let wr2 = qualityAdjustedWinrate(gen2.wins, gen2.played, gen2.weightSum);
 
   const h2h = headToHeadWinrate(match.team1Name, match.team2Name, finishedMatches, ODDS_H2H_LIMIT);
   if (h2h.played >= ODDS_H2H_MIN_SAMPLE) {
-    const h2hWr1 = h2h.wins / h2h.played;
+    const h2hWr1 = qualityAdjustedWinrate(h2h.wins, h2h.played, h2h.weightSum);
     wr1 = wr1 * (1 - ODDS_H2H_WEIGHT) + h2hWr1 * ODDS_H2H_WEIGHT;
     wr2 = wr2 * (1 - ODDS_H2H_WEIGHT) + (1 - h2hWr1) * ODDS_H2H_WEIGHT;
   }
