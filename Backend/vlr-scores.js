@@ -1,3 +1,4 @@
+
 /**
  * Va chercher les scores détaillés par manche (ex: 13-9) sur vlr.gg, via
  * notre propre instance auto-hébergée sur Railway (vlrggapi), pour un match
@@ -144,31 +145,5 @@ async function getMapScores(team1Name, team2Name, dateStr) {
   }
 }
 
-module.exports = { getMapScores };
+export { getMapScores };
 
-/**
- * Branchement dans ta route existante (exemple avec Express), dans
- * /api/valorant-results, juste avant de renvoyer la réponse :
- *
- *   const { getMapScores } = require("./vlr-scores");
- *
- *   app.get("/api/valorant-results", async (req, res) => {
- *     const matches = await fetchFromPandaScore(...);  // ton code existant
- *
- *     // Pour chaque match terminé, on tente d'ajouter le détail par manche.
- *     // En parallèle, avec un échec silencieux par match (Promise.allSettled).
- *     await Promise.allSettled(
- *       matches.map(async (m) => {
- *         if (m.status !== "finished") return;
- *         const t1 = m.opponents?.[0]?.opponent?.name;
- *         const t2 = m.opponents?.[1]?.opponent?.name;
- *         const date = (m.begin_at || "").slice(0, 10);
- *         if (!t1 || !t2 || !date) return;
- *         m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
- *       })
- *     );
- *
- *     storeFinishedMatches(matches.map(transformMatch)); // déjà en place
- *     res.json(matches);
- *   });
- */
