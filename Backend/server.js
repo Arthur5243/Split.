@@ -359,6 +359,100 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "split-app-backend" });
 });
 
+// ==========================================================================
+// Pont vlr.gg : va chercher le score détaillé par map (ex: 13-9) d'un match,
+// que PandaScore ne fournit pas. Les IDs PandaScore et vlr.gg ne correspondent
+// pas entre eux, donc on identifie le match vlr.gg par équipe + date au lieu
+// d'un ID direct : équipe1 -> recherche vlr.gg -> ID équipe -> historique de
+// l'équipe -> trouve le match contre équipe2 à la bonne date -> ID du match
+// -> détails complets (score par map).
+const VLRGGAPI_BASE = process.env.VLRGGAPI_BASE || "https://vlrggapi-production-b3a0.up.railway.app";
+
+async function vlrFetch(path) {
+  const res = await fetch(VLRGGAPI_BASE + path);
+  if (!res.ok) throw new Error("vlrggapi HTTP " + res.status);
+  const json = await res.json();
+  return json.data;
+}
+
+// Similarité simple entre deux noms d'équipe (insensible à la casse/accents),
+// suffisant pour départager "Gentle Mates" trouvé via une recherche "gentle".
+function similar(a, b) {
+  const clean = (s) =>
+    (s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  const ca = clean(a), cb = clean(b);
+  return ca === cb || ca.includes(cb) || cb.includes(ca);
+}
+
+// Différence en jours entre deux dates ISO (YYYY-MM-DD), pour tolérer les
+// petits écarts (fuseaux horaires, "2h 44m ago" imprécis côté vlr.gg).
+function daysBetween(d1, d2) {
+  if (!d1 || !d2) return Infinity;
+  const t1 = new Date(d1).getTime();
+  const t2 = new Date(d2).getTime();
+  if (Number.isNaN(t1) || Number.isNaN(t2)) return Infinity;
+  return Math.abs(t1 - t2) / 86400000;
+}
+
+app.get("/api/map-scores", async (req, res) => {
+  const { team1, team2, date } = req.query;
+  if (!team1 || !team2) {
+    return res.status(400).json({ error: "team1 et team2 requis (date optionnelle, format YYYY-MM-DD)." });
+  }
+
+  try {
+    // 1. Trouve l'équipe 1 sur vlr.gg
+    const search = await vlrFetch("/v2/search?q=" + encodeURIComponent(team1));
+    const teamHit = (search?.results?.teams || []).find((t) => similar(t.name, team1));
+    if (!teamHit) {
+      return res.status(404).json({ error: "Équipe introuvable sur vlr.gg : " + team1 });
+    }
+
+    // 2. Parcourt son historique de matchs pour trouver celui contre team2
+    let found = null;
+    for (let page = 1; page <= 5 && !found; page++) {
+      const matches = await vlrFetch("/v2/team?id=" + teamHit.id + "&q=matches&page=" + page);
+      const list = matches?.matches || [];
+      if (list.length === 0) break;
+
+      for (const m of list) {
+        const opp = m.teams?.team1 && similar(m.teams.team1, team1) ? m.teams.team2 : m.teams?.team1;
+        if (!similar(opp, team2)) continue;
+        if (date && daysBetween(m.date, date) > 3) continue; // tolère ±3 jours
+        found = m;
+        break;
+      }
+    }
+
+    if (!found) {
+      return res.status(404).json({ error: "Match introuvable sur vlr.gg pour " + team1 + " vs " + team2 });
+    }
+
+    // 3. Récupère le détail complet (score par map)
+    const details = await vlrFetch("/v2/match/details?match_id=" + found.match_id);
+
+    res.json({
+      match_id: found.match_id,
+      event: details.event,
+      date: details.date,
+      teams: details.teams,
+      maps: (details.maps || []).map((mp) => ({
+        map_name: mp.map_name,
+        picked_by: mp.picked_by,
+        score_team1: mp.score?.team1?.total,
+        score_team2: mp.score?.team2?.total,
+      })),
+    });
+  } catch (e) {
+    console.error("map-scores error:", e.message);
+    res.status(502).json({ error: "Erreur vlr.gg : " + e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
 });
