@@ -1,4 +1,5 @@
 
+
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -407,7 +408,7 @@ app.get("/api/map-scores", async (req, res) => {
   try {
     // 1. Trouve l'équipe 1 sur vlr.gg
     const search = await vlrFetch("/v2/search?q=" + encodeURIComponent(team1));
-    const teamHit = (search?.results?.teams || []).find((t) => similar(t.name, team1));
+    const teamHit = (search?.segments?.results?.teams || []).find((t) => similar(t.name, team1));
     if (!teamHit) {
       return res.status(404).json({ error: "Équipe introuvable sur vlr.gg : " + team1 });
     }
