@@ -60,7 +60,9 @@ async function findTeamId(teamName) {
 
   try {
     const json = await vlrFetch("/v2/search?q=" + encodeURIComponent(teamName));
-    const teams = (json && json.data && json.data.segments && json.data.segments.teams) || [];
+    const teams =
+      (json && json.data && json.data.segments && json.data.segments.results && json.data.segments.results.teams) ||
+      [];
     const target = normalize(teamName);
     const match = teams.find((t) => normalize(t.name) === target) || teams[0] || null;
     const id = match ? match.id : null;
