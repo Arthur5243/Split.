@@ -417,9 +417,11 @@ app.get("/api/map-scores", async (req, res) => {
     // dans l'historique), sinon on s'arrête vite (juste le plus récent).
     const MAX_PAGES = date ? 15 : 3;
     let found = null;
+    const debugPages = [];
     for (let page = 1; page <= MAX_PAGES && !found; page++) {
       const matches = await vlrFetch("/v2/team?id=" + teamHit.id + "&q=matches&page=" + page);
       const list = matches?.matches || [];
+      debugPages.push({ page, count: list.length, sample: list.slice(0, 2) });
       if (list.length === 0) break;
 
       for (const m of list) {
@@ -432,7 +434,12 @@ app.get("/api/map-scores", async (req, res) => {
     }
 
     if (!found) {
-      return res.status(404).json({ error: "Match introuvable sur vlr.gg pour " + team1 + " vs " + team2 });
+      return res.status(404).json({
+        error: "Match introuvable sur vlr.gg pour " + team1 + " vs " + team2,
+        debug_team_id: teamHit.id,
+        debug_team_name: teamHit.name,
+        debug_pages: debugPages,
+      });
     }
 
     // 3. Récupère le détail complet (score par map)
