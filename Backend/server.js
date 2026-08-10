@@ -1,5 +1,4 @@
 
-
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -413,9 +412,12 @@ app.get("/api/map-scores", async (req, res) => {
       return res.status(404).json({ error: "Équipe introuvable sur vlr.gg : " + team1 });
     }
 
-    // 2. Parcourt son historique de matchs pour trouver celui contre team2
+    // 2. Parcourt son historique de matchs pour trouver celui contre team2.
+    // Plus de pages si une date est fournie (un match ancien peut être loin
+    // dans l'historique), sinon on s'arrête vite (juste le plus récent).
+    const MAX_PAGES = date ? 15 : 3;
     let found = null;
-    for (let page = 1; page <= 5 && !found; page++) {
+    for (let page = 1; page <= MAX_PAGES && !found; page++) {
       const matches = await vlrFetch("/v2/team?id=" + teamHit.id + "&q=matches&page=" + page);
       const list = matches?.matches || [];
       if (list.length === 0) break;
