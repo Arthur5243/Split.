@@ -398,6 +398,18 @@ function daysBetween(d1, d2) {
   return Math.abs(t1 - t2) / 86400000;
 }
 
+// Test rapide : ce endpoint vlrggapi fonctionne-t-il pour une équipe connue
+// (Sentinels, id=2, utilisée dans leur propre doc) ? Sert à savoir si le
+// souci vient de vlrggapi en général ou juste de Gentle Mates.
+app.get("/admin/test-vlr", async (req, res) => {
+  try {
+    const sentinels = await vlrFetch("/v2/team?id=2&q=matches&page=1");
+    res.json({ sentinels_matches_count: (sentinels?.matches || []).length, sample: sentinels?.matches?.slice(0, 2) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/map-scores", async (req, res) => {
   const { team1, team2, date } = req.query;
   if (!team1 || !team2) {
