@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Home,
@@ -813,7 +814,36 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
       )}
 
-      {finished ? null : (
+      {finished ? (
+        <>
+          <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center py-1.5" style={{ background: "#1a1a1a" }}>
+            <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
+          </button>
+
+          {expanded && (
+            <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
+              <div className="flex flex-col gap-2">
+                {/* On affiche toujours quelque chose : le vrai score par map si vlr.gg
+                    l'a fourni (match.map_scores), sinon un repli 0-0 par map (une
+                    seule ligne "0-0" si on n'a même pas le nombre de maps). */}
+                {(match.map_scores && match.map_scores.length > 0
+                  ? match.map_scores
+                  : [{ map: null, score1: 0, score2: 0 }]
+                ).map((g, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                      {g.map || "Map " + (i + 1)}
+                    </span>
+                    <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                      {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
         <>
           <button onClick={() => onToggleExpand(match.id)} disabled={tbd} className="w-full flex items-center justify-center py-1.5" style={{ background: "#1a1a1a", opacity: tbd ? 0.4 : 1 }}>
             <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
