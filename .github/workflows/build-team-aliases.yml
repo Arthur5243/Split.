@@ -1,0 +1,33 @@
+name: Build team aliases
+
+on:
+  schedule:
+    - cron: "0 5 1 * *" # le 1er de chaque mois à 5h UTC
+  workflow_dispatch: {} # bouton "Run workflow" manuel dans l'onglet Actions
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run build-team-aliases script
+        run: node Backend/scripts/build-team-aliases.js
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Backend/data/team-aliases.json Backend/data/unmatched-teams.log
+          git diff --cached --quiet && echo "Rien à commit." && exit 0
+          git commit -m "chore: refresh team-aliases.json"
+          git push
