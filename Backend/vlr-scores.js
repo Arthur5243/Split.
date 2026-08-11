@@ -85,12 +85,17 @@ function sleep(ms) {
 }
 
 // vlrggapi a son propre rate-limiter interne (plus strict sur les routes
-// "coûteuses" comme /v2/team, qui scrapent vraiment vlr.gg). On retente une
-// fois en cas de 429, avec une petite pause, avant d'abandonner.
+// "coûteuses" comme /v2/team, qui scrapent vraiment vlr.gg). Depuis qu'on
+// n'enrichit plus seulement les 2-8 derniers matchs mais TOUS les matchs
+// terminés, on tape cette API beaucoup plus souvent d'affilée -> on se
+// prend des 429 dès le 2e/3e match. On retente maintenant jusqu'à 4 fois,
+// avec un backoff plus généreux (1.2s, 2.4s, 3.6s, 4.8s), pour laisser le
+// temps au rate-limiter de vlrggapi de se réinitialiser.
 async function vlrFetch(path, attempt = 0) {
   const res = await fetch(VLR_API_BASE + path);
-  if (res.status === 429 && attempt < 2) {
-    await sleep(700 * (attempt + 1));
+  if (res.status === 429 && attempt < 4) {
+    console.log(`[vlr-scores] 429 sur ${path} (tentative ${attempt + 1}/4), pause...`);
+    await sleep(1200 * (attempt + 1));
     return vlrFetch(path, attempt + 1);
   }
   if (!res.ok) throw new Error("vlr-api HTTP " + res.status);
