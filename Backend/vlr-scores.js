@@ -1,4 +1,3 @@
-
 /**
  * Va chercher les scores détaillés par manche (ex: 13-9) sur vlr.gg, via
  * notre propre instance auto-hébergée sur Railway (vlrggapi), pour un match
@@ -15,7 +14,45 @@
  * normalement avec juste le score de série PandaScore dans ce cas.
  */
 
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ALIASES_PATH = path.join(__dirname, "data", "team-aliases.json");
+const UNMATCHED_PATH = path.join(__dirname, "data", "unmatched-teams.log");
+
 const VLR_API_BASE = process.env.VLR_API_BASE || "https://vlrggapi-production-b3a0.up.railway.app";
+
+// Fichier d'alias équipe PandaScore -> équipe vlr.gg, construit à l'avance
+// par scripts/build-team-aliases.js. Chargé une seule fois au démarrage :
+// zéro appel réseau pour toutes les équipes déjà connues.
+// Clé = nom PandaScore normalisé, valeur = { vlr_name, vlr_id }.
+const teamAliases = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(ALIASES_PATH, "utf-8"));
+    const map = new Map();
+    for (const [name, info] of Object.entries(raw)) {
+      map.set(normalize(name), info);
+    }
+    return map;
+  } catch (e) {
+    return new Map(); // fichier absent ou invalide -> on retombe sur le live pour tout
+  }
+})();
+
+// Loggue les équipes qui passent par la recherche live (donc absentes du
+// fichier d'alias) pour pouvoir enrichir team-aliases.json plus tard, à la
+// main ou via un prochain run de build-team-aliases.js.
+function logUnmatched(teamName, resolved) {
+  try {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const status = resolved ? `trouvé en live: ${resolved}` : "introuvable";
+    fs.appendFileSync(UNMATCHED_PATH, `${stamp} — ${teamName} (${status})\n`);
+  } catch (e) {
+    // best-effort, jamais bloquant
+  }
+}
 
 // Petit cache mémoire pour ne pas re-taper l'API à chaque requête (les scores
 // d'un match terminé ne changent jamais une fois publiés).
@@ -65,6 +102,13 @@ async function vlrFetch(path, attempt = 0) {
  * Renvoie null si rien trouvé.
  */
 async function findTeamId(teamName) {
+  // 1) Fichier d'alias construit à l'avance : instantané, zéro requête réseau,
+  // zéro faux positif possible (rempli uniquement avec des matchs exacts).
+  const alias = teamAliases.get(normalize(teamName));
+  if (alias) return alias.vlr_id;
+
+  // 2) Fallback : recherche live comme avant, pour les équipes pas encore
+  // dans le fichier. On loggue le cas pour pouvoir enrichir le fichier.
   const cacheKey = "team-id:" + normalize(teamName);
   const cached = getCached(cacheKey);
   if (cached !== undefined) return cached;
@@ -78,8 +122,10 @@ async function findTeamId(teamName) {
     const match = teams.find((t) => normalize(t.name) === target) || teams[0] || null;
     const id = match ? match.id : null;
     setCached(cacheKey, id);
+    logUnmatched(teamName, match ? `${match.name} (#${match.id})` : null);
     return id;
   } catch (e) {
+    logUnmatched(teamName, null);
     return null;
   }
 }
