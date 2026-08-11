@@ -1,1 +1,1078 @@
-{}
+{
+  " BEM Esports": {
+    "vlr_name": "BEM Esports",
+    "vlr_id": "19434"
+  },
+  ":3": {
+    "vlr_name": ":3",
+    "vlr_id": "13565"
+  },
+  "100 Thieves": {
+    "vlr_name": "100 Thieves",
+    "vlr_id": "120"
+  },
+  "2GAME Esports": {
+    "vlr_name": "2Game Esports",
+    "vlr_id": "15072"
+  },
+  "2L8": {
+    "vlr_name": "2L8",
+    "vlr_id": "3956"
+  },
+  "6GPA": {
+    "vlr_name": "6GPA",
+    "vlr_id": "19190"
+  },
+  "A Team": {
+    "vlr_name": "A Team",
+    "vlr_id": "20603"
+  },
+  "Abacatudos": {
+    "vlr_name": "ABACATUDOS",
+    "vlr_id": "22657"
+  },
+  "AGELITE": {
+    "vlr_name": "AGELITE",
+    "vlr_id": "21338"
+  },
+  "AKA HERO": {
+    "vlr_name": "AKA HERO",
+    "vlr_id": "15491"
+  },
+  "All Gamers": {
+    "vlr_name": "All Gamers",
+    "vlr_id": "1119"
+  },
+  "Alliance Guardians": {
+    "vlr_name": "Alliance Guardians",
+    "vlr_id": "16440"
+  },
+  "AlQadsiah Esports": {
+    "vlr_name": "AlQadsiah Esports",
+    "vlr_id": "16598"
+  },
+  "Alter Ego": {
+    "vlr_name": "Alter Ego",
+    "vlr_id": "1110"
+  },
+  "ALTERNATE aTTaX": {
+    "vlr_name": "ALTERNATE aTTaX",
+    "vlr_id": "8826"
+  },
+  "ALTERNATE aTTaX Ruby": {
+    "vlr_name": "ALTERNATE aTTaX Ruby",
+    "vlr_id": "11496"
+  },
+  "Any Questions Gaming": {
+    "vlr_name": "Any Questions Gaming",
+    "vlr_id": "19531"
+  },
+  "ARETE": {
+    "vlr_name": "ARETE",
+    "vlr_id": "20978"
+  },
+  "Asterisk": {
+    "vlr_name": "Asterisk",
+    "vlr_id": "15685"
+  },
+  "Aura": {
+    "vlr_name": "AURA",
+    "vlr_id": "16868"
+  },
+  "Auraboros": {
+    "vlr_name": "Auraboros",
+    "vlr_id": "21706"
+  },
+  "AXE": {
+    "vlr_name": "Axe",
+    "vlr_id": "19667"
+  },
+  "Axolotl": {
+    "vlr_name": "Axolotl",
+    "vlr_id": "22920"
+  },
+  "Azure Dragon Gaming": {
+    "vlr_name": "Azure Dragon Gaming",
+    "vlr_id": "21053"
+  },
+  "BAAM Esports": {
+    "vlr_name": "BAAM Esports",
+    "vlr_id": "17985"
+  },
+  "baigiau": {
+    "vlr_name": "baigiau",
+    "vlr_id": "20871"
+  },
+  "Barça eSports": {
+    "vlr_name": "Barça eSports",
+    "vlr_id": "14461"
+  },
+  "Barça eSports GC": {
+    "vlr_name": "Barça eSports GC",
+    "vlr_id": "21050"
+  },
+  "BBL Esports": {
+    "vlr_name": "BBL Esports",
+    "vlr_id": "397"
+  },
+  "Beşiktaş Esports": {
+    "vlr_name": "Beşiktaş Esports",
+    "vlr_id": "2036"
+  },
+  "BESTIA": {
+    "vlr_name": "BESTIA",
+    "vlr_id": "22142"
+  },
+  "Bilibili Gaming": {
+    "vlr_name": "Bilibili Gaming",
+    "vlr_id": "12010"
+  },
+  "Bitfix Gaming": {
+    "vlr_name": "Bitfix Gaming",
+    "vlr_id": "12355"
+  },
+  "Blue Otter": {
+    "vlr_name": "Blue Otter",
+    "vlr_id": "16278"
+  },
+  "Bonk": {
+    "vlr_name": "BONK",
+    "vlr_id": "18054"
+  },
+  "BOOM Esports": {
+    "vlr_name": "BOOM Esports",
+    "vlr_id": "466"
+  },
+  "Bushido Wildcats": {
+    "vlr_name": "Bushido Wildcats",
+    "vlr_id": "20961"
+  },
+  "Caldya Esport": {
+    "vlr_name": "Caldya Esport",
+    "vlr_id": "15828"
+  },
+  "CGN Esports": {
+    "vlr_name": "CGN Esports",
+    "vlr_id": "5214"
+  },
+  "Chaos Alliance": {
+    "vlr_name": "Chaos Alliance",
+    "vlr_id": "17096"
+  },
+  "Chivas Esports": {
+    "vlr_name": "Chivas Esports",
+    "vlr_id": "2131"
+  },
+  "Çilekler": {
+    "vlr_name": "Çilekler",
+    "vlr_id": "22601"
+  },
+  "Cloud9": {
+    "vlr_name": "Cloud9",
+    "vlr_id": "188"
+  },
+  "Cloud9 GC": {
+    "vlr_name": "Cloud9 GC",
+    "vlr_id": "22918"
+  },
+  "CNEsports": {
+    "vlr_name": "CNEsports",
+    "vlr_id": "1132"
+  },
+  "Coalesce": {
+    "vlr_name": "Coalesce",
+    "vlr_id": "12478"
+  },
+  "Coffeshop": {
+    "vlr_name": "Coffeshop",
+    "vlr_id": "20257"
+  },
+  "Contra": {
+    "vlr_name": "Contra",
+    "vlr_id": "10376"
+  },
+  "Contra GC": {
+    "vlr_name": "Contra GC",
+    "vlr_id": "15133"
+  },
+  "Crest Gaming Zst": {
+    "vlr_name": "CREST GAMING Zst",
+    "vlr_id": "294"
+  },
+  "CTRL Esports": {
+    "vlr_name": "CTRL Esports",
+    "vlr_id": "11267"
+  },
+  "Dark Passage": {
+    "vlr_name": "Dark Passage",
+    "vlr_id": "1981"
+  },
+  "DetonatioN FocusMe": {
+    "vlr_name": "DetonatioN FocusMe",
+    "vlr_id": "278"
+  },
+  "Division One": {
+    "vlr_name": "Division One",
+    "vlr_id": "21714"
+  },
+  "DNSTY": {
+    "vlr_name": "DNSTY",
+    "vlr_id": "17179"
+  },
+  "Dortmund eSports": {
+    "vlr_name": "Dortmund Esports",
+    "vlr_id": "8941"
+  },
+  "DOT EXE": {
+    "vlr_name": "DOT EXE",
+    "vlr_id": "17664"
+  },
+  "Dragon Ranger Gaming": {
+    "vlr_name": "Dragon Ranger Gaming",
+    "vlr_id": "11981"
+  },
+  "Dream Chaser": {
+    "vlr_name": "Dream Chaser",
+    "vlr_id": "16469"
+  },
+  "DRX Youth": {
+    "vlr_name": "DRX Youth",
+    "vlr_id": "20789"
+  },
+  "Easties": {
+    "vlr_name": "Easties",
+    "vlr_id": "16172"
+  },
+  "EDward Gaming": {
+    "vlr_name": "EDward Gaming",
+    "vlr_id": "1120"
+  },
+  "Eintracht Frankfurt": {
+    "vlr_name": "Eintracht Frankfurt",
+    "vlr_id": "14478"
+  },
+  "Elevate": {
+    "vlr_name": "ELEVATE",
+    "vlr_id": "18622"
+  },
+  "EMPIRE GC": {
+    "vlr_name": "Empire GC",
+    "vlr_id": "19499"
+  },
+  "Enterprise Esports": {
+    "vlr_name": "Enterprise Esports",
+    "vlr_id": "876"
+  },
+  "EOTO": {
+    "vlr_name": "EOTO",
+    "vlr_id": "18350"
+  },
+  "Erah Esport": {
+    "vlr_name": "Erah Esport",
+    "vlr_id": "18024"
+  },
+  "eSports Cologne": {
+    "vlr_name": "eSports Cologne",
+    "vlr_id": "11829"
+  },
+  "Esprit Shōnen": {
+    "vlr_name": "Esprit Shōnen",
+    "vlr_id": "20964"
+  },
+  "Eternal Fire": {
+    "vlr_name": "Eternal Fire",
+    "vlr_id": "6392"
+  },
+  "Eternal Fire Passion": {
+    "vlr_name": "Eternal Fire Passion",
+    "vlr_id": "21743"
+  },
+  "Eternal Focus Amethyst": {
+    "vlr_name": "Eternal Focus Amethyst",
+    "vlr_id": "18194"
+  },
+  "Evictix GC": {
+    "vlr_name": "Evictix GC",
+    "vlr_id": "16458"
+  },
+  "Evil Geniuses": {
+    "vlr_name": "Evil Geniuses",
+    "vlr_id": "5248"
+  },
+  "Evil Geniuses Academy": {
+    "vlr_name": "Evil Geniuses Academy",
+    "vlr_id": "21054"
+  },
+  "EVOPLAY": {
+    "vlr_name": "EVOPLAY",
+    "vlr_id": "9071"
+  },
+  "eXtreme Gaming": {
+    "vlr_name": "eXtreme Gaming",
+    "vlr_id": "9066"
+  },
+  "F4TALITY": {
+    "vlr_name": "F4TALITY",
+    "vlr_id": "16068"
+  },
+  "F9 EICAR": {
+    "vlr_name": "F9 EICAR",
+    "vlr_id": "18494"
+  },
+  "FALKE ESPORTS": {
+    "vlr_name": "Falke Esports",
+    "vlr_id": "15009"
+  },
+  "FALKE VENOM": {
+    "vlr_name": "FALKE VENOM",
+    "vlr_id": "17601"
+  },
+  "FearX": {
+    "vlr_name": "FEARX",
+    "vlr_id": "15744"
+  },
+  "Fennel": {
+    "vlr_name": "FENNEL",
+    "vlr_id": "2934"
+  },
+  "Fire Flux Esports": {
+    "vlr_name": "Fire Flux Esports",
+    "vlr_id": "20085"
+  },
+  "FlyQuest": {
+    "vlr_name": "FlyQuest",
+    "vlr_id": "21838"
+  },
+  "FlyQuest RED": {
+    "vlr_name": "FlyQuest RED",
+    "vlr_id": "6456"
+  },
+  "Fnatic": {
+    "vlr_name": "FNATIC",
+    "vlr_id": "2593"
+  },
+  "FOKUS": {
+    "vlr_name": "FOKUS",
+    "vlr_id": "6882"
+  },
+  "FOKUS Sakura": {
+    "vlr_name": "FOKUS Sakura",
+    "vlr_id": "12236"
+  },
+  "Formulation Gaming": {
+    "vlr_name": "Formulation Gaming",
+    "vlr_id": "10417"
+  },
+  "Fraggerz": {
+    "vlr_name": "Fraggerz",
+    "vlr_id": "4569"
+  },
+  "FRG": {
+    "vlr_name": "FRG",
+    "vlr_id": "21243"
+  },
+  "FRG x TSE": {
+    "vlr_name": "FRG x TSE",
+    "vlr_id": "23068"
+  },
+  "Fuego": {
+    "vlr_name": "FUEGO",
+    "vlr_id": "17252"
+  },
+  "FULL BOX 200": {
+    "vlr_name": "FULL BOX 200",
+    "vlr_id": "15027"
+  },
+  "FULL SENSE": {
+    "vlr_name": "FULL SENSE",
+    "vlr_id": "4050"
+  },
+  "FunPlus Phoenix": {
+    "vlr_name": "FunPlus Phoenix",
+    "vlr_id": "11328"
+  },
+  "FURIA Academy": {
+    "vlr_name": "FURIA Academy",
+    "vlr_id": "17094"
+  },
+  "FUSION": {
+    "vlr_name": "FUSION",
+    "vlr_id": "7269"
+  },
+  "FUSION X": {
+    "vlr_name": "FUSION X",
+    "vlr_id": "8310"
+  },
+  "FUT Esports": {
+    "vlr_name": "FUT Esports",
+    "vlr_id": "1184"
+  },
+  "G2 Esports": {
+    "vlr_name": "G2 Esports",
+    "vlr_id": "11058"
+  },
+  "G2 Gozen": {
+    "vlr_name": "G2 Gozen",
+    "vlr_id": "6530"
+  },
+  "Galatasaray Esports": {
+    "vlr_name": "Galatasaray Esports",
+    "vlr_id": "4572"
+  },
+  "Galions": {
+    "vlr_name": "Galions",
+    "vlr_id": "20963"
+  },
+  "Gamax Esports": {
+    "vlr_name": "Gamax Esports",
+    "vlr_id": "2290"
+  },
+  "Gen.G Global Academy": {
+    "vlr_name": "Gen.G Global Academy",
+    "vlr_id": "17392"
+  },
+  "Gentle Mates": {
+    "vlr_name": "Gentle Mates",
+    "vlr_id": "12694"
+  },
+  "Gentle Mates GC": {
+    "vlr_name": "Gentle Mates GC",
+    "vlr_id": "21093"
+  },
+  "GGEZ": {
+    "vlr_name": "GGEZ",
+    "vlr_id": "22580"
+  },
+  "ghosts": {
+    "vlr_name": "GHOSTS",
+    "vlr_id": "19918"
+  },
+  "GIANTX": {
+    "vlr_name": "GIANTX",
+    "vlr_id": "14419"
+  },
+  "GIANTX GC": {
+    "vlr_name": "GIANTX GC",
+    "vlr_id": "15119"
+  },
+  "Global Esports": {
+    "vlr_name": "Global Esports",
+    "vlr_id": "918"
+  },
+  "Habos Babos": {
+    "vlr_name": "Habos Babos",
+    "vlr_id": "22114"
+  },
+  "HIMMERS": {
+    "vlr_name": "HIMMERS",
+    "vlr_id": "22720"
+  },
+  "Hornets": {
+    "vlr_name": "Hornets",
+    "vlr_id": "21051"
+  },
+  "Howlers": {
+    "vlr_name": "Howlers",
+    "vlr_id": "20959"
+  },
+  "HyperSpeed Golden": {
+    "vlr_name": "HyperSpeed Golden",
+    "vlr_id": "21708"
+  },
+  "IGZIST": {
+    "vlr_name": "IGZIST",
+    "vlr_id": "6869"
+  },
+  "Insomnia": {
+    "vlr_name": "Insomnia",
+    "vlr_id": "5148"
+  },
+  "INTZ": {
+    "vlr_name": "INTZ",
+    "vlr_id": "21089"
+  },
+  "Jade Lions": {
+    "vlr_name": "Jade Lions",
+    "vlr_id": "22130"
+  },
+  "Joblife": {
+    "vlr_name": "Joblife",
+    "vlr_id": "11232"
+  },
+  "Joblife Nanas": {
+    "vlr_name": "Joblife Nanas",
+    "vlr_id": "23144"
+  },
+  "Karmine Corp": {
+    "vlr_name": "Karmine Corp",
+    "vlr_id": "8877"
+  },
+  "Karmine Corp GC": {
+    "vlr_name": "Karmine Corp GC",
+    "vlr_id": "12255"
+  },
+  "KeepBest Gaming": {
+    "vlr_name": "KeepBest Gaming",
+    "vlr_id": "12784"
+  },
+  "Kiwoom DRX": {
+    "vlr_name": "KIWOOM DRX",
+    "vlr_id": "8185"
+  },
+  "Kookje University": {
+    "vlr_name": "Kookje University",
+    "vlr_id": "20690"
+  },
+  "KPI Gaming": {
+    "vlr_name": "KPI Gaming",
+    "vlr_id": "6313"
+  },
+  "KRÜ Blaze": {
+    "vlr_name": "KRÜ BLAZE",
+    "vlr_id": "7511"
+  },
+  "KRÜ Esports": {
+    "vlr_name": "KRÜ Esports",
+    "vlr_id": "2355"
+  },
+  "KRÜ Spark": {
+    "vlr_name": "KRÜ SPARK",
+    "vlr_id": "19791"
+  },
+  "LA MALA": {
+    "vlr_name": "La Mala",
+    "vlr_id": "18400"
+  },
+  "la Masia": {
+    "vlr_name": "La Masia",
+    "vlr_id": "18025"
+  },
+  "LAZER": {
+    "vlr_name": "LAZER",
+    "vlr_id": "20808"
+  },
+  "Legiowon": {
+    "vlr_name": "Legiowon",
+    "vlr_id": "15135"
+  },
+  "Leosun Esports": {
+    "vlr_name": "Leosun Esports",
+    "vlr_id": "21627"
+  },
+  "Leviatán Academy": {
+    "vlr_name": "LEVIATÁN Academy",
+    "vlr_id": "9425"
+  },
+  "Leviatán GC": {
+    "vlr_name": "LEVIATÁN GC",
+    "vlr_id": "9205"
+  },
+  "Looking For Home": {
+    "vlr_name": "Looking For Home",
+    "vlr_id": "22344"
+  },
+  "Looking For Laburo": {
+    "vlr_name": "Looking For Laburo",
+    "vlr_id": "21238"
+  },
+  "Los Chudeles": {
+    "vlr_name": "Los Chudeles",
+    "vlr_id": "22719"
+  },
+  "Lost Puppies GC": {
+    "vlr_name": "Lost Puppies GC",
+    "vlr_id": "23142"
+  },
+  "LOUD": {
+    "vlr_name": "LOUD",
+    "vlr_id": "6961"
+  },
+  "M80": {
+    "vlr_name": "M80",
+    "vlr_id": "11001"
+  },
+  "Mandatory": {
+    "vlr_name": "Mandatory",
+    "vlr_id": "7967"
+  },
+  "MANIA Esports": {
+    "vlr_name": "MANIA Esports",
+    "vlr_id": "14511"
+  },
+  "Maui Wowie": {
+    "vlr_name": "maui wowie",
+    "vlr_id": "21381"
+  },
+  "Mayhem": {
+    "vlr_name": "MAYHEM",
+    "vlr_id": "20960"
+  },
+  "Melilla Titans": {
+    "vlr_name": "Melilla Titans",
+    "vlr_id": "7940"
+  },
+  "Metizport": {
+    "vlr_name": "Metizport",
+    "vlr_id": "12489"
+  },
+  "MIBR": {
+    "vlr_name": "MIBR",
+    "vlr_id": "7386"
+  },
+  "MIBR Academy": {
+    "vlr_name": "MIBR Academy",
+    "vlr_id": "16606"
+  },
+  "MIBR GC": {
+    "vlr_name": "MIBR GC",
+    "vlr_id": "8050"
+  },
+  "MIR": {
+    "vlr_name": "MIR",
+    "vlr_id": "17945"
+  },
+  "Mir Gaming": {
+    "vlr_name": "Mir Gaming",
+    "vlr_id": "21437"
+  },
+  "Mom Said No": {
+    "vlr_name": "Mom Said No",
+    "vlr_id": "23143"
+  },
+  "Monarch-X GC": {
+    "vlr_name": "Monarch-X GC",
+    "vlr_id": "17860"
+  },
+  "Motiv Esports": {
+    "vlr_name": "Motiv Esports",
+    "vlr_id": "18117"
+  },
+  "MVSK Secret": {
+    "vlr_name": "MVSK Secret",
+    "vlr_id": "22919"
+  },
+  "MYVRA GC": {
+    "vlr_name": "MYVRA GC",
+    "vlr_id": "15139"
+  },
+  "Natus Vincere": {
+    "vlr_name": "Natus Vincere",
+    "vlr_id": "4915"
+  },
+  "Nightblood Gaming": {
+    "vlr_name": "Nightblood Gaming",
+    "vlr_id": "5601"
+  },
+  "Ninetails": {
+    "vlr_name": "Ninetails",
+    "vlr_id": "18418"
+  },
+  "No Salary Peek": {
+    "vlr_name": "No Salary Peek",
+    "vlr_id": "22341"
+  },
+  "No Sweat Blossom": {
+    "vlr_name": "No Sweat Blossom",
+    "vlr_id": "16085"
+  },
+  "Nongshim RedForce": {
+    "vlr_name": "Nongshim RedForce",
+    "vlr_id": "11060"
+  },
+  "Nova Esports": {
+    "vlr_name": "Nova Esports",
+    "vlr_id": "12064"
+  },
+  "NOVO Esports": {
+    "vlr_name": "NOVO Esports",
+    "vlr_id": "13161"
+  },
+  "NPC Team": {
+    "vlr_name": "NPC TEAM",
+    "vlr_id": "23113"
+  },
+  "NRG": {
+    "vlr_name": "NRG",
+    "vlr_id": "1034"
+  },
+  "NRG Academy": {
+    "vlr_name": "NRG Academy",
+    "vlr_id": "21049"
+  },
+  "Nuxeria Esport": {
+    "vlr_name": "Nuxeria Esport",
+    "vlr_id": "15477"
+  },
+  "Oasis Gaming": {
+    "vlr_name": "Oasis Gaming",
+    "vlr_id": "3136"
+  },
+  "Olimpo Gold": {
+    "vlr_name": "Olimpo Gold",
+    "vlr_id": "21092"
+  },
+  "One More Esports": {
+    "vlr_name": "One More Esports",
+    "vlr_id": "8945"
+  },
+  "ONSIDE GAMING": {
+    "vlr_name": "ONSIDE GAMING",
+    "vlr_id": "19189"
+  },
+  "ORA Temper": {
+    "vlr_name": "ORA Temper",
+    "vlr_id": "22724"
+  },
+  "Osan University": {
+    "vlr_name": "Osan University",
+    "vlr_id": "20691"
+  },
+  "Otakar Esports": {
+    "vlr_name": "Otakar Esports",
+    "vlr_id": "17979"
+  },
+  "Overpeek": {
+    "vlr_name": "OVERPEEK",
+    "vlr_id": "12927"
+  },
+  "OXEN": {
+    "vlr_name": "OXEN",
+    "vlr_id": "9427"
+  },
+  "Papara SuperMassive": {
+    "vlr_name": "Papara SuperMassive",
+    "vlr_id": "4567"
+  },
+  "Paper Rex": {
+    "vlr_name": "Paper Rex",
+    "vlr_id": "624"
+  },
+  "Pcific Esports": {
+    "vlr_name": "PCIFIC Esports",
+    "vlr_id": "3478"
+  },
+  "PEEK": {
+    "vlr_name": "PEEK",
+    "vlr_id": "16071"
+  },
+  "Pigeons": {
+    "vlr_name": "Pigeons",
+    "vlr_id": "16910"
+  },
+  "Pixel Lumina": {
+    "vlr_name": "Pixel Lumina",
+    "vlr_id": "17177"
+  },
+  "Puppy Thieves": {
+    "vlr_name": "Puppy Thieves",
+    "vlr_id": "21946"
+  },
+  "QT DIG∞": {
+    "vlr_name": "QT DIG∞",
+    "vlr_id": "18299"
+  },
+  "RAFHA eSPORTS": {
+    "vlr_name": "RAFHA eSPORTS",
+    "vlr_id": "18121"
+  },
+  "Ramboot Club": {
+    "vlr_name": "Ramboot Club",
+    "vlr_id": "8924"
+  },
+  "Rare Atom": {
+    "vlr_name": "Rare Atom",
+    "vlr_id": "11985"
+  },
+  "RED Canids": {
+    "vlr_name": "RED Canids",
+    "vlr_id": "1124"
+  },
+  "REIGNITE FOXX": {
+    "vlr_name": "REIGNITE FOXX",
+    "vlr_id": "21367"
+  },
+  "REJECT": {
+    "vlr_name": "REJECT",
+    "vlr_id": "104"
+  },
+  "Revenant XSpark": {
+    "vlr_name": "Revenant XSpark",
+    "vlr_id": "17180"
+  },
+  "Revenge": {
+    "vlr_name": "Revenge",
+    "vlr_id": "22886"
+  },
+  "Revitalize GC": {
+    "vlr_name": "Revitalize GC",
+    "vlr_id": "22921"
+  },
+  "Rex Regum Qeon": {
+    "vlr_name": "Rex Regum Qeon",
+    "vlr_id": "878"
+  },
+  "Rival Esports": {
+    "vlr_name": "Rival Esports",
+    "vlr_id": "17139"
+  },
+  "RIZON": {
+    "vlr_name": "RIZON",
+    "vlr_id": "5091"
+  },
+  "ROSE": {
+    "vlr_name": "ROSE",
+    "vlr_id": "11648"
+  },
+  "ROSO GC": {
+    "vlr_name": "ROSO GC",
+    "vlr_id": "21377"
+  },
+  "ROY Esports": {
+    "vlr_name": "ROY Esports",
+    "vlr_id": "22131"
+  },
+  "RRR": {
+    "vlr_name": "RRR",
+    "vlr_id": "18982"
+  },
+  "S8UL Esports": {
+    "vlr_name": "S8UL Esports",
+    "vlr_id": "3713"
+  },
+  "SaD Esports": {
+    "vlr_name": "SaD Esports",
+    "vlr_id": "13920"
+  },
+  "SaD GC": {
+    "vlr_name": "SaD GC",
+    "vlr_id": "14716"
+  },
+  "Sasanqua": {
+    "vlr_name": "Sasanqua",
+    "vlr_id": "9517"
+  },
+  "SEN Otters": {
+    "vlr_name": "SEN Otters",
+    "vlr_id": "22074"
+  },
+  "Sentinels": {
+    "vlr_name": "Sentinels",
+    "vlr_id": "2"
+  },
+  "ShindeN": {
+    "vlr_name": "ShindeN",
+    "vlr_id": "16971"
+  },
+  "Shopify Rebellion Black": {
+    "vlr_name": "Shopify Rebellion Black",
+    "vlr_id": "9353"
+  },
+  "Shopify Rebellion Gold": {
+    "vlr_name": "Shopify Rebellion Gold",
+    "vlr_id": "14278"
+  },
+  "SIGN Esports": {
+    "vlr_name": "SIGN Esports",
+    "vlr_id": "20596"
+  },
+  "SK Nebula": {
+    "vlr_name": "SK Nebula",
+    "vlr_id": "15832"
+  },
+  "So:sweet": {
+    "vlr_name": "So:sweet",
+    "vlr_id": "22548"
+  },
+  "Soleil Gaming GC": {
+    "vlr_name": "Soleil Gaming GC",
+    "vlr_id": "13315"
+  },
+  "Stallions Esports": {
+    "vlr_name": "Stallions Esports",
+    "vlr_id": "18120"
+  },
+  "STREAMER ARENA": {
+    "vlr_name": "STREAMER ARENA",
+    "vlr_id": "21459"
+  },
+  "SwimTrek Blue": {
+    "vlr_name": "SwimTrek Blue",
+    "vlr_id": "21711"
+  },
+  "T1": {
+    "vlr_name": "T1",
+    "vlr_id": "14"
+  },
+  "T1 Academy": {
+    "vlr_name": "T1 Academy",
+    "vlr_id": "15578"
+  },
+  "TBK Esports": {
+    "vlr_name": "TBK Esports",
+    "vlr_id": "6946"
+  },
+  "Team Heretics": {
+    "vlr_name": "Team Heretics",
+    "vlr_id": "1001"
+  },
+  "Team Liquid": {
+    "vlr_name": "Team Liquid",
+    "vlr_id": "474"
+  },
+  "Team Liquid Academy": {
+    "vlr_name": "Team Liquid Academy",
+    "vlr_id": "17297"
+  },
+  "Team Liquid Brazil": {
+    "vlr_name": "Team Liquid Brazil",
+    "vlr_id": "7055"
+  },
+  "Team NKT": {
+    "vlr_name": "Team NKT",
+    "vlr_id": "6665"
+  },
+  "Team RA'AD": {
+    "vlr_name": "Team RA'AD",
+    "vlr_id": "1471"
+  },
+  "Team Secret": {
+    "vlr_name": "Team Secret",
+    "vlr_id": "6199"
+  },
+  "Team Solid": {
+    "vlr_name": "Team Solid",
+    "vlr_id": "19265"
+  },
+  "Team Vitality": {
+    "vlr_name": "Team Vitality",
+    "vlr_id": "2059"
+  },
+  "Teevee": {
+    "vlr_name": "Teevee",
+    "vlr_id": "18196"
+  },
+  "The Rad Syndicate": {
+    "vlr_name": "The Rad Syndicate",
+    "vlr_id": "798"
+  },
+  "The Spiders": {
+    "vlr_name": "The Spiders",
+    "vlr_id": "22718"
+  },
+  "Trace Esports": {
+    "vlr_name": "Trace Esports",
+    "vlr_id": "12685"
+  },
+  "TrinitY": {
+    "vlr_name": "Trinity",
+    "vlr_id": "16301"
+  },
+  "Twisted Minds Orchid": {
+    "vlr_name": "Twisted Minds Orchid",
+    "vlr_id": "12934"
+  },
+  "Twisted Saints Esports": {
+    "vlr_name": "Twisted Saints Esports",
+    "vlr_id": "16629"
+  },
+  "TYLOO": {
+    "vlr_name": "TYLOO",
+    "vlr_id": "731"
+  },
+  "UBE": {
+    "vlr_name": "UBE",
+    "vlr_id": "20971"
+  },
+  "UCAM Esports Club": {
+    "vlr_name": "UCAM Esports Club",
+    "vlr_id": "4616"
+  },
+  "University War": {
+    "vlr_name": "University War",
+    "vlr_id": "20209"
+  },
+  "University War GC": {
+    "vlr_name": "University War GC",
+    "vlr_id": "14958"
+  },
+  "UNIWAY": {
+    "vlr_name": "UNIWAY",
+    "vlr_id": "15837"
+  },
+  "Unsettled Resentment": {
+    "vlr_name": "Unsettled Resentment",
+    "vlr_id": "21919"
+  },
+  "USTUNLUKURANLAR": {
+    "vlr_name": "USTUNLUKURANLAR",
+    "vlr_id": "16871"
+  },
+  "VARREL": {
+    "vlr_name": "VARREL",
+    "vlr_id": "11229"
+  },
+  "Vibranium Esports": {
+    "vlr_name": "Vibranium Esports",
+    "vlr_id": "16077"
+  },
+  "VillianArc": {
+    "vlr_name": "VillianArc",
+    "vlr_id": "18504"
+  },
+  "VR2": {
+    "vlr_name": "VR2",
+    "vlr_id": "20879"
+  },
+  "WEC C": {
+    "vlr_name": "WEC C",
+    "vlr_id": "21339"
+  },
+  "Winthrop University": {
+    "vlr_name": "Winthrop University",
+    "vlr_id": "10448"
+  },
+  "WIP Esports": {
+    "vlr_name": "WIP Esports",
+    "vlr_id": "19391"
+  },
+  "Wolves Esports": {
+    "vlr_name": "Wolves Esports",
+    "vlr_id": "13790"
+  },
+  "World Sports Invictus Gaming": {
+    "vlr_name": "World Sports Invictus Gaming",
+    "vlr_id": "21699"
+  },
+  "X-CAST": {
+    "vlr_name": "X-CAST",
+    "vlr_id": "22549"
+  },
+  "Xipto Esports": {
+    "vlr_name": "Xipto Esports",
+    "vlr_id": "17167"
+  },
+  "XØ Ind": {
+    "vlr_name": "XØ IND",
+    "vlr_id": "16411"
+  },
+  "XtremeDogs": {
+    "vlr_name": "XtremeDogs",
+    "vlr_id": "22112"
+  },
+  "Yi-Jing": {
+    "vlr_name": "Yi-Jing",
+    "vlr_id": "22282"
+  },
+  "yung": {
+    "vlr_name": "Yung",
+    "vlr_id": "17988"
+  },
+  "ZennIT Orange GC": {
+    "vlr_name": "ZennIT Orange GC",
+    "vlr_id": "18399"
+  },
+  "ZETA DIVISION": {
+    "vlr_name": "ZETA DIVISION",
+    "vlr_id": "5448"
+  }
+}
