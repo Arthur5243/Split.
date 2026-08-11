@@ -138,11 +138,16 @@ async function enrichWithMapScores(data) {
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
-    if (!t1 || !t2 || !date) return;
+    if (!t1 || !t2 || !date) {
+      console.log(`[map_scores] skip (données manquantes) — t1=${t1} t2=${t2} date=${date}`);
+      return;
+    }
     try {
       m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
+      console.log(`[map_scores] ${t1} vs ${t2} (${date}) →`, JSON.stringify(m.map_scores));
     } catch (e) {
       m.map_scores = null;
+      console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
     }
     await sleep(400); // laisse largement respirer vlr.gg / le rate-limiter de vlrggapi
   });

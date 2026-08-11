@@ -105,7 +105,10 @@ async function findTeamId(teamName) {
   // 1) Fichier d'alias construit à l'avance : instantané, zéro requête réseau,
   // zéro faux positif possible (rempli uniquement avec des matchs exacts).
   const alias = teamAliases.get(normalize(teamName));
-  if (alias) return alias.vlr_id;
+  if (alias) {
+    console.log(`[vlr-scores] ${teamName} → alias connu, id=${alias.vlr_id}`);
+    return alias.vlr_id;
+  }
 
   // 2) Fallback : recherche live comme avant, pour les équipes pas encore
   // dans le fichier. On loggue le cas pour pouvoir enrichir le fichier.
@@ -121,10 +124,12 @@ async function findTeamId(teamName) {
     const target = normalize(teamName);
     const match = teams.find((t) => normalize(t.name) === target) || teams[0] || null;
     const id = match ? match.id : null;
+    console.log(`[vlr-scores] ${teamName} → recherche live: ${match ? `${match.name} (#${id})` : "AUCUN RÉSULTAT"}`);
     setCached(cacheKey, id);
     logUnmatched(teamName, match ? `${match.name} (#${match.id})` : null);
     return id;
   } catch (e) {
+    console.log(`[vlr-scores] ${teamName} → erreur recherche:`, e.message);
     logUnmatched(teamName, null);
     return null;
   }
@@ -167,9 +172,11 @@ async function findMatchId(team1Name, team2Name, dateStr) {
         break;
       }
     }
+    console.log(`[vlr-scores] match ${team1Name} vs ${team2Name} (${dateStr}) → ${best ? "match_id " + best : "AUCUN MATCH TROUVÉ parmi " + matches.length}`);
     setCached(cacheKey, best);
     return best;
   } catch (e) {
+    console.log(`[vlr-scores] findMatchId erreur:`, e.message);
     return null;
   }
 }
