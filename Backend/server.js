@@ -125,21 +125,16 @@ async function mapWithConcurrency(items, limit, fn) {
 }
 
 async function enrichWithMapScores(data) {
-  // On ne va chercher le détail par map QUE pour les derniers matchs
-  // terminés (les plus consultés) — pas les 50 d'un coup. Ça réduit le volume
-  // vers vlr.gg à presque rien, et accélère beaucoup la réponse.
-  //
-  // Mis à 8 (au lieu de 2) : PandaScore marque parfois un match "finished"
-  // avant que vlr.gg n'ait publié la page de résultat correspondante (source
-  // différente, latence de publication). Avec seulement 2, on tombait
-  // régulièrement sur des matchs pas encore dispo côté vlr.gg -> null pour
-  // rien. Élargir la fenêtre laisse une chance aux matchs plus anciens (déjà
-  // bien publiés sur vlr.gg) de remonter un vrai score.
-  const RECENT_FINISHED_LIMIT = 8;
+  // Restriction retirée : on va chercher le détail par map pour TOUS les
+  // matchs terminés renvoyés par PandaScore (jusqu'à 50, cf per_page côté
+  // /api/valorant-results), pas seulement les N plus récents. Ça reste une
+  // seule requête HTTP côté front (le résultat enrichi complet est mis en
+  // cache 10 min, cf enrichedResultsCache) ; côté vlr.gg le throttling
+  // (concurrency=1 + sleep 400ms dans mapWithConcurrency) est conservé pour
+  // rester discret.
   const finished = data
     .filter((m) => m.status === "finished")
-    .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at))
-    .slice(0, RECENT_FINISHED_LIMIT);
+    .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at));
 
   await mapWithConcurrency(finished, 1, async (m) => {
     const t1 = m.opponents?.[0]?.opponent?.name;
