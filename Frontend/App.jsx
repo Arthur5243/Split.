@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef } from "react";
 import {
   Home,
@@ -835,16 +836,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   : [{ map: null, score1: 0, score2: 0 }]
                 ).map((g, i) => (
                   <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                        Map {i + 1}
-                      </span>
-                      {g.map && (
-                        <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                          {g.map}
-                        </span>
-                      )}
-                    </div>
+                    <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                      {g.map || "Map " + (i + 1)}
+                    </span>
                     <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
                       {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
                     </span>
