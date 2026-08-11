@@ -151,7 +151,11 @@ async function enrichWithMapScores(data) {
       m.map_scores = null;
       console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
     }
-    await sleep(400); // laisse largement respirer vlr.gg / le rate-limiter de vlrggapi
+    // 900ms (au lieu de 400) : depuis qu'on enrichit TOUS les matchs terminés
+    // (plus de limite à 8), il faut laisser plus de marge au rate-limiter de
+    // vlrggapi entre chaque match, sinon seul le 1er passe et les suivants
+    // se prennent des 429 en cascade.
+    await sleep(900);
   });
 }
 
