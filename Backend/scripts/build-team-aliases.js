@@ -48,3 +48,81 @@ async function vlrFetch(pathAndQuery, attempt = 0) {
   if (!res.ok) throw new Error("vlr-api HTTP " + res.status);
   return res.json();
 }
+
+// Ne renvoie un résultat QUE si le nom matche exactement (une fois
+// normalisé). Pas de "teams[0]" par défaut ici : ce fichier doit être fiable
+// à 100%, donc on préfère un miss (-> log) à un faux positif.
+async function searchExact(teamName) {
+  const json = await vlrFetch("/v2/search?q=" + encodeURIComponent(teamName));
+  const teams =
+    (json && json.data && json.data.segments && json.data.segments.results && json.data.segments.results.teams) ||
+    [];
+  const target = normalize(teamName);
+  return teams.find((t) => normalize(t.name) === target) || null;
+}
+
+function loadJsonSafe(filePath, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  } catch (e) {
+    return fallback;
+  }
+}
+
+async function main() {
+  const matches = loadJsonSafe(MATCHES_PATH, []);
+  const teamNames = new Set();
+  for (const m of matches) {
+    if (m.team1) teamNames.add(m.team1);
+    if (m.team2) teamNames.add(m.team2);
+  }
+
+  const aliases = loadJsonSafe(ALIASES_PATH, {});
+  const toProcess = [...teamNames].filter((name) => REFRESH || !aliases[name]);
+
+  console.log(`ℹ️  ${teamNames.size} équipe(s) au total, ${toProcess.length} à traiter (${REFRESH ? "mode --refresh" : "nouvelles seulement"}).`);
+
+  const unmatched = [];
+  let found = 0;
+
+  for (let i = 0; i < toProcess.length; i++) {
+    const name = toProcess[i];
+    try {
+      const match = await searchExact(name);
+      if (match) {
+        aliases[name] = { vlr_name: match.name, vlr_id: match.id };
+        found++;
+        console.log(`✅ [${i + 1}/${toProcess.length}] ${name} -> ${match.name} (#${match.id})`);
+      } else {
+        unmatched.push(name);
+        console.log(`⚠️  [${i + 1}/${toProcess.length}] ${name} -> aucun match exact`);
+      }
+    } catch (e) {
+      unmatched.push(name);
+      console.log(`❌ [${i + 1}/${toProcess.length}] ${name} -> erreur (${e.message})`);
+    }
+    // Pause entre chaque requête pour ménager vlrggapi et éviter les 429.
+    await sleep(600);
+  }
+
+  const sortedAliases = Object.fromEntries(
+    Object.entries(aliases).sort(([a], [b]) => a.localeCompare(b))
+  );
+  fs.writeFileSync(ALIASES_PATH, JSON.stringify(sortedAliases, null, 2) + "\n");
+
+  if (unmatched.length > 0) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const lines = unmatched.map((n) => `${stamp} — ${n}`).join("\n") + "\n";
+    fs.appendFileSync(UNMATCHED_PATH, lines);
+  }
+
+  console.log(`\n✅ ${found} équipe(s) ajoutée(s)/confirmée(s) dans team-aliases.json.`);
+  if (unmatched.length > 0) {
+    console.log(`⚠️  ${unmatched.length} équipe(s) non trouvée(s) (voir Backend/data/unmatched-teams.log) : ${unmatched.join(", ")}`);
+  }
+}
+
+main().catch((e) => {
+  console.error("❌ Erreur:", e.message);
+  process.exit(1);
+});
