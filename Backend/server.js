@@ -125,8 +125,16 @@ async function mapWithConcurrency(items, limit, fn) {
 }
 
 async function enrichWithMapScores(data) {
-  const finished = data.filter((m) => m.status === "finished");
-  await mapWithConcurrency(finished, 3, async (m) => {
+  // On ne va chercher le détail par map QUE pour les tout derniers matchs
+  // terminés (les plus consultés) — pas les 50 d'un coup. Ça réduit le volume
+  // vers vlr.gg à presque rien, et accélère beaucoup la réponse.
+  const RECENT_FINISHED_LIMIT = 2;
+  const finished = data
+    .filter((m) => m.status === "finished")
+    .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at))
+    .slice(0, RECENT_FINISHED_LIMIT);
+
+  await mapWithConcurrency(finished, 1, async (m) => {
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
@@ -136,7 +144,7 @@ async function enrichWithMapScores(data) {
     } catch (e) {
       m.map_scores = null;
     }
-    await sleep(150); // laisse respirer vlr.gg entre 2 matchs, même dans le pool
+    await sleep(400); // laisse largement respirer vlr.gg / le rate-limiter de vlrggapi
   });
 }
 
