@@ -52,21 +52,21 @@ async function main() {
 
   console.log("\n=== ÉTAPE 2 : matchs de", match.name, "===");
   const teamJson = await vlrFetch(`/v2/team?id=${match.id}&q=matches&page=1`);
-  const matches = teamJson?.data?.matches || [];
+  const matches = teamJson?.data?.segments || [];
   console.log(`${matches.length} match(s) renvoyés par l'API`);
 
   const targetOpp = normalize(team2Name);
   const targetDate = new Date(dateStr + "T00:00:00");
   let best = null;
   for (const m of matches) {
-    const t1 = normalize(m.teams?.team1);
-    const t2 = normalize(m.teams?.team2);
+    const t1 = normalize(m.team1?.name);
+    const t2 = normalize(m.team2?.name);
     if (![t1, t2].includes(targetOpp)) continue;
     const mDate = m.date ? new Date(m.date) : null;
     if (!mDate) continue;
     const diffDays = Math.abs((mDate - targetDate) / 86400000);
     console.log(
-      `  candidat: ${m.teams?.team1} vs ${m.teams?.team2} — ${m.date} — match_id ${m.match_id} — écart ${diffDays.toFixed(1)}j`
+      `  candidat: ${m.team1?.name} vs ${m.team2?.name} — ${m.date} — match_id ${m.match_id} — écart ${diffDays.toFixed(1)}j`
     );
     if (diffDays <= 1) {
       best = m;
@@ -82,14 +82,14 @@ async function main() {
 
   console.log("\n=== ÉTAPE 3 : détail du match", best.match_id, "===");
   const detailsJson = await vlrFetch(`/v2/match/details?match_id=${best.match_id}`);
-  const maps = detailsJson?.data?.maps || [];
+  const maps = detailsJson?.data?.segments?.[0]?.maps || [];
   console.log(`${maps.length} map(s) dans la réponse brute :`);
   console.log(JSON.stringify(maps, null, 2));
 
   console.log("\n=== RÉSULTAT APRÈS LE FILTRE ACTUEL DE vlr-scores.js ===");
   const parsed = maps
-    .filter((m) => m.score && m.score.team1 && m.score.team2)
-    .map((m) => ({ map: m.map_name, score1: m.score.team1.total, score2: m.score.team2.total }));
+    .filter((m) => m.score && Number.isFinite(m.score.team1) && Number.isFinite(m.score.team2))
+    .map((m) => ({ map: m.map_name, score1: m.score.team1, score2: m.score.team2 }));
 
   if (parsed.length === maps.length) {
     console.log("✅ Toutes les maps passent le filtre:", parsed);

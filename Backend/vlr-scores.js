@@ -147,15 +147,16 @@ async function findMatchId(team1Name, team2Name, dateStr) {
       return null;
     }
     const json = await vlrFetch("/v2/team?id=" + teamId + "&q=matches&page=1");
-    const matches = (json && json.data && json.data.matches) || [];
+    // L'API renvoie la liste sous "segments", pas "matches".
+    const matches = (json && json.data && json.data.segments) || [];
     const targetOpponent = normalize(team2Name);
     const targetDate = new Date(dateStr + "T00:00:00");
 
     let best = null;
     for (const m of matches) {
-      const opponentName = normalize(m.teams && (m.teams.team1 === team1Name ? m.teams.team2 : m.teams.team1));
-      // fallback si teams.team1/team2 ne matche pas exactement team1Name
-      const teamsInMatch = [normalize(m.teams && m.teams.team1), normalize(m.teams && m.teams.team2)];
+      // team1/team2 sont des objets {name, tag, logo} au niveau racine du
+      // match, pas sous une clé "teams".
+      const teamsInMatch = [normalize(m.team1 && m.team1.name), normalize(m.team2 && m.team2.name)];
       if (!teamsInMatch.includes(targetOpponent)) continue;
 
       const matchDate = m.date ? new Date(m.date) : null;
@@ -188,13 +189,17 @@ async function getMapScores(team1Name, team2Name, dateStr) {
     if (cached !== undefined) return cached;
 
     const json = await vlrFetch("/v2/match/details?match_id=" + matchId);
-    const maps = (json && json.data && json.data.maps) || [];
+    // Les maps sont dans data.segments[0].maps, pas data.maps directement.
+    const segment = (json && json.data && json.data.segments && json.data.segments[0]) || null;
+    const maps = (segment && segment.maps) || [];
     const result = maps
-      .filter((m) => m.score && m.score.team1 && m.score.team2)
+      // score.team1 / score.team2 sont déjà des nombres (ex: 13, 4), pas des
+      // objets avec un champ .total.
+      .filter((m) => m.score && Number.isFinite(m.score.team1) && Number.isFinite(m.score.team2))
       .map((m) => ({
         map: m.map_name,
-        score1: m.score.team1.total,
-        score2: m.score.team2.total,
+        score1: m.score.team1,
+        score2: m.score.team2,
       }));
     const finalResult = result.length > 0 ? result : null;
     setCached(cacheKey, finalResult);
