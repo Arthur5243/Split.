@@ -43,8 +43,19 @@ function normalize(s) {
     .toLowerCase();
 }
 
-async function vlrFetch(path) {
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// vlrggapi a son propre rate-limiter interne (plus strict sur les routes
+// "coûteuses" comme /v2/team, qui scrapent vraiment vlr.gg). On retente une
+// fois en cas de 429, avec une petite pause, avant d'abandonner.
+async function vlrFetch(path, attempt = 0) {
   const res = await fetch(VLR_API_BASE + path);
+  if (res.status === 429 && attempt < 2) {
+    await sleep(700 * (attempt + 1));
+    return vlrFetch(path, attempt + 1);
+  }
   if (!res.ok) throw new Error("vlr-api HTTP " + res.status);
   return res.json();
 }
