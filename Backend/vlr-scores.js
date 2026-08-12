@@ -216,5 +216,5 @@ async function getMapScores(team1Name, team2Name, dateStr) {
   }
 }
 
-export { getMapScores };
+export { getMapScores, findTeamId, findMatchId };
 
