@@ -23,6 +23,7 @@ const ALIASES_PATH = path.join(__dirname, "data", "team-aliases.json");
 const UNMATCHED_PATH = path.join(__dirname, "data", "unmatched-teams.log");
 
 const VLR_API_BASE = process.env.VLR_API_BASE || "https://vlrggapi-production-b3a0.up.railway.app";
+const MANUAL_SCORES_PATH = path.join(__dirname, "data", "manual-map-scores.json");
 
 // Fichier d'alias équipe PandaScore -> équipe vlr.gg, construit à l'avance
 // par scripts/build-team-aliases.js. Chargé une seule fois au démarrage :
@@ -52,6 +53,55 @@ function logUnmatched(teamName, resolved) {
   } catch (e) {
     // best-effort, jamais bloquant
   }
+}
+
+// Scores par map saisis à la main (Backend/data/manual-map-scores.json) quand
+// vlrggapi est bloqué/rate-limité par Cloudflare et ne répond plus de façon
+// fiable. Chargé une seule fois au démarrage, zéro appel réseau. Toujours
+// vérifié EN PREMIER dans getMapScores() — prioritaire même sur ce qui est
+// déjà en base SQLite (donc ça écrase un `null` posé par un précédent échec
+// vlr.gg), pour ne jamais dépendre de vlr.gg pour ces matchs-là.
+const manualScores = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(MANUAL_SCORES_PATH, "utf-8"));
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) {
+    return []; // fichier absent -> aucun impact, on retombe sur vlr.gg comme avant
+  }
+})();
+
+function daysBetweenDates(d1, d2) {
+  const t1 = new Date(d1 + "T00:00:00").getTime();
+  const t2 = new Date(d2 + "T00:00:00").getTime();
+  if (Number.isNaN(t1) || Number.isNaN(t2)) return Infinity;
+  return Math.abs(t1 - t2) / 86400000;
+}
+
+/**
+ * Cherche un match dans manual-map-scores.json par équipes + date (tolérance
+ * ±1 jour, mêmes règles que le matching vlr.gg). Renvoie les scores par map
+ * réorientés pour correspondre à l'ordre (team1Name, team2Name) demandé -
+ * même si le fichier manuel les a dans l'autre sens.
+ */
+function findManualMapScores(team1Name, team2Name, dateStr) {
+  if (manualScores.length === 0) return null;
+  const n1 = normalize(team1Name);
+  const n2 = normalize(team2Name);
+
+  for (const entry of manualScores) {
+    if (dateStr && daysBetweenDates(entry.date, dateStr) > 1) continue;
+    const e1 = normalize(entry.team1);
+    const e2 = normalize(entry.team2);
+
+    if (e1 === n1 && e2 === n2) {
+      return entry.maps.map((m) => ({ map: m.map, score1: m.score1, score2: m.score2 }));
+    }
+    if (e1 === n2 && e2 === n1) {
+      // Même match mais équipes dans l'ordre inverse -> on retourne les scores.
+      return entry.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 }));
+    }
+  }
+  return null;
 }
 
 // Petit cache mémoire pour ne pas re-taper l'API à chaque requête (les scores
@@ -187,6 +237,14 @@ async function findMatchId(team1Name, team2Name, dateStr) {
  * ou null si introuvable / API indisponible.
  */
 async function getMapScores(team1Name, team2Name, dateStr) {
+  // 1. Saisie manuelle en premier : instantané, jamais bloqué par Cloudflare,
+  // et prioritaire même si vlr.gg a déjà été tenté sans succès pour ce match.
+  const manual = findManualMapScores(team1Name, team2Name, dateStr);
+  if (manual) {
+    console.log(`[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → trouvé en saisie manuelle`);
+    return manual;
+  }
+
   try {
     const matchId = await findMatchId(team1Name, team2Name, dateStr);
     if (!matchId) return null;
@@ -216,5 +274,5 @@ async function getMapScores(team1Name, team2Name, dateStr) {
   }
 }
 
-export { getMapScores, findTeamId, findMatchId };
+export { getMapScores, findTeamId, findMatchId, findManualMapScores };
 
