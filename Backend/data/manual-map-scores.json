@@ -50,7 +50,7 @@
   {
     "date": "2026-08-10",
     "region": "China",
-    "team1": "Titan Esports Club",
+    "team1": "TEC Esports",
     "team2": "Dragon Ranger Gaming",
     "score": "2-1",
     "maps": [
@@ -64,7 +64,7 @@
         "map": "Ascent",
         "score1": 1,
         "score2": 13,
-        "pick": "Titan Esports Club"
+        "pick": "TEC Esports"
       },
       {
         "map": "Haven",
@@ -284,7 +284,7 @@
   {
     "date": "2026-08-09",
     "region": "Americas",
-    "team1": "Leviatán",
+    "team1": "Leviatán Esports",
     "team2": "MIBR",
     "score": "2-0",
     "maps": [
@@ -292,7 +292,7 @@
         "map": "Split",
         "score1": 13,
         "score2": 10,
-        "pick": "Leviatán"
+        "pick": "Leviatán Esports"
       },
       {
         "map": "Sunset",
@@ -561,7 +561,7 @@
     "date": "2026-08-07",
     "region": "China",
     "team1": "EDward Gaming",
-    "team2": "Titan Esports Club",
+    "team2": "TEC Esports",
     "score": "1-2",
     "maps": [
       {
@@ -574,7 +574,7 @@
         "map": "Split",
         "score1": 11,
         "score2": 13,
-        "pick": "Titan Esports Club"
+        "pick": "TEC Esports"
       },
       {
         "map": "Ascent",
@@ -587,7 +587,7 @@
   {
     "date": "2026-08-07",
     "region": "Pacific",
-    "team1": "Gen.G",
+    "team1": "Gen.G Esports",
     "team2": "FULL SENSE",
     "score": "2-1",
     "maps": [
@@ -595,7 +595,7 @@
         "map": "Lotus",
         "score1": 13,
         "score2": 8,
-        "pick": "Gen.G"
+        "pick": "Gen.G Esports"
       },
       {
         "map": "Sunset",
@@ -698,6 +698,33 @@
         "score1": 13,
         "score2": 3,
         "pick": "Evil Geniuses"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-12",
+    "region": "China",
+    "team1": "All Gamers",
+    "team2": "TEC Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 10,
+        "pick": "All Gamers"
+      },
+      {
+        "map": "Ascent",
+        "score1": 12,
+        "score2": 14,
+        "pick": "TEC Esports"
+      },
+      {
+        "map": "Summit",
+        "score1": 9,
+        "score2": 13,
+        "pick": null
       }
     ]
   }
