@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
-import { getMapScores, findTeamId, findMatchId } from "./vlr-scores.js";
+import { getMapScores, findTeamId, findMatchId, findManualMapScores } from "./vlr-scores.js";
 import { storeFinishedMatches, getFullHistory, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -135,6 +135,20 @@ async function mapWithConcurrency(items, limit, fn) {
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
+    // La saisie manuelle passe AVANT la base SQLite : si un match a déjà été
+    // tenté sur vlr.gg sans succès (stocké en base comme `null`), on veut
+    // quand même remonter le score saisi à la main plutôt que de rester
+    // bloqué sur cet échec pour toujours.
+    const t1 = m.opponents?.[0]?.opponent?.name;
+    const t2 = m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || "").slice(0, 10);
+    const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
+    if (manual) {
+      m.map_scores = manual;
+      saveMapScores(m.id, manual); // persiste aussi en base, pour cohérence avec getFullHistory
+      continue;
+    }
+
     const stored = getStoredMapScores(m.id);
     if (stored !== undefined) {
       m.map_scores = stored; // déjà résolu (même si `null` = déjà essayé, sans succès)
@@ -215,6 +229,14 @@ app.get("/api/valorant-results", async (req, res) => {
     // pour un match déjà résolu, même juste après un redeploy.
     const finished = data.filter((m) => m.status === "finished");
     for (const m of finished) {
+      const t1 = m.opponents?.[0]?.opponent?.name;
+      const t2 = m.opponents?.[1]?.opponent?.name;
+      const date = (m.begin_at || "").slice(0, 10);
+      const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
+      if (manual) {
+        m.map_scores = manual;
+        continue;
+      }
       const stored = getStoredMapScores(m.id);
       if (stored !== undefined) m.map_scores = stored;
     }
