@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   Home,
@@ -22,25 +20,11 @@ import {
 const SPLIT_LOGO = "/split-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
 
-// Icônes de la nav du bas — repli Lucide si jamais une image ne charge pas
-// (offline, CDN down, etc.), mais on affiche en priorité les vrais logos
-// officiels ci-dessous (cf. navItems / img).
+// Icônes de la nav du bas (remplacent d'anciennes images perdues lors de la
+// compression des images ; pas de fichier supplémentaire à héberger).
 const NAV_VALORANT_ICON = Crosshair;
 const NAV_CSGO_ICON = Target;
 const NAV_RL_ICON = Car;
-
-// Vrais logos des jeux (remplacent les icônes génériques perdues lors de la
-// compression des images). Valorant et Counter-Strike viennent de Simple
-// Icons (marques monochromes, on force le blanc pour matcher le style de
-// la nav) ; Rocket League vient de Wikimedia Commons (pas dispo sur Simple
-// Icons).
-const NAV_VALORANT_IMG = "https://cdn.simpleicons.org/valorant/FFFFFF";
-const NAV_CSGO_IMG = "https://cdn.simpleicons.org/counterstrike/FFFFFF";
-const NAV_RL_IMG = "https://commons.wikimedia.org/wiki/Special:FilePath/Rocket_League_logo.svg";
-// Mêmes logos, mais en couleur de marque (pas blanc) pour les pages "à
-// venir" CS:GO/RL dont le fond est un cercle blanc.
-const CSGO_IMG_DARK = "https://cdn.simpleicons.org/counterstrike";
-const RL_IMG_DARK = NAV_RL_IMG;
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
@@ -1123,34 +1107,11 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   );
 }
 
-// Affiche le vrai logo du jeu (item.img) et retombe automatiquement sur
-// l'icône Lucide générique (item.Icon) si l'image ne charge pas (CDN down,
-// pas de réseau) — jamais de case vide dans la nav.
-function NavIcon({ item, active, labelColor }) {
-  const [failed, setFailed] = useState(false);
-  if (!item.img || failed) {
-    return <item.Icon size={20} color={labelColor} strokeWidth={2.2} />;
-  }
-  return (
-    <img
-      src={item.img}
-      alt={item.label}
-      onError={() => setFailed(true)}
-      style={{ width: "20px", height: "20px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }}
-    />
-  );
-}
-
-function PlaceholderTab({ label, Icon, img, T }) {
-  const [failed, setFailed] = useState(false);
+function PlaceholderTab({ label, Icon, T }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: "560px" }}>
       <div className="rounded-full flex items-center justify-center mb-4" style={{ width: "72px", height: "72px", background: "#fff" }}>
-        {img && !failed ? (
-          <img src={img} alt={label} onError={() => setFailed(true)} style={{ width: "34px", height: "34px", objectFit: "contain" }} />
-        ) : (
-          <Icon size={34} color="#111" strokeWidth={2.2} />
-        )}
+        <Icon size={34} color="#111" strokeWidth={2.2} />
       </div>
       <h2 className="font-black" style={{ color: "#111", fontSize: "20px" }}>{label}</h2>
       <p style={{ color: "#555", fontSize: "13px" }} className="mt-2">{T.placeholderSoon.replace("{label}", label)}</p>
@@ -1588,9 +1549,9 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, Icon: NAV_VALORANT_ICON, img: NAV_VALORANT_IMG },
-    { key: "csgo", label: T.navCsgo, Icon: NAV_CSGO_ICON, img: NAV_CSGO_IMG },
-    { key: "rocketleague", label: T.navRl, Icon: NAV_RL_ICON, img: NAV_RL_IMG },
+    { key: "valorant", label: T.navValorant, Icon: NAV_VALORANT_ICON },
+    { key: "csgo", label: T.navCsgo, Icon: NAV_CSGO_ICON },
+    { key: "rocketleague", label: T.navRl, Icon: NAV_RL_ICON },
     { key: "classement", label: T.navClassement, Icon: Trophy },
   ];
 
@@ -1619,8 +1580,8 @@ export default function ClutchApp() {
               loading={dataLoading}
             />
           )}
-          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" Icon={NAV_CSGO_ICON} img={CSGO_IMG_DARK} T={T} />}
-          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" Icon={NAV_RL_ICON} img={RL_IMG_DARK} T={T} />}
+          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" Icon={NAV_CSGO_ICON} T={T} />}
+          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" Icon={NAV_RL_ICON} T={T} />}
           {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} />}
         </div>
 
@@ -1632,7 +1593,11 @@ export default function ClutchApp() {
             const labelColor = active ? "#fff" : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => setActiveTab(item.key)} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
-                <NavIcon item={item} active={active} labelColor={labelColor} />
+                {item.img ? (
+                  <img src={item.img} alt={item.label} style={{ width: "20px", height: "20px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
+                ) : (
+                  <item.Icon size={20} color={labelColor} strokeWidth={2.2} />
+                )}
                 <span style={{ color: labelColor, fontSize: "10px", fontWeight: active ? 700 : 500 }}>{item.label}</span>
               </button>
             );
