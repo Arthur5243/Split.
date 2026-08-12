@@ -44,8 +44,17 @@ const REGION_TWITCH = {
 const CATS = ["VALORANT", "CSGO", "RL"];
 
 // Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
-// vide par défaut, les logos viennent normalement de match.team1Logo/team2Logo.
-const LOGOS = {};
+// utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
+const LOGOS = {
+  XE: "/logos/xe.png",
+  TS: "/logos/ts.png",
+  DRX: "/logos/drx.png",
+};
+
+// Équipes dont le logo API est mal classé "sombre" par useIsDarkLogo (donc
+// transformé à tort en blanc uni) alors qu'il est en réalité coloré : on
+// force l'affichage en couleurs d'origine, jamais d'inversion, pour ces codes.
+const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG"]);
 
 // Langues disponibles dans le sélecteur
 const LANGS = [
@@ -694,7 +703,8 @@ function useIsDarkLogo(src) {
 
 function TeamLogo({ code, apiLogo, accent, tbd }) {
   const src = LOGOS[code] || apiLogo || null;
-  const isDarkLogo = useIsDarkLogo(src);
+  const detectedDark = useIsDarkLogo(src);
+  const isDarkLogo = FORCE_NATURAL_COLOR.has(code) ? false : detectedDark;
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
