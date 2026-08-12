@@ -103,6 +103,9 @@ function toHistoryRow(m) {
 // en fraîcheur perçue.
 let enrichedResultsCache = null; // { data, time }
 const ENRICHED_RESULTS_TTL_MS = 10 * 60 * 1000;
+// Empêche deux sweeps d'enrichissement de tourner en parallèle si plusieurs
+// requêtes arrivent pendant que le cache est en train d'être recalculé.
+let enrichInProgress = false;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -168,20 +171,33 @@ app.get("/api/valorant-results", async (req, res) => {
 
     const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
 
-    // Ajoute le score par manche (13-9) via vlr.gg quand c'est trouvable.
-    // Échec silencieux par match : jamais de crash si un match n'est pas trouvé.
-    await enrichWithMapScores(data);
-
+    // On répond IMMÉDIATEMENT avec les données brutes PandaScore (jamais
+    // "pas de matchs"), et on enrichit les scores par map en arrière-plan.
+    // Avant : on attendait (await) enrichWithMapScores sur TOUS les matchs
+    // terminés avant de répondre -> avec les retries sur 429, la requête
+    // pouvait prendre des dizaines de secondes et le front/proxy Railway
+    // coupait la connexion (statut 499) -> plus aucun match affiché, alors
+    // que PandaScore avait bien répondu depuis longtemps.
     enrichedResultsCache = { data, time: now };
+    res.json(data);
 
-    // Accumule les matchs terminés dans la mini base SQLite (voir
-    // match-history-store.js). N'affecte pas la réponse ni /api/match-history
-    // pour l'instant — c'est un stock qui s'accumule en parallèle, en attendant
-    // qu'on décide comment le fusionner avec l'historique statique matches.json.
     const rows = data.map(toHistoryRow).filter(Boolean);
     storeFinishedMatches(rows);
 
-    res.json(data);
+    if (!enrichInProgress) {
+      enrichInProgress = true;
+      enrichWithMapScores(data)
+        .then(() => {
+          // Les objets `data` sont mutés en place par enrichWithMapScores,
+          // donc le cache déjà posé plus haut se retrouve enrichi une fois
+          // le sweep terminé — sans jamais avoir fait attendre le front.
+          enrichedResultsCache = { data, time: Date.now() };
+        })
+        .catch((e) => console.error("[enrich background]", e.message))
+        .finally(() => {
+          enrichInProgress = false;
+        });
+    }
   } catch (e) {
     console.error(e);
     // Si le sweep échoue mais qu'on a un cache même périmé, mieux vaut le
