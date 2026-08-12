@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
 import { getMapScores, findTeamId, findMatchId, findManualMapScores } from "./vlr-scores.js";
-import { storeFinishedMatches, getFullHistory, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
+import { storeFinishedMatches, getFullHistory, getFullHistoryFlat, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -204,6 +204,56 @@ async function enrichWithMapScores(data) {
   });
 }
 
+// Reconstruit, depuis une ligne accumulée en base (SQLite), la même forme
+// "PandaScore-like" que consomme transformMatch() côté front (opponents,
+// results, begin_at, league, serie, tier). Sert uniquement pour les matchs
+// qu'on a déjà vus mais qui sont tombés hors de la fenêtre des 50 derniers
+// matchs renvoyés par PandaScore (voir buildMergedResults ci-dessous).
+function toLiveHistoryShape(row) {
+  const id1 = "lh1_" + row.id;
+  const id2 = "lh2_" + row.id;
+  const hasScore = row.score1 != null && row.score2 != null;
+  return {
+    id: row.id,
+    begin_at: row.day ? row.day + "T" + (row.time || "00:00") + ":00Z" : null,
+    status: row.status,
+    tier: row.league || null,
+    serie: { full_name: row.phase, name: row.phase },
+    league: { name: row.league },
+    opponents: [
+      { opponent: { id: id1, name: row.team1Name || row.team1, acronym: null, image_url: null } },
+      { opponent: { id: id2, name: row.team2Name || row.team2, acronym: null, image_url: null } },
+    ],
+    results: hasScore
+      ? [
+          { team_id: id1, score: row.score1 },
+          { team_id: id2, score: row.score2 },
+        ]
+      : [],
+    map_scores: row.map_scores || null,
+  };
+}
+
+// Nombre de matchs accumulés qu'on est prêt à réinjecter en plus de la
+// fenêtre live PandaScore. Largement au-dessus de 50 (la taille de cette
+// fenêtre) pour qu'un match déjà vu ne disparaisse plus jamais de l'onglet
+// "Match terminé", même avec 4 régions VCT qui tournent en même temps.
+const ACCUMULATED_HISTORY_LIMIT = 400;
+
+// Fusionne la fenêtre live (PandaScore, jusqu'à 50 matchs) avec tout ce qu'on
+// a déjà accumulé en base. Un match une fois vu une fois reste visible pour
+// de bon, même une fois poussé hors des 50 plus récents (tous jeux/régions
+// confondus) par le volume de matchs plus récents.
+function buildMergedResults(liveData) {
+  const liveIds = new Set(liveData.map((m) => String(m.id)));
+  const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
+    .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
+    .map(toLiveHistoryShape);
+  return [...liveData, ...accumulated].sort(
+    (a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0)
+  );
+}
+
 app.get("/api/valorant-results", async (req, res) => {
   try {
     const now = Date.now();
@@ -248,16 +298,23 @@ app.get("/api/valorant-results", async (req, res) => {
     // prendre des dizaines de secondes et le front/proxy Railway coupait la
     // connexion (statut 499) -> plus aucun match affiché, alors que
     // PandaScore avait bien répondu depuis longtemps.
-    enrichedResultsCache = { data, time: now };
-    res.json(data);
+    //
+    // On fusionne aussi avec l'historique accumulé en base (voir
+    // buildMergedResults) : sinon un match tombé hors des 50 plus récents
+    // PandaScore (tous jeux/régions confondus) disparaîtrait purement et
+    // simplement de l'onglet "Match terminé", alors qu'on l'a déjà vu et
+    // qu'on a déjà ses scores (série + par map).
+    const merged = buildMergedResults(data);
+    enrichedResultsCache = { data: merged, time: now };
+    res.json(merged);
 
     enrichInProgress = true;
     enrichWithMapScores(data)
       .then(() => {
         // Les objets `data` sont mutés en place par enrichWithMapScores,
-        // donc le cache déjà posé plus haut se retrouve enrichi une fois
-        // le sweep terminé — sans jamais avoir fait attendre le front.
-        enrichedResultsCache = { data, time: Date.now() };
+        // donc on refait la fusion avec l'historique accumulé pour que le
+        // cache reflète bien les scores fraîchement trouvés.
+        enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
       })
       .catch((e) => console.error("[enrich background]", e.message))
       .finally(() => {
