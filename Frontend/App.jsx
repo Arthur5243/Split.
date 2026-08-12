@@ -22,9 +22,9 @@ const NEWS_IMAGE = "/news-image.jpg";
 
 // Icônes de la nav du bas (remplacent d'anciennes images perdues lors de la
 // compression des images ; pas de fichier supplémentaire à héberger).
-const NAV_VALORANT_ICON = crosshair;
-const NAV_CSGO_ICON = crosshair;
-const NAV_RL_ICON = car;
+const NAV_VALORANT_ICON = Crosshair;
+const NAV_CSGO_ICON = Crosshair;
+const NAV_RL_ICON = Car;
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
