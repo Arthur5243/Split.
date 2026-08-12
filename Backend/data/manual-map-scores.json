@@ -1,0 +1,704 @@
+[
+  {
+    "date": "2026-08-11",
+    "region": "China",
+    "team1": "Dragon Ranger Gaming",
+    "team2": "Trace Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Sunset",
+        "score1": 16,
+        "score2": 14,
+        "pick": "Trace Esports"
+      },
+      {
+        "map": "Ascent",
+        "score1": 4,
+        "score2": 13,
+        "pick": "Dragon Ranger Gaming"
+      },
+      {
+        "map": "Summit",
+        "score1": 12,
+        "score2": 14,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-11",
+    "region": "China",
+    "team1": "JD Gaming",
+    "team2": "EDward Gaming",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 13,
+        "score2": 6,
+        "pick": "EDward Gaming"
+      },
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 9,
+        "pick": "JD Gaming"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-10",
+    "region": "China",
+    "team1": "Titan Esports Club",
+    "team2": "Dragon Ranger Gaming",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 9,
+        "pick": "Dragon Ranger Gaming"
+      },
+      {
+        "map": "Ascent",
+        "score1": 1,
+        "score2": 13,
+        "pick": "Titan Esports Club"
+      },
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 8,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-10",
+    "region": "China",
+    "team1": "All Gamers",
+    "team2": "JD Gaming",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 11,
+        "pick": "All Gamers"
+      },
+      {
+        "map": "Sunset",
+        "score1": 14,
+        "score2": 12,
+        "pick": "JD Gaming"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-10",
+    "region": "Americas",
+    "team1": "LOUD",
+    "team2": "100 Thieves",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 8,
+        "score2": 13,
+        "pick": "LOUD"
+      },
+      {
+        "map": "Haven",
+        "score1": 10,
+        "score2": 13,
+        "pick": "100 Thieves"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "Americas",
+    "team1": "Evil Geniuses",
+    "team2": "NRG",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 1,
+        "score2": 13,
+        "pick": "NRG"
+      },
+      {
+        "map": "Breeze",
+        "score1": 7,
+        "score2": 13,
+        "pick": "Evil Geniuses"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "EMEA",
+    "team1": "Gentle Mates",
+    "team2": "Enterprise Esports",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 9,
+        "score2": 13,
+        "pick": "Enterprise Esports"
+      },
+      {
+        "map": "Lotus",
+        "score1": 6,
+        "score2": 13,
+        "pick": "Gentle Mates"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "EMEA",
+    "team1": "Team Heretics",
+    "team2": "Fire Flux Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 9,
+        "pick": "Fire Flux Esports"
+      },
+      {
+        "map": "Sunset",
+        "score1": 2,
+        "score2": 13,
+        "pick": "Team Heretics"
+      },
+      {
+        "map": "Ascent",
+        "score1": 9,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "China",
+    "team1": "Trace Esports",
+    "team2": "FunPlus Phoenix",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Ascent",
+        "score1": 13,
+        "score2": 5,
+        "pick": "FunPlus Phoenix"
+      },
+      {
+        "map": "Lotus",
+        "score1": 13,
+        "score2": 7,
+        "pick": "Trace Esports"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "Pacific",
+    "team1": "Nongshim RedForce",
+    "team2": "Rex Regum Qeon",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 12,
+        "score2": 14,
+        "pick": "Nongshim RedForce"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 11,
+        "pick": "Rex Regum Qeon"
+      },
+      {
+        "map": "Haven",
+        "score1": 10,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "China",
+    "team1": "EDward Gaming",
+    "team2": "Wolves Esports",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Ascent",
+        "score1": 11,
+        "score2": 13,
+        "pick": "Wolves Esports"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 10,
+        "pick": "EDward Gaming"
+      },
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 6,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "Pacific",
+    "team1": "VARREL",
+    "team2": "Paper Rex",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 9,
+        "pick": "VARREL"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 11,
+        "pick": "Paper Rex"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-09",
+    "region": "Americas",
+    "team1": "Leviatán",
+    "team2": "MIBR",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 10,
+        "pick": "Leviatán"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 8,
+        "pick": "MIBR"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "Americas",
+    "team1": "KRÜ Esports",
+    "team2": "Sentinels",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 6,
+        "score2": 13,
+        "pick": "KRÜ Esports"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 6,
+        "pick": "Sentinels"
+      },
+      {
+        "map": "Breeze",
+        "score1": 13,
+        "score2": 7,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "EMEA",
+    "team1": "Eternal Fire",
+    "team2": "Joblife",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 10,
+        "score2": 13,
+        "pick": "Joblife"
+      },
+      {
+        "map": "Split",
+        "score1": 14,
+        "score2": 12,
+        "pick": "Eternal Fire"
+      },
+      {
+        "map": "Ascent",
+        "score1": 13,
+        "score2": 7,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "EMEA",
+    "team1": "FUT Esports",
+    "team2": "GIANTX",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 6,
+        "pick": "GIANTX"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 10,
+        "pick": "FUT Esports"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "China",
+    "team1": "KeepBest Gaming",
+    "team2": "FunPlus Phoenix",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 10,
+        "score2": 13,
+        "pick": "KeepBest Gaming"
+      },
+      {
+        "map": "Sunset",
+        "score1": 8,
+        "score2": 13,
+        "pick": "FunPlus Phoenix"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "Pacific",
+    "team1": "Global Esports",
+    "team2": "ZETA DIVISION",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 13,
+        "score2": 9,
+        "pick": "Global Esports"
+      },
+      {
+        "map": "Split",
+        "score1": 14,
+        "score2": 12,
+        "pick": "ZETA DIVISION"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "China",
+    "team1": "A Team",
+    "team2": "Wolves Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 11,
+        "pick": "Wolves Esports"
+      },
+      {
+        "map": "Ascent",
+        "score1": 8,
+        "score2": 13,
+        "pick": "A Team"
+      },
+      {
+        "map": "Summit",
+        "score1": 14,
+        "score2": 16,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "Pacific",
+    "team1": "KIWOOM DRX",
+    "team2": "T1",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 9,
+        "score2": 13,
+        "pick": "KIWOOM DRX"
+      },
+      {
+        "map": "Breeze",
+        "score1": 5,
+        "score2": 13,
+        "pick": "T1"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-08",
+    "region": "Americas",
+    "team1": "G2 Esports",
+    "team2": "LOUD",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 15,
+        "pick": "LOUD"
+      },
+      {
+        "map": "Lotus",
+        "score1": 1,
+        "score2": 13,
+        "pick": "G2 Esports"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "Americas",
+    "team1": "100 Thieves",
+    "team2": "Cloud9",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 15,
+        "pick": "Cloud9"
+      },
+      {
+        "map": "Breeze",
+        "score1": 11,
+        "score2": 13,
+        "pick": "100 Thieves"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "EMEA",
+    "team1": "FNATIC",
+    "team2": "Enterprise Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 13,
+        "score2": 3,
+        "pick": "Enterprise Esports"
+      },
+      {
+        "map": "Split",
+        "score1": 10,
+        "score2": 13,
+        "pick": "FNATIC"
+      },
+      {
+        "map": "Haven",
+        "score1": 11,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "EMEA",
+    "team1": "PCIFIC Esports",
+    "team2": "Fire Flux Esports",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 5,
+        "score2": 13,
+        "pick": "PCIFIC Esports"
+      },
+      {
+        "map": "Split",
+        "score1": 6,
+        "score2": 13,
+        "pick": "Fire Flux Esports"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "China",
+    "team1": "EDward Gaming",
+    "team2": "Titan Esports Club",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 7,
+        "pick": "EDward Gaming"
+      },
+      {
+        "map": "Split",
+        "score1": 11,
+        "score2": 13,
+        "pick": "Titan Esports Club"
+      },
+      {
+        "map": "Ascent",
+        "score1": 9,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "Pacific",
+    "team1": "Gen.G",
+    "team2": "FULL SENSE",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 13,
+        "score2": 8,
+        "pick": "Gen.G"
+      },
+      {
+        "map": "Sunset",
+        "score1": 10,
+        "score2": 13,
+        "pick": "FULL SENSE"
+      },
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 11,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "Pacific",
+    "team1": "Team Secret",
+    "team2": "DetonatioN FocusMe",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 6,
+        "score2": 13,
+        "pick": "Team Secret"
+      },
+      {
+        "map": "Split",
+        "score1": 11,
+        "score2": 13,
+        "pick": "DetonatioN FocusMe"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "China",
+    "team1": "All Gamers",
+    "team2": "Trace Esports",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Sunset",
+        "score1": 5,
+        "score2": 13,
+        "pick": "Trace Esports"
+      },
+      {
+        "map": "Split",
+        "score1": 13,
+        "score2": 8,
+        "pick": "All Gamers"
+      },
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 2,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "region": "Americas",
+    "team1": "ENVY",
+    "team2": "NRG",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 6,
+        "score2": 13,
+        "pick": "NRG"
+      },
+      {
+        "map": "Haven",
+        "score1": 9,
+        "score2": 13,
+        "pick": "ENVY"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-06",
+    "region": "Americas",
+    "team1": "Evil Geniuses",
+    "team2": "FURIA",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 11,
+        "pick": "FURIA"
+      },
+      {
+        "map": "Breeze",
+        "score1": 13,
+        "score2": 3,
+        "pick": "Evil Geniuses"
+      }
+    ]
+  }
+]
