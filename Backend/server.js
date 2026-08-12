@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
-import { getMapScores } from "./vlr-scores.js";
+import { getMapScores, findTeamId, findMatchId } from "./vlr-scores.js";
 import { storeFinishedMatches, getFullHistory, getTeamHistory } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -506,6 +506,54 @@ app.get("/admin/live-history-count", (req, res) => {
 
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "split-app-backend" });
+});
+
+// ==========================================================================
+// Debug : rejoue le pipeline complet (match terminé -> nom d'équipe -> id
+// vlr.gg de l'équipe -> id du match vlr.gg -> détails/scores par map) pas à
+// pas, uniquement pour les 3 derniers matchs terminés à l'instant présent.
+// But : vérifier étape par étape que chaque maillon fonctionne (équipe
+// trouvée, match trouvé, scores trouvés) avant de compter sur le sweep
+// silencieux de enrichWithMapScores pour tous les matchs.
+app.get("/admin/debug-last3-map-scores", async (req, res) => {
+  try {
+    const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
+
+    const finished = data
+      .filter((m) => m.status === "finished")
+      .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at))
+      .slice(0, 3);
+
+    const steps = [];
+    for (const m of finished) {
+      const team1 = m.opponents?.[0]?.opponent?.name || null;
+      const team2 = m.opponents?.[1]?.opponent?.name || null;
+      const date = (m.begin_at || "").slice(0, 10);
+
+      const entry = {
+        pandascore_match_id: m.id,
+        team1,
+        team2,
+        date,
+        etape_1_id_equipe_vlr: null,
+        etape_2_id_match_vlr: null,
+        etape_3_scores_par_map: null,
+      };
+
+      if (team1 && team2 && date) {
+        entry.etape_1_id_equipe_vlr = await findTeamId(team1);
+        entry.etape_2_id_match_vlr = await findMatchId(team1, team2, date);
+        entry.etape_3_scores_par_map = await getMapScores(team1, team2, date);
+      }
+
+      steps.push(entry);
+    }
+
+    res.json({ matchs_testes: steps.length, details: steps });
+  } catch (e) {
+    console.error("debug-last3-map-scores error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ==========================================================================
