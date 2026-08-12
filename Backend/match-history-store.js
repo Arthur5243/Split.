@@ -51,6 +51,15 @@ db.exec(`
   )
 `);
 
+// Migration : ajoute la colonne map_scores si elle n'existe pas encore (base
+// créée avant ce correctif). SQLite n'a pas de "ADD COLUMN IF NOT EXISTS",
+// donc on tente et on avale l'erreur "duplicate column" si elle existe déjà.
+try {
+  db.exec(`ALTER TABLE matches ADD COLUMN map_scores TEXT`);
+} catch (e) {
+  if (!/duplicate column/i.test(e.message)) throw e;
+}
+
 // INSERT OR IGNORE : si le match existe déjà (même id), on ne le retouche pas.
 // -> jamais de doublon, jamais de donnée écrasée au hasard.
 const upsertStmt = db.prepare(`
@@ -59,6 +68,9 @@ const upsertStmt = db.prepare(`
   VALUES
     (@id, @team1, @team2, @team1Name, @team2Name, @score1, @score2, @status, @region, @league, @phase, @day, @time, @raw)
 `);
+
+const saveMapScoresStmt = db.prepare(`UPDATE matches SET map_scores = @mapScores WHERE id = @id`);
+const getMapScoresStmt = db.prepare(`SELECT map_scores FROM matches WHERE id = ?`);
 
 /**
  * À appeler à chaque fois que /api/valorant-results (ou live/upcoming en statut
@@ -91,6 +103,32 @@ function storeFinishedMatches(matches) {
 }
 
 /**
+ * Renvoie les scores par map déjà connus pour un match (persistés en base),
+ * ou null si jamais trouvés / pas encore essayé. Permet à enrichWithMapScores
+ * de sauter complètement l'appel à vlr.gg pour un match déjà résolu, même
+ * après un redémarrage/redeploy du backend (le cache mémoire, lui, repart à
+ * zéro à chaque redeploy — pas la base SQLite tant qu'un volume est monté).
+ */
+function getStoredMapScores(id) {
+  const row = getMapScoresStmt.get(String(id));
+  if (!row || row.map_scores == null) return undefined; // jamais essayé / pas en base
+  try {
+    return JSON.parse(row.map_scores); // peut être `null` si déjà essayé sans succès
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Persiste les scores par map une fois trouvés sur vlr.gg, pour ne plus
+ * jamais avoir à refaire la requête. N'écrit que si le match existe déjà en
+ * base (toujours le cas ici : storeFinishedMatches tourne avant l'enrichissement).
+ */
+function saveMapScores(id, mapScores) {
+  saveMapScoresStmt.run({ id: String(id), mapScores: JSON.stringify(mapScores) });
+}
+
+/**
  * Renvoie tout l'historique accumulé (le plus récent d'abord), au format déjà
  * compatible avec transformMatch() côté frontend (structure PandaScore-like
  * reconstruite depuis raw_json).
@@ -112,4 +150,4 @@ function getTeamHistory(teamCode, limit = 50) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
-export { storeFinishedMatches, getFullHistory, getTeamHistory };
+export { storeFinishedMatches, getFullHistory, getTeamHistory, getStoredMapScores, saveMapScores };
