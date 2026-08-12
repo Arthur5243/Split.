@@ -20,8 +20,8 @@ const NEWS_IMAGE = "/news-image.jpg";
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
 // Valorant / CS2 / Rocket League — fichiers fournis par l'utilisateur.
-const NAV_VALORANT_IMG = "/nav-valorant.png";
-const NAV_CSGO_IMG = "/nav-csgo.png";
+const NAV_VALORANT_IMG = "/valorant. png";
+const NAV_CSGO_IMG = "/csgo.png";
 const NAV_RL_IMG = "/nav-rl.png";
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
