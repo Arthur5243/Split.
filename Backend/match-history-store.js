@@ -140,6 +140,38 @@ function getFullHistory(limit = 5000) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
+/**
+ * Comme getFullHistory, mais renvoie les champs à plat (pas raw_json) et
+ * inclut map_scores (parsé). Sert à reconstituer, côté server.js, le format
+ * "PandaScore-like" attendu par le front pour les matchs qui sont tombés
+ * hors de la fenêtre des 50 derniers matchs renvoyés par PandaScore (tous
+ * jeux/régions confondus) mais qu'on a déjà vus et stockés nous-mêmes.
+ */
+function getFullHistoryFlat(limit = 5000) {
+  const rows = db
+    .prepare(
+      `SELECT id, team1, team2, team1_name, team2_name, score1, score2, status, region, league, phase, day, time, map_scores
+       FROM matches ORDER BY day DESC, time DESC LIMIT ?`
+    )
+    .all(limit);
+  return rows.map((r) => ({
+    id: r.id,
+    team1: r.team1,
+    team2: r.team2,
+    team1Name: r.team1_name,
+    team2Name: r.team2_name,
+    score1: r.score1,
+    score2: r.score2,
+    status: r.status,
+    region: r.region,
+    league: r.league,
+    phase: r.phase,
+    day: r.day,
+    time: r.time,
+    map_scores: r.map_scores ? JSON.parse(r.map_scores) : null,
+  }));
+}
+
 /** Historique filtré pour une équipe donnée (utile pour du debug/monitoring). */
 function getTeamHistory(teamCode, limit = 50) {
   const rows = db
@@ -150,4 +182,4 @@ function getTeamHistory(teamCode, limit = 50) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
-export { storeFinishedMatches, getFullHistory, getTeamHistory, getStoredMapScores, saveMapScores };
+export { storeFinishedMatches, getFullHistory, getFullHistoryFlat, getTeamHistory, getStoredMapScores, saveMapScores };
