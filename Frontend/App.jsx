@@ -11,20 +11,18 @@ import {
   X,
   CalendarDays,
   Chrome,
-  Crosshair,
   Target,
-  Car,
   ChevronUp,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
 
-// Icônes de la nav du bas (remplacent d'anciennes images perdues lors de la
-// compression des images ; pas de fichier supplémentaire à héberger).
-const NAV_VALORANT_ICON = Crosshair;
-const NAV_CSGO_ICON = Crosshair;
-const NAV_RL_ICON = Car;
+// Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
+// Valorant / CS2 / Rocket League — fichiers fournis par l'utilisateur.
+const NAV_VALORANT_IMG = "/nav-valorant.png";
+const NAV_CSGO_IMG = "/nav-csgo.png";
+const NAV_RL_IMG = "/nav-rl.png";
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
@@ -1107,11 +1105,11 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   );
 }
 
-function PlaceholderTab({ label, Icon, T }) {
+function PlaceholderTab({ label, img, T }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: "560px" }}>
-      <div className="rounded-full flex items-center justify-center mb-4" style={{ width: "72px", height: "72px", background: "#fff" }}>
-        <Icon size={34} color="#111" strokeWidth={2.2} />
+      <div className="rounded-full flex items-center justify-center mb-4" style={{ width: "72px", height: "72px", background: "#111" }}>
+        <img src={img} alt={label} style={{ width: "34px", height: "34px", objectFit: "contain" }} />
       </div>
       <h2 className="font-black" style={{ color: "#111", fontSize: "20px" }}>{label}</h2>
       <p style={{ color: "#555", fontSize: "13px" }} className="mt-2">{T.placeholderSoon.replace("{label}", label)}</p>
@@ -1549,9 +1547,9 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, Icon: NAV_VALORANT_ICON },
-    { key: "csgo", label: T.navCsgo, Icon: NAV_CSGO_ICON },
-    { key: "rocketleague", label: T.navRl, Icon: NAV_RL_ICON },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG },
     { key: "classement", label: T.navClassement, Icon: Trophy },
   ];
 
@@ -1580,8 +1578,8 @@ export default function ClutchApp() {
               loading={dataLoading}
             />
           )}
-          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" Icon={NAV_CSGO_ICON} T={T} />}
-          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" Icon={NAV_RL_ICON} T={T} />}
+          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" img={NAV_CSGO_IMG} T={T} />}
+          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
           {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} />}
         </div>
 
