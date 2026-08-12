@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
 import { getMapScores, findTeamId, findMatchId } from "./vlr-scores.js";
-import { storeFinishedMatches, getFullHistory, getTeamHistory } from "./match-history-store.js";
+import { storeFinishedMatches, getFullHistory, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -127,6 +127,24 @@ async function mapWithConcurrency(items, limit, fn) {
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+// Colle sur `data` les scores par map déjà connus en base (synchrone, aucun
+// appel réseau) — ceux-là s'affichent dès la 1ère réponse, sans attendre le
+// sweep en arrière-plan. Renvoie la liste des matchs terminés qui n'ont
+// encore JAMAIS été résolus (ni en base, ni en cache) : c'est seulement sur
+// ceux-là qu'on ira taper vlr.gg.
+function applyStoredMapScores(finished) {
+  const stillUnknown = [];
+  for (const m of finished) {
+    const stored = getStoredMapScores(m.id);
+    if (stored !== undefined) {
+      m.map_scores = stored; // déjà résolu (même si `null` = déjà essayé, sans succès)
+    } else {
+      stillUnknown.push(m);
+    }
+  }
+  return stillUnknown;
+}
+
 async function enrichWithMapScores(data) {
   // Restriction retirée : on va chercher le détail par map pour TOUS les
   // matchs terminés renvoyés par PandaScore (jusqu'à 50, cf per_page côté
@@ -139,7 +157,13 @@ async function enrichWithMapScores(data) {
     .filter((m) => m.status === "finished")
     .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at));
 
-  await mapWithConcurrency(finished, 1, async (m) => {
+  // Court-circuite tout ce qui est déjà en base (SQLite, persiste entre les
+  // redeploys tant qu'un volume Railway est monté) — on ne rappelle vlr.gg
+  // QUE pour les matchs jamais résolus jusqu'ici. C'est ce qui évite de
+  // redemander la même requête en boucle.
+  const toFetch = applyStoredMapScores(finished);
+
+  await mapWithConcurrency(toFetch, 1, async (m) => {
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
@@ -154,6 +178,10 @@ async function enrichWithMapScores(data) {
       m.map_scores = null;
       console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
     }
+    // Persisté immédiatement (succès OU échec) : un match déjà tenté ne sera
+    // plus jamais re-tapé sur vlr.gg à chaque sweep — seulement si on efface
+    // la base ou si on ajoute un mécanisme de re-tentative plus tard.
+    saveMapScores(m.id, m.map_scores);
     // 900ms (au lieu de 400) : depuis qu'on enrichit TOUS les matchs terminés
     // (plus de limite à 8), il faut laisser plus de marge au rate-limiter de
     // vlrggapi entre chaque match, sinon seul le 1er passe et les suivants
@@ -179,18 +207,27 @@ app.get("/api/valorant-results", async (req, res) => {
 
     const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
 
-    // On répond IMMÉDIATEMENT avec les données brutes PandaScore (jamais
-    // "pas de matchs"), et on enrichit les scores par map en arrière-plan.
-    // Avant : on attendait (await) enrichWithMapScores sur TOUS les matchs
-    // terminés avant de répondre -> avec les retries sur 429, la requête
-    // pouvait prendre des dizaines de secondes et le front/proxy Railway
-    // coupait la connexion (statut 499) -> plus aucun match affiché, alors
-    // que PandaScore avait bien répondu depuis longtemps.
-    enrichedResultsCache = { data, time: now };
-    res.json(data);
-
     const rows = data.map(toHistoryRow).filter(Boolean);
     storeFinishedMatches(rows);
+
+    // Pose tout de suite les scores déjà connus en base (aucun appel réseau,
+    // donc ça ne retarde pas la réponse) — jamais besoin d'attendre un sweep
+    // pour un match déjà résolu, même juste après un redeploy.
+    const finished = data.filter((m) => m.status === "finished");
+    for (const m of finished) {
+      const stored = getStoredMapScores(m.id);
+      if (stored !== undefined) m.map_scores = stored;
+    }
+
+    // On répond IMMÉDIATEMENT (jamais "pas de matchs"), et on va chercher sur
+    // vlr.gg uniquement les scores encore inconnus, en arrière-plan. Avant :
+    // on attendait (await) enrichWithMapScores sur TOUS les matchs terminés
+    // avant de répondre -> avec les retries sur 429, la requête pouvait
+    // prendre des dizaines de secondes et le front/proxy Railway coupait la
+    // connexion (statut 499) -> plus aucun match affiché, alors que
+    // PandaScore avait bien répondu depuis longtemps.
+    enrichedResultsCache = { data, time: now };
+    res.json(data);
 
     enrichInProgress = true;
     enrichWithMapScores(data)
