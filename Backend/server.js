@@ -165,7 +165,15 @@ async function enrichWithMapScores(data) {
 app.get("/api/valorant-results", async (req, res) => {
   try {
     const now = Date.now();
-    if (enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS) {
+    const cacheIsFresh = enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS;
+
+    // Si un enrichissement est déjà en cours sur les données actuelles, on
+    // sert ce cache tel quel plutôt que de relancer un fetch + un nouveau
+    // sweep : sinon le sweep en cours devient orphelin (il continue de
+    // muter un tableau `data` qui n'est plus celui référencé par le cache)
+    // et ses résultats sont perdus -> plus aucun map_scores ne se pose
+    // jamais sur ce qui est réellement servi.
+    if (cacheIsFresh || (enrichedResultsCache && enrichInProgress)) {
       return res.json(enrichedResultsCache.data);
     }
 
@@ -184,20 +192,18 @@ app.get("/api/valorant-results", async (req, res) => {
     const rows = data.map(toHistoryRow).filter(Boolean);
     storeFinishedMatches(rows);
 
-    if (!enrichInProgress) {
-      enrichInProgress = true;
-      enrichWithMapScores(data)
-        .then(() => {
-          // Les objets `data` sont mutés en place par enrichWithMapScores,
-          // donc le cache déjà posé plus haut se retrouve enrichi une fois
-          // le sweep terminé — sans jamais avoir fait attendre le front.
-          enrichedResultsCache = { data, time: Date.now() };
-        })
-        .catch((e) => console.error("[enrich background]", e.message))
-        .finally(() => {
-          enrichInProgress = false;
-        });
-    }
+    enrichInProgress = true;
+    enrichWithMapScores(data)
+      .then(() => {
+        // Les objets `data` sont mutés en place par enrichWithMapScores,
+        // donc le cache déjà posé plus haut se retrouve enrichi une fois
+        // le sweep terminé — sans jamais avoir fait attendre le front.
+        enrichedResultsCache = { data, time: Date.now() };
+      })
+      .catch((e) => console.error("[enrich background]", e.message))
+      .finally(() => {
+        enrichInProgress = false;
+      });
   } catch (e) {
     console.error(e);
     // Si le sweep échoue mais qu'on a un cache même périmé, mieux vaut le
