@@ -779,6 +779,30 @@ app.get("/admin/test-vlr", async (req, res) => {
   }
 });
 
+// Debug pour vérifier si PandaScore a déjà créé les entrées de tournoi
+// "Playoffs" (avec byes des qualifiés) pour une league donnée, avant qu'un
+// bracket ne soit rempli. Sert à distinguer "notre pagination coupe trop
+// tôt" de "PandaScore n'a tout simplement pas encore ces données".
+app.get("/admin/debug-tournaments", async (req, res) => {
+  const search = req.query.search || "Americas";
+  try {
+    const data = await pandaFetch(
+      "/valorant/tournaments?search[name]=" + encodeURIComponent(search) + "&per_page=100&sort=-begin_at"
+    );
+    const summary = (data || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      serie: t.serie?.full_name,
+      begin_at: t.begin_at,
+      end_at: t.end_at,
+      has_bracket: t.has_bracket,
+    }));
+    res.json(summary);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/map-scores", async (req, res) => {
   const { team1, team2, date } = req.query;
   if (!team1 || !team2) {
