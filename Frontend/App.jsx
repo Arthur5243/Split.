@@ -41,13 +41,13 @@ const REGION_TWITCH = {
   CN: "valorant_cn",
 };
 
-// Handles YouTube VCT officiels par région, pour le bouton "Replay" une fois
-// le match terminé (pattern https://youtube.com/@vct[region]).
+// Liens replay YouTube officiels par région, pour le bouton "Replay" une fois
+// le match terminé (chaque région a son propre handle et paramètre "si").
 const REGION_YOUTUBE = {
-  EMEA: "vctemea",
-  AMERICAS: "vctamericas",
-  PACIFIC: "vctpacific",
-  CN: "vctchina",
+  EMEA: "https://youtube.com/@vctemea?si=BpA8cbVamLTFSN78",
+  AMERICAS: "https://youtube.com/@valorant_americas?si=ZgRee5FljnA9F5XG",
+  PACIFIC: "https://youtube.com/@vctpacific?si=BpA8cbVamLTFSN78",
+  CN: "https://youtube.com/@valorantesportscn?si=H2cxjYM4lYVN-Oks",
 };
 
 // Catégories de jeux affichées dans le classement
@@ -911,9 +911,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
 
-  // Lien replay YouTube selon la région du match (repli sur vctemea si inconnue)
-  const youtubeHandle = REGION_YOUTUBE[match.region] || "vctemea";
-  const replayUrl = "https://youtube.com/@" + youtubeHandle + "?si=BpA8cbVamLTFSN78";
+  // Lien replay YouTube selon la région du match (repli sur EMEA si inconnue)
+  const replayUrl = REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA;
 
   // Points gagnés sur ce match précis, uniquement si un pari a été fait et le
   // match est terminé (même formule que le règlement global des points) :
