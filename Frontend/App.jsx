@@ -935,8 +935,15 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache }) {
   const tbd = isTbd(match);
+  // PandaScore renvoie parfois image_url: null pour un match tout juste
+  // terminé (délai de leur côté sur les matchs "past"), alors que la même
+  // équipe a un logo connu ailleurs (upcoming/live/un autre résultat) — on
+  // retombe sur ce logo déjà vu plutôt que de laisser tomber sans raison.
+  const cache = teamLogoCache || {};
+  const resolvedLogo1 = match.team1Logo || cache[normTeamName(match.team1Name)] || null;
+  const resolvedLogo2 = match.team2Logo || cache[normTeamName(match.team2Name)] || null;
   const finished = match.status === "finished";
   const running = match.status === "running";
   const seriesA = (pred && pred.seriesA) || "";
@@ -1007,7 +1014,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       <div className="flex items-center justify-between px-4 py-3 gap-2">
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
-            <TeamLogo code={match.team1} apiLogo={match.team1Logo} accent={accent} tbd={tbd} />
+            <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
             <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 : 0}%</span>
           </div>
           <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team1}</span>
@@ -1028,7 +1035,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
         <div className="flex items-center gap-2 flex-row-reverse">
           <div className="flex flex-col items-center gap-0.5">
-            <TeamLogo code={match.team2} apiLogo={match.team2Logo} accent={accent} tbd={tbd} />
+            <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 : 0}%</span>
           </div>
           <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team2}</span>
@@ -1338,7 +1345,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, T }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
   const glowAccent = single ? single.accent : "#ffffff";
   const allSelected = selectedRegions.length === REGIONS.length;
@@ -1417,7 +1424,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} />
             </React.Fragment>
           );
         })}
@@ -1835,6 +1842,20 @@ export default function ClutchApp() {
     return set.sort();
   }, [upcomingMatches, liveMatches, resultsMatches]);
 
+  // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
+  // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
+  // quand PandaScore renvoie image_url: null pour un match "juste terminé"
+  // (leur cache met parfois du temps à suivre) alors que la même équipe a
+  // déjà un logo connu ailleurs (voir MatchCard).
+  const teamLogoCache = React.useMemo(() => {
+    const map = {};
+    for (const m of [...upcomingMatches, ...liveMatches, ...resultsMatches]) {
+      if (m.team1Logo && m.team1Name) map[normTeamName(m.team1Name)] = m.team1Logo;
+      if (m.team2Logo && m.team2Name) map[normTeamName(m.team2Name)] = m.team2Logo;
+    }
+    return map;
+  }, [upcomingMatches, liveMatches, resultsMatches]);
+
   function toggleRegion(key) {
     const allKeys = REGIONS.map((r) => r.key);
     if (key === "ALL") {
@@ -2009,6 +2030,7 @@ export default function ClutchApp() {
               upcoming={upcomingMatches}
               live={liveMatches}
               results={resultsMatches}
+              teamLogoCache={teamLogoCache}
               loading={dataLoading}
             />
           )}
