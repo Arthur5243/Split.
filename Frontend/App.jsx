@@ -9,7 +9,7 @@ import {
   Mail,
   Lock,
   X,
-  CalendarDays,a
+  CalendarDays,
   Chrome,
   Target,
   ChevronUp,
