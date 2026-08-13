@@ -9,7 +9,7 @@ import {
   Mail,
   Lock,
   X,
-  CalendarDays,
+  CalendarDays,a
   Chrome,
   Target,
   ChevronUp,
@@ -724,13 +724,24 @@ function attachComputedOdds(matches, finishedMatches) {
 // S'appuie sur match.map_scores (scores réels par map, récupérés côté
 // backend via vlr.gg) et pred.games[i] = { a, b } (score pronostiqué pour la
 // map i, dans le même ordre équipe1/équipe2 que match.map_scores[i].score1/2).
-function calcMatchPoints(match, pred) {
-  if (!pred || pred.seriesA === "" || pred.seriesB === "") return 0;
-  if (match.score1 == null || match.score2 == null) return 0;
+// Détail des points, décomposé en deux lignes cumulables :
+//   - Score : 40 pts si la série pronostiquée est EXACTEMENT le score final
+//     (ex: pronostic 3-1, résultat réel 3-1), 20 pts si la bonne équipe a été
+//     pronostiquée mais pas le score exact, 0 pt si mauvaise équipe.
+//   - Bonus : 30 pts PAR map en score parfait (indépendant du Score), qui
+//     s'ajoute au Score dès qu'une bonne équipe a été pronostiquée.
+function getMatchPointsBreakdown(match, pred) {
+  if (!pred || pred.seriesA === "" || pred.seriesB === "") return { score: 0, bonus: 0, total: 0 };
+  if (match.score1 == null || match.score2 == null) return { score: 0, bonus: 0, total: 0 };
 
-  const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
-  const actualA = match.score1 > match.score2;
-  if (predictedA !== actualA) return 0; // mauvaise équipe -> 0 pt, peu importe le reste
+  const predA = parseInt(pred.seriesA, 10);
+  const predB = parseInt(pred.seriesB, 10);
+  const predictedAWins = predA > predB;
+  const actualAWins = match.score1 > match.score2;
+  if (predictedAWins !== actualAWins) return { score: 0, bonus: 0, total: 0 }; // mauvaise équipe -> 0 pt, peu importe le reste
+
+  const exactSeriesScore = predA === match.score1 && predB === match.score2;
+  const score = exactSeriesScore ? 40 : 20;
 
   const actualMaps = match.map_scores;
   const games = pred.games || [];
@@ -739,14 +750,20 @@ function calcMatchPoints(match, pred) {
     for (let i = 0; i < actualMaps.length; i++) {
       const g = games[i];
       if (!g || g.a === "" || g.b === "") continue; // map non pronostiquée -> pas de bonus possible
-      const predA = parseInt(g.a, 10);
-      const predB = parseInt(g.b, 10);
-      if (predA === actualMaps[i].score1 && predB === actualMaps[i].score2) {
+      const gA = parseInt(g.a, 10);
+      const gB = parseInt(g.b, 10);
+      if (gA === actualMaps[i].score1 && gB === actualMaps[i].score2) {
         perfectMaps++;
       }
     }
   }
-  return perfectMaps > 0 ? perfectMaps * 30 : 20;
+  const bonus = perfectMaps * 30;
+
+  return { score, bonus, total: score + bonus };
+}
+
+function calcMatchPoints(match, pred) {
+  return getMatchPointsBreakdown(match, pred).total;
 }
 
 function isValidScore(aStr, bStr) {
@@ -938,12 +955,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // Lien replay YouTube selon la région du match (repli sur EMEA si inconnue)
   const replayUrl = REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA;
 
-  // Points gagnés sur ce match précis, uniquement si un pari a été fait et le
-  // match est terminé (même règle que le règlement global des points) :
-  // null = pas de pari fait (rien à afficher), 0 = pari faux, > 0 = pari juste.
-  let earnedPoints = null;
+  // Détail des points gagnés sur ce match précis, uniquement si un pari a été
+  // fait et le match est terminé (même règle que le règlement global des
+  // points) : null = pas de pari fait (rien à afficher).
+  let pointsBreakdown = null;
   if (finished && pred && pred.seriesA !== "" && pred.seriesB !== "" && match.score1 != null && match.score2 != null) {
-    earnedPoints = calcMatchPoints(match, pred);
+    pointsBreakdown = getMatchPointsBreakdown(match, pred);
   }
 
   return (
@@ -1029,9 +1046,31 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
       {finished ? (
         <>
-          <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center py-1.5" style={{ background: "#1a1a1a" }}>
-            <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
-          </button>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center" style={{ background: "#1a1a1a", padding: "14px 0" }}>
+              <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
+            </button>
+            {pointsBreakdown && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "12px",
+                  background: pointsBreakdown.total > 0 ? "#CCF71D" : "#262626",
+                  color: pointsBreakdown.total > 0 ? "#0d0d0d" : "#777",
+                  fontSize: "15px",
+                  fontWeight: 900,
+                  fontStyle: "italic",
+                  letterSpacing: "0.01em",
+                  padding: "3px 12px",
+                  borderRadius: "8px",
+                  boxShadow: pointsBreakdown.total > 0 ? "0 0 0 1px rgba(204,247,29,0.35)" : "none",
+                }}
+              >
+                {pointsBreakdown.total} pts
+              </span>
+            )}
+          </div>
 
           {expanded && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
@@ -1082,9 +1121,18 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   <Play size={12} />
                   {T.replay}
                 </button>
-                <span style={{ color: earnedPoints > 0 ? "#CCF71D" : "#666", fontSize: "12px", fontWeight: 900, minWidth: "44px", textAlign: "right" }}>
-                  {earnedPoints != null ? (earnedPoints > 0 ? "+" + earnedPoints + " pts" : "0 pts") : ""}
-                </span>
+                {pointsBreakdown && pointsBreakdown.total > 0 ? (
+                  <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 700, textAlign: "right" }}>
+                    Score : {pointsBreakdown.score} pts
+                    {pointsBreakdown.bonus > 0 && <> + Bonus : {pointsBreakdown.bonus} pts</>}
+                    {" = "}
+                    <span style={{ color: "#CCF71D", fontWeight: 900 }}>{pointsBreakdown.total} pts</span>
+                  </span>
+                ) : (
+                  <span style={{ color: "#666", fontSize: "12px", fontWeight: 900 }}>
+                    {pointsBreakdown != null ? "0 pts" : ""}
+                  </span>
+                )}
               </div>
             </div>
           )}
