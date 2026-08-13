@@ -1947,4 +1947,4 @@ export default function ClutchApp() {
             setFavoriteTeam={setFavoriteTeam}
             otherNotifs={otherNotifs}
             setOtherNotifs={setOtherNotifs}
-            t
+            
