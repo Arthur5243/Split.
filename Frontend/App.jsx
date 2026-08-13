@@ -1730,7 +1730,15 @@ export default function ClutchApp() {
   // la logique de calcul des points (calcMatchPoints) ne change pas.
   const [predictions, setPredictions] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("split_predictions") || "{}");
+      const stored = JSON.parse(localStorage.getItem("split_predictions") || "{}");
+      // Les rectangles de détail (scores par map) ne doivent jamais rester
+      // ouverts après un reload : on repart toujours fermé, le reste de la
+      // prédiction (scores saisis, odds...) est conservé tel quel.
+      const reset = {};
+      for (const [id, pred] of Object.entries(stored)) {
+        reset[id] = { ...pred, expanded: false };
+      }
+      return reset;
     } catch (e) {
       return {};
     }
