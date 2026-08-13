@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
-import { getMapScores, findTeamId, findMatchId, findManualMapScores } from "./vlr-scores.js";
+import { getMapScores, findTeamId, findMatchId, findManualMapScores, getUpcomingMatchesForTeam } from "./vlr-scores.js";
 import { storeFinishedMatches, getFullHistory, getFullHistoryFlat, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -783,6 +783,19 @@ app.get("/admin/test-vlr", async (req, res) => {
 // "Playoffs" (avec byes des qualifiés) pour une league donnée, avant qu'un
 // bracket ne soit rempli. Sert à distinguer "notre pagination coupe trop
 // tôt" de "PandaScore n'a tout simplement pas encore ces données".
+// Vérifie directement sur vlr.gg si les équipes qualifiées Americas ont déjà
+// des matchs de Playoffs programmés qu'on n'a pas encore côté PandaScore.
+// Usage : /admin/debug-vlr-americas
+app.get("/admin/debug-vlr-americas", async (req, res) => {
+  const teams = ["Sentinels", "NRG", "Leviatan", "G2 Esports", "KRU Esports", "Cloud9", "MIBR", "Evil Geniuses"];
+  try {
+    const results = await Promise.all(teams.map((t) => getUpcomingMatchesForTeam(t)));
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/admin/debug-tournaments", async (req, res) => {
   const search = req.query.search || "Americas";
   try {
