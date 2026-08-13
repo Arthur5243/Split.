@@ -417,6 +417,9 @@ function transformMatch(m) {
     time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
     league: (m.league && m.league.name) || "VCT",
     phase: (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "",
+    // Nom du tournoi tel quel (distinct de `phase`, qui peut déjà être le nom
+    // du serie) : sert uniquement à détecter/afficher le tag "Playoffs".
+    tournamentName: (m.tournament && m.tournament.name) || "",
     team1: teamCode(t1),
     team2: teamCode(t2),
     team1Name: t1 ? t1.name : null,
@@ -441,6 +444,12 @@ function transformMatch(m) {
 
 function isTbd(m) {
   return m.team1 === "TBD" || m.team2 === "TBD";
+}
+
+// Vrai si le tournoi de ce match est une phase Playoffs (peu importe la
+// casse) -> sert à afficher un petit tag gris "Playoffs" à côté de la ligue.
+function isPlayoffs(m) {
+  return /playoff/i.test(m.tournamentName || "") || /playoff/i.test(m.phase || "");
 }
 
 // --- Système de cotes maison (remplace l'API /api/odds qui renvoyait tout à 0%) ---
@@ -767,6 +776,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div>
           <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
             {match.league} • {match.phase}
+            {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
+              <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
+            )}
           </span>
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
         </div>
@@ -1559,8 +1571,8 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
     { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG },
     { key: "classement", label: T.navClassement, Icon: Trophy },
   ];
@@ -1604,7 +1616,7 @@ export default function ClutchApp() {
             return (
               <button key={item.key} onClick={() => setActiveTab(item.key)} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 {item.img ? (
-                  <img src={item.img} alt={item.label} style={{ width: "20px", height: "20px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
+                  <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 20) + "px", height: (item.imgSize || 20) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
                 ) : (
                   <item.Icon size={20} color={labelColor} strokeWidth={2.2} />
                 )}
