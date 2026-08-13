@@ -418,6 +418,7 @@ function classifyRegion(text) {
 // (CODE_PANDASCORE -> CODE_CORRECT) pour chaque cas repéré.
 const TEAM_CODE_OVERRIDES = {
   OSG: "ONG",
+  KDX: "DRX",
 };
 
 function teamCode(opp) {
