@@ -92,6 +92,8 @@ const STR = {
     teamsTbc: "Équipes à confirmer",
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pts d'écart après 12",
+    betLocked: "Pari verrouillé — le match a commencé",
+    myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
     classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
     classementEmptySub: "Personne n'a encore fait de pronostic. Sois le premier à grimper au classement !",
@@ -117,6 +119,8 @@ const STR = {
     teamsTbc: "Teams TBC",
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pt gap after 12",
+    betLocked: "Bet locked — match has started",
+    myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
     classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
     classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
@@ -660,6 +664,18 @@ function attachComputedOdds(matches, finishedMatches) {
   });
 }
 
+// --- Système de points ---
+// Formule demandée : probabilité (%) -> cote décimale -> points.
+//   cote = 100 / probabilité              (ex: 36% -> 100/36 = 2.78)
+//   points = (cote - 1) * 100             (ex: (2.78 - 1) * 100 = 178 pts)
+// Plus la probabilité annoncée pour l'équipe pronostiquée était basse (gros
+// outsider), plus la cote est haute, plus les points gagnés sont élevés.
+function calcPoints(oddsPercent) {
+  if (!oddsPercent || oddsPercent <= 0 || oddsPercent > 100) return 0;
+  const cote = 100 / oddsPercent;
+  return Math.round((cote - 1) * 100);
+}
+
 function isValidScore(aStr, bStr) {
   const a = parseInt(aStr || "0", 10);
   const b = parseInt(bStr || "0", 10);
@@ -742,26 +758,28 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
   );
 }
 
-function SeriesScoreInput({ value, onChange, accent }) {
+function SeriesScoreInput({ value, onChange, accent, disabled }) {
   return (
     <input
       value={value}
-      onChange={(e) => onChange(e.target.value.replace(/[^0-2]/g, "").slice(-1))}
+      onChange={(e) => !disabled && onChange(e.target.value.replace(/[^0-2]/g, "").slice(-1))}
+      disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-xl"
-      style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a" }}
+      style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 }
 
-function GameScoreInput({ value, onChange }) {
+function GameScoreInput({ value, onChange, disabled }) {
   return (
     <input
       value={value}
-      onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+      onChange={(e) => !disabled && onChange(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+      disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-lg"
-      style={{ width: "44px", height: "38px", background: "#1c1c1c", color: "#fff", fontSize: "15px", border: "1px solid #2a2a2a" }}
+      style={{ width: "44px", height: "38px", background: "#1c1c1c", color: "#fff", fontSize: "15px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 }
@@ -774,6 +792,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesB = (pred && pred.seriesB) || "";
   const expanded = pred && pred.expanded;
   const games = (pred && pred.games) || [];
+  // Dès que le match a démarré (live) ou est terminé, le pari est figé :
+  // impossible de changer le score série pronostiqué ni les scores par map.
+  const betLocked = running || finished;
 
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
@@ -836,13 +857,19 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="px-4 pb-3 flex items-center justify-center gap-3">
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
-            <SeriesScoreInput value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} />
+            <SeriesScoreInput value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} />
           </div>
           <span style={{ color: "#444", fontWeight: 900, fontSize: "18px" }}>–</span>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
-            <SeriesScoreInput value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} />
+            <SeriesScoreInput value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} />
           </div>
+        </div>
+      )}
+      {running && !tbd && (
+        <div className="px-4 pb-2 flex items-center justify-center gap-1.5">
+          <Lock size={11} color="#666" />
+          <span style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>{T.betLocked || "Pari verrouillé"}</span>
         </div>
       )}
 
@@ -908,9 +935,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           )}
                         </div>
                         <div className="flex items-center justify-center gap-3">
-                          <GameScoreInput value={g.a} onChange={(v) => onScoreChange(match.id, i, "a", v)} />
+                          <GameScoreInput value={g.a} onChange={(v) => onScoreChange(match.id, i, "a", v)} disabled={betLocked} />
                           <span style={{ color: "#444", fontWeight: 700 }}>—</span>
-                          <GameScoreInput value={g.b} onChange={(v) => onScoreChange(match.id, i, "b", v)} />
+                          <GameScoreInput value={g.b} onChange={(v) => onScoreChange(match.id, i, "b", v)} disabled={betLocked} />
                         </div>
                       </div>
                     );
@@ -1149,12 +1176,20 @@ function PlaceholderTab({ label, img, T }) {
   );
 }
 
-function ClassementTab({ T, selectedCats, toggleCat }) {
+function ClassementTab({ T, selectedCats, toggleCat, userPoints }) {
   const allSelected = selectedCats.length === CATS.length;
   return (
     <div className="px-4 pt-6 pb-6">
       <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
       <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
+
+      <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+        <div>
+          <p style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{T.myPoints}</p>
+          <p style={{ color: "#777", fontSize: "10.5px" }}>{T.myPointsSub}</p>
+        </div>
+        <span style={{ color: "#CCF71D", fontSize: "20px", fontWeight: 900 }}>{userPoints} pts</span>
+      </div>
 
       <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-2">{T.catFilterLabel}</p>
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
@@ -1389,7 +1424,33 @@ export default function ClutchApp() {
   const [selectedStatuses, setSelectedStatuses] = useState(["upcoming"]);
   const [selectedCats, setSelectedCats] = useState(["VALORANT"]);
   const [preAllCats, setPreAllCats] = useState(["VALORANT"]);
-  const [predictions, setPredictions] = useState({});
+  // Prédictions + points persistés en local (localStorage) : pas encore de
+  // compte utilisateur (connexion à ajouter plus tard), donc on garde tout
+  // rattaché à cet appareil pour l'instant. Le jour où l'auth arrive, il
+  // suffira de remplacer ce stockage local par un appel serveur par utilisateur,
+  // la logique de calcul des points (calcPoints) ne change pas.
+  const [predictions, setPredictions] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("split_predictions") || "{}");
+    } catch (e) {
+      return {};
+    }
+  });
+  const [userPoints, setUserPoints] = useState(() => {
+    const raw = parseInt(localStorage.getItem("split_points_total") || "0", 10);
+    return Number.isNaN(raw) ? 0 : raw;
+  });
+  const [settledMatchIds, setSettledMatchIds] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem("split_settled_matches") || "[]"));
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("split_predictions", JSON.stringify(predictions));
+  }, [predictions]);
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
@@ -1468,7 +1529,20 @@ export default function ClutchApp() {
         const finishedMatches = historyT.length > paT.length ? historyT : paT;
         setUpcomingMatches(attachComputedOdds(upT, finishedMatches));
         setLiveMatches(attachComputedOdds(liT, finishedMatches));
-        setResultsMatches(paT);
+        // Avant : les matchs terminés (onglet "Match terminé") ne passaient
+        // jamais par attachComputedOdds -> match.odds1/odds2 restaient
+        // `undefined`, et le repli d'affichage (`match.odds1 != null ? ... : 0`)
+        // faisait donc afficher 0% / 0% sur TOUS les matchs déjà joués.
+        // On calcule les cotes de la même façon que pour upcoming/live, à
+        // partir de l'historique qui EXCLUT le match lui-même (sinon son
+        // propre résultat biaiserait sa propre cote).
+        setResultsMatches(
+          paT.map((m) => {
+            const historyWithoutSelf = finishedMatches.filter((h) => String(h.id) !== String(m.id));
+            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf);
+            return { ...m, odds1, odds2, cote1, cote2 };
+          })
+        );
       } catch (e) {
         // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
       } finally {
@@ -1554,12 +1628,56 @@ export default function ClutchApp() {
         if (ok) {
           const count = an + bn;
           const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
-          return { ...prev, [matchId]: { ...next, games, expanded: true } };
+          // On fige les cotes affichées AU MOMENT du pari (avant que le match
+          // ne commence, seul instant où ce champ est éditable) : les points
+          // gagnés plus tard se basent toujours sur cette cote-là, jamais sur
+          // une cote recalculée après-coup une fois le résultat connu.
+          const src = [...upcomingMatches, ...liveMatches].find((m) => String(m.id) === String(matchId));
+          const odds1 = src ? src.odds1 : cur.odds1;
+          const odds2 = src ? src.odds2 : cur.odds2;
+          return { ...prev, [matchId]: { ...next, games, expanded: true, odds1, odds2 } };
         }
       }
       return { ...prev, [matchId]: next };
     });
   }
+
+  // Dès qu'un match pronostiqué apparaît "finished" côté résultats, on règle
+  // le pari une seule fois (settledMatchIds évite de recompter les points à
+  // chaque repoll de /api/valorant-results toutes les 60s).
+  useEffect(() => {
+    if (!resultsMatches.length) return;
+    let pointsToAdd = 0;
+    const newlySettled = [];
+    for (const m of resultsMatches) {
+      if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
+      if (settledMatchIds.has(String(m.id))) continue;
+      const pred = predictions[m.id];
+      if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
+      const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
+      const actualA = m.score1 > m.score2;
+      newlySettled.push(String(m.id));
+      if (predictedA === actualA) {
+        const oddsForPick = predictedA ? pred.odds1 : pred.odds2;
+        pointsToAdd += calcPoints(oddsForPick);
+      }
+    }
+    if (newlySettled.length > 0) {
+      setSettledMatchIds((prev) => {
+        const next = new Set(prev);
+        newlySettled.forEach((id) => next.add(id));
+        localStorage.setItem("split_settled_matches", JSON.stringify([...next]));
+        return next;
+      });
+      if (pointsToAdd > 0) {
+        setUserPoints((prev) => {
+          const next = prev + pointsToAdd;
+          localStorage.setItem("split_points_total", String(next));
+          return next;
+        });
+      }
+    }
+  }, [resultsMatches]);
 
   function toggleExpand(matchId) {
     setPredictions((prev) => ({
@@ -1612,7 +1730,7 @@ export default function ClutchApp() {
           )}
           {activeTab === "csgo" && <PlaceholderTab label="CS:GO" img={NAV_CSGO_IMG} T={T} />}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
-          {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} />}
+          {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} userPoints={userPoints} />}
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
