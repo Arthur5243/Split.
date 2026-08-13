@@ -68,7 +68,7 @@ app.get("/api/valorant-upcoming", async (req, res) => {
     // toutes les régions sans que l'une écrase la profondeur des autres.
     const pageNums = [1, 2, 3, 4, 5];
     const pages = await Promise.all(
-      pageNums.map((p) => cachedFetch("upcoming-" + p, "/valorant/matches/upcoming?per_page=100&page=" + p))
+      pageNums.map((p) => cachedFetch("upcoming-" + p, "/valorant/matches/upcoming?per_page=100&page=" + p + "&sort=begin_at"))
     );
     const combined = pages.flatMap((p) => p || []);
     const data = combined.filter((m) => !isFullyUnknown(m));
