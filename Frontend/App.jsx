@@ -13,6 +13,7 @@ import {
   Chrome,
   Target,
   ChevronUp,
+  Play,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -38,6 +39,15 @@ const REGION_TWITCH = {
   AMERICAS: "valorant_americas",
   PACIFIC: "valorant_pacific",
   CN: "valorant_cn",
+};
+
+// Handles YouTube VCT officiels par région, pour le bouton "Replay" une fois
+// le match terminé (pattern https://youtube.com/@vct[region]).
+const REGION_YOUTUBE = {
+  EMEA: "vctemea",
+  AMERICAS: "vctamericas",
+  PACIFIC: "vctpacific",
+  CN: "vctchina",
 };
 
 // Catégories de jeux affichées dans le classement
@@ -107,6 +117,7 @@ const STR = {
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
+    yourBet: "Ton pari", replay: "Replay",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
@@ -134,6 +145,7 @@ const STR = {
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
+    yourBet: "Your bet", replay: "Replay",
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Clasificación",
@@ -159,6 +171,7 @@ const STR = {
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
     statusUpcoming: "Próximos partidos",
+    yourBet: "Tu pronóstico", replay: "Replay",
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Classifica",
@@ -184,6 +197,7 @@ const STR = {
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
     statusUpcoming: "Prossime partite",
+    yourBet: "Il tuo pronostico", replay: "Replay",
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "ランキング",
@@ -209,6 +223,7 @@ const STR = {
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
     statusUpcoming: "今後の試合",
+    yourBet: "あなたの予想", replay: "リプレイ",
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Rangliste",
@@ -234,6 +249,7 @@ const STR = {
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
     statusUpcoming: "Bevorstehende Spiele",
+    yourBet: "Dein Tipp", replay: "Replay",
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "排行榜",
@@ -259,6 +275,7 @@ const STR = {
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
     statusUpcoming: "即将进行的比赛",
+    yourBet: "你的竞猜", replay: "回放",
   },
 };
 
@@ -479,20 +496,20 @@ function parseMapPick(raw) {
 }
 
 // Construit le libellé complet d'une map : nom nettoyé + soit "(Équipe)" si on
-// sait qui l'a choisie, soit "(map decider)" pour la dernière map de la série
-// (celle qu'aucune des deux équipes n'a choisie).
+// sait qui l'a choisie, soit "(map decider)" uniquement pour la 3e map d'une
+// série (la seule qu'aucune des deux équipes n'a choisie en BO3).
 // - Saisie manuelle (Backend/data/manual-map-scores.json) : champ `pick`
 //   explicite, `null` pour la map décisive.
 // - Données auto vlr.gg : le pick est parfois collé dans le nom brut de la
-//   map ; à défaut, on considère la dernière map de la liste comme decider.
+//   map ; à défaut, la 3e map (index 2) est considérée comme decider.
 function formatMapLabel(g, index, total) {
   if (Object.prototype.hasOwnProperty.call(g, "pick")) {
     if (g.pick) return (g.map || "") + " (" + g.pick + ")";
-    return (g.map || "") + " (map decider)";
+    return (g.map || "") + (index === 2 ? " (map decider)" : "");
   }
   const { name, pickedBy } = parseMapPick(g.map);
   if (pickedBy) return name + " (" + pickedBy + ")";
-  if (index === total - 1) return name + " (map decider)";
+  if (index === 2) return name + " (map decider)";
   return name;
 }
 
@@ -838,7 +855,7 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
 // est considérée complète -> on bascule direct sur l'autre case. Si l'autre
 // case du même duel est déjà complète (ex: 13-2), les deux scores sont
 // saisis -> on ferme le clavier numérique (blur) au lieu de rebasculer.
-const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChange, disabled, onAdvance, otherValue }, ref) {
+const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChange, disabled, onAdvance, otherValue, onFieldFocus, onFieldBlur }, ref) {
   return (
     <input
       ref={ref}
@@ -854,6 +871,8 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
           onAdvance();
         }
       }}
+      onFocus={onFieldFocus}
+      onBlur={onFieldBlur}
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-lg"
@@ -881,8 +900,30 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesBRef = useRef(null);
   const gameRefs = useRef({});
 
+  // Suit quels champs de score par map ont été "quittés" (blur) par
+  // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
+  // saisie de la map terminée (jamais pendant la frappe). Revient à false
+  // dès qu'on reclique dans le champ (nouvelle saisie en cours).
+  const [touchedFields, setTouchedFields] = useState({});
+  const markTouched = (key) => setTouchedFields((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+  const markUntouched = (key) => setTouchedFields((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
+
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
+
+  // Lien replay YouTube selon la région du match (repli sur vctemea si inconnue)
+  const youtubeHandle = REGION_YOUTUBE[match.region] || "vctemea";
+  const replayUrl = "https://youtube.com/@" + youtubeHandle + "?si=BpA8cbVamLTFSN78";
+
+  // Points gagnés sur ce match précis, uniquement si un pari a été fait et le
+  // match est terminé (même formule que le règlement global des points) :
+  // null = pas de pari fait (rien à afficher), 0 = pari faux, > 0 = pari juste.
+  let earnedPoints = null;
+  if (finished && pred && pred.seriesA !== "" && pred.seriesB !== "" && match.score1 != null && match.score2 != null) {
+    const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
+    const actualA = match.score1 > match.score2;
+    earnedPoints = predictedA === actualA ? calcPoints(predictedA ? pred.odds1 : pred.odds2) : 0;
+  }
 
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: "1px solid #333" }}>
@@ -921,9 +962,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team1}</span>
         </div>
         {finished ? (
-          <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900 }}>
-            {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
-          </span>
+          <div className="flex flex-col items-center">
+            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900 }}>
+              {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
+            </span>
+            {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
+              <span style={{ color: "#777", fontSize: "9.5px", fontWeight: 700, marginTop: "1px" }}>
+                {T.yourBet} : {pred.seriesA}-{pred.seriesB}
+              </span>
+            )}
+          </div>
         ) : (
           <span style={{ color: "#555", fontSize: "11px", fontWeight: 700 }}>VS</span>
         )}
@@ -974,24 +1022,48 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   const mapsList = match.map_scores && match.map_scores.length > 0
                     ? match.map_scores
                     : [{ map: null, score1: 0, score2: 0 }];
-                  return mapsList.map((g, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                          Map {i + 1}
-                        </span>
-                        {g.map && (
-                          <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                            {formatMapLabel(g, i, mapsList.length)}
+                  return mapsList.map((g, i) => {
+                    const gamePred = (pred && pred.games && pred.games[i]) || null;
+                    return (
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                            Map {i + 1}
                           </span>
-                        )}
+                          {g.map && (
+                            <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                              {formatMapLabel(g, i, mapsList.length)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                            {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                          </span>
+                          {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                            <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
+                              {T.yourBet} : {gamePred.a}-{gamePred.b}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                        {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                      </span>
-                    </div>
-                  ));
+                    );
+                  });
                 })()}
+              </div>
+
+              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f" }}>
+                <button
+                  onClick={() => window.open(replayUrl, "_blank", "noopener,noreferrer")}
+                  className="flex items-center gap-1.5"
+                  style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                >
+                  <Play size={12} />
+                  {T.replay}
+                </button>
+                <span style={{ color: earnedPoints > 0 ? "#CCF71D" : "#666", fontSize: "12px", fontWeight: 900, minWidth: "44px", textAlign: "right" }}>
+                  {earnedPoints != null ? (earnedPoints > 0 ? "+" + earnedPoints + " pts" : "0 pts") : ""}
+                </span>
               </div>
             </div>
           )}
@@ -1009,12 +1081,15 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               ) : (
                 <div className="flex flex-col gap-3">
                   {games.map((g, i) => {
-                    // On n'affiche l'erreur que si les DEUX scores sont
-                    // entièrement saisis et que la combinaison viole la
-                    // règle (13 pts min, 2 pts d'écart après 12) : jamais à
-                    // vide, jamais pendant que l'utilisateur tape encore.
-                    const bothComplete = isGameScoreComplete(g.a) && isGameScoreComplete(g.b);
-                    const showError = bothComplete && !isValidScore(g.a, g.b);
+                    // On n'affiche l'erreur que si les DEUX scores ont été
+                    // saisis (non vides) ET que l'utilisateur a quitté les
+                    // deux champs (blur) après saisie : jamais à vide,
+                    // jamais pendant que l'utilisateur tape encore — mais
+                    // bien dès que c'est fini, même sur un score ambigu
+                    // comme "1" seul (ex: 12-1).
+                    const bothFilled = g.a !== "" && g.b !== "";
+                    const bothTouched = touchedFields[i + "-a"] && touchedFields[i + "-b"];
+                    const showError = bothFilled && bothTouched && !isValidScore(g.a, g.b);
                     return (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
@@ -1034,6 +1109,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                             disabled={betLocked}
                             onAdvance={() => gameRefs.current[i + "-b"] && gameRefs.current[i + "-b"].focus()}
                             otherValue={g.b}
+                            onFieldFocus={() => markUntouched(i + "-a")}
+                            onFieldBlur={() => markTouched(i + "-a")}
                           />
                           <span style={{ color: "#444", fontWeight: 700 }}>—</span>
                           <GameScoreInput
@@ -1041,6 +1118,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                             value={g.b}
                             onChange={(v) => onScoreChange(match.id, i, "b", v)}
                             otherValue={g.a}
+                            onFieldFocus={() => markUntouched(i + "-b")}
+                            onFieldBlur={() => markTouched(i + "-b")}
                             disabled={betLocked}
                             onAdvance={() => gameRefs.current[i + "-a"] && gameRefs.current[i + "-a"].focus()}
                           />
@@ -1868,18 +1947,4 @@ export default function ClutchApp() {
             setFavoriteTeam={setFavoriteTeam}
             otherNotifs={otherNotifs}
             setOtherNotifs={setOtherNotifs}
-            teams={allTeams}
-            T={T}
-          />
-        )}
-        {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}
-      </div>
-
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
-      `}</style>
-    </div>
-  );
-}
+            t
