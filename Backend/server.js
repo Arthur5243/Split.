@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import fs from "fs";
@@ -6,7 +5,16 @@ import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
 import { getMapScores, findTeamId, findMatchId, findManualMapScores, getUpcomingMatchesForTeam } from "./vlr-scores.js";
-import { storeFinishedMatches, getFullHistory, getFullHistoryFlat, getTeamHistory, getStoredMapScores, saveMapScores } from "./match-history-store.js";
+import {
+  storeFinishedMatches,
+  getFullHistory,
+  getFullHistoryFlat,
+  getTeamHistory,
+  getStoredMapScores,
+  saveMapScores,
+  saveMapScoresFailure,
+  getMapScoresState,
+} from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -174,16 +182,16 @@ async function mapWithConcurrency(items, limit, fn) {
 
 // Colle sur `data` les scores par map déjà connus en base (synchrone, aucun
 // appel réseau) — ceux-là s'affichent dès la 1ère réponse, sans attendre le
-// sweep en arrière-plan. Renvoie la liste des matchs terminés qui n'ont
-// encore JAMAIS été résolus (ni en base, ni en cache) : c'est seulement sur
-// ceux-là qu'on ira taper vlr.gg.
+// sweep en arrière-plan. Renvoie la liste des matchs terminés qu'il faut
+// (re)taper sur vlr.gg : ceux jamais tentés, ET ceux dont la précédente
+// tentative a échoué mais dont le délai de retentative est écoulé (voir
+// RETRY_DELAYS_MS dans match-history-store.js) — jusqu'à abandon définitif.
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
     // La saisie manuelle passe AVANT la base SQLite : si un match a déjà été
-    // tenté sur vlr.gg sans succès (stocké en base comme `null`), on veut
-    // quand même remonter le score saisi à la main plutôt que de rester
-    // bloqué sur cet échec pour toujours.
+    // tenté sur vlr.gg sans succès, on veut quand même remonter le score
+    // saisi à la main plutôt que de rester bloqué sur cet échec.
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
@@ -194,12 +202,20 @@ function applyStoredMapScores(finished) {
       continue;
     }
 
-    const stored = getStoredMapScores(m.id);
-    if (stored !== undefined) {
-      m.map_scores = stored; // déjà résolu (même si `null` = déjà essayé, sans succès)
-    } else {
-      stillUnknown.push(m);
+    const state = getMapScoresState(m.id);
+    if (state === undefined || state.value === undefined) {
+      // Jamais en base, ou en base mais jamais encore résolu : si un délai de
+      // retentative est programmé, on respecte ce délai plutôt que de
+      // re-taper vlr.gg à chaque poll (60s) ; sinon (1er essai ou délai déjà
+      // écoulé) on le remet dans le lot à aller chercher.
+      const dueNow = !state || !state.nextRetryAt || new Date(state.nextRetryAt).getTime() <= Date.now();
+      if (dueNow) stillUnknown.push(m);
+      continue;
     }
+    // state.value !== undefined : soit un succès (array), soit un abandon
+    // définitif (`null`, tous les paliers de retry épuisés) — rien à
+    // retenter, on affiche ce qu'on a.
+    m.map_scores = state.value;
   }
   return stillUnknown;
 }
@@ -230,17 +246,27 @@ async function enrichWithMapScores(data) {
       console.log(`[map_scores] skip (données manquantes) — t1=${t1} t2=${t2} date=${date}`);
       return;
     }
+    let fetchError = false;
     try {
       m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
       console.log(`[map_scores] ${t1} vs ${t2} (${date}) →`, JSON.stringify(m.map_scores));
     } catch (e) {
       m.map_scores = null;
+      fetchError = true;
       console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
     }
-    // Persisté immédiatement (succès OU échec) : un match déjà tenté ne sera
-    // plus jamais re-tapé sur vlr.gg à chaque sweep — seulement si on efface
-    // la base ou si on ajoute un mécanisme de re-tentative plus tard.
-    saveMapScores(m.id, m.map_scores);
+    // Succès -> persisté pour de bon. Échec (ou `null` renvoyé, ex: requête
+    // faite trop tôt avant que vlr.gg publie le report du match) -> on
+    // programme une retentative plus tard au lieu d'enregistrer `null`
+    // définitivement (voir saveMapScoresFailure / RETRY_DELAYS_MS) ; le champ
+    // affiché tout de suite reste `null` (fallback "0-0" côté front) en
+    // attendant la prochaine tentative.
+    if (m.map_scores) {
+      saveMapScores(m.id, m.map_scores);
+    } else {
+      saveMapScoresFailure(m.id);
+      if (!fetchError) console.log(`[map_scores] ${t1} vs ${t2} (${date}) → retentative programmée`);
+    }
     // 900ms (au lieu de 400) : depuis qu'on enrichit TOUS les matchs terminés
     // (plus de limite à 8), il faut laisser plus de marge au rate-limiter de
     // vlrggapi entre chaque match, sinon seul le 1er passe et les suivants
