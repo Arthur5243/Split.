@@ -60,6 +60,23 @@ try {
   if (!/duplicate column/i.test(e.message)) throw e;
 }
 
+// Migration : colonnes de suivi des retentatives quand vlr.gg n'a rien
+// renvoyé (souvent parce que le match vient tout juste de se terminer et que
+// le report détaillé n'est pas encore publié). Avant ce correctif, un échec
+// était enregistré comme `null` définitif dès le 1er essai — d'où des scores
+// par map qui restaient bloqués à "0-0" pour de bon sur des matchs comme
+// RRQ vs SPE alors que la donnée finissait par arriver sur vlr.gg peu après.
+try {
+  db.exec(`ALTER TABLE matches ADD COLUMN map_scores_attempts INTEGER DEFAULT 0`);
+} catch (e) {
+  if (!/duplicate column/i.test(e.message)) throw e;
+}
+try {
+  db.exec(`ALTER TABLE matches ADD COLUMN map_scores_next_retry_at TEXT`);
+} catch (e) {
+  if (!/duplicate column/i.test(e.message)) throw e;
+}
+
 // INSERT OR IGNORE : si le match existe déjà (même id), on ne le retouche pas.
 // -> jamais de doublon, jamais de donnée écrasée au hasard.
 const upsertStmt = db.prepare(`
@@ -69,8 +86,31 @@ const upsertStmt = db.prepare(`
     (@id, @team1, @team2, @team1Name, @team2Name, @score1, @score2, @status, @region, @league, @phase, @day, @time, @raw)
 `);
 
-const saveMapScoresStmt = db.prepare(`UPDATE matches SET map_scores = @mapScores WHERE id = @id`);
+const saveMapScoresStmt = db.prepare(`
+  UPDATE matches
+  SET map_scores = @mapScores, map_scores_attempts = @attempts, map_scores_next_retry_at = @nextRetryAt
+  WHERE id = @id
+`);
 const getMapScoresStmt = db.prepare(`SELECT map_scores FROM matches WHERE id = ?`);
+const getMapScoresRowStmt = db.prepare(
+  `SELECT map_scores, map_scores_attempts, map_scores_next_retry_at FROM matches WHERE id = ?`
+);
+
+// Paliers de délai avant de retenter un match dont le score par map n'a pas
+// été trouvé sur vlr.gg. Croissants pour ne pas marteler l'API sur des
+// matchs qui ne seront peut-être jamais couverts, tout en laissant le temps
+// à vlr.gg de publier le report pour les matchs tout juste terminés (le cas
+// RRQ vs SPE : requête faite trop tôt -> null -> on retente plus tard au
+// lieu d'enregistrer ce null pour de bon).
+// Après le dernier palier, on abandonne définitivement pour ce match-là.
+const RETRY_DELAYS_MS = [
+  5 * 60 * 1000, // 1er échec -> retente dans 5 min
+  15 * 60 * 1000, // 2e -> 15 min
+  60 * 60 * 1000, // 3e -> 1h
+  3 * 60 * 60 * 1000, // 4e -> 3h
+  12 * 60 * 60 * 1000, // 5e -> 12h
+  24 * 60 * 60 * 1000, // 6e -> 24h, puis abandon définitif
+];
 
 /**
  * À appeler à chaque fois que /api/valorant-results (ou live/upcoming en statut
@@ -113,7 +153,7 @@ function getStoredMapScores(id) {
   const row = getMapScoresStmt.get(String(id));
   if (!row || row.map_scores == null) return undefined; // jamais essayé / pas en base
   try {
-    return JSON.parse(row.map_scores); // peut être `null` si déjà essayé sans succès
+    return JSON.parse(row.map_scores); // peut être `null` si on a définitivement abandonné
   } catch (e) {
     return undefined;
   }
@@ -123,9 +163,63 @@ function getStoredMapScores(id) {
  * Persiste les scores par map une fois trouvés sur vlr.gg, pour ne plus
  * jamais avoir à refaire la requête. N'écrit que si le match existe déjà en
  * base (toujours le cas ici : storeFinishedMatches tourne avant l'enrichissement).
+ * Réinitialise aussi le compteur de retentatives (un succès n'a plus besoin
+ * d'être retenté).
  */
 function saveMapScores(id, mapScores) {
-  saveMapScoresStmt.run({ id: String(id), mapScores: JSON.stringify(mapScores) });
+  saveMapScoresStmt.run({ id: String(id), mapScores: JSON.stringify(mapScores), attempts: 0, nextRetryAt: null });
+}
+
+/**
+ * Persiste un ÉCHEC de récupération (vlr.gg n'a rien renvoyé pour ce match).
+ * Au lieu d'écrire `null` définitivement dès le 1er essai, on programme une
+ * retentative selon RETRY_DELAYS_MS. On n'abandonne pour de bon (map_scores
+ * fixé à `null`) qu'après avoir épuisé tous les paliers.
+ */
+function saveMapScoresFailure(id) {
+  const row = getMapScoresRowStmt.get(String(id));
+  const attempts = ((row && row.map_scores_attempts) || 0) + 1;
+  const gaveUp = attempts > RETRY_DELAYS_MS.length;
+  saveMapScoresStmt.run({
+    id: String(id),
+    // Tant qu'on retente encore : on laisse `map_scores` à NULL en base (pas
+    // de JSON écrit) pour bien le distinguer d'un abandon définitif.
+    mapScores: gaveUp ? JSON.stringify(null) : null,
+    attempts,
+    nextRetryAt: gaveUp ? null : new Date(Date.now() + RETRY_DELAYS_MS[attempts - 1]).toISOString(),
+  });
+}
+
+/**
+ * État complet de la résolution des scores par map pour un match :
+ *  - value: array (résolu), null (abandon définitif), undefined (pas encore
+ *    résolu — jamais tenté, ou en attente de retentative)
+ *  - attempts / nextRetryAt / gaveUp : pour savoir si/quand retenter
+ * Renvoie undefined si le match n'est même pas encore en base.
+ */
+function getMapScoresState(id) {
+  const row = getMapScoresRowStmt.get(String(id));
+  if (!row) return undefined;
+  if (row.map_scores != null) {
+    let parsed;
+    try {
+      parsed = JSON.parse(row.map_scores);
+    } catch (e) {
+      parsed = null;
+    }
+    return {
+      value: parsed,
+      attempts: row.map_scores_attempts || 0,
+      nextRetryAt: row.map_scores_next_retry_at || null,
+      gaveUp: true, // un `map_scores` non-null en base = succès OU abandon définitif, plus rien à retenter
+    };
+  }
+  return {
+    value: undefined,
+    attempts: row.map_scores_attempts || 0,
+    nextRetryAt: row.map_scores_next_retry_at || null,
+    gaveUp: false,
+  };
 }
 
 /**
@@ -182,4 +276,13 @@ function getTeamHistory(teamCode, limit = 50) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
-export { storeFinishedMatches, getFullHistory, getFullHistoryFlat, getTeamHistory, getStoredMapScores, saveMapScores };
+export {
+  storeFinishedMatches,
+  getFullHistory,
+  getFullHistoryFlat,
+  getTeamHistory,
+  getStoredMapScores,
+  saveMapScores,
+  saveMapScoresFailure,
+  getMapScoresState,
+};
