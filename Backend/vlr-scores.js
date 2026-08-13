@@ -77,6 +77,22 @@ function daysBetweenDates(d1, d2) {
   return Math.abs(t1 - t2) / 86400000;
 }
 
+// Normalisation "large" pour le matching tolérant : en plus de normalize()
+// (accents, casse, espaces de bord), on retire tirets/points/apostrophes et
+// le "s" final de chaque mot (pluriel simple), pour absorber les petits
+// écarts de nom entre PandaScore et notre saisie manuelle (ex: "Sharper
+// Esport" vs "Sharper Esports") sans jamais confondre deux équipes
+// différentes (comparaison toujours sur le nom complet, jamais un sous-mot).
+function looseNormalize(s) {
+  return normalize(s)
+    .replace(/[-.'’]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w.endsWith("s") && w.length > 3 ? w.slice(0, -1) : w))
+    .join(" ");
+}
+
 /**
  * Cherche un match dans manual-map-scores.json par équipes + date (tolérance
  * ±1 jour, mêmes règles que le matching vlr.gg). Renvoie les scores par map
@@ -87,16 +103,20 @@ function findManualMapScores(team1Name, team2Name, dateStr) {
   if (manualScores.length === 0) return null;
   const n1 = normalize(team1Name);
   const n2 = normalize(team2Name);
+  const ln1 = looseNormalize(team1Name);
+  const ln2 = looseNormalize(team2Name);
 
   for (const entry of manualScores) {
     if (dateStr && daysBetweenDates(entry.date, dateStr) > 1) continue;
     const e1 = normalize(entry.team1);
     const e2 = normalize(entry.team2);
+    const le1 = looseNormalize(entry.team1);
+    const le2 = looseNormalize(entry.team2);
 
-    if (e1 === n1 && e2 === n2) {
+    if ((e1 === n1 && e2 === n2) || (le1 === ln1 && le2 === ln2)) {
       return entry.maps.map((m) => ({ map: m.map, score1: m.score1, score2: m.score2 }));
     }
-    if (e1 === n2 && e2 === n1) {
+    if ((e1 === n2 && e2 === n1) || (le1 === ln2 && le2 === ln1)) {
       // Même match mais équipes dans l'ordre inverse -> on retourne les scores.
       return entry.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 }));
     }
