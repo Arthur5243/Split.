@@ -25,12 +25,21 @@ if (!PANDASCORE_API_KEY) {
   );
 }
 
-async function pandaFetch(path) {
+// Retry sur 429 : PandaScore rate-limite assez vite quand on tire plusieurs
+// pages d'affilée. Avant, une seule page en échec faisait planter tout le
+// Promise.all de /api/valorant-upcoming (cf plus bas) et coupait la liste
+// des matchs à venir à la date où le blocage survenait, au lieu d'aller
+// jusqu'au dernier match programmé.
+async function pandaFetch(path, attempt = 0) {
   const res = await fetch(PANDASCORE_BASE + path, {
     headers: {
       Authorization: "Bearer " + PANDASCORE_API_KEY,
     },
   });
+  if (res.status === 429 && attempt < 4) {
+    await sleep(800 * (attempt + 1));
+    return pandaFetch(path, attempt + 1);
+  }
   if (!res.ok) {
     throw new Error("PandaScore HTTP " + res.status);
   }
@@ -59,19 +68,34 @@ function isFullyUnknown(m) {
 
 app.get("/api/valorant-upcoming", async (req, res) => {
   try {
-    // Avant : 2 pages (200 matchs) partagées entre TOUTES les régions dans
-    // une seule liste triée par date. Problème : une région avec beaucoup de
-    // matchs proches (ex: Americas) bouffe une grosse partie de la fenêtre,
-    // et une région avec moins de volume se retrouve coupée plus tôt même si
-    // PandaScore a des matchs plus loin pour elle aussi.
-    // Maintenant : 5 pages (jusqu'à 500 matchs) pour laisser assez de place à
-    // toutes les régions sans que l'une écrase la profondeur des autres.
-    const pageNums = [1, 2, 3, 4, 5];
-    const pages = await Promise.all(
-      pageNums.map((p) => cachedFetch("upcoming-" + p, "/valorant/matches/upcoming?per_page=100&page=" + p + "&sort=begin_at"))
-    );
-    const combined = pages.flatMap((p) => p || []);
-    const data = combined.filter((m) => !isFullyUnknown(m));
+    // Avant : 5 pages (max 500 matchs) tirées EN PARALLÈLE avec Promise.all.
+    // Deux problèmes : (1) plafond fixe à 500 matchs, donc coupait avant le
+    // dernier match réellement programmé si le volume total dépassait ça ;
+    // (2) 5 requêtes simultanées déclenchent facilement le rate-limit
+    // PandaScore (429), et vu que Promise.all rejette tout dès qu'UNE page
+    // échoue, le moindre 429 sur la page 3/4/5 faisait planter toute la
+    // route (502) et donnait l'impression que "ça se bloque après telle
+    // date" côté front.
+    // Maintenant : pagination séquentielle (une page à la fois, petite pause
+    // entre chaque + retry auto sur 429 via pandaFetch) qui continue tant
+    // que PandaScore renvoie des pages pleines, et s'arrête d'elle-même dès
+    // qu'une page est vide ou incomplète = on est allé jusqu'au tout dernier
+    // match programmé, sans plafond arbitraire.
+    const PER_PAGE = 100;
+    const MAX_PAGES = 50; // garde-fou (5000 matchs) pour éviter une boucle infinie en cas d'anomalie API
+    let all = [];
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const pageData = await cachedFetch(
+        "upcoming-" + page,
+        "/valorant/matches/upcoming?per_page=" + PER_PAGE + "&page=" + page + "&sort=begin_at"
+      );
+      if (!pageData || pageData.length === 0) break;
+      all = all.concat(pageData);
+      if (pageData.length < PER_PAGE) break; // page incomplète = dernière page
+      await sleep(200); // reste sous le rate-limit PandaScore entre 2 pages
+    }
+    // Ne garde que les matchs où au moins une des 2 équipes est connue.
+    const data = all.filter((m) => !isFullyUnknown(m));
     res.json(data);
   } catch (e) {
     console.error(e);
