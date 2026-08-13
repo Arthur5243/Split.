@@ -452,6 +452,14 @@ function isPlayoffs(m) {
   return /playoff/i.test(m.tournamentName || "") || /playoff/i.test(m.phase || "");
 }
 
+// vlr.gg renvoie parfois le nom de map avec l'annotation de pick collée dedans,
+// ex: "Ascent (Vitality pick)". On veut garder l'équipe entre parenthèses mais
+// virer le mot "pick" -> "Ascent (Vitality)".
+function formatMapName(raw) {
+  if (!raw) return raw;
+  return raw.replace(/\s*pick\s*(?=\))/gi, "").replace(/\(\s*\)/g, "").trim();
+}
+
 // --- Système de cotes maison (remplace l'API /api/odds qui renvoyait tout à 0%) ---
 // Principe (winrate lissé) :
 //   winrate = (victoires + PRIOR_WEIGHT*0.5) / (matchs joués + PRIOR_WEIGHT)
@@ -861,7 +869,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       </span>
                       {g.map && (
                         <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                          {g.map}
+                          {formatMapName(g.map)}
                         </span>
                       )}
                     </div>
