@@ -716,20 +716,23 @@ function attachComputedOdds(matches, finishedMatches) {
 // --- Système de points ---
 // Règle :
 //   - Mauvaise équipe pronostiquée pour gagner la série : 0 pt.
-//   - Bonne équipe + score exact sur une map (ex: pronostic 13-9, résultat
-//     réel 13-9) : +30 pts PAR map en score parfait.
-//   - Bonne équipe mais aucune map en score parfait (score faux, ou pas
-//     pronostiqué map par map) : +20 pts pour le match entier, une seule
-//     fois (jamais multiplié par le nombre de maps).
-// S'appuie sur match.map_scores (scores réels par map, récupérés côté
+//   - Bonne équipe pronostiquée : les points dépendent de la cote figée au
+//     moment du pari (pred.odds1/odds2, en %, capturée dans onSeriesChange
+//     AVANT le début du match, jamais recalculée après coup) :
+//       exactScorePoints = (100 ÷ probabilité − 1) × 100
+//     où "probabilité" est la cote (en %) de l'équipe pronostiquée.
+//     Plus l'équipe était outsider (cote basse), plus les points sont élevés.
+//   - Score de série EXACTEMENT juste (ex: pronostic 3-1, résultat réel 3-1)
+//     -> exactScorePoints (arrondi).
+//   - Bonne équipe mais score de série pas exact -> 30% de exactScorePoints.
+// Bonus par map (indépendant du Score, cumulable, PAS basé sur la cote) :
+// s'appuie sur match.map_scores (scores réels par map, récupérés côté
 // backend via vlr.gg) et pred.games[i] = { a, b } (score pronostiqué pour la
 // map i, dans le même ordre équipe1/équipe2 que match.map_scores[i].score1/2).
-// Détail des points, décomposé en deux lignes cumulables :
-//   - Score : 40 pts si la série pronostiquée est EXACTEMENT le score final
-//     (ex: pronostic 3-1, résultat réel 3-1), 20 pts si la bonne équipe a été
-//     pronostiquée mais pas le score exact, 0 pt si mauvaise équipe.
-//   - Bonus : 30 pts PAR map en score parfait (indépendant du Score), qui
-//     s'ajoute au Score dès qu'une bonne équipe a été pronostiquée.
+//   - Score de map exact (ex: pronostic 13-9, réel 13-9) : +30 pts PAR map.
+//   - Score de map à 1 point près sur les deux scores (ex: pronostic 13-9,
+//     réel 13-10 ou 12-9) : +15 pts PAR map.
+//   - Sinon : 0 pt pour cette map.
 function getMatchPointsBreakdown(match, pred) {
   if (!pred || pred.seriesA === "" || pred.seriesB === "") return { score: 0, bonus: 0, total: 0 };
   if (match.score1 == null || match.score2 == null) return { score: 0, bonus: 0, total: 0 };
@@ -740,24 +743,33 @@ function getMatchPointsBreakdown(match, pred) {
   const actualAWins = match.score1 > match.score2;
   if (predictedAWins !== actualAWins) return { score: 0, bonus: 0, total: 0 }; // mauvaise équipe -> 0 pt, peu importe le reste
 
+  // Probabilité (cote en %) de l'équipe pronostiquée, figée au moment du pari.
+  // Garde-fou 5-95% pour éviter une division par une valeur extrême/absente.
+  const rawProbability = predictedAWins ? pred.odds1 : pred.odds2;
+  const probability = Math.min(95, Math.max(5, rawProbability != null ? rawProbability : 50));
+  const exactScorePoints = Math.round((100 / probability - 1) * 100);
+
   const exactSeriesScore = predA === match.score1 && predB === match.score2;
-  const score = exactSeriesScore ? 40 : 20;
+  const score = exactSeriesScore ? exactScorePoints : Math.round(exactScorePoints * 0.3);
 
   const actualMaps = match.map_scores;
   const games = pred.games || [];
-  let perfectMaps = 0;
+  let bonus = 0;
   if (Array.isArray(actualMaps) && actualMaps.length > 0) {
     for (let i = 0; i < actualMaps.length; i++) {
       const g = games[i];
       if (!g || g.a === "" || g.b === "") continue; // map non pronostiquée -> pas de bonus possible
       const gA = parseInt(g.a, 10);
       const gB = parseInt(g.b, 10);
-      if (gA === actualMaps[i].score1 && gB === actualMaps[i].score2) {
-        perfectMaps++;
+      const diffA = Math.abs(gA - actualMaps[i].score1);
+      const diffB = Math.abs(gB - actualMaps[i].score2);
+      if (diffA === 0 && diffB === 0) {
+        bonus += 30; // score de map exact
+      } else if (diffA <= 1 && diffB <= 1) {
+        bonus += 15; // à 1 point près sur les deux scores
       }
     }
   }
-  const bonus = perfectMaps * 30;
 
   return { score, bonus, total: score + bonus };
 }
