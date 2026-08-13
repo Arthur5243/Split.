@@ -61,12 +61,14 @@ const LOGOS = {
   DRX: "/logos/drx.png",
   W7M: "/logos/w7m.png",
   FUT: "/logos/fut.png",
+  AT: "/logos/at.png",
+  KBG: "/logos/kbg.png",
 };
 
 // Équipes dont le logo est mal classé "sombre" par useIsDarkLogo (donc
 // transformé à tort en blanc uni / halo) alors qu'il est en réalité coloré :
 // on force l'affichage en couleurs d'origine, jamais d'inversion, pour ces codes.
-const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG", "W7M", "XE", "DRX"]);
+const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG", "W7M", "XE", "DRX", "AT"]);
 
 // Langues disponibles dans le sélecteur
 const LANGS = [
@@ -419,12 +421,26 @@ function classifyRegion(text) {
 const TEAM_CODE_OVERRIDES = {
   OSG: "ONG",
   KRX: "DRX",
+  KIWO: "DRX",
+  KEEP: "KBG",
+  FUNP: "FPX",
+  GLOBAL: "GE",
+};
+
+// Corrections par nom complet : utilisées quand PandaScore ne renvoie AUCUN
+// acronyme pour l'équipe (cas fréquent sur les matchs déjà archivés, ex.
+// l'onglet "Terminé" une fois l'équipe sortie de la fenêtre live). Sans ça,
+// teamCode() retombe sur les 4 premières lettres du nom complet, ce qui peut
+// produire un code qui ne matche ni LOGOS ni FORCE_NATURAL_COLOR (ex. "FUT "
+// avec un espace pour "FUT Esports") -> logo mal détecté / inversé en blanc.
+const NAME_CODE_OVERRIDES = {
+  "FUT Esports": "FUT",
 };
 
 function teamCode(opp) {
   if (!opp) return "TBD";
   if (opp.acronym) return TEAM_CODE_OVERRIDES[opp.acronym.toUpperCase()] || opp.acronym;
-  if (opp.name) return opp.name.slice(0, 4).toUpperCase();
+  if (opp.name) return NAME_CODE_OVERRIDES[opp.name] || opp.name.slice(0, 4).toUpperCase();
   return "TBD";
 }
 
