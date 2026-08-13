@@ -429,6 +429,8 @@ const TEAM_CODE_OVERRIDES = {
   GLOBAL: "GE",
   GLOB: "GE",
   "A TE": "AT",
+  WOLV: "WE",
+  WOLVES: "WE",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
