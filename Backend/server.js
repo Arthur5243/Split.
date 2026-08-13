@@ -48,9 +48,31 @@ async function cachedFetch(key, path) {
   return data;
 }
 
+// Un match dont les DEUX équipes sont encore inconnues (bracket pas encore
+// déterminé) n'apporte aucune info utile -> on le vire. Un match avec une
+// seule équipe connue (ex: "Vitality vs TBD") reste utile et doit s'afficher.
+function isFullyUnknown(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  return !t1 && !t2;
+}
+
 app.get("/api/valorant-upcoming", async (req, res) => {
   try {
-    const data = await cachedFetch("upcoming", "/valorant/matches/upcoming?per_page=50");
+    // Avant : une seule page de 50 matchs, tous jeux/régions confondus. Les
+    // matchs "TBD vs TBD" (bracket pas encore fixé) prenaient de la place
+    // dans cette fenêtre et poussaient dehors de vrais matchs à venir sur les
+    // régions moins actives -> certaines régions s'arrêtaient plus tôt que
+    // d'autres (ex: EMEA allait jusqu'au 21/08, pas les autres régions).
+    // Maintenant : on va chercher 2 pages (jusqu'à 200 matchs), on retire les
+    // TBD vs TBD, et on garde tout le reste -> même profondeur pour toutes
+    // les régions.
+    const [page1, page2] = await Promise.all([
+      cachedFetch("upcoming-1", "/valorant/matches/upcoming?per_page=100&page=1"),
+      cachedFetch("upcoming-2", "/valorant/matches/upcoming?per_page=100&page=2"),
+    ]);
+    const combined = [...(page1 || []), ...(page2 || [])];
+    const data = combined.filter((m) => !isFullyUnknown(m));
     res.json(data);
   } catch (e) {
     console.error(e);
