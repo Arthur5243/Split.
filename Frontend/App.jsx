@@ -416,8 +416,10 @@ function classifyRegion(text) {
 }
 
 // Corrections manuelles de codes d'équipe : PandaScore renvoie parfois un
-// acronyme faux/imprécis (mal généré côté source). Ajoute une entrée ici
-// (CODE_PANDASCORE -> CODE_CORRECT) pour chaque cas repéré.
+// acronyme faux/imprécis (mal généré côté source), ou carrément aucun
+// acronyme (l'onglet "Terminé" retombe alors sur les 4 premières lettres du
+// nom complet, ex. "Global Esports" -> "GLOB"). Ajoute une entrée ici pour
+// chaque code fautif repéré, qu'il vienne d'un acronyme ou de ce fallback.
 const TEAM_CODE_OVERRIDES = {
   OSG: "ONG",
   KRX: "DRX",
@@ -425,23 +427,28 @@ const TEAM_CODE_OVERRIDES = {
   KEEP: "KBG",
   FUNP: "FPX",
   GLOBAL: "GE",
+  GLOB: "GE",
+  "A TE": "AT",
 };
 
-// Corrections par nom complet : utilisées quand PandaScore ne renvoie AUCUN
-// acronyme pour l'équipe (cas fréquent sur les matchs déjà archivés, ex.
-// l'onglet "Terminé" une fois l'équipe sortie de la fenêtre live). Sans ça,
-// teamCode() retombe sur les 4 premières lettres du nom complet, ce qui peut
-// produire un code qui ne matche ni LOGOS ni FORCE_NATURAL_COLOR (ex. "FUT "
-// avec un espace pour "FUT Esports") -> logo mal détecté / inversé en blanc.
+// Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
+// aucun acronyme ET que le fallback "4 premières lettres" ne donne pas un
+// code correct/prévisible (ex. "FUT Esports" -> "FUT " avec un espace en
+// trop, qui ne matcherait même pas une entrée dans TEAM_CODE_OVERRIDES).
 const NAME_CODE_OVERRIDES = {
   "FUT Esports": "FUT",
 };
 
 function teamCode(opp) {
   if (!opp) return "TBD";
-  if (opp.acronym) return TEAM_CODE_OVERRIDES[opp.acronym.toUpperCase()] || opp.acronym;
-  if (opp.name) return NAME_CODE_OVERRIDES[opp.name] || opp.name.slice(0, 4).toUpperCase();
-  return "TBD";
+  let raw = null;
+  if (opp.acronym) {
+    raw = opp.acronym.toUpperCase();
+  } else if (opp.name) {
+    raw = NAME_CODE_OVERRIDES[opp.name] || opp.name.slice(0, 4).toUpperCase();
+  }
+  if (!raw) return "TBD";
+  return TEAM_CODE_OVERRIDES[raw] || raw;
 }
 
 function transformMatch(m) {
