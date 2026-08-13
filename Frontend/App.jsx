@@ -790,10 +790,25 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
   );
 }
 
+// Un score de série (0-2) est "complet" dès qu'un chiffre est saisi (jamais
+// de suite possible, un seul chiffre max).
+function isSeriesScoreComplete(v) {
+  return v !== "" && v != null;
+}
+
+// Un score de map est "complet" soit à 2 chiffres, soit à 1 chiffre qui n'est
+// pas "1" (dans ce cas on attend une suite possible en 10-19).
+function isGameScoreComplete(v) {
+  const s = v || "";
+  return s.length === 2 || (s.length === 1 && s !== "1");
+}
+
 // Score de série (0-2, un seul chiffre) : dès qu'un chiffre est saisi, il n'y
 // a jamais de suite possible (un seul chiffre max) -> on bascule direct sur
-// l'autre case (onAdvance), comme un champ de code OTP.
-const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance }, ref) {
+// l'autre case (onAdvance), comme un champ de code OTP. Si l'autre case du
+// même duel est déjà remplie, la saisie du duel est complète -> on ferme le
+// clavier numérique (blur) au lieu de rebasculer dessus.
+const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance, otherValue }, ref) {
   return (
     <input
       ref={ref}
@@ -802,7 +817,12 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
         if (disabled) return;
         const v = e.target.value.replace(/[^0-2]/g, "").slice(-1);
         onChange(v);
-        if (v !== "" && onAdvance) onAdvance();
+        if (v === "") return;
+        if (isSeriesScoreComplete(otherValue)) {
+          e.target.blur();
+        } else if (onAdvance) {
+          onAdvance();
+        }
       }}
       disabled={disabled}
       inputMode="numeric"
@@ -815,8 +835,10 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
 // Score par map (2 chiffres max, ex: 13). Suite logique : si le seul chiffre
 // saisi est "1", on attend (le score peut continuer en 10-19) ; pour tout
 // autre chiffre seul (0, 2-9) ou dès que 2 chiffres sont saisis, la saisie
-// est considérée complète -> on bascule direct sur l'autre case.
-const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChange, disabled, onAdvance }, ref) {
+// est considérée complète -> on bascule direct sur l'autre case. Si l'autre
+// case du même duel est déjà complète (ex: 13-2), les deux scores sont
+// saisis -> on ferme le clavier numérique (blur) au lieu de rebasculer.
+const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChange, disabled, onAdvance, otherValue }, ref) {
   return (
     <input
       ref={ref}
@@ -825,8 +847,12 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
         if (disabled) return;
         const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
         onChange(v);
-        const complete = v.length === 2 || (v.length === 1 && v !== "1");
-        if (complete && onAdvance) onAdvance();
+        if (!isGameScoreComplete(v)) return;
+        if (isGameScoreComplete(otherValue)) {
+          e.target.blur();
+        } else if (onAdvance) {
+          onAdvance();
+        }
       }}
       disabled={disabled}
       inputMode="numeric"
@@ -916,12 +942,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="px-4 pb-3 flex items-center justify-center gap-3">
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
-            <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} />
+            <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} />
           </div>
           <span style={{ color: "#444", fontWeight: 900, fontSize: "18px" }}>–</span>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
-            <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} />
+            <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} />
           </div>
         </div>
       )}
@@ -983,12 +1009,17 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               ) : (
                 <div className="flex flex-col gap-3">
                   {games.map((g, i) => {
-                    const valid = isValidScore(g.a, g.b);
+                    // On n'affiche l'erreur que si les DEUX scores sont
+                    // entièrement saisis et que la combinaison viole la
+                    // règle (13 pts min, 2 pts d'écart après 12) : jamais à
+                    // vide, jamais pendant que l'utilisateur tape encore.
+                    const bothComplete = isGameScoreComplete(g.a) && isGameScoreComplete(g.b);
+                    const showError = bothComplete && !isValidScore(g.a, g.b);
                     return (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
                           <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
-                          {!valid && (
+                          {showError && (
                             <span className="flex items-center gap-1" style={{ color: "#e05252", fontSize: "10px" }}>
                               <AlertCircle size={12} />
                               {T.scoreInvalid}
@@ -1002,12 +1033,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                             onChange={(v) => onScoreChange(match.id, i, "a", v)}
                             disabled={betLocked}
                             onAdvance={() => gameRefs.current[i + "-b"] && gameRefs.current[i + "-b"].focus()}
+                            otherValue={g.b}
                           />
                           <span style={{ color: "#444", fontWeight: 700 }}>—</span>
                           <GameScoreInput
                             ref={(el) => (gameRefs.current[i + "-b"] = el)}
                             value={g.b}
                             onChange={(v) => onScoreChange(match.id, i, "b", v)}
+                            otherValue={g.a}
                             disabled={betLocked}
                             onAdvance={() => gameRefs.current[i + "-a"] && gameRefs.current[i + "-a"].focus()}
                           />
