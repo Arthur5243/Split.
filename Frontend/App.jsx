@@ -50,12 +50,13 @@ const LOGOS = {
   TS: "/logos/ts.png",
   DRX: "/logos/drx.png",
   W7M: "/logos/w7m.png",
+  FUT: "/logos/fut.png",
 };
 
 // Équipes dont le logo est mal classé "sombre" par useIsDarkLogo (donc
 // transformé à tort en blanc uni / halo) alors qu'il est en réalité coloré :
 // on force l'affichage en couleurs d'origine, jamais d'inversion, pour ces codes.
-const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG", "W7M"]);
+const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG", "W7M", "XE", "DRX"]);
 
 // Langues disponibles dans le sélecteur
 const LANGS = [
