@@ -3,7 +3,7 @@
     "date": "2026-08-13",
     "region": "Pacific",
     "team1": "Rex Regum Qeon",
-    "team2": "Sharper Esports",
+    "team2": "Sharper Esport",
     "score": "1-2",
     "maps": [
       {
@@ -16,7 +16,7 @@
         "map": "Sunset",
         "score1": 13,
         "score2": 1,
-        "pick": "Sharper Esports"
+        "pick": "Sharper Esport"
       },
       {
         "map": "Breeze",
