@@ -240,6 +240,14 @@ function toLiveHistoryShape(row) {
 // "Match terminé", même avec 4 régions VCT qui tournent en même temps.
 const ACCUMULATED_HISTORY_LIMIT = 400;
 
+// Cutoff manuel : le match Gen.G vs FULL SENSE du 7 août 2026 (VCT Pacific
+// Stage 2) marque la fin de l'historique "figé" qu'on veut voir dans l'onglet
+// résultats. On ne garde plus, depuis PandaScore ni depuis l'accumulé SQLite,
+// que les matchs strictement APRÈS cette date-là, pour ne plus jamais
+// réafficher/mélanger les anciens résultats déjà connus.
+// Pour désactiver ce filtre plus tard, mettre RESULTS_CUTOFF à null.
+const RESULTS_CUTOFF = "2026-08-07T23:59:59Z";
+
 // Fusionne la fenêtre live (PandaScore, jusqu'à 50 matchs) avec tout ce qu'on
 // a déjà accumulé en base. Un match une fois vu une fois reste visible pour
 // de bon, même une fois poussé hors des 50 plus récents (tous jeux/régions
@@ -249,9 +257,12 @@ function buildMergedResults(liveData) {
   const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
     .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
     .map(toLiveHistoryShape);
-  return [...liveData, ...accumulated].sort(
-    (a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0)
-  );
+  const merged = [...liveData, ...accumulated];
+  const cutoffMs = RESULTS_CUTOFF ? new Date(RESULTS_CUTOFF).getTime() : null;
+  const filtered = cutoffMs
+    ? merged.filter((m) => m.begin_at && new Date(m.begin_at).getTime() > cutoffMs)
+    : merged;
+  return filtered.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
 }
 
 app.get("/api/valorant-results", async (req, res) => {
