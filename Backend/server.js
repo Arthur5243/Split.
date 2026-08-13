@@ -59,19 +59,18 @@ function isFullyUnknown(m) {
 
 app.get("/api/valorant-upcoming", async (req, res) => {
   try {
-    // Avant : une seule page de 50 matchs, tous jeux/régions confondus. Les
-    // matchs "TBD vs TBD" (bracket pas encore fixé) prenaient de la place
-    // dans cette fenêtre et poussaient dehors de vrais matchs à venir sur les
-    // régions moins actives -> certaines régions s'arrêtaient plus tôt que
-    // d'autres (ex: EMEA allait jusqu'au 21/08, pas les autres régions).
-    // Maintenant : on va chercher 2 pages (jusqu'à 200 matchs), on retire les
-    // TBD vs TBD, et on garde tout le reste -> même profondeur pour toutes
-    // les régions.
-    const [page1, page2] = await Promise.all([
-      cachedFetch("upcoming-1", "/valorant/matches/upcoming?per_page=100&page=1"),
-      cachedFetch("upcoming-2", "/valorant/matches/upcoming?per_page=100&page=2"),
-    ]);
-    const combined = [...(page1 || []), ...(page2 || [])];
+    // Avant : 2 pages (200 matchs) partagées entre TOUTES les régions dans
+    // une seule liste triée par date. Problème : une région avec beaucoup de
+    // matchs proches (ex: Americas) bouffe une grosse partie de la fenêtre,
+    // et une région avec moins de volume se retrouve coupée plus tôt même si
+    // PandaScore a des matchs plus loin pour elle aussi.
+    // Maintenant : 5 pages (jusqu'à 500 matchs) pour laisser assez de place à
+    // toutes les régions sans que l'une écrase la profondeur des autres.
+    const pageNums = [1, 2, 3, 4, 5];
+    const pages = await Promise.all(
+      pageNums.map((p) => cachedFetch("upcoming-" + p, "/valorant/matches/upcoming?per_page=100&page=" + p))
+    );
+    const combined = pages.flatMap((p) => p || []);
     const data = combined.filter((m) => !isFullyUnknown(m));
     res.json(data);
   } catch (e) {
