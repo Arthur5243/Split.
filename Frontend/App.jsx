@@ -1947,4 +1947,18 @@ export default function ClutchApp() {
             setFavoriteTeam={setFavoriteTeam}
             otherNotifs={otherNotifs}
             setOtherNotifs={setOtherNotifs}
-            
+            teams={allTeams}
+            T={T}
+          />
+        )}
+        {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}
+      </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+      `}</style>
+    </div>
+  );
+}
