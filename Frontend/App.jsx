@@ -396,9 +396,16 @@ function classifyRegion(text) {
   return null; // ligue non suivie -> on l'ignore
 }
 
+// Corrections manuelles de codes d'équipe : PandaScore renvoie parfois un
+// acronyme faux/imprécis (mal généré côté source). Ajoute une entrée ici
+// (CODE_PANDASCORE -> CODE_CORRECT) pour chaque cas repéré.
+const TEAM_CODE_OVERRIDES = {
+  OSG: "ONG",
+};
+
 function teamCode(opp) {
   if (!opp) return "TBD";
-  if (opp.acronym) return opp.acronym;
+  if (opp.acronym) return TEAM_CODE_OVERRIDES[opp.acronym.toUpperCase()] || opp.acronym;
   if (opp.name) return opp.name.slice(0, 4).toUpperCase();
   return "TBD";
 }
@@ -457,11 +464,36 @@ function isPlayoffs(m) {
 }
 
 // vlr.gg renvoie parfois le nom de map avec l'annotation de pick collée dedans,
-// ex: "Ascent (Vitality pick)". On veut garder l'équipe entre parenthèses mais
-// virer le mot "pick" -> "Ascent (Vitality)".
-function formatMapName(raw) {
-  if (!raw) return raw;
-  return raw.replace(/\s*pick\s*(?=\))/gi, "").replace(/\(\s*\)/g, "").trim();
+// ex: "Ascent (Vitality pick)". On sépare le nom propre de la map et l'équipe
+// qui l'a choisie, pour pouvoir réafficher ça proprement ensuite (sans le mot
+// "pick", juste "(Vitality)").
+function parseMapPick(raw) {
+  if (!raw) return { name: raw, pickedBy: null };
+  const match = raw.match(/\(\s*([^()]*?)\s*pick\s*\)/i);
+  if (match) {
+    const name = raw.slice(0, match.index).trim();
+    const team = match[1].trim();
+    return { name, pickedBy: team || null };
+  }
+  return { name: raw.trim(), pickedBy: null };
+}
+
+// Construit le libellé complet d'une map : nom nettoyé + soit "(Équipe)" si on
+// sait qui l'a choisie, soit "(map decider)" pour la dernière map de la série
+// (celle qu'aucune des deux équipes n'a choisie).
+// - Saisie manuelle (Backend/data/manual-map-scores.json) : champ `pick`
+//   explicite, `null` pour la map décisive.
+// - Données auto vlr.gg : le pick est parfois collé dans le nom brut de la
+//   map ; à défaut, on considère la dernière map de la liste comme decider.
+function formatMapLabel(g, index, total) {
+  if (Object.prototype.hasOwnProperty.call(g, "pick")) {
+    if (g.pick) return (g.map || "") + " (" + g.pick + ")";
+    return (g.map || "") + " (map decider)";
+  }
+  const { name, pickedBy } = parseMapPick(g.map);
+  if (pickedBy) return name + " (" + pickedBy + ")";
+  if (index === total - 1) return name + " (map decider)";
+  return name;
 }
 
 // --- Système de cotes maison (remplace l'API /api/odds qui renvoyait tout à 0%) ---
@@ -758,31 +790,51 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
   );
 }
 
-function SeriesScoreInput({ value, onChange, accent, disabled }) {
+// Score de série (0-2, un seul chiffre) : dès qu'un chiffre est saisi, il n'y
+// a jamais de suite possible (un seul chiffre max) -> on bascule direct sur
+// l'autre case (onAdvance), comme un champ de code OTP.
+const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance }, ref) {
   return (
     <input
+      ref={ref}
       value={value}
-      onChange={(e) => !disabled && onChange(e.target.value.replace(/[^0-2]/g, "").slice(-1))}
+      onChange={(e) => {
+        if (disabled) return;
+        const v = e.target.value.replace(/[^0-2]/g, "").slice(-1);
+        onChange(v);
+        if (v !== "" && onAdvance) onAdvance();
+      }}
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-xl"
       style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
-}
+});
 
-function GameScoreInput({ value, onChange, disabled }) {
+// Score par map (2 chiffres max, ex: 13). Suite logique : si le seul chiffre
+// saisi est "1", on attend (le score peut continuer en 10-19) ; pour tout
+// autre chiffre seul (0, 2-9) ou dès que 2 chiffres sont saisis, la saisie
+// est considérée complète -> on bascule direct sur l'autre case.
+const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChange, disabled, onAdvance }, ref) {
   return (
     <input
+      ref={ref}
       value={value}
-      onChange={(e) => !disabled && onChange(e.target.value.replace(/[^0-9]/g, "").slice(0, 2))}
+      onChange={(e) => {
+        if (disabled) return;
+        const v = e.target.value.replace(/[^0-9]/g, "").slice(0, 2);
+        onChange(v);
+        const complete = v.length === 2 || (v.length === 1 && v !== "1");
+        if (complete && onAdvance) onAdvance();
+      }}
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-lg"
       style={{ width: "44px", height: "38px", background: "#1c1c1c", color: "#fff", fontSize: "15px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
-}
+});
 
 function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang }) {
   const tbd = isTbd(match);
@@ -795,6 +847,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // Dès que le match a démarré (live) ou est terminé, le pari est figé :
   // impossible de changer le score série pronostiqué ni les scores par map.
   const betLocked = running || finished;
+
+  // Refs pour l'auto-avancement (façon code OTP) : dès qu'une case a une
+  // saisie "complète", le focus bascule direct sur l'autre case du même
+  // duel (série A<->B, ou score map A<->B pour chaque map).
+  const seriesARef = useRef(null);
+  const seriesBRef = useRef(null);
+  const gameRefs = useRef({});
 
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
@@ -857,12 +916,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="px-4 pb-3 flex items-center justify-center gap-3">
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
-            <SeriesScoreInput value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} />
+            <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} />
           </div>
           <span style={{ color: "#444", fontWeight: 900, fontSize: "18px" }}>–</span>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
-            <SeriesScoreInput value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} />
+            <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} />
           </div>
         </div>
       )}
@@ -885,26 +944,28 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {/* On affiche toujours quelque chose : le vrai score par map si vlr.gg
                     l'a fourni (match.map_scores), sinon un repli 0-0 par map (une
                     seule ligne "0-0" si on n'a même pas le nombre de maps). */}
-                {(match.map_scores && match.map_scores.length > 0
-                  ? match.map_scores
-                  : [{ map: null, score1: 0, score2: 0 }]
-                ).map((g, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                        Map {i + 1}
-                      </span>
-                      {g.map && (
-                        <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                          {formatMapName(g.map)}
+                {(() => {
+                  const mapsList = match.map_scores && match.map_scores.length > 0
+                    ? match.map_scores
+                    : [{ map: null, score1: 0, score2: 0 }];
+                  return mapsList.map((g, i) => (
+                    <div key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                          Map {i + 1}
                         </span>
-                      )}
+                        {g.map && (
+                          <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                            {formatMapLabel(g, i, mapsList.length)}
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                        {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                      </span>
                     </div>
-                    <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                      {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                    </span>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -935,9 +996,21 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           )}
                         </div>
                         <div className="flex items-center justify-center gap-3">
-                          <GameScoreInput value={g.a} onChange={(v) => onScoreChange(match.id, i, "a", v)} disabled={betLocked} />
+                          <GameScoreInput
+                            ref={(el) => (gameRefs.current[i + "-a"] = el)}
+                            value={g.a}
+                            onChange={(v) => onScoreChange(match.id, i, "a", v)}
+                            disabled={betLocked}
+                            onAdvance={() => gameRefs.current[i + "-b"] && gameRefs.current[i + "-b"].focus()}
+                          />
                           <span style={{ color: "#444", fontWeight: 700 }}>—</span>
-                          <GameScoreInput value={g.b} onChange={(v) => onScoreChange(match.id, i, "b", v)} disabled={betLocked} />
+                          <GameScoreInput
+                            ref={(el) => (gameRefs.current[i + "-b"] = el)}
+                            value={g.b}
+                            onChange={(v) => onScoreChange(match.id, i, "b", v)}
+                            disabled={betLocked}
+                            onAdvance={() => gameRefs.current[i + "-a"] && gameRefs.current[i + "-a"].focus()}
+                          />
                         </div>
                       </div>
                     );
