@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-08-13",
+    "region": "Pacific",
+    "team1": "Rex Regum Qeon",
+    "team2": "Sharper Esports",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Haven",
+        "score1": 10,
+        "score2": 13,
+        "pick": "Rex Regum Qeon"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 1,
+        "pick": "Sharper Esports"
+      },
+      {
+        "map": "Breeze",
+        "score1": 6,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
     "date": "2026-08-11",
     "region": "China",
     "team1": "Dragon Ranger Gaming",
