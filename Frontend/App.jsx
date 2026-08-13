@@ -714,15 +714,39 @@ function attachComputedOdds(matches, finishedMatches) {
 }
 
 // --- Système de points ---
-// Formule demandée : probabilité (%) -> cote décimale -> points.
-//   cote = 100 / probabilité              (ex: 36% -> 100/36 = 2.78)
-//   points = (cote - 1) * 100             (ex: (2.78 - 1) * 100 = 178 pts)
-// Plus la probabilité annoncée pour l'équipe pronostiquée était basse (gros
-// outsider), plus la cote est haute, plus les points gagnés sont élevés.
-function calcPoints(oddsPercent) {
-  if (!oddsPercent || oddsPercent <= 0 || oddsPercent > 100) return 0;
-  const cote = 100 / oddsPercent;
-  return Math.round((cote - 1) * 100);
+// Règle :
+//   - Mauvaise équipe pronostiquée pour gagner la série : 0 pt.
+//   - Bonne équipe + score exact sur une map (ex: pronostic 13-9, résultat
+//     réel 13-9) : +30 pts PAR map en score parfait.
+//   - Bonne équipe mais aucune map en score parfait (score faux, ou pas
+//     pronostiqué map par map) : +20 pts pour le match entier, une seule
+//     fois (jamais multiplié par le nombre de maps).
+// S'appuie sur match.map_scores (scores réels par map, récupérés côté
+// backend via vlr.gg) et pred.games[i] = { a, b } (score pronostiqué pour la
+// map i, dans le même ordre équipe1/équipe2 que match.map_scores[i].score1/2).
+function calcMatchPoints(match, pred) {
+  if (!pred || pred.seriesA === "" || pred.seriesB === "") return 0;
+  if (match.score1 == null || match.score2 == null) return 0;
+
+  const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
+  const actualA = match.score1 > match.score2;
+  if (predictedA !== actualA) return 0; // mauvaise équipe -> 0 pt, peu importe le reste
+
+  const actualMaps = match.map_scores;
+  const games = pred.games || [];
+  let perfectMaps = 0;
+  if (Array.isArray(actualMaps) && actualMaps.length > 0) {
+    for (let i = 0; i < actualMaps.length; i++) {
+      const g = games[i];
+      if (!g || g.a === "" || g.b === "") continue; // map non pronostiquée -> pas de bonus possible
+      const predA = parseInt(g.a, 10);
+      const predB = parseInt(g.b, 10);
+      if (predA === actualMaps[i].score1 && predB === actualMaps[i].score2) {
+        perfectMaps++;
+      }
+    }
+  }
+  return perfectMaps > 0 ? perfectMaps * 30 : 20;
 }
 
 function isValidScore(aStr, bStr) {
@@ -915,13 +939,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const replayUrl = REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA;
 
   // Points gagnés sur ce match précis, uniquement si un pari a été fait et le
-  // match est terminé (même formule que le règlement global des points) :
+  // match est terminé (même règle que le règlement global des points) :
   // null = pas de pari fait (rien à afficher), 0 = pari faux, > 0 = pari juste.
   let earnedPoints = null;
   if (finished && pred && pred.seriesA !== "" && pred.seriesB !== "" && match.score1 != null && match.score2 != null) {
-    const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
-    const actualA = match.score1 > match.score2;
-    earnedPoints = predictedA === actualA ? calcPoints(predictedA ? pred.odds1 : pred.odds2) : 0;
+    earnedPoints = calcMatchPoints(match, pred);
   }
 
   return (
@@ -1612,7 +1634,7 @@ export default function ClutchApp() {
   // compte utilisateur (connexion à ajouter plus tard), donc on garde tout
   // rattaché à cet appareil pour l'instant. Le jour où l'auth arrive, il
   // suffira de remplacer ce stockage local par un appel serveur par utilisateur,
-  // la logique de calcul des points (calcPoints) ne change pas.
+  // la logique de calcul des points (calcMatchPoints) ne change pas.
   const [predictions, setPredictions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("split_predictions") || "{}");
@@ -1833,18 +1855,35 @@ export default function ClutchApp() {
     if (!resultsMatches.length) return;
     let pointsToAdd = 0;
     const newlySettled = [];
+    const now = Date.now();
     for (const m of resultsMatches) {
       if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
       if (settledMatchIds.has(String(m.id))) continue;
       const pred = predictions[m.id];
       if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
+
       const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
       const actualA = m.score1 > m.score2;
-      newlySettled.push(String(m.id));
-      if (predictedA === actualA) {
-        const oddsForPick = predictedA ? pred.odds1 : pred.odds2;
-        pointsToAdd += calcPoints(oddsForPick);
+      const gotTeamRight = predictedA === actualA;
+      const hasGamePredictions = gotTeamRight && (pred.games || []).some((g) => g && g.a !== "" && g.b !== "");
+      const mapScoresPending = !Array.isArray(m.map_scores);
+      // Si la bonne équipe a été pronostiquée ET qu'un score par map a été
+      // saisi, on attend que le vrai score par map (m.map_scores) soit connu
+      // avant de régler définitivement les points : sinon, un match réglé
+      // trop tôt (score par map encore en cours de retentative côté backend,
+      // cf. la retentative automatique sur vlr.gg) resterait bloqué sur le
+      // forfait "bonne équipe, mauvais score" (+20) même si le score exact
+      // aurait dû rapporter +30/map. On laisse une fenêtre de 48h après la
+      // date du match (le backend abandonne ses propres retentatives au bout
+      // d'environ 24h) avant de régler quand même avec ce qu'on a.
+      if (hasGamePredictions && mapScoresPending) {
+        const matchDayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
+        const withinGracePeriod = matchDayMs && now - matchDayMs < 48 * 60 * 60 * 1000;
+        if (withinGracePeriod) continue; // on retentera au prochain poll (60s)
       }
+
+      newlySettled.push(String(m.id));
+      pointsToAdd += calcMatchPoints(m, pred);
     }
     if (newlySettled.length > 0) {
       setSettledMatchIds((prev) => {
