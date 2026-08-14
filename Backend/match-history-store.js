@@ -104,12 +104,12 @@ const getMapScoresRowStmt = db.prepare(
 // lieu d'enregistrer ce null pour de bon).
 // Après le dernier palier, on abandonne définitivement pour ce match-là.
 const RETRY_DELAYS_MS = [
-  5 * 60 * 1000, // 1er échec -> retente dans 5 min
-  15 * 60 * 1000, // 2e -> 15 min
-  60 * 60 * 1000, // 3e -> 1h
-  3 * 60 * 60 * 1000, // 4e -> 3h
-  12 * 60 * 60 * 1000, // 5e -> 12h
-  24 * 60 * 60 * 1000, // 6e -> 24h, puis abandon définitif
+  1 * 60 * 1000, // 1er échec -> retente dans 1 min
+  3 * 60 * 1000, // 2e -> 3 min
+  4 * 60 * 1000, // 3e -> 4 min
+  5 * 60 * 1000, // 4e -> 5 min
+  15 * 60 * 1000, // 5e -> 15 min
+  2 * 60 * 60 * 1000, // 6e -> 2h, puis abandon définitif
 ];
 
 /**
@@ -173,35 +173,29 @@ function saveMapScores(id, mapScores) {
 /**
  * Persiste un ÉCHEC de récupération (vlr.gg n'a rien renvoyé pour ce match).
  * Au lieu d'écrire `null` définitivement dès le 1er essai, on programme une
- * retentative selon RETRY_DELAYS_MS. Une fois le dernier palier atteint, on
- * NE renonce JAMAIS : on continue de retenter indéfiniment toutes les 24h
- * (dernier délai de RETRY_DELAYS_MS, répété en boucle). Laisser un match
- * terminé bloqué sans score par map pour toujours n'a pas de sens — vlr.gg
- * finit presque toujours par publier le report, même en retard.
+ * retentative selon RETRY_DELAYS_MS (1min, 3min, 4min, 5min, 15min, 2h). On
+ * abandonne pour de bon (map_scores fixé à `null`) après ce dernier palier.
  */
 function saveMapScoresFailure(id) {
   const row = getMapScoresRowStmt.get(String(id));
   const attempts = ((row && row.map_scores_attempts) || 0) + 1;
-  // Palier à utiliser : les paliers croissants tant qu'il en reste, puis on
-  // reste indéfiniment sur le dernier (24h) une fois tous épuisés.
-  const tierIndex = Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1);
+  const gaveUp = attempts > RETRY_DELAYS_MS.length;
   saveMapScoresStmt.run({
     id: String(id),
-    // On ne fixe JAMAIS map_scores à `null` de façon définitive : tant que
-    // rien n'est trouvé, la colonne reste NULL en base (= "pas encore
-    // résolu, retentative programmée"), jamais "abandon".
-    mapScores: null,
+    // Tant qu'on retente encore : on laisse `map_scores` à NULL en base (pas
+    // de JSON écrit) pour bien le distinguer d'un abandon définitif.
+    mapScores: gaveUp ? JSON.stringify(null) : null,
     attempts,
-    nextRetryAt: new Date(Date.now() + RETRY_DELAYS_MS[tierIndex]).toISOString(),
+    nextRetryAt: gaveUp ? null : new Date(Date.now() + RETRY_DELAYS_MS[attempts - 1]).toISOString(),
   });
 }
 
 /**
  * État complet de la résolution des scores par map pour un match :
- *  - value: array (résolu) ou undefined (pas encore résolu — jamais tenté,
- *    ou en attente de retentative ; le système ne renonce plus jamais, donc
- *    `value` ne vaut jamais `null` de façon permanente)
- *  - attempts / nextRetryAt : pour savoir quand retenter
+ *  - value: array (résolu), null (abandon définitif après le dernier
+ *    palier), undefined (pas encore résolu — jamais tenté, ou en attente de
+ *    retentative)
+ *  - attempts / nextRetryAt / gaveUp : pour savoir si/quand retenter
  * Renvoie undefined si le match n'est même pas encore en base.
  */
 function getMapScoresState(id) {
@@ -218,7 +212,7 @@ function getMapScoresState(id) {
       value: parsed,
       attempts: row.map_scores_attempts || 0,
       nextRetryAt: row.map_scores_next_retry_at || null,
-      gaveUp: true, // trouvé avec succès -> plus rien à retenter (le seul cas où map_scores est non-null en base désormais)
+      gaveUp: true, // un `map_scores` non-null en base = succès OU abandon définitif, plus rien à retenter
     };
   }
   return {
