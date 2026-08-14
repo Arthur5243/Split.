@@ -104,6 +104,7 @@ const STR = {
     teamsTbc: "Équipes à confirmer",
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pts d'écart après 12",
+    alreadyWonSuffix: "aurait déjà gagné si tu mets ce score",
     betLocked: "Pari verrouillé — le match a commencé",
     myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
@@ -132,6 +133,7 @@ const STR = {
     teamsTbc: "Teams TBC",
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pt gap after 12",
+    alreadyWonSuffix: "would have already won with this score",
     betLocked: "Bet locked — match has started",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
@@ -160,6 +162,7 @@ const STR = {
     teamsTbc: "Equipos por confirmar",
     seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
     scoreInvalid: "13 pts mín, 2 pts de diferencia tras 12",
+    alreadyWonSuffix: "ya habría ganado con este marcador",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
     classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
@@ -186,6 +189,7 @@ const STR = {
     teamsTbc: "Squadre da confermare",
     seriesHint: "Inserisci un punteggio di serie valido sopra (es. 2-0, 2-1).",
     scoreInvalid: "13 pt min, 2 pt di scarto dopo il 12",
+    alreadyWonSuffix: "avrebbe già vinto con questo punteggio",
     placeholderSoon: "Presto disponibile. Stiamo preparando i pronostici {label}, torna a trovarci!",
     classementTitle: "Classifica", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
@@ -212,6 +216,7 @@ const STR = {
     teamsTbc: "対戦カード未定",
     seriesHint: "上のボックスに有効なシリーズスコアを入力してください(例: 2-0、2-1)。",
     scoreInvalid: "13点先取、12点以降は2点差が必要",
+    alreadyWonSuffix: "はこのスコアだと既に勝利しています",
     placeholderSoon: "近日公開。{label}の予想機能を準備中です、お楽しみに!",
     classementTitle: "ランキング", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
@@ -238,6 +243,7 @@ const STR = {
     teamsTbc: "Teams noch offen",
     seriesHint: "Gib oben einen gültigen Serien-Score ein (z. B. 2-0, 2-1).",
     scoreInvalid: "Mind. 13 Punkte, 2 Punkte Vorsprung nach 12",
+    alreadyWonSuffix: "hätte mit diesem Ergebnis bereits gewonnen",
     placeholderSoon: "Bald verfügbar. Wir bereiten die {label}-Tipps vor, schau bald wieder vorbei!",
     classementTitle: "Rangliste", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
@@ -264,6 +270,7 @@ const STR = {
     teamsTbc: "对阵尚未确定",
     seriesHint: "请在上方输入有效的系列赛比分(如2-0、2-1)。",
     scoreInvalid: "先得13分，12平后须净胜2分",
+    alreadyWonSuffix: "按这个比分已经提前获胜了",
     placeholderSoon: "敬请期待。{label}竞猜功能筹备中，请稍后再来查看!",
     classementTitle: "排行榜", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
@@ -817,6 +824,32 @@ function isValidScore(aStr, bStr) {
   return w - l === 2;
 }
 
+// Cas spécifique Bo3 (seul format de l'app, score de série max 2-1) : si la
+// série pronostiquée compte 3 maps, la même équipe ne peut PAS avoir gagné
+// les 2 premières. Si elle l'avait fait, la série se serait terminée 2-0 et
+// la 3e map n'aurait jamais été jouée. On ne peut détecter ça qu'une fois les
+// 2 premières maps entièrement saisies (et seulement s'il y a bien une 3e map
+// à pronostiquer). Renvoie le nom de l'équipe "déjà gagnante" à ce stade, ou
+// null si rien à signaler.
+function computeGameOverrunWinner(games, team1Name, team2Name) {
+  if (!Array.isArray(games) || games.length !== 3) return null; // rien à valider hors 2-1
+  const g0 = games[0];
+  const g1 = games[1];
+  if (!g0 || !g1) return null;
+  if (g0.a === "" || g0.b === "" || g1.a === "" || g1.b === "") return null;
+  if (!isGameScoreComplete(g0.a) || !isGameScoreComplete(g0.b) || !isGameScoreComplete(g1.a) || !isGameScoreComplete(g1.b)) {
+    return null; // saisie encore en cours sur l'une des 2 maps
+  }
+  const a0 = parseInt(g0.a, 10);
+  const b0 = parseInt(g0.b, 10);
+  const a1 = parseInt(g1.a, 10);
+  const b1 = parseInt(g1.b, 10);
+  const winner0 = a0 > b0 ? 1 : a0 < b0 ? 2 : null;
+  const winner1 = a1 > b1 ? 1 : a1 < b1 ? 2 : null;
+  if (winner0 === null || winner1 === null || winner0 !== winner1) return null;
+  return winner0 === 1 ? team1Name : team2Name;
+}
+
 // Détecte si un logo est majoritairement noir/foncé (donc invisible sur fond
 // sombre) en échantillonnant ses pixels via un canvas. Si oui -> on le force
 // en blanc (contraste). Sinon -> on garde ses couleurs d'origine intactes.
@@ -994,6 +1027,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [touchedFields, setTouchedFields] = useState({});
   const markTouched = (key) => setTouchedFields((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
   const markUntouched = (key) => setTouchedFields((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
+
+  // Équipe qui aurait déjà gagné la série avant la 3e map, si la série
+  // pronostiquée est en 2-1 (3 maps) et que les maps 1 et 2 ont le même
+  // vainqueur. Affiché comme erreur sur la Map 2, dès qu'elle est saisie.
+  const overrunWinner = computeGameOverrunWinner(games, match.team1Name, match.team2Name);
 
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
@@ -1205,15 +1243,27 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                     const bothFilled = g.a !== "" && g.b !== "";
                     const bothTouched = touchedFields[i + "-a"] && touchedFields[i + "-b"];
                     const showError = bothFilled && bothTouched && !isValidScore(g.a, g.b);
+                    // Erreur spécifique "série déjà gagnée" : seulement sur
+                    // la Map 2 (i === 1), et seulement une fois qu'elle est
+                    // entièrement saisie/quittée (même logique que showError
+                    // ci-dessus, jamais pendant que l'utilisateur tape).
+                    const showOverrunError = i === 1 && bothFilled && bothTouched && !!overrunWinner;
                     return (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
                           <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
-                          {showError && (
-                            <span className="flex items-center gap-1" style={{ color: "#e05252", fontSize: "10px" }}>
+                          {showOverrunError ? (
+                            <span className="flex items-center gap-1" style={{ color: "#e05252", fontSize: "10px", textAlign: "right" }}>
                               <AlertCircle size={12} />
-                              {T.scoreInvalid}
+                              {overrunWinner} {T.alreadyWonSuffix}
                             </span>
+                          ) : (
+                            showError && (
+                              <span className="flex items-center gap-1" style={{ color: "#e05252", fontSize: "10px" }}>
+                                <AlertCircle size={12} />
+                                {T.scoreInvalid}
+                              </span>
+                            )
                           )}
                         </div>
                         <div className="flex items-center justify-center gap-3">
