@@ -50,6 +50,15 @@ const REGION_YOUTUBE = {
   CN: "https://youtube.com/@valorantesportscn?si=H2cxjYM4lYVN-Oks",
 };
 
+// Liens du direct YouTube (pas le replay) par région, pour le choix
+// Twitch/YouTube proposé au clic sur "LIVE".
+const REGION_YOUTUBE_LIVE = {
+  EMEA: "https://www.youtube.com/@vctemea/live",
+  AMERICAS: "https://www.youtube.com/@valorant_americas/live",
+  PACIFIC: "https://www.youtube.com/@VCTPacific/live",
+  CN: "https://www.youtube.com/@VALORANTEsportsCN/live",
+};
+
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
 
@@ -1035,6 +1044,15 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
   const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
+  const twitchLiveUrl = "https://www.twitch.tv/" + twitchChannel;
+
+  // Lien du direct YouTube selon la région (repli sur EMEA si inconnue) -
+  // proposé en alternative à Twitch au clic sur "LIVE".
+  const youtubeLiveUrl = REGION_YOUTUBE_LIVE[match.region] || REGION_YOUTUBE_LIVE.EMEA;
+
+  // Petit sélecteur Twitch/YouTube affiché au clic sur "LIVE", plutôt que
+  // d'ouvrir Twitch directement.
+  const [showStreamPicker, setShowStreamPicker] = useState(false);
 
   // Lien replay YouTube selon la région du match (repli sur EMEA si inconnue)
   const replayUrl = REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA;
@@ -1060,14 +1078,60 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
         </div>
         {running ? (
-          <button
-            onClick={() => window.open("https://www.twitch.tv/" + twitchChannel, "_blank", "noopener,noreferrer")}
-            className="flex items-center gap-1.5"
-            style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
-          >
-            <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-            LIVE
-          </button>
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowStreamPicker((v) => !v)}
+              className="flex items-center gap-1.5"
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+            >
+              <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+              LIVE
+            </button>
+            {showStreamPicker && (
+              <>
+                {/* Zone invisible pleine page pour fermer le sélecteur au clic ailleurs */}
+                <div
+                  onClick={() => setShowStreamPicker(false)}
+                  style={{ position: "fixed", inset: 0, zIndex: 10 }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 6px)",
+                    right: 0,
+                    zIndex: 11,
+                    background: "#1c1c1c",
+                    border: "1px solid #333",
+                    borderRadius: "10px",
+                    overflow: "hidden",
+                    minWidth: "120px",
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      setShowStreamPicker(false);
+                      window.open(twitchLiveUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    className="w-full text-left"
+                    style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", borderBottom: "1px solid #2a2a2a" }}
+                  >
+                    Twitch
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowStreamPicker(false);
+                      window.open(youtubeLiveUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    className="w-full text-left"
+                    style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent" }}
+                  >
+                    YouTube
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         ) : finished ? (
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
