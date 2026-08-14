@@ -1379,7 +1379,38 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
 
   const accentFor = (region) => (REGIONS.find((r) => r.key === region) || {}).accent || "#fff";
 
-  const source = showFinished ? results : [...live, ...upcoming];
+  // Un match remonté "finished" côté PandaScore mais dont le score par map
+  // n'est pas encore résolu (toujours en cours de retentative côté backend,
+  // cf. RETRY_DELAYS_MS) reste affiché dans l'onglet "à venir" plutôt que
+  // "Terminé", pour ne jamais montrer un score par map à 0-0 alors que le
+  // vrai score n'est pas encore arrivé. Le badge affiche quand même "Terminé"
+  // (pas "LIVE") puisque match.status vaut déjà "finished" (voir plus haut
+  // `const finished = match.status === "finished"`). Fenêtre de 48h après la
+  // date du match — même délai que le règlement des pronostics plus bas —
+  // passé laquelle on l'affiche quand même dans "Terminé" avec ce qu'on a,
+  // plutôt que de le laisser coincé indéfiniment dans "à venir".
+  const now = Date.now();
+  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
+  const stillWithinGrace = (m) => {
+    const dayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
+    return dayMs != null && now - dayMs < 48 * 60 * 60 * 1000;
+  };
+  const resultsReady = results.filter((m) => hasRealMapScore(m) || !stillWithinGrace(m));
+  const resultsPending = results.filter((m) => !hasRealMapScore(m) && stillWithinGrace(m));
+
+  // dédoublonne par id : un match tout juste terminé peut, le temps d'un
+  // poll, apparaître à la fois dans `live` (PandaScore n'a pas encore
+  // actualisé /valorant-live) et dans `resultsPending` (déjà remonté par
+  // /valorant-results) — on garde la version resultsPending (plus complète).
+  function dedupeById(list) {
+    const seen = new Map();
+    for (const m of list) {
+      if (!seen.has(String(m.id))) seen.set(String(m.id), m);
+    }
+    return [...seen.values()];
+  }
+
+  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...live, ...upcoming]);
 
   const combined = source
     .filter((m) => m.region && selectedRegions.includes(m.region))
