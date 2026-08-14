@@ -755,6 +755,46 @@ app.get("/admin/debug-last3-map-scores", async (req, res) => {
 });
 
 // ==========================================================================
+// Force une nouvelle tentative IMMÉDIATE de récupération du score par map
+// pour UN match précis (id PandaScore), en contournant complètement l'état
+// stocké en base (nextRetryAt à respecter, ou abandon définitif après les
+// paliers de RETRY_DELAYS_MS). Utile après un correctif (ex: ajout d'un
+// alias manquant dans team-aliases.json) pour "réparer" un match déjà marqué
+// abandonné, sans attendre un futur redeploy qui viderait toute la base.
+// Usage : /admin/force-map-scores?id=<pandascore_id>
+app.get("/admin/force-map-scores", async (req, res) => {
+  try {
+    const id = req.query.id;
+    if (!id) return res.status(400).json({ error: "paramètre ?id=<pandascore_id> manquant" });
+
+    const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
+    const m = data.find((x) => String(x.id) === String(id));
+    if (!m) {
+      return res.status(404).json({ error: "match introuvable parmi les 50 derniers résultats PandaScore" });
+    }
+
+    const team1 = m.opponents?.[0]?.opponent?.name || null;
+    const team2 = m.opponents?.[1]?.opponent?.name || null;
+    const date = (m.begin_at || "").slice(0, 10);
+    if (!team1 || !team2 || !date) {
+      return res.status(422).json({ error: "données d'équipe/date manquantes sur ce match", team1, team2, date });
+    }
+
+    const mapScores = await getMapScores(team1, team2, date);
+    if (mapScores) {
+      saveMapScores(id, mapScores); // persiste le succès, remet le compteur de retentatives à zéro
+    } else {
+      saveMapScoresFailure(id); // reprogramme un prochain essai normal (ne force pas un abandon)
+    }
+
+    res.json({ id, team1, team2, date, map_scores: mapScores });
+  } catch (e) {
+    console.error("force-map-scores error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ==========================================================================
 // Pont vlr.gg : va chercher le score détaillé par map (ex: 13-9) d'un match,
 // que PandaScore ne fournit pas. Les IDs PandaScore et vlr.gg ne correspondent
 // pas entre eux, donc on identifie le match vlr.gg par équipe + date au lieu
