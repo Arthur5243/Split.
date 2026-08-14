@@ -124,6 +124,26 @@ function findManualMapScores(team1Name, team2Name, dateStr) {
   return null;
 }
 
+// Valide qu'une séquence de scores par map est mathématiquement possible.
+// Cas concret : série Bo3 qui finit 2-1 (donc exactement 3 maps jouées). La
+// même équipe ne peut PAS avoir gagné les 2 premières maps : si elle l'avait
+// fait, la série se serait terminée 2-0 et la 3e map n'aurait jamais existé.
+// Donc sur maps[0] et maps[1], le gagnant doit forcément être différent à
+// chaque fois (1-1 avant la belle) — peu importe l'équipe, peu importe le
+// match : règle générique appliquée à tout le monde.
+// Sert à détecter une erreur de matching/scrape (mauvais match_id, maps
+// dupliquées, etc.) plutôt qu'à juger un vrai résultat — dans ce cas on
+// préfère renvoyer null (et laisser la retry logic réessayer / laisser la
+// place à une saisie manuelle) plutôt que d'afficher une donnée impossible.
+function isPlausibleMapSequence(maps) {
+  if (!Array.isArray(maps) || maps.length !== 3) return true; // rien à valider hors Bo3 en 2-1
+  const winnerOf = (m) => (m.score1 > m.score2 ? 1 : m.score2 > m.score1 ? 2 : null);
+  const w1 = winnerOf(maps[0]);
+  const w2 = winnerOf(maps[1]);
+  if (w1 === null || w2 === null) return true; // score de map incomplet/égalité -> pas notre rôle de bloquer
+  return w1 !== w2;
+}
+
 // Petit cache mémoire pour ne pas re-taper l'API à chaque requête (les scores
 // d'un match terminé ne changent jamais une fois publiés).
 const cache = new Map();
@@ -261,8 +281,15 @@ async function getMapScores(team1Name, team2Name, dateStr) {
   // et prioritaire même si vlr.gg a déjà été tenté sans succès pour ce match.
   const manual = findManualMapScores(team1Name, team2Name, dateStr);
   if (manual) {
-    console.log(`[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → trouvé en saisie manuelle`);
-    return manual;
+    if (!isPlausibleMapSequence(manual)) {
+      console.log(
+        `[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → saisie manuelle REJETÉE (séquence de maps impossible, à corriger dans manual-map-scores.json):`,
+        JSON.stringify(manual)
+      );
+    } else {
+      console.log(`[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → trouvé en saisie manuelle`);
+      return manual;
+    }
   }
 
   try {
@@ -289,7 +316,14 @@ async function getMapScores(team1Name, team2Name, dateStr) {
         score1: m.score.team1,
         score2: m.score.team2,
       }));
-    const finalResult = result.length > 0 ? result : null;
+    let finalResult = result.length > 0 ? result : null;
+    if (finalResult && !isPlausibleMapSequence(finalResult)) {
+      console.log(
+        `[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → résultat vlr.gg REJETÉ (séquence de maps impossible, probable erreur de matching):`,
+        JSON.stringify(finalResult)
+      );
+      finalResult = null; // on préfère null (retry / saisie manuelle) qu'une donnée impossible
+    }
     setCached(cacheKey, finalResult);
     return finalResult;
   } catch (e) {
