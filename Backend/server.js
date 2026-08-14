@@ -412,6 +412,16 @@ async function enrichWithMapScores(data) {
     // attendant la prochaine tentative.
     if (m.map_scores) {
       saveMapScores(m.id, m.map_scores);
+      // Rafraîchit le cache tout de suite, match par match, au lieu d'attendre
+      // la fin du lot `toFetch` en cours (le .then() final ci-dessous). Sans
+      // ça, un match résolu en tête de file reste invisible côté front tant
+      // que tous les autres retries du même lot n'ont pas fini de tourner
+      // (mapWithConcurrency + 900ms d'attente entre chaque) — potentiellement
+      // plusieurs dizaines de secondes de retard alors que le score est déjà
+      // correct en base depuis longtemps. `data` est muté en place par cette
+      // même fonction donc buildMergedResults(data) reflète bien l'état
+      // courant, y compris les autres matchs déjà résolus plus tôt dans ce lot.
+      enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
     } else {
       saveMapScoresFailure(m.id);
       if (!fetchError) console.log(`[map_scores] ${t1} vs ${t2} (${date}) → retentative programmée`);
