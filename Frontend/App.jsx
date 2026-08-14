@@ -431,6 +431,7 @@ const TEAM_CODE_OVERRIDES = {
   "A TE": "AT",
   WOLV: "WE",
   WOLVES: "WE",
+  NV: "ENVY",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
