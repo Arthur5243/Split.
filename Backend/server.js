@@ -114,8 +114,9 @@ app.get("/api/valorant-upcoming", async (req, res) => {
 app.get("/api/valorant-live", async (req, res) => {
   try {
     const data = await cachedFetch("live", "/valorant/matches/running?per_page=50");
-    await reconcileStaleLiveMatches(data);
-    res.json(data);
+    const hiddenIds = await reconcileStaleLiveMatches(data);
+    const visible = hiddenIds && hiddenIds.length ? data.filter((m) => !hiddenIds.includes(m.id)) : data;
+    res.json(visible);
   } catch (e) {
     console.error(e);
     res.status(502).json({ error: "Impossible de récupérer les matchs en direct." });
@@ -189,6 +190,19 @@ async function mapWithConcurrency(items, limit, fn) {
 // solliciter vlr.gg pour rien.
 const STALE_LIVE_THRESHOLD_MS = 90 * 60 * 1000; // 1h30
 
+// Filet de sécurité ABSOLU, indépendant de vlr.gg : au-delà de 4h, aucun Bo3
+// Valorant n'est réellement encore en cours. Si vlr.gg n'a jamais pu
+// confirmer la fin de la série (équipe introuvable dans l'alias/la recherche
+// live, vlrggapi down, rate-limit persistant, page pas encore publiée...),
+// le match restait auparavant affiché "en direct" indéfiniment - c'est
+// exactement le cas TYLOO vs Titan Esports Club qui a révélé ce problème.
+// Maintenant : passé ce délai, on le RETIRE de l'onglet "en direct" même
+// sans score confirmé, plutôt que de continuer à mentir sur son statut. Il
+// n'apparaît pas non plus à tort dans "Match terminé" (on n'invente aucun
+// score) ; il réapparaîtra correctement dès que PandaScore ou vlr.gg
+// rattrapent leur retard.
+const ABSOLUTE_HIDE_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4h
+
 // Double vérification automatique : pour chaque match encore "running" chez
 // PandaScore depuis plus d'1h30, on va voir sur vlr.gg si la série est en
 // fait déjà décidée (2 maps gagnées par une équipe en Bo3). Si oui : (1) on
@@ -199,7 +213,11 @@ const STALE_LIVE_THRESHOLD_MS = 90 * 60 * 1000; // 1h30
 // propre statut. Générique : s'applique à TOUS les matchs, tous les jours,
 // pas seulement au cas TYLOO vs Titan Esports Club qui a révélé le problème.
 // Défensif comme le reste : si vlr.gg échoue ou ne trouve rien, on ne touche
-// à rien et on retentera au prochain poll (60s plus tard, côté front).
+// à rien et on retentera au prochain poll (60s plus tard, côté front) - SAUF
+// si le délai absolu ci-dessus est dépassé, auquel cas on masque quand même
+// le match (cf ABSOLUTE_HIDE_THRESHOLD_MS) pour ne jamais rester bloqué.
+// Renvoie la liste des matchs à masquer de la réponse (non résolus par
+// vlr.gg mais trop vieux pour rester crédibles en "en direct").
 async function reconcileStaleLiveMatches(data) {
   const now = Date.now();
   const suspects = data.filter((m) => {
@@ -207,12 +225,18 @@ async function reconcileStaleLiveMatches(data) {
     const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
     return beginAt && now - beginAt >= STALE_LIVE_THRESHOLD_MS;
   });
-  if (suspects.length === 0) return;
+  const toHide = [];
+  if (suspects.length === 0) return toHide;
 
   await mapWithConcurrency(suspects, 1, async (m) => {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
-    if (!t1 || !t2) return;
+    const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
+    const pastAbsoluteLimit = beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS;
+    if (!t1 || !t2) {
+      if (pastAbsoluteLimit) toHide.push(m.id);
+      return;
+    }
     const date = (m.begin_at || "").slice(0, 10);
 
     let mapScores = null;
@@ -220,9 +244,19 @@ async function reconcileStaleLiveMatches(data) {
       mapScores = await getMapScores(t1.name, t2.name, date);
     } catch (e) {
       console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → erreur vlr.gg:`, e.message);
+      if (pastAbsoluteLimit) {
+        console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → masqué (running depuis >4h, vlr.gg indisponible)`);
+        toHide.push(m.id);
+      }
       return;
     }
-    if (!mapScores || mapScores.length === 0) return; // vlr.gg n'a rien -> peut-être vraiment encore en cours
+    if (!mapScores || mapScores.length === 0) {
+      if (pastAbsoluteLimit) {
+        console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → masqué (running depuis >4h, vlr.gg n'a rien trouvé)`);
+        toHide.push(m.id);
+      }
+      return; // vlr.gg n'a rien -> peut-être vraiment encore en cours (ou masqué ci-dessus si trop vieux)
+    }
 
     let wins1 = 0;
     let wins2 = 0;
@@ -231,7 +265,17 @@ async function reconcileStaleLiveMatches(data) {
       else if (mp.score2 > mp.score1) wins2++;
     }
     const winsNeeded = 2; // Bo3, seul format de l'app
-    if (wins1 < winsNeeded && wins2 < winsNeeded) return; // vlr.gg aussi le montre encore ouvert -> cohérent, rien à corriger
+    if (wins1 < winsNeeded && wins2 < winsNeeded) {
+      // vlr.gg aussi le montre encore ouvert -> cohérent avec "running" en soi,
+      // SAUF si ça dure depuis plus de 4h : à ce stade c'est probablement un
+      // match annulé/abandonné des deux côtés (PandaScore ET vlr.gg bloqués
+      // sur le même statut obsolète), donc on masque quand même.
+      if (pastAbsoluteLimit) {
+        console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → masqué (running depuis >4h, série toujours ouverte des deux côtés)`);
+        toHide.push(m.id);
+      }
+      return;
+    }
 
     console.log(
       `[live-reconcile] ${t1.name} vs ${t2.name} (${date}) → PandaScore dit encore "running" mais vlr.gg confirme la série décidée (${wins1}-${wins2}), correction appliquée.`
@@ -268,6 +312,8 @@ async function reconcileStaleLiveMatches(data) {
     saveMapScores(m.id, mapScores);
     enrichedResultsCache = null; // force /api/valorant-results à relire la base au prochain appel
   });
+
+  return toHide;
 }
 
 // Colle sur `data` les scores par map déjà connus en base (synchrone, aucun
