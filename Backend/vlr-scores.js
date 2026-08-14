@@ -282,7 +282,10 @@ async function getMapScores(team1Name, team2Name, dateStr) {
       // objets avec un champ .total.
       .filter((m) => m.score && Number.isFinite(m.score.team1) && Number.isFinite(m.score.team2))
       .map((m) => ({
-        map: m.map_name,
+        // vlrggapi colle parfois un badge "PICK"/"BAN" directement au nom de
+        // la map sans espace (ex: "BreezePICK") — on le retire. Aucune map
+        // Valorant ne se termine par ces mots, donc pas de faux positif.
+        map: (m.map_name || "").replace(/\s*(PICK|BAN)\s*$/i, "").trim(),
         score1: m.score.team1,
         score2: m.score.team2,
       }));
