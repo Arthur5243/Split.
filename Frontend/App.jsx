@@ -38,7 +38,7 @@ const REGION_TWITCH = {
   EMEA: "valorant_emea",
   AMERICAS: "valorant_americas",
   PACIFIC: "valorant_pacific",
-  CN: "valorant_cn",
+  CN: "valorantesports_cn",
 };
 
 // Liens replay YouTube officiels par région, pour le bouton "Replay" une fois
