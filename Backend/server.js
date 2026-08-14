@@ -185,7 +185,8 @@ async function mapWithConcurrency(items, limit, fn) {
 // sweep en arrière-plan. Renvoie la liste des matchs terminés qu'il faut
 // (re)taper sur vlr.gg : ceux jamais tentés, ET ceux dont la précédente
 // tentative a échoué mais dont le délai de retentative est écoulé (voir
-// RETRY_DELAYS_MS dans match-history-store.js) — jusqu'à abandon définitif.
+// RETRY_DELAYS_MS dans match-history-store.js) — jusqu'à abandon définitif
+// après le dernier palier (2h).
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
