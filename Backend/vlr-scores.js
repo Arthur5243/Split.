@@ -188,6 +188,23 @@ async function vlrFetch(path, attempt = 0) {
 }
 
 /**
+ * Résout le nom "officiel" vlr.gg d'une équipe à partir de son nom brut
+ * PandaScore, via le fichier d'alias (ex: "TEC Esports" -> "Titan Esports
+ * Club"). Si l'équipe n'est pas dans le fichier, renvoie le nom PandaScore
+ * tel quel (comportement identique à avant pour les équipes non
+ * répertoriées — pas de régression).
+ *
+ * Sert à comparer des noms d'équipe entre les deux sources sur un terrain
+ * commun : findTeamId() ne matche que le nom de départ, pas celui de
+ * l'adversaire dans la liste des matchs renvoyée par vlr.gg (qui, elle,
+ * utilise toujours le nom vlr.gg).
+ */
+function resolveVlrName(teamName) {
+  const alias = teamAliases.get(normalize(teamName));
+  return alias ? alias.vlr_name : teamName;
+}
+
+/**
  * Cherche l'ID vlr.gg d'une équipe par son nom (via /v2/search).
  * Renvoie null si rien trouvé.
  */
@@ -244,7 +261,12 @@ async function findMatchId(team1Name, team2Name, dateStr) {
     const json = await vlrFetch("/v2/team?id=" + teamId + "&q=matches&page=1");
     // L'API renvoie la liste sous "segments", pas "matches".
     const matches = (json && json.data && json.data.segments) || [];
-    const targetOpponent = normalize(team2Name);
+    // Bug historique : comparer directement le nom PandaScore brut de
+    // l'adversaire (ex: "TEC Esports") au nom affiché par vlr.gg dans la
+    // liste des matchs (ex: "Titan Esports Club") ne matche jamais quand
+    // les deux noms diffèrent. On résout donc l'adversaire via le même
+    // fichier d'alias que celui utilisé pour l'équipe de départ.
+    const targetOpponent = normalize(resolveVlrName(team2Name));
     const targetDate = new Date(dateStr + "T00:00:00");
 
     let best = null;
