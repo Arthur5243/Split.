@@ -783,11 +783,16 @@ app.get("/admin/force-map-scores", async (req, res) => {
     const mapScores = await getMapScores(team1, team2, date);
     if (mapScores) {
       saveMapScores(id, mapScores); // persiste le succès, remet le compteur de retentatives à zéro
+      // Sans ça, /api/valorant-results continuerait de servir l'ancien cache
+      // en mémoire (enrichedResultsCache, TTL 10 min) sans jamais relire la
+      // base tant qu'il est encore frais -> le site resterait sur l'ancien
+      // score jusqu'à 10 min de plus après cette correction manuelle.
+      enrichedResultsCache = null;
     } else {
       saveMapScoresFailure(id); // reprogramme un prochain essai normal (ne force pas un abandon)
     }
 
-    res.json({ id, team1, team2, date, map_scores: mapScores });
+    res.json({ id, team1, team2, date, map_scores: mapScores, cache_invalide: !!mapScores });
   } catch (e) {
     console.error("force-map-scores error:", e.message);
     res.status(500).json({ error: e.message });
