@@ -114,6 +114,18 @@ app.get("/api/valorant-upcoming", async (req, res) => {
 app.get("/api/valorant-live", async (req, res) => {
   try {
     const data = await cachedFetch("live", "/valorant/matches/running?per_page=50");
+    // DIAGNOSTIC TEMPORAIRE (à retirer une fois le cas TYLOO vs Titan Esports
+    // Club élucidé) : liste chaque match "running" brut renvoyé par
+    // PandaScore avec son begin_at et son âge, pour comprendre pourquoi
+    // reconcileStaleLiveMatches ne le détecte jamais comme suspect (begin_at
+    // manquant ? statut différent de "running" ? absent de la liste ?).
+    for (const m of data) {
+      if (m.status !== "running") continue;
+      const t1 = m.opponents?.[0]?.opponent?.name || "?";
+      const t2 = m.opponents?.[1]?.opponent?.name || "?";
+      const ageMin = m.begin_at ? Math.round((Date.now() - new Date(m.begin_at).getTime()) / 60000) : null;
+      console.log(`[diag-live] id=${m.id} ${t1} vs ${t2} status=${m.status} begin_at=${m.begin_at} age=${ageMin}min`);
+    }
     const hiddenIds = await reconcileStaleLiveMatches(data);
     const visible = hiddenIds && hiddenIds.length ? data.filter((m) => !hiddenIds.includes(m.id)) : data;
     res.json(visible);
