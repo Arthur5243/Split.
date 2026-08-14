@@ -114,6 +114,7 @@ app.get("/api/valorant-upcoming", async (req, res) => {
 app.get("/api/valorant-live", async (req, res) => {
   try {
     const data = await cachedFetch("live", "/valorant/matches/running?per_page=50");
+    await reconcileStaleLiveMatches(data);
     res.json(data);
   } catch (e) {
     console.error(e);
@@ -178,6 +179,95 @@ async function mapWithConcurrency(items, limit, fn) {
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+// Un Bo3 Valorant dure rarement plus d'1h30 en tout (2 ou 3 maps). Un match
+// que PandaScore affiche encore "running" au-delà de ce seuil est très
+// probablement déjà terminé côté PandaScore (juste pas encore marqué comme
+// tel chez eux — décalage assez fréquent). Sous ce seuil, on ne vérifie rien
+// : le match est probablement encore réellement en cours, pas la peine de
+// solliciter vlr.gg pour rien.
+const STALE_LIVE_THRESHOLD_MS = 90 * 60 * 1000; // 1h30
+
+// Double vérification automatique : pour chaque match encore "running" chez
+// PandaScore depuis plus d'1h30, on va voir sur vlr.gg si la série est en
+// fait déjà décidée (2 maps gagnées par une équipe en Bo3). Si oui : (1) on
+// corrige le statut affiché tout de suite (le match sort de l'onglet "en
+// direct"), et (2) on l'enregistre nous-mêmes comme terminé dans notre base
+// (avec son score par map) pour qu'il apparaisse instantanément dans l'onglet
+// "Match terminé", sans attendre que PandaScore mette lui-même à jour son
+// propre statut. Générique : s'applique à TOUS les matchs, tous les jours,
+// pas seulement au cas TYLOO vs Titan Esports Club qui a révélé le problème.
+// Défensif comme le reste : si vlr.gg échoue ou ne trouve rien, on ne touche
+// à rien et on retentera au prochain poll (60s plus tard, côté front).
+async function reconcileStaleLiveMatches(data) {
+  const now = Date.now();
+  const suspects = data.filter((m) => {
+    if (m.status !== "running") return false;
+    const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
+    return beginAt && now - beginAt >= STALE_LIVE_THRESHOLD_MS;
+  });
+  if (suspects.length === 0) return;
+
+  await mapWithConcurrency(suspects, 1, async (m) => {
+    const t1 = m.opponents?.[0]?.opponent;
+    const t2 = m.opponents?.[1]?.opponent;
+    if (!t1 || !t2) return;
+    const date = (m.begin_at || "").slice(0, 10);
+
+    let mapScores = null;
+    try {
+      mapScores = await getMapScores(t1.name, t2.name, date);
+    } catch (e) {
+      console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → erreur vlr.gg:`, e.message);
+      return;
+    }
+    if (!mapScores || mapScores.length === 0) return; // vlr.gg n'a rien -> peut-être vraiment encore en cours
+
+    let wins1 = 0;
+    let wins2 = 0;
+    for (const mp of mapScores) {
+      if (mp.score1 > mp.score2) wins1++;
+      else if (mp.score2 > mp.score1) wins2++;
+    }
+    const winsNeeded = 2; // Bo3, seul format de l'app
+    if (wins1 < winsNeeded && wins2 < winsNeeded) return; // vlr.gg aussi le montre encore ouvert -> cohérent, rien à corriger
+
+    console.log(
+      `[live-reconcile] ${t1.name} vs ${t2.name} (${date}) → PandaScore dit encore "running" mais vlr.gg confirme la série décidée (${wins1}-${wins2}), correction appliquée.`
+    );
+
+    // 1) Corrige l'objet renvoyé tout de suite -> sort de l'onglet "en direct" dès cette réponse.
+    m.status = "finished";
+    m.map_scores = mapScores;
+    m.results = [
+      { team_id: t1.id, score: wins1 },
+      { team_id: t2.id, score: wins2 },
+    ];
+
+    // 2) Persiste nous-mêmes ce match comme terminé, pour qu'il apparaisse
+    // immédiatement dans l'onglet "Match terminé" (via buildMergedResults)
+    // sans attendre que PandaScore corrige lui-même son propre statut.
+    storeFinishedMatches([
+      {
+        id: String(m.id),
+        team1: t1.name,
+        team2: t2.name,
+        team1Name: t1.name,
+        team2Name: t2.name,
+        score1: wins1,
+        score2: wins2,
+        status: "finished",
+        region: null,
+        league: m.league?.name || null,
+        phase: m.serie?.full_name || null,
+        day: date,
+        time: (m.begin_at || "").slice(11, 16),
+      },
+    ]);
+    saveMapScores(m.id, mapScores);
+    enrichedResultsCache = null; // force /api/valorant-results à relire la base au prochain appel
+  });
 }
 
 // Colle sur `data` les scores par map déjà connus en base (synchrone, aucun
