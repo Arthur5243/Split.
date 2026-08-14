@@ -1098,5 +1098,25 @@
   "QTD": {
     "vlr_name": "QT DIG∞",
     "vlr_id": "18299"
+  },
+  "FURIA Esports": {
+    "vlr_name": "FURIA",
+    "vlr_id": "2406"
+  },
+  "Fluxo W7M": {
+    "vlr_name": "Fluxo W7M",
+    "vlr_id": "23141"
+  },
+  "XLG Gaming": {
+    "vlr_name": "Xi Lai Gaming",
+    "vlr_id": "13581"
+  },
+  "Sharper Esport": {
+    "vlr_name": "Sharper Esports",
+    "vlr_id": "623"
+  },
+  "JD Gaming": {
+    "vlr_name": "JD Gaming",
+    "vlr_id": "13576"
   }
 }
