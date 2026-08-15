@@ -5,10 +5,10 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient en priorité d'un suivi live via
- *      hltv-match-api (cf hltv-scores.js), avec repli sur l'endpoint
- *      PandaScore lui-même (cs2-scores.js, /csgo/games/{id}) si le suivi
- *      live n'a rien capturé pour ce match.
+ *   1. Le score par map vient en priorité de hltv-next (paquet npm, cf
+ *      hltv-scores.js — recherche le match sur HLTV par équipes+date, pas
+ *      d'infra à héberger), avec repli sur l'endpoint PandaScore lui-même
+ *      (cs2-scores.js, /csgo/games/{id}) si hltv-next n'a rien trouvé.
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -34,7 +34,7 @@ import {
   saveMapScoresFailure,
   getMapScoresState,
 } from "./cs2-history-store.js";
-import { startHltvTracker, finalizeAndGet } from "./hltv-scores.js";
+import { getMapScoresFromHltv } from "./hltv-scores.js";
 
 const router = express.Router();
 
@@ -124,17 +124,6 @@ router.get("/api/cs2-live", async (req, res) => {
   }
 });
 
-// Démarre le sondage périodique hltv-match-api (no-op si HLTV_API_BASE
-// n'est pas configurée) : réutilise le même cache 60s ("cs2-live") que la
-// route ci-dessus, donc ne double jamais la charge sur PandaScore.
-startHltvTracker(async () => {
-  try {
-    return await cachedFetch("cs2-live", "/" + CS2_SLUG + "/matches/running?per_page=50");
-  } catch (e) {
-    return [];
-  }
-});
-
 // --- Enrichissement score par map + accumulation, même principe que server.js ---
 
 let enrichedResultsCache = null; // { data, time }
@@ -187,33 +176,38 @@ async function enrichWithMapScores(data) {
 
   const toFetch = applyStoredMapScores(finished);
 
-  await mapWithConcurrency(toFetch, 2, async (m) => {
+  await mapWithConcurrency(toFetch, 1, async (m) => {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
     let mapScores = null;
+    const date = (m.begin_at || "").slice(0, 10);
 
-    // 1) Priorité au suivi live hltv-match-api (capturé pendant que le
-    // match était en direct, cf hltv-scores.js) : gratuit, aucun plan
-    // PandaScore payant requis pour le score par map. `expectedTotalMaps` =
-    // nb de maps jouées d'après le score de série PandaScore (results),
-    // pour savoir si le suivi est complet.
-    const results = m.results || [];
-    const r1 = results.find((r) => r.team_id === t1.id);
-    const r2 = results.find((r) => r.team_id === t2.id);
-    const expectedTotalMaps = (r1 ? r1.score : 0) + (r2 ? r2.score : 0);
-    if (expectedTotalMaps > 0) {
-      mapScores = finalizeAndGet(m.id, expectedTotalMaps);
+    // 1) Priorité à hltv-next (cf hltv-scores.js) : gratuit, tourne dans ce
+    // backend directement (pas d'infra à héberger), aucun plan PandaScore
+    // payant requis pour le score par map.
+    try {
+      mapScores = await getMapScoresFromHltv(t1.name, t2.name, date);
+    } catch (e) {
+      console.log(`[cs2 map_scores] hltv-next ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
+    // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
+    // confirmé fonctionnel en prod) : trace chaque match traité ici, pour
+    // repérer précisément où ça coince sur un match donné (ex. IMP vs ISG).
+    console.log(
+      `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}) — ` +
+        `hltv-next=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
+    );
 
-    // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si le
-    // suivi live n'a rien capturé (match manqué en tout début de sondage,
-    // service HLTV_API_BASE non configuré, etc.).
+    // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si
+    // hltv-next n'a rien trouvé (match introuvable côté HLTV, bloqué par
+    // Cloudflare ce coup-ci, etc.). Ne coûte rien à tenter même sur le plan
+    // gratuit — échoue juste vite dans ce cas.
     if (!mapScores) {
       try {
         mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
       } catch (e) {
-        console.log(`[cs2 map_scores] ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+        console.log(`[cs2 map_scores] PandaScore ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
       }
     }
 
@@ -224,7 +218,7 @@ async function enrichWithMapScores(data) {
     } else {
       saveMapScoresFailure(m.id);
     }
-    await sleep(400);
+    await sleep(600); // pause entre chaque match traité, par courtoisie envers HLTV/PandaScore
   });
 }
 
