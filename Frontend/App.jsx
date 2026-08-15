@@ -107,6 +107,7 @@ const STR = {
     newsLabel: "News", newsBadge: "Annonce", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Prochains matchs · tous circuits",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
@@ -147,6 +148,7 @@ const STR = {
     newsLabel: "News", newsBadge: "Announcement", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Upcoming matches · all circuits",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
@@ -187,6 +189,7 @@ const STR = {
     newsLabel: "News", newsBadge: "Anuncio", newsTitle: "3 MASTERS EN 2027", newsSub: "Un tercer torneo Masters se añadiría al calendario de la próxima temporada.",
     classementLabel: "Clasificación", seeAll: "Ver todo", classementEmptyHome: "0 pronosticadores clasificados por ahora. ¡Sé el primero!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Próximos partidos · todos los circuitos",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
@@ -225,6 +228,7 @@ const STR = {
     newsLabel: "News", newsBadge: "Annuncio", newsTitle: "3 MASTERS NEL 2027", newsSub: "Un terzo torneo Masters si aggiungerebbe al calendario della prossima stagione.",
     classementLabel: "Classifica", seeAll: "Vedi tutto", classementEmptyHome: "0 pronosticatori in classifica per ora. Sii il primo!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Prossimi match · tutti i circuiti",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
@@ -263,6 +267,7 @@ const STR = {
     newsLabel: "ニュース", newsBadge: "お知らせ", newsTitle: "2027年に3つ目のマスターズ", newsSub: "来シーズン、3つ目のマスターズ大会が開催される見込みです。",
     classementLabel: "ランキング", seeAll: "すべて見る", classementEmptyHome: "現在ランキング登録者は0人です。最初の1人になろう!",
     calendarLabel: "カレンダー", calendarCardTitle: "VCT 2026 カレンダー", calendarCardSub: "Kickoff・Masters・Playoffs・Champions",
+    cs2CalendarCardTitle: "CS2カレンダー", cs2CalendarCardSub: "今後の試合・全大会",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
@@ -301,6 +306,7 @@ const STR = {
     newsLabel: "News", newsBadge: "Ankündigung", newsTitle: "3 MASTERS IN 2027", newsSub: "Ein drittes Masters-Turnier soll im Kalender der nächsten Saison hinzukommen.",
     classementLabel: "Rangliste", seeAll: "Alle anzeigen", classementEmptyHome: "Bisher 0 platzierte Tipper. Sei der Erste!",
     calendarLabel: "Kalender", calendarCardTitle: "VCT-2026-Kalender", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "CS2-Kalender", cs2CalendarCardSub: "Kommende Spiele · alle Circuits",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
@@ -339,6 +345,7 @@ const STR = {
     newsLabel: "资讯", newsBadge: "公告", newsTitle: "2027年将迎来第三场大师赛", newsSub: "下赛季日程中可能新增第三场大师赛(Masters)。",
     classementLabel: "排行榜", seeAll: "查看全部", classementEmptyHome: "目前还没有上榜用户，快来当第一人!",
     calendarLabel: "赛程日历", calendarCardTitle: "VCT 2026赛程日历", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
+    cs2CalendarCardTitle: "CS2赛程", cs2CalendarCardSub: "即将进行的比赛 · 全部赛事",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
@@ -1164,7 +1171,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -1325,7 +1332,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
-            <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 : 0}%</span>
+            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 : 0}%</span>}
           </div>
           <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team1}</span>
         </div>
@@ -1346,7 +1353,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2 flex-row-reverse">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
-            <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 : 0}%</span>
+            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 : 0}%</span>}
           </div>
           <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team2}</span>
         </div>
@@ -1667,6 +1674,18 @@ function HomeTab({ setActiveTab, onOpenCalendar, T }) {
         </span>
         <ChevronRight size={18} color="#666" />
       </button>
+      <button onClick={() => setActiveTab("csgo")} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#141414", border: "1px solid #262626" }}>
+        <span className="flex items-center gap-3">
+          <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
+            <CalendarDays size={18} color="#3B82F6" />
+          </span>
+          <span className="text-left">
+            <span className="block" style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{T.cs2CalendarCardTitle}</span>
+            <span className="block" style={{ color: "#888", fontSize: "11px" }}>{T.cs2CalendarCardSub}</span>
+          </span>
+        </span>
+        <ChevronRight size={18} color="#666" />
+      </button>
     </div>
   );
 }
@@ -1805,99 +1824,7 @@ function regionAccentCS2(key) {
   return (REGIONS_CS2.find((r) => r.key === key) || {}).accent || CS2_ACCENT;
 }
 
-// Petit classement régional "maison", construit à partir des résultats déjà
-// chargés (mêmes matchs terminés que l'onglet "Terminé") : pour chaque
-// équipe apparue dans la région choisie, compte victoires/défaites sur les
-// matchs disponibles. Volontairement simple (pas de pondération façon
-// computeMatchOdds) — c'est un aperçu de forme récente, pas un ranking
-// officiel façon VRS, qu'aucune API publique n'expose.
-function computeRegionalRankingCS2(results, regionKey) {
-  const table = new Map(); // nom d'équipe -> { wins, losses }
-  for (const m of results) {
-    if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
-    const entries = [
-      { name: m.team1Name, region: m.team1Region, won: m.score1 > m.score2 },
-      { name: m.team2Name, region: m.team2Region, won: m.score2 > m.score1 },
-    ];
-    for (const e of entries) {
-      if (!e.name || e.region !== regionKey) continue;
-      const cur = table.get(e.name) || { wins: 0, losses: 0 };
-      if (e.won) cur.wins++;
-      else cur.losses++;
-      table.set(e.name, cur);
-    }
-  }
-  return [...table.entries()]
-    .map(([name, rec]) => ({ name, ...rec, played: rec.wins + rec.losses }))
-    .sort((a, b) => b.wins - a.wins || b.played - a.played)
-    .slice(0, 8);
-}
-
-// Panneau explicatif + classement régional : "Régions → Ranking régional →
-// Invitations/Qualifiers → Stages communs → Playoffs → Champions". Repliable
-// pour ne pas alourdir la liste de matchs par défaut.
-function Cs2CircuitPanel({ T, results, selectedRegions }) {
-  const steps = [
-    { title: T.cs2CircuitRegions, desc: T.cs2CircuitRegionsDesc },
-    { title: T.cs2CircuitRanking, desc: T.cs2CircuitRankingDesc },
-    { title: T.cs2CircuitQualifiers, desc: T.cs2CircuitQualifiersDesc },
-    { title: T.cs2CircuitStages, desc: T.cs2CircuitStagesDesc },
-    { title: T.cs2CircuitPlayoffs, desc: T.cs2CircuitPlayoffsDesc },
-    { title: T.cs2CircuitChampions, desc: T.cs2CircuitChampionsDesc },
-  ];
-  const rankingRegion = selectedRegions.length === 1 ? selectedRegions[0] : REGIONS_CS2[0].key;
-  const ranking = React.useMemo(() => computeRegionalRankingCS2(results, rankingRegion), [results, rankingRegion]);
-
-  return (
-    <div className="mx-4 mb-4 rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #ddd" }}>
-      <div className="px-4 pt-4 pb-2">
-        <h3 className="font-black" style={{ color: "#111", fontSize: "15px" }}>{T.cs2CircuitTitle}</h3>
-        <p style={{ color: "#666", fontSize: "11.5px", marginTop: "3px", lineHeight: 1.4 }}>{T.cs2CircuitIntro}</p>
-      </div>
-      <div className="px-4 pb-4 flex flex-col gap-2.5">
-        {steps.map((s, i) => (
-          <div key={i} className="flex items-start gap-2.5">
-            <div
-              className="rounded-full flex items-center justify-center shrink-0 font-black"
-              style={{ width: "20px", height: "20px", background: CS2_ACCENT, color: "#fff", fontSize: "10px", marginTop: "1px" }}
-            >
-              {i + 1}
-            </div>
-            <div>
-              <div style={{ color: "#111", fontSize: "12px", fontWeight: 700 }}>{s.title}</div>
-              <div style={{ color: "#777", fontSize: "11px", lineHeight: 1.35 }}>{s.desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="px-4 pb-4 pt-3" style={{ borderTop: "1px solid #eee" }}>
-        <div className="flex items-center justify-between mb-2">
-          <span style={{ color: "#111", fontSize: "12px", fontWeight: 800 }}>
-            {T.cs2RankingTitle} · {regionLabelCS2(rankingRegion, T)}
-          </span>
-        </div>
-        <p style={{ color: "#999", fontSize: "10px", marginBottom: "8px" }}>{T.cs2RankingSubtitle}</p>
-        {ranking.length === 0 ? (
-          <p style={{ color: "#999", fontSize: "11px" }}>{T.cs2RankingEmpty}</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {ranking.map((r, i) => (
-              <div key={r.name} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: "#f5f5f5" }}>
-                <span style={{ color: "#333", fontSize: "11.5px", fontWeight: 700 }}>
-                  {i + 1}. {r.name}
-                </span>
-                <span style={{ color: "#666", fontSize: "10.5px", fontWeight: 700 }}>{r.wins}V - {r.losses}D</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
-  const [showCircuit, setShowCircuit] = useState(false);
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -1944,24 +1871,11 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
     <div className="relative">
       <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + CS2_ACCENT + "22, transparent 70%)" }} />
       <div className="relative px-4 pt-4 pb-2">
-        <h1 className="font-black" style={{ color: "#111", fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
-        <p style={{ color: "#666", fontSize: "12px" }}>{T.cs2Subtitle}</p>
+        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
+        <p style={{ color: "#888", fontSize: "12px" }}>{T.cs2Subtitle}</p>
       </div>
 
-      <div className="px-4 pt-1">
-        <button
-          onClick={() => setShowCircuit((v) => !v)}
-          className="flex items-center gap-1.5"
-          style={{ color: CS2_ACCENT, fontSize: "11.5px", fontWeight: 800 }}
-        >
-          {showCircuit ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {showCircuit ? T.cs2CircuitToggleHide : T.cs2CircuitToggleShow}
-        </button>
-      </div>
-
-      {showCircuit && <div className="pt-3"><Cs2CircuitPanel T={T} results={results} selectedRegions={selectedRegions} /></div>}
-
-      <div className="flex gap-2 px-4 pt-2">
+      <div className="flex gap-2 px-4 pt-1">
         {["upcoming", "finished"].map((s) => {
           const active = selectedStatuses.includes(s);
           return (
@@ -1969,7 +1883,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
               key={s}
               onClick={() => toggleStatus(s)}
               className="rounded-full"
-              style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#111" : "#fff", color: active ? "#fff" : "#666", border: active ? "none" : "1px solid #ddd" }}
+              style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
             >
               {s === "upcoming" ? T.statusUpcoming : T.calendarDone}
             </button>
@@ -1981,7 +1895,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
         <button
           onClick={() => toggleRegion("ALL")}
           className="shrink-0 rounded-full transition-all"
-          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#111" : "#fff", color: allSelected ? "#fff" : "#666", border: allSelected ? "none" : "1px solid #ddd" }}
+          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#fff" : "#161616", color: allSelected ? "#000" : "#888", border: allSelected ? "none" : "1px solid #2a2a2a" }}
         >
           {T.regionAll}
         </button>
@@ -1992,7 +1906,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
               key={r.key}
               onClick={() => toggleRegion(r.key)}
               className="shrink-0 rounded-full transition-all"
-              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? r.accent : "#fff", color: active ? "#111" : "#666", border: active ? "none" : "1px solid #ddd" }}
+              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? r.accent : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
             >
               {regionLabelCS2(r.key, T)}
             </button>
@@ -2007,7 +1921,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
           return (
             <React.Fragment key={m.id}>
               {showDay && (
-                <div className="pt-3 pb-2" style={{ color: "#888", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <div className="pt-3 pb-2" style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
@@ -2023,12 +1937,13 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 teamLogoCache={teamLogoCache}
                 streamUrl={m.streamUrl}
                 useRegionStreamFallback={false}
+                hideOdds
               />
             </React.Fragment>
           );
         })}
         {combined.length === 0 && (
-          <p className="text-center pt-10" style={{ color: "#999", fontSize: "12px" }}>
+          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
             {loading ? "…" : "—"}
           </p>
         )}
@@ -2390,7 +2305,7 @@ export default function ClutchApp() {
   const [cs2DataLoading, setCs2DataLoading] = useState(true);
 
   const T = STR[currentLang] || STR.fr;
-  const isLight = activeTab === "csgo" || activeTab === "rocketleague";
+  const isLight = activeTab === "rocketleague";
 
   useEffect(() => {
     let cancelled = false;
