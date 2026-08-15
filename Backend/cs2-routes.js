@@ -82,7 +82,7 @@ function attachTeamRegions(m) {
 // undefined) — le vrai champ est `m.tournament.tier` ("s"/"a"/"b"/"c"/"d").
 // On ne garde que S et A ; à élargir facilement si trop restrictif
 // (ajouter "b" au tableau).
-const NOTABLE_TIERS = ["s", "a"];
+const NOTABLE_TIERS = ["s", "a", "b"];
 function isNotableTier(m) {
   const tier = (m.tournament?.tier || "").toLowerCase();
   return NOTABLE_TIERS.includes(tier);
@@ -203,7 +203,7 @@ async function enrichWithMapScores(data) {
     if (!t1 || !t2) return;
     let mapScores = null;
     const date = (m.begin_at || "").slice(0, 10);
-    const tournamentName = m.serie?.full_name || m.league?.name || "";
+    const tournamentName = m.league?.name || m.serie?.full_name || "";
 
     // 1) Priorité à Liquipedia (cf liquipedia-scores.js) : source la plus
     // complète (couvre aussi les petits matchs, pas seulement ceux avec un
