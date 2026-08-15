@@ -497,9 +497,9 @@ function regionLabel(key, T) {
 // peut très bien opposer une équipe EUROPE à une équipe AMERICAS dans un
 // stage commun (Major, IEM, BLAST...).
 const REGIONS_CS2 = [
-  { key: "EUROPE", accent: "#3B82F6" },
-  { key: "AMERICAS", accent: "#FF5A1F" },
-  { key: "ASIA", accent: "#F5C518" },
+  { key: "EUROPE", accent: "#F5D400" },
+  { key: "AMERICAS", accent: "#FF3B30" },
+  { key: "ASIA", accent: "#34D058" },
 ];
 
 function regionLabelCS2(key, T) {
