@@ -1,42 +1,44 @@
 /**
- * Score par map CS2 via hltv-next (paquet npm) :
- * https://www.npmjs.com/package/hltv-next
+ * Suivi des scores par map CS2 via hltv-match-api (ton fork corrigé,
+ * auto-hébergé sur Railway : https://github.com/Arthur5243/hltv-match-api).
  *
- * Contrairement à hltv-match-api (le repo GitHub d'origine fourni) : celui-ci
- * a un build cassé (dossier gradle/ manquant dans le dépôt — impossible à
- * compiler tel quel, constaté en tentant de le déployer) et nécessite de
- * toute façon un service séparé à héberger (+ un navigateur headless en
- * compagnon). hltv-next est une bibliothèque Node qui tourne DANS ce
- * backend directement — aucune infrastructure de plus.
+ * DIFFÉRENCE STRUCTURELLE IMPORTANTE avec vlr-scores.js (Valorant) : cette
+ * API n'expose QUE les matchs live et à venir —
+ *   GET /api/matches, /api/matches/live, /api/matches/upcoming
+ * — il n'existe PAS d'endpoint "détail d'un match déjà terminé". Sur un
+ * match live, elle renvoie :
+ *   team1Score / team2Score  -> score de MANCHES de la map EN COURS
+ *   team1MapWins / team2MapWins -> nb de maps déjà remportées par équipe
+ * Donc aucun lookup a posteriori n'est possible une fois le match terminé.
  *
- * IMPORTANT — import PROTÉGÉ : la 1ère tentative utilisait un `import ...
- * from "hltv-next"` statique en haut du fichier, qui a fait planter TOUT le
- * serveur au démarrage (Valorant y compris) quand le paquet n'était pas
- * disponible. Ici, le paquet est chargé dynamiquement (`await import(...)`)
- * SEULEMENT au moment où une map CS2 doit être résolue, et entouré d'un
- * try/catch : si ça échoue pour n'importe quelle raison (paquet absent,
- * erreur réseau, forme inattendue), la fonction renvoie simplement `null`
- * et cs2-routes.js retombe sur son repli PandaScore existant — le reste du
- * serveur (Valorant, tout le reste) n'est jamais concerné.
+ * Stratégie : sonder /api/matches/live à intervalle régulier PENDANT que le
+ * match est en direct, et figer le score d'une map au moment précis où
+ * mapWins augmente — la map qui vient de se terminer avait le score vu au
+ * sondage PRÉCÉDENT, juste avant l'incrémentation (au sondage suivant, le
+ * compteur est déjà reparti à 0 sur la map suivante). Le tout est gardé en
+ * mémoire ici, puis remonté à cs2-routes.js dès qu'un match disparaît de la
+ * liste "running" PandaScore (= terminé), voir `finalizeAndGet`.
  *
- * Fonctionnement en 2 appels une fois le paquet chargé :
- *   1. HLTV.getResults({ startDate, endDate }) — fenêtre étroite (±1 jour
- *      autour de la date du match PandaScore) pour ne tirer qu'une seule
- *      page côté HLTV — puis on retrouve le bon match par similarité de nom
- *      d'équipe (comme vlr-scores.js pour Valorant).
- *   2. HLTV.getMatch({ id }) — détail complet du match trouvé, qui inclut
- *      directement le score par manche de chaque map jouée.
- *
- * ⚠️ HLTV protège son site par Cloudflare et peut bloquer une IP qui le
- * sollicite trop souvent. On reste strictement défensif : un seul essai par
- * match, résultat persisté dès qu'il est trouvé (cf cs2-history-store.js),
- * jamais de rafale de requêtes.
+ * Défensif comme le reste de l'app : HLTV_API_BASE absent, service
+ * injoignable, équipe non trouvée, suivi incomplet -> on renvoie `null`,
+ * jamais un score inventé. L'appelant (cs2-routes.js) retombe alors sur son
+ * propre repli (PandaScore /csgo/games/{id}), puis sur "0-0" côté front.
  */
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+const HLTV_API_BASE = (process.env.HLTV_API_BASE || "").replace(/\/$/, "");
+
+// 1 min : assez fréquent pour ne pas rater la fin d'une map (une map CS2
+// dure généralement 30-45 min), assez espacé pour rester léger sur
+// l'instance auto-hébergée.
+const POLL_INTERVAL_MS = 60 * 1000;
+
+if (!HLTV_API_BASE) {
+  console.warn(
+    "ℹ️  HLTV_API_BASE n'est pas définie : le suivi live hltv-match-api pour les scores par map CS2 est désactivé (repli sur PandaScore/csgo/games)."
+  );
 }
 
+// Même comparateur que vlr-scores.js/server.js (insensible à la casse/accents).
 function similar(a, b) {
   const clean = (s) =>
     (s || "")
@@ -50,98 +52,125 @@ function similar(a, b) {
   return ca === cb || ca.includes(cb) || cb.includes(ca);
 }
 
-function isoDate(d) {
-  return d.toISOString().slice(0, 10);
+async function fetchHltvLive() {
+  if (!HLTV_API_BASE) return [];
+  const res = await fetch(HLTV_API_BASE + "/api/matches/live");
+  if (!res.ok) throw new Error("hltv-match-api HTTP " + res.status);
+  const json = await res.json();
+  return Array.isArray(json) ? json : json.liveMatches || [];
 }
 
-// Charge hltv-next à la demande, jamais au chargement du module. Mis en
-// cache après le 1er succès (ou le 1er échec, pour ne pas retenter l'import
-// à chaque appel si le paquet est vraiment absent). Ne lève JAMAIS — renvoie
-// `null` en cas de souci, quelle qu'en soit la cause.
-let hltvModulePromise = null;
-async function loadHltv() {
-  if (!hltvModulePromise) {
-    hltvModulePromise = import("hltv-next")
-      .then((mod) => mod.HLTV || mod.default || mod)
-      .catch((e) => {
-        console.log("[hltv-next] module indisponible (getMapScoresFromHltv restera désactivé) :", e.message);
-        return null;
-      });
+function findHltvMatch(hltvMatches, team1Name, team2Name) {
+  return hltvMatches.find(
+    (h) =>
+      (similar(h.team1Name, team1Name) && similar(h.team2Name, team2Name)) ||
+      (similar(h.team1Name, team2Name) && similar(h.team2Name, team1Name))
+  );
+}
+
+// hltvMatch liste-t-il les équipes dans le MÊME ordre que PandaScore pour ce
+// match (team1 HLTV == team1 PandaScore) ? Sert à ne jamais inverser
+// score1/score2 si HLTV les liste dans l'autre sens.
+function isSameOrder(hltvMatch, team1Name) {
+  return similar(hltvMatch.team1Name, team1Name);
+}
+
+// pandascoreMatchId (string) -> { maps: [{score1,score2}], lastSnapshot, lastSeenAt }
+const tracked = new Map();
+
+// Un tour de sondage : appelé régulièrement (cf startHltvTracker) avec la
+// liste des matchs CS2 bruts "running" côté PandaScore (opponents[].opponent
+// avec .id/.name, tel que renvoyé par /csgo/matches/running).
+async function pollOnce(pandascoreLiveMatches) {
+  if (!HLTV_API_BASE || !pandascoreLiveMatches || pandascoreLiveMatches.length === 0) return;
+
+  let hltvMatches;
+  try {
+    hltvMatches = await fetchHltvLive();
+  } catch (e) {
+    console.log("[hltv] sondage impossible:", e.message);
+    return;
   }
-  return hltvModulePromise;
+
+  for (const m of pandascoreLiveMatches) {
+    const t1 = m.opponents?.[0]?.opponent;
+    const t2 = m.opponents?.[1]?.opponent;
+    if (!t1 || !t2) continue;
+
+    const hMatch = findHltvMatch(hltvMatches, t1.name, t2.name);
+    if (!hMatch) continue; // pas (encore) trouvé côté HLTV -> on retentera au prochain sondage
+
+    const sameOrder = isSameOrder(hMatch, t1.name);
+    const score1 = sameOrder ? hMatch.team1Score : hMatch.team2Score;
+    const score2 = sameOrder ? hMatch.team2Score : hMatch.team1Score;
+    const mapWins1 = (sameOrder ? hMatch.team1MapWins : hMatch.team2MapWins) || 0;
+    const mapWins2 = (sameOrder ? hMatch.team2MapWins : hMatch.team1MapWins) || 0;
+    if (score1 == null || score2 == null) continue;
+
+    const key = String(m.id);
+    const state = tracked.get(key) || { maps: [], lastSnapshot: null };
+    const prev = state.lastSnapshot;
+    const totalMapsBefore = prev ? prev.mapWins1 + prev.mapWins2 : 0;
+    const totalMapsNow = mapWins1 + mapWins2;
+
+    if (prev && totalMapsNow > totalMapsBefore) {
+      // Une map vient de se terminer entre les deux sondages : on fige son
+      // score avec le DERNIER snapshot connu avant l'incrémentation (prev),
+      // jamais le score courant (déjà reparti à 0 sur la map suivante).
+      state.maps.push({ score1: prev.score1, score2: prev.score2 });
+    }
+
+    state.lastSnapshot = { score1, score2, mapWins1, mapWins2 };
+    state.lastSeenAt = Date.now();
+    tracked.set(key, state);
+  }
 }
 
 /**
- * Cherche le score par map d'un match CS2 sur HLTV, à partir des noms
- * d'équipe PandaScore + de la date du match (YYYY-MM-DD). Renvoie un
- * tableau [{map, score1, score2}, ...] — score1/score2 dans le MÊME ordre
- * que team1Name/team2Name passés en paramètre — ou `null` si non trouvé /
- * erreur / paquet indisponible. Jamais de score inventé, jamais de crash.
+ * À appeler une fois qu'un match a quitté la liste "running" PandaScore
+ * (donc terminé) : finalise la dernière map en cours (celle qui n'a jamais
+ * eu de sondage "après" pour détecter son incrémentation) et renvoie le
+ * tableau complet au même format que PandaScore ({score1, score2} par map,
+ * sans nom de map — HLTV ne l'expose pas sur ces endpoints).
+ *
+ * `expectedTotalMaps` = nb de maps jouées d'après le score de série
+ * PandaScore (results). Si le suivi est incomplet par rapport à ce total
+ * (serveur redémarré en cours de route, match raté au tout début...), on
+ * renvoie `null` plutôt qu'un score partiel trompeur.
  */
-async function getMapScoresFromHltv(team1Name, team2Name, dateStr) {
-  if (!team1Name || !team2Name || !dateStr) return null;
+function finalizeAndGet(pandascoreMatchId, expectedTotalMaps) {
+  const key = String(pandascoreMatchId);
+  const state = tracked.get(key);
+  tracked.delete(key); // libère la mémoire, qu'on ait ou non un résultat exploitable
+  if (!state) return null;
 
-  const HLTV = await loadHltv();
-  if (!HLTV || typeof HLTV.getResults !== "function" || typeof HLTV.getMatch !== "function") {
-    return null; // paquet absent ou forme inattendue -> repli PandaScore côté appelant
+  if (state.lastSnapshot && state.maps.length < expectedTotalMaps) {
+    state.maps.push({ score1: state.lastSnapshot.score1, score2: state.lastSnapshot.score2 });
   }
 
-  // Fenêtre étroite (±1 jour) autour de la date du match : getResults()
-  // boucle tant qu'une page renvoie des résultats, donc sans borne de date
-  // ça peut ratisser tout l'historique HLTV pour rien.
-  const center = new Date(dateStr + "T00:00:00Z");
-  const start = new Date(center.getTime() - 86400000);
-  const end = new Date(center.getTime() + 86400000);
-
-  let results;
-  try {
-    results = await HLTV.getResults({ startDate: isoDate(start), endDate: isoDate(end) });
-  } catch (e) {
-    console.log(`[hltv-next] getResults(${team1Name} vs ${team2Name}, ${dateStr}) → ERREUR:`, e.message);
-    return null;
-  }
-  if (!Array.isArray(results) || results.length === 0) {
-    console.log(`[hltv-next] getResults(${dateStr}) → 0 résultat HLTV sur la fenêtre`);
-    return null;
-  }
-
-  const found = results.find(
-    (r) =>
-      (similar(r.team1 && r.team1.name, team1Name) && similar(r.team2 && r.team2.name, team2Name)) ||
-      (similar(r.team1 && r.team1.name, team2Name) && similar(r.team2 && r.team2.name, team1Name))
-  );
-  if (!found) {
-    console.log(
-      `[hltv-next] aucune correspondance pour ${team1Name} vs ${team2Name} (${dateStr}) parmi ${results.length} résultats HLTV : ` +
-        results.map((r) => (r.team1 && r.team1.name) + " vs " + (r.team2 && r.team2.name)).join(" | ")
-    );
-    return null;
-  }
-
-  await sleep(500); // petite pause avant le 2e appel, par courtoisie envers HLTV
-
-  let full;
-  try {
-    full = await HLTV.getMatch({ id: found.id });
-  } catch (e) {
-    console.log(`[hltv-next] getMatch(${found.id}) → ERREUR:`, e.message);
-    return null;
-  }
-  if (!full || !Array.isArray(full.maps) || full.maps.length === 0) {
-    console.log(`[hltv-next] getMatch(${found.id}) → pas de maps exploitables`);
-    return null;
-  }
-
-  const sameOrder = similar(found.team1 && found.team1.name, team1Name);
-  const maps = full.maps
-    .filter((m) => m && m.result)
-    .map((m) => ({
-      map: m.name || null,
-      score1: sameOrder ? m.result.team1TotalRounds : m.result.team2TotalRounds,
-      score2: sameOrder ? m.result.team2TotalRounds : m.result.team1TotalRounds,
-    }));
-
-  return maps.length > 0 ? maps : null;
+  if (!expectedTotalMaps || state.maps.length !== expectedTotalMaps) return null;
+  return state.maps;
 }
 
-export { getMapScoresFromHltv };
+let intervalHandle = null;
+
+/**
+ * Démarre le sondage périodique en arrière-plan. `getLiveMatchesFn` doit
+ * renvoyer (async) les matchs CS2 bruts "running" côté PandaScore. No-op si
+ * HLTV_API_BASE n'est pas configurée, ou si déjà démarré.
+ */
+function startHltvTracker(getLiveMatchesFn) {
+  if (!HLTV_API_BASE || intervalHandle) return;
+  const tick = async () => {
+    try {
+      const live = await getLiveMatchesFn();
+      await pollOnce(live || []);
+    } catch (e) {
+      console.log("[hltv] erreur de sondage:", e.message);
+    }
+  };
+  tick();
+  intervalHandle = setInterval(tick, POLL_INTERVAL_MS);
+}
+
+export { startHltvTracker, finalizeAndGet, HLTV_API_BASE };
