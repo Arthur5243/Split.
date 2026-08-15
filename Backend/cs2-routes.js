@@ -5,10 +5,11 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient en priorité d'odds-api.io (source officielle,
- *      cf oddsapi-scores.js — même clé ODDS_API_KEY déjà utilisée pour les
- *      cotes Valorant historiques), avec repli sur l'endpoint PandaScore
- *      lui-même (cs2-scores.js, /csgo/games/{id}) si rien n'est trouvé.
+ *   1. Le score par map vient en cascade de 3 sources, dans l'ordre :
+ *      Liquipedia (cf liquipedia-scores.js — la plus complète, gratuite,
+ *      sans scraping) → odds-api.io (cf oddsapi-scores.js — plus rapide
+ *      mais couverture partielle, réutilise ODDS_API_KEY) → PandaScore
+ *      lui-même (cs2-scores.js, /csgo/games/{id}) en dernier repli.
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -35,6 +36,7 @@ import {
   getMapScoresState,
 } from "./cs2-history-store.js";
 import { getMapScoresFromOddsApi } from "./oddsapi-scores.js";
+import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 
 const router = express.Router();
 
@@ -192,13 +194,26 @@ async function enrichWithMapScores(data) {
     if (!t1 || !t2) return;
     let mapScores = null;
     const date = (m.begin_at || "").slice(0, 10);
+    const tournamentName = m.serie?.full_name || m.league?.name || "";
 
-    // 1) Priorité à odds-api.io (cf oddsapi-scores.js) : source officielle,
-    // pas de scraping/captcha, réutilise la même clé ODDS_API_KEY déjà en
-    // place pour les cotes Valorant historiques. Plafonné à
-    // MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf plus haut) :
-    // au-delà, on saute directement au repli PandaScore pour ce cycle-ci.
-    if (attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
+    // 1) Priorité à Liquipedia (cf liquipedia-scores.js) : source la plus
+    // complète (couvre aussi les petits matchs, pas seulement ceux avec un
+    // marché de paris), gratuite, sans scraping/captcha. Le module gère
+    // lui-même son propre débit (throttleGeneral/throttleParse), pas besoin
+    // de plafond ici comme pour odds-api.io — chaque page de tournoi est
+    // mise en cache, donc les matchs suivants d'un même tournoi sont
+    // quasi-instantanés une fois la page récupérée une 1ère fois.
+    try {
+      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
+    } catch (e) {
+      console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+    }
+
+    // 2) Repli : odds-api.io (cf oddsapi-scores.js), si Liquipedia n'a rien
+    // trouvé pour ce match (tournoi introuvable sur leur wiki, etc.).
+    // Plafonné à MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf
+    // plus haut) : au-delà, on saute directement au repli PandaScore.
+    if (!mapScores && attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
       try {
         mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
       } catch (e) {
@@ -208,12 +223,11 @@ async function enrichWithMapScores(data) {
     // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
     // confirmé fonctionnel en prod) : trace chaque match traité ici.
     console.log(
-      `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}) — ` +
-        `oddsapi=${mapScores ? JSON.stringify(mapScores) : attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE ? "aucun (repli PandaScore)" : "pas tenté ce cycle (quota), repli PandaScore"}`
+      `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
+        `résultat=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
     );
 
-    // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si
-    // odds-api.io n'a rien trouvé pour ce match.
+    // 3) Dernier repli : endpoint PandaScore lui-même (/csgo/games/{id}).
     if (!mapScores) {
       try {
         mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
