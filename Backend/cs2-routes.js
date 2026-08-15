@@ -77,15 +77,22 @@ function attachTeamRegions(m) {
 }
 
 // PandaScore note chaque tournoi de S (le plus haut niveau) à D/Unranked
-// (S > A > B > C > D > Unranked, cf leur doc). Beaucoup des matchs CS2
-// remontés sont des qualifs/équipes académie de tier B/C/D — pas
-// inintéressants en soi, mais ça noie les vrais gros matchs dans la liste.
-// On ne garde que S et A ici ; à élargir facilement si trop restrictif
-// (ajouter "b" au tableau).
-const NOTABLE_TIERS = ["s", "a"];
+// (S > A > B > C > D > Unranked, cf leur doc officielle). Une 1ère tentative
+// de filtre sur m.tier a fait disparaître TOUS les matchs — signe que ce
+// champ n'est pas peuplé comme attendu sur ce plan/cette réponse (vide,
+// absent, ou sous une autre forme). DIAGNOSTIC TEMPORAIRE ci-dessous pour
+// voir la vraie forme des données avant de retenter un filtre correct :
+// filtre désactivé pour l'instant (toujours `true`), le temps de vérifier.
+let tierDiagLogged = 0;
 function isNotableTier(m) {
-  const tier = (m.tier || "").toLowerCase();
-  return NOTABLE_TIERS.includes(tier);
+  if (tierDiagLogged < 15) {
+    tierDiagLogged++;
+    console.log(
+      `[cs2-tier-diag] ${m.opponents?.[0]?.opponent?.name || "?"} vs ${m.opponents?.[1]?.opponent?.name || "?"} — ` +
+        `tier=${JSON.stringify(m.tier)}, tournament.tier=${JSON.stringify(m.tournament?.tier)}, league.name=${JSON.stringify(m.league?.name)}`
+    );
+  }
+  return true; // désactivé le temps du diagnostic — on ne filtre plus rien
 }
 
 router.get("/api/cs2-upcoming", async (req, res) => {
