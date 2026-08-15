@@ -108,19 +108,60 @@ function resetLiquipediaCycleCap() {
   newPagesFetchedThisCycle = 0;
 }
 
-async function searchTournamentPage(query) {
-  if (!query) return null;
+// Pages génériques qui remontent souvent en tête de la recherche full-text
+// Liquipedia (elles mentionnent énormément de noms de tournois dans leur
+// texte) mais ne sont JAMAIS la page d'un tournoi précis -> fort malus.
+const TITLE_BLACKLIST = [
+  "player database", "list of", "statistics", "broadcasters", "talent",
+  "awards", "transfers", "rumours", "rumors", "gallery", "/player",
+  "records", "prize pool",
+];
+
+// La recherche full-text de Liquipedia classe par pertinence du CONTENU de
+// la page, pas par correspondance de TITRE -> une page annexe qui cite 50
+// fois "IEM Cologne 2026" dans son texte peut arriver avant la vraie page du
+// tournoi. On re-classe donc nous-mêmes les résultats : bonus si l'année du
+// match apparaît dans le titre (signal fort, quasi jamais un faux positif),
+// bonus par mot de la requête retrouvé dans le titre, malus si le titre
+// ressemble à une page générique (cf TITLE_BLACKLIST ci-dessus).
+function scoreTitle(title, queryWords, year) {
+  const t = title.toLowerCase();
+  let score = 0;
+  for (const w of queryWords) {
+    if (w.length < 2) continue;
+    if (t.includes(w)) score += 2;
+  }
+  if (year && t.includes(year)) score += 5;
+  if (TITLE_BLACKLIST.some((b) => t.includes(b))) score -= 20;
+  score -= title.length * 0.01; // très léger biais vers les titres courts (pages principales)
+  return score;
+}
+
+// Renvoie jusqu'à 3 titres de page candidats, du meilleur au moins bon
+// (score > seuil, jamais un titre blacklisté), plutôt qu'un seul choix
+// aveugle -> l'appelant peut essayer le 2e/3e si le 1er ne contient pas le
+// bon match.
+async function searchTournamentPage(query, year) {
+  if (!query) return [];
   await throttleSearch();
   const url =
     LIQUIPEDIA_BASE +
     "?action=query&list=search&srsearch=" +
     encodeURIComponent(query) +
-    "&srlimit=3&format=json";
+    "&srlimit=10&format=json";
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) throw new Error("Liquipedia search HTTP " + res.status);
   const json = await res.json();
   const results = (json && json.query && json.query.search) || [];
-  return results.length > 0 ? results[0].title : null;
+  if (results.length === 0) return [];
+
+  const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const ranked = results
+    .map((r) => ({ title: r.title, score: scoreTitle(r.title, queryWords, year) }))
+    .filter((r) => r.score > -10) // rejette les titres blacklistés
+    .sort((a, b) => b.score - a.score);
+
+  return ranked.slice(0, 3).map((r) => r.title);
 }
 
 async function fetchWikitext(pageTitle) {
@@ -333,29 +374,37 @@ function findMatch(blocks, team1Name, team2Name, dateStr) {
 async function getMapScoresFromLiquipedia(team1Name, team2Name, leagueName, serieName, dateStr) {
   if (!team1Name || !team2Name) return null;
 
+  const year = (dateStr || "").slice(0, 4) || null;
   const queries = [leagueName, serieName].filter(Boolean);
+
   for (const query of queries) {
-    let pageTitle;
+    let pageTitles;
     try {
-      pageTitle = await searchTournamentPage(query);
+      pageTitles = await searchTournamentPage(query, year);
     } catch (e) {
       console.log(`[liquipedia] recherche "${query}" → ERREUR:`, e.message);
       continue;
     }
-    if (!pageTitle) continue;
-
-    let wikitext;
-    try {
-      wikitext = await fetchWikitext(pageTitle);
-    } catch (e) {
-      console.log(`[liquipedia] page "${pageTitle}" → ERREUR:`, e.message);
+    if (pageTitles.length === 0) {
+      console.log(`[liquipedia] recherche "${query}" → aucun candidat retenu (tout blacklisté ou 0 résultat)`);
       continue;
     }
-    if (!wikitext) continue; // pas en cache + plafond de nouvelles pages atteint ce cycle -> on retentera au prochain
 
-    const blocks = extractMatchBlocks(wikitext);
-    const found = findMatch(blocks, team1Name, team2Name, dateStr);
-    if (found) return found;
+    for (const pageTitle of pageTitles) {
+      let wikitext;
+      try {
+        wikitext = await fetchWikitext(pageTitle);
+      } catch (e) {
+        console.log(`[liquipedia] page "${pageTitle}" → ERREUR:`, e.message);
+        continue;
+      }
+      if (!wikitext) continue; // pas en cache + plafond de nouvelles pages atteint ce cycle -> on retentera au prochain
+
+      const blocks = extractMatchBlocks(wikitext);
+      const found = findMatch(blocks, team1Name, team2Name, dateStr);
+      if (found) return found;
+      console.log(`[liquipedia] page "${pageTitle}" trouvée mais aucun match ${team1Name} vs ${team2Name} (${dateStr}) dedans`);
+    }
   }
   return null;
 }
