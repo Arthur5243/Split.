@@ -30,10 +30,34 @@
  * Défensif comme le reste de l'app : clé absente, event introuvable, champ
  * scores absent -> on renvoie `null`, jamais un score inventé. L'appelant
  * (cs2-routes.js) retombe alors sur son repli PandaScore existant.
+ *
+ * QUOTA (identifié après coup, en prod) : le plan gratuit d'odds-api.io est
+ * limité à 100 requêtes/heure. Chercher par team1 PUIS team2 (cf
+ * findCs2Event) double le nombre d'appels par match — sur un lot de
+ * plusieurs dizaines de matchs traités d'affilée, ça épuise le quota en
+ * quelques secondes (le back retombe alors en erreur HTTP 429 sur tous les
+ * matchs suivants du lot, y compris ceux qui auraient pu être trouvés). Un
+ * espacement minimum entre appels (RATE_LIMIT_SPACING_MS) est donc imposé
+ * ici, plus un plafond côté cs2-routes.js sur le nombre de matchs tentés
+ * par cycle (cf MAX_ODDSAPI_LOOKUPS_PER_CYCLE) — les matchs non traités ce
+ * cycle-ci retentent au prochain (cf RETRY_DELAYS_MS dans
+ * cs2-history-store.js).
  */
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const ODDS_BASE = "https://api.odds-api.io/v3";
+
+// 100 req/h en gratuit = en moyenne 1 requête/36s pour ne jamais taper le
+// plafond même en continu ; on prend une marge large (1 toutes les 3s) —
+// suffisant vu que cs2-routes.js plafonne aussi le nombre de matchs/cycle.
+const RATE_LIMIT_SPACING_MS = 3000;
+let lastCallAt = 0;
+
+async function throttle() {
+  const wait = lastCallAt + RATE_LIMIT_SPACING_MS - Date.now();
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+  lastCallAt = Date.now();
+}
 
 if (!ODDS_API_KEY) {
   console.warn(
@@ -85,6 +109,7 @@ function isCs2Event(ev) {
 }
 
 async function searchEvents(query) {
+  await throttle();
   const url = `${ODDS_BASE}/events/search?query=${encodeURIComponent(query)}&apiKey=${ODDS_API_KEY}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("odds-api.io /events/search HTTP " + res.status);
@@ -93,6 +118,7 @@ async function searchEvents(query) {
 }
 
 async function getEventDetail(eventId) {
+  await throttle();
   const url = `${ODDS_BASE}/events/${eventId}?apiKey=${ODDS_API_KEY}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("odds-api.io /events/" + eventId + " HTTP " + res.status);
