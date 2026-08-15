@@ -338,7 +338,12 @@ async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, 
   if (!team1Name || !team2Name) return null;
 
   const queries = [];
+  const year = dateStr && /^\d{4}/.test(dateStr) ? dateStr.slice(0, 4) : "";
   if (tournamentName && !/^\d{4}$/.test(tournamentName.trim())) {
+    // L'année évite de tomber sur une édition passée du même tournoi
+    // (ex: "Esports World Cup" seul remonte l'édition 2025 alors que le
+    // match cherché est en 2026).
+    queries.push(`${team1Name} ${team2Name} ${tournamentName} ${year}`.trim());
     queries.push(`${team1Name} ${team2Name} ${tournamentName}`);
   }
   queries.push(`${team1Name} ${team2Name}`);
