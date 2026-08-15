@@ -105,19 +105,21 @@ async function getEventDetail(eventId) {
  * — score1/score2 dans le MÊME ordre que team1Name/team2Name passés en
  * paramètre — ou `null` si non trouvé/erreur/pas de données. Jamais de
  * score inventé.
+ *
+ * Essaie la recherche par team1Name, puis par team2Name si la 1ère ne
+ * trouve rien : le nom mieux référencé chez odds-api.io (celui qui a le
+ * plus de chances de matcher leur base) varie d'une équipe à l'autre.
  */
-async function getMapScoresFromOddsApi(team1Name, team2Name) {
-  if (!ODDS_API_KEY || !team1Name || !team2Name) return null;
-
+async function findCs2Event(queryName, team1Name, team2Name) {
   let events;
   try {
-    events = await searchEvents(team1Name);
+    events = await searchEvents(queryName);
   } catch (e) {
-    console.log(`[oddsapi] events/search(${team1Name}) → ERREUR:`, e.message);
+    console.log(`[oddsapi] events/search(${queryName}) → ERREUR:`, e.message);
     return null;
   }
   if (!Array.isArray(events) || events.length === 0) {
-    console.log(`[oddsapi] events/search(${team1Name}) → 0 résultat`);
+    console.log(`[oddsapi] events/search(${queryName}) → 0 résultat`);
     return null;
   }
 
@@ -132,13 +134,23 @@ async function getMapScoresFromOddsApi(team1Name, team2Name) {
   });
   if (!found) {
     console.log(
-      `[oddsapi] aucune correspondance CS2 pour ${team1Name} vs ${team2Name} parmi ${events.length} résultats : ` +
+      `[oddsapi] aucune correspondance CS2 pour ${team1Name} vs ${team2Name} (requête: ${queryName}) parmi ${events.length} résultats : ` +
         events
           .map((ev) => (ev.home || "?") + " vs " + (ev.away || "?") + " [" + fieldText(ev.sport) + "/" + fieldText(ev.league) + "]")
           .join(" | ")
     );
-    return null;
   }
+  return found || null;
+}
+
+async function getMapScoresFromOddsApi(team1Name, team2Name) {
+  if (!ODDS_API_KEY || !team1Name || !team2Name) return null;
+
+  let found = await findCs2Event(team1Name, team1Name, team2Name);
+  if (!found) {
+    found = await findCs2Event(team2Name, team1Name, team2Name);
+  }
+  if (!found) return null;
 
   let detail;
   try {
