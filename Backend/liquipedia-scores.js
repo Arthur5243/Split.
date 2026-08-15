@@ -325,24 +325,42 @@ function findMatchInWikitext(wikitext, team1Name, team2Name, dateStr) {
  * [{map, score1, score2}, ...] (score1/score2 dans l'ordre team1Name/
  * team2Name), ou `null` si non trouvé/erreur. Jamais de score inventé.
  *
- * Cherche par NOMS D'ÉQUIPE (pas par nom de tournoi PandaScore, souvent
- * absent ou trop vague, ex: juste "2026") : plus fiable pour retrouver la
- * bonne page via la recherche plein texte de Liquipedia. Essaie plusieurs
- * pages candidates (searchTournamentPages) jusqu'à en trouver une qui
- * contient réellement le match — le 1er résultat de recherche est souvent
- * une page d'index générique sans données exploitables.
+ * Cherche d'abord par ÉQUIPES + NOM DU TOURNOI (quand ce dernier est
+ * exploitable, pas juste une année comme "2026") : utile quand les noms
+ * d'équipe sont courts/génériques (ex: "BIG", "Spirit") et matchent
+ * n'importe quoi en recherche plein texte seule (League of Legends, foot,
+ * tennis de table...). Complète avec une recherche équipes seules. Essaie
+ * ensuite chaque page candidate (searchTournamentPages) jusqu'à en trouver
+ * une qui contient réellement le match — le 1er résultat de recherche est
+ * souvent une page d'index générique sans données exploitables.
  */
-async function getMapScoresFromLiquipedia(team1Name, team2Name, _tournamentName, dateStr) {
+async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, dateStr) {
   if (!team1Name || !team2Name) return null;
 
-  let pageTitles;
-  try {
-    pageTitles = await searchTournamentPages(team1Name + " " + team2Name);
-  } catch (e) {
-    console.log(`[liquipedia] search(${team1Name} ${team2Name}) → ERREUR:`, e.message);
-    return null;
+  const queries = [];
+  if (tournamentName && !/^\d{4}$/.test(tournamentName.trim())) {
+    queries.push(`${team1Name} ${team2Name} ${tournamentName}`);
   }
-  if (!pageTitles || pageTitles.length === 0) {
+  queries.push(`${team1Name} ${team2Name}`);
+
+  const seen = new Set();
+  const pageTitles = [];
+  for (const q of queries) {
+    let results;
+    try {
+      results = await searchTournamentPages(q);
+    } catch (e) {
+      console.log(`[liquipedia] search(${q}) → ERREUR:`, e.message);
+      continue;
+    }
+    for (const title of results || []) {
+      if (!seen.has(title)) {
+        seen.add(title);
+        pageTitles.push(title);
+      }
+    }
+  }
+  if (pageTitles.length === 0) {
     console.log(`[liquipedia] search(${team1Name} ${team2Name}) → aucune page trouvée`);
     return null;
   }
