@@ -52,10 +52,6 @@ function isFullyUnknown(m) {
   return !t1 && !t2;
 }
 
-// Ajoute team1_region / team2_region sur le match brut PandaScore, calculés
-// depuis le pays (`location`) de chaque équipe. Fait une seule fois ici
-// (backend) plutôt que côté front, pour garder une seule source de vérité
-// sur la table pays -> région.
 // Ajoute team1_region / team2_region (pays -> région) et stream_url (flux
 // officiel du match si PandaScore le fournit, via `streams_list`) sur le
 // match brut PandaScore. Fait une seule fois ici (backend) plutôt que côté
@@ -80,6 +76,18 @@ function attachTeamRegions(m) {
   return m;
 }
 
+// PandaScore note chaque tournoi de S (le plus haut niveau) à D/Unranked
+// (S > A > B > C > D > Unranked, cf leur doc). Beaucoup des matchs CS2
+// remontés sont des qualifs/équipes académie de tier B/C/D — pas
+// inintéressants en soi, mais ça noie les vrais gros matchs dans la liste.
+// On ne garde que S et A ici ; à élargir facilement si trop restrictif
+// (ajouter "b" au tableau).
+const NOTABLE_TIERS = ["s", "a"];
+function isNotableTier(m) {
+  const tier = (m.tier || "").toLowerCase();
+  return NOTABLE_TIERS.includes(tier);
+}
+
 router.get("/api/cs2-upcoming", async (req, res) => {
   try {
     const PER_PAGE = 100;
@@ -95,7 +103,7 @@ router.get("/api/cs2-upcoming", async (req, res) => {
       if (pageData.length < PER_PAGE) break;
       await sleep(200);
     }
-    const data = all.filter((m) => !isFullyUnknown(m)).map(attachTeamRegions);
+    const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m)).map(attachTeamRegions);
     res.json(data);
   } catch (e) {
     console.error("cs2-upcoming error:", e.message);
@@ -115,6 +123,7 @@ router.get("/api/cs2-live", async (req, res) => {
     const data = await cachedFetch("cs2-live", "/" + CS2_SLUG + "/matches/running?per_page=50");
     const now = Date.now();
     const visible = (data || []).filter((m) => {
+      if (!isNotableTier(m)) return false;
       if (m.status !== "running") return true;
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
@@ -292,9 +301,9 @@ router.get("/api/cs2-results", async (req, res) => {
       return res.json(enrichedResultsCache.data);
     }
 
-    const data = (await cachedFetch("cs2-results", "/" + CS2_SLUG + "/matches/past?per_page=50")).map(
-      attachTeamRegions
-    );
+    const data = (await cachedFetch("cs2-results", "/" + CS2_SLUG + "/matches/past?per_page=50"))
+      .filter(isNotableTier)
+      .map(attachTeamRegions);
 
     storeFinishedMatches(data.map(toHistoryRow).filter(Boolean));
 
