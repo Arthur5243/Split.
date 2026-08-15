@@ -72,10 +72,16 @@ async function liquipediaFetch(params, { isParse = false } = {}) {
 
 // --- Recherche de la page de tournoi -----------------------------------
 
-async function searchTournamentPage(query) {
-  const json = await liquipediaFetch({ action: "query", list: "search", srsearch: query, srlimit: "3" });
+// Renvoie plusieurs titres candidats (pas juste le 1er) : le 1er résultat
+// est souvent une page d'index générique ("C-Tier Tournaments", "Qualifier
+// Tournaments"...) plutôt que la vraie page du tournoi avec les matchs —
+// surtout quand le nom de tournoi côté PandaScore est vague (ex: juste
+// "2026"). L'appelant essaie chaque candidat jusqu'à en trouver un qui
+// contient réellement des {{Match}} exploitables.
+async function searchTournamentPages(query) {
+  const json = await liquipediaFetch({ action: "query", list: "search", srsearch: query, srlimit: "5" });
   const results = json?.query?.search || [];
-  return results.length > 0 ? results[0].title : null;
+  return results.map((r) => r.title);
 }
 
 // --- Récupération + cache du wikitext d'une page ------------------------
@@ -273,39 +279,13 @@ function slugMatchesName(slug, name) {
 
 // --- Point d'entrée -------------------------------------------------------
 
-/**
- * Cherche le score par map d'un match CS2 sur Liquipedia, à partir des noms
- * d'équipe + nom du tournoi (côté PandaScore) et de la date (YYYY-MM-DD).
- * Renvoie [{map, score1, score2}, ...] (score1/score2 dans l'ordre
- * team1Name/team2Name), ou `null` si non trouvé/erreur. Jamais de score
- * inventé.
- */
-async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, dateStr) {
-  if (!team1Name || !team2Name || !tournamentName) return null;
-
-  let pageTitle;
-  try {
-    pageTitle = await searchTournamentPage(tournamentName);
-  } catch (e) {
-    console.log(`[liquipedia] search(${tournamentName}) → ERREUR:`, e.message);
-    return null;
-  }
-  if (!pageTitle) {
-    console.log(`[liquipedia] search(${tournamentName}) → aucune page trouvée`);
-    return null;
-  }
-
-  let wikitext;
-  try {
-    wikitext = await getWikitext(pageTitle);
-  } catch (e) {
-    console.log(`[liquipedia] wikitext(${pageTitle}) → ERREUR:`, e.message);
-    return null;
-  }
-  if (!wikitext) return null;
-
+// Cherche le match dans une page déjà récupérée ; renvoie les maps trouvées
+// (dans l'ordre team1/team2) ou `null` si cette page ne contient pas ce
+// match précis.
+function findMatchInWikitext(wikitext, team1Name, team2Name, dateStr) {
   const blocks = extractTemplateBlocks(wikitext, "Match");
   const candidates = blocks.map(parseMatchBlock).filter(Boolean);
+  if (candidates.length === 0) return { maps: null, matchCount: 0 };
 
   const sameOrderMatches = candidates.filter(
     (m) => m.finished && slugMatchesName(m.opponent1, team1Name) && slugMatchesName(m.opponent2, team2Name)
@@ -327,19 +307,65 @@ async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, 
   }
 
   const found = pickClosestByDate(sameOrderMatches);
-  if (found) {
-    return found.maps.length > 0 ? found.maps : null;
-  }
+  if (found) return { maps: found.maps.length > 0 ? found.maps : null, matchCount: candidates.length };
+
   const foundSwapped = pickClosestByDate(swappedMatches);
   if (foundSwapped) {
-    return foundSwapped.maps.length > 0
-      ? foundSwapped.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 }))
-      : null;
+    const maps =
+      foundSwapped.maps.length > 0 ? foundSwapped.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 })) : null;
+    return { maps, matchCount: candidates.length };
   }
 
-  console.log(
-    `[liquipedia] aucune correspondance pour ${team1Name} vs ${team2Name} dans "${pageTitle}" (${candidates.length} matchs sur la page)`
-  );
+  return { maps: null, matchCount: candidates.length };
+}
+
+/**
+ * Cherche le score par map d'un match CS2 sur Liquipedia, à partir des noms
+ * d'équipe (côté PandaScore) et de la date (YYYY-MM-DD). Renvoie
+ * [{map, score1, score2}, ...] (score1/score2 dans l'ordre team1Name/
+ * team2Name), ou `null` si non trouvé/erreur. Jamais de score inventé.
+ *
+ * Cherche par NOMS D'ÉQUIPE (pas par nom de tournoi PandaScore, souvent
+ * absent ou trop vague, ex: juste "2026") : plus fiable pour retrouver la
+ * bonne page via la recherche plein texte de Liquipedia. Essaie plusieurs
+ * pages candidates (searchTournamentPages) jusqu'à en trouver une qui
+ * contient réellement le match — le 1er résultat de recherche est souvent
+ * une page d'index générique sans données exploitables.
+ */
+async function getMapScoresFromLiquipedia(team1Name, team2Name, _tournamentName, dateStr) {
+  if (!team1Name || !team2Name) return null;
+
+  let pageTitles;
+  try {
+    pageTitles = await searchTournamentPages(team1Name + " " + team2Name);
+  } catch (e) {
+    console.log(`[liquipedia] search(${team1Name} ${team2Name}) → ERREUR:`, e.message);
+    return null;
+  }
+  if (!pageTitles || pageTitles.length === 0) {
+    console.log(`[liquipedia] search(${team1Name} ${team2Name}) → aucune page trouvée`);
+    return null;
+  }
+
+  for (const pageTitle of pageTitles) {
+    let wikitext;
+    try {
+      wikitext = await getWikitext(pageTitle);
+    } catch (e) {
+      console.log(`[liquipedia] wikitext(${pageTitle}) → ERREUR:`, e.message);
+      continue;
+    }
+    if (!wikitext) continue;
+
+    const { maps, matchCount } = findMatchInWikitext(wikitext, team1Name, team2Name, dateStr);
+    if (maps) return maps;
+    if (matchCount === 0) {
+      console.log(`[liquipedia] "${pageTitle}" → page sans {{Match}} exploitable (probablement une page d'index), candidat suivant`);
+      continue;
+    }
+    console.log(`[liquipedia] "${pageTitle}" → ${matchCount} matchs sur la page mais aucun ne correspond à ${team1Name} vs ${team2Name}`);
+  }
+
   return null;
 }
 
