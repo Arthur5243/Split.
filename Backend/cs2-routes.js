@@ -35,6 +35,7 @@ import {
   getMapScoresState,
 } from "./cs2-history-store.js";
 import { getMapScoresFromOddsApi } from "./oddsapi-scores.js";
+import { getMapScoresFromLiquipedia, resetLiquipediaCycleCap } from "./liquipedia-scores.js";
 
 const router = express.Router();
 
@@ -185,6 +186,11 @@ async function enrichWithMapScores(data) {
 
   const toFetch = applyStoredMapScores(finished);
 
+  // Nouveau cycle d'enrichissement -> ré-autorise jusqu'à 3 nouvelles pages
+  // de tournoi Liquipedia (cf liquipedia-scores.js). Les pages déjà en cache
+  // restent utilisables sans compter dans ce plafond.
+  resetLiquipediaCycleCap();
+
   await mapWithConcurrency(toFetch, 1, async (m) => {
     const attemptIndex = toFetch.indexOf(m);
     const t1 = m.opponents?.[0]?.opponent;
@@ -193,12 +199,30 @@ async function enrichWithMapScores(data) {
     let mapScores = null;
     const date = (m.begin_at || "").slice(0, 10);
 
-    // 1) Priorité à odds-api.io (cf oddsapi-scores.js) : source officielle,
-    // pas de scraping/captcha, réutilise la même clé ODDS_API_KEY déjà en
-    // place pour les cotes Valorant historiques. Plafonné à
-    // MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf plus haut) :
-    // au-delà, on saute directement au repli PandaScore pour ce cycle-ci.
-    if (attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
+    // 1) Priorité à Liquipedia (wiki communautaire, gratuit, historique très
+    // complet même sur les vieux tournois — cf liquipedia-scores.js). Chaque
+    // appel peut déclencher une recherche de page + un fetch de wikitext,
+    // tous deux rate-limités et plafonnés en interne (3 nouvelles pages max
+    // par cycle) : au-delà, la fonction renvoie `null` silencieusement et on
+    // retombe sur les sources suivantes pour ce match, ce cycle-ci.
+    try {
+      mapScores = await getMapScoresFromLiquipedia(
+        t1.name,
+        t2.name,
+        m.league?.name || null,
+        m.serie?.full_name || null,
+        date
+      );
+    } catch (e) {
+      console.log(`[cs2 map_scores] Liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+    }
+
+    // 2) odds-api.io (cf oddsapi-scores.js) si Liquipedia n'a rien trouvé :
+    // source officielle, pas de scraping/captcha, réutilise la même clé
+    // ODDS_API_KEY déjà en place pour les cotes Valorant historiques.
+    // Plafonné à MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf
+    // plus haut) : au-delà, on saute directement au repli PandaScore.
+    if (!mapScores && attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
       try {
         mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
       } catch (e) {
@@ -209,11 +233,11 @@ async function enrichWithMapScores(data) {
     // confirmé fonctionnel en prod) : trace chaque match traité ici.
     console.log(
       `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}) — ` +
-        `oddsapi=${mapScores ? JSON.stringify(mapScores) : attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE ? "aucun (repli PandaScore)" : "pas tenté ce cycle (quota), repli PandaScore"}`
+        `résolu=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
     );
 
-    // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si
-    // odds-api.io n'a rien trouvé pour ce match.
+    // 3) Dernier repli : endpoint PandaScore lui-même (/csgo/games/{id}), si
+    // ni Liquipedia ni odds-api.io n'ont rien trouvé pour ce match.
     if (!mapScores) {
       try {
         mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
