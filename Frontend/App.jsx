@@ -1839,4 +1839,941 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
               <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} />
             </React.Fragment>
           );
-       
+        })}
+        {combined.length === 0 && (
+          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
+            {loading ? "…" : "—"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Couleur d'accent unique pour les cartes CS2 : contrairement à Valorant, la
+// région n'est plus un attribut du MATCH (un match peut opposer deux
+// équipes de régions différentes), donc pas de couleur "par région" par
+// carte — juste une couleur CS2 fixe, cohérente sur tout l'onglet.
+const CS2_ACCENT = "#3B82F6";
+
+function regionAccentCS2(key) {
+  return (REGIONS_CS2.find((r) => r.key === key) || {}).accent || CS2_ACCENT;
+}
+
+function regionCodeCS2(key) {
+  if (key === "EUROPE") return "EU";
+  if (key === "AMERICAS") return "AM";
+  if (key === "ASIA") return "AS";
+  return "";
+}
+
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
+  const allSelected = selectedRegions.length === REGIONS_CS2.length;
+  const showFinished = selectedStatuses[0] === "finished";
+
+  // Même logique de "grâce" que côté Valorant : un match "finished" côté
+  // PandaScore mais dont le score par map n'est pas encore résolu
+  // (retentative en cours côté backend, cf RETRY_DELAYS_MS dans
+  // cs2-history-store.js) reste affiché dans "à venir" plutôt que "Terminé",
+  // pour ne jamais montrer un faux 0-0.
+  const now = Date.now();
+  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
+  const stillWithinGrace = (m) => {
+    const dayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
+    return dayMs != null && now - dayMs < 48 * 60 * 60 * 1000;
+  };
+  const resultsReady = results.filter((m) => hasRealMapScore(m) || !stillWithinGrace(m));
+  const resultsPending = results.filter((m) => !hasRealMapScore(m) && stillWithinGrace(m));
+
+  function dedupeById(list) {
+    const seen = new Map();
+    for (const m of list) {
+      if (!seen.has(String(m.id))) seen.set(String(m.id), m);
+    }
+    return [...seen.values()];
+  }
+
+  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...live, ...upcoming]);
+
+  // Filtre par ÉQUIPE, pas par match : si toutes les régions sont
+  // sélectionnées (par défaut), on montre tout, y compris les stages
+  // communs / Majors où les deux équipes n'ont pas forcément de région
+  // connue. Si une sélection partielle est active, on ne garde que les
+  // matchs impliquant au moins une équipe de la/les région(s) choisie(s).
+  const combined = source
+    .filter((m) => allSelected || (m.team1Region && selectedRegions.includes(m.team1Region)) || (m.team2Region && selectedRegions.includes(m.team2Region)))
+    .sort((a, b) => {
+      const ka = (a.day || "") + (a.time || "");
+      const kb = (b.day || "") + (b.time || "");
+      return showFinished ? kb.localeCompare(ka) : ka.localeCompare(kb);
+    });
+
+  let lastDay = null;
+
+  return (
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + CS2_ACCENT + "22, transparent 70%)" }} />
+      <div className="relative px-4 pt-4 pb-2">
+        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
+        <p style={{ color: "#888", fontSize: "12px" }}>{T.cs2Subtitle}</p>
+      </div>
+
+      <div className="flex gap-2 px-4 pt-1">
+        {["upcoming", "finished"].map((s) => {
+          const active = selectedStatuses.includes(s);
+          return (
+            <button
+              key={s}
+              onClick={() => toggleStatus(s)}
+              className="rounded-full"
+              style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
+            >
+              {s === "upcoming" ? T.statusUpcoming : T.calendarDone}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 relative">
+        <button
+          onClick={() => toggleRegion("ALL")}
+          className="shrink-0 rounded-full transition-all"
+          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#fff" : "#161616", color: allSelected ? "#000" : "#888", border: allSelected ? "none" : "1px solid #2a2a2a" }}
+        >
+          {T.regionAll}
+        </button>
+        {REGIONS_CS2.map((r) => {
+          const active = selectedRegions.includes(r.key);
+          return (
+            <button
+              key={r.key}
+              onClick={() => toggleRegion(r.key)}
+              className="shrink-0 rounded-full transition-all"
+              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? r.accent : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
+            >
+              {regionLabelCS2(r.key, T)}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="px-4 pb-6 relative">
+        {combined.map((m) => {
+          const showDay = m.day !== lastDay;
+          lastDay = m.day;
+          return (
+            <React.Fragment key={m.id}>
+              {showDay && (
+                <div className="pt-3 pb-2" style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {dayLabel(m.day, lang, T)}
+                </div>
+              )}
+              <MatchCard
+                match={m}
+                accent={CS2_ACCENT}
+                pred={predictions[m.id]}
+                onSeriesChange={onSeriesChange}
+                onToggleExpand={toggleExpand}
+                onScoreChange={changeScore}
+                T={T}
+                lang={lang}
+                teamLogoCache={teamLogoCache}
+                streamUrl={m.streamUrl}
+                useRegionStreamFallback={false}
+                hideOdds
+                team1RegionColor={m.team1Region ? regionAccentCS2(m.team1Region) : null}
+                team2RegionColor={m.team2Region ? regionAccentCS2(m.team2Region) : null}
+                team1RegionCode={m.team1Region ? regionCodeCS2(m.team1Region) : null}
+                team2RegionCode={m.team2Region ? regionCodeCS2(m.team2Region) : null}
+              />
+            </React.Fragment>
+          );
+        })}
+        {combined.length === 0 && (
+          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
+            {loading ? "…" : "—"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderTab({ label, img, T }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: "560px" }}>
+      <div className="rounded-full flex items-center justify-center mb-4" style={{ width: "72px", height: "72px", background: "#111" }}>
+        <img src={img} alt={label} style={{ width: "34px", height: "34px", objectFit: "contain" }} />
+      </div>
+      <h2 className="font-black" style={{ color: "#111", fontSize: "20px" }}>{label}</h2>
+      <p style={{ color: "#555", fontSize: "13px" }} className="mt-2">{T.placeholderSoon.replace("{label}", label)}</p>
+    </div>
+  );
+}
+
+function ClassementTab({ T, selectedCats, toggleCat, userPoints }) {
+  const allSelected = selectedCats.length === CATS.length;
+  return (
+    <div className="px-4 pt-6 pb-6">
+      <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
+      <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
+
+      <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+        <div>
+          <p style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{T.myPoints}</p>
+          <p style={{ color: "#777", fontSize: "10.5px" }}>{T.myPointsSub}</p>
+        </div>
+        <span style={{ color: "#CCF71D", fontSize: "20px", fontWeight: 900 }}>{userPoints} pts</span>
+      </div>
+
+      <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-2">{T.catFilterLabel}</p>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
+        <button
+          onClick={() => toggleCat("ALL")}
+          className="shrink-0 rounded-full transition-all"
+          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#fff" : "#161616", color: allSelected ? "#000" : "#888", border: allSelected ? "none" : "1px solid #2a2a2a" }}
+        >
+          {T.regionAll}
+        </button>
+        {CATS.map((c) => {
+          const active = selectedCats.includes(c);
+          return (
+            <button
+              key={c}
+              onClick={() => toggleCat(c)}
+              className="shrink-0 rounded-full transition-all"
+              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
+            >
+              {catLabel(c, T)}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "360px" }}>
+        <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
+          <Trophy size={26} color="#444" />
+        </div>
+        <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.classementEmptyTitle}</p>
+        <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "240px" }} className="mt-2">{T.classementEmptySub}</p>
+      </div>
+    </div>
+  );
+}
+
+function LanguageMenu({ current, onSelect, onClose }) {
+  return (
+    <div className="absolute inset-0 z-50" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="absolute rounded-2xl overflow-hidden" style={{ top: "52px", left: "16px", background: "#181818", border: "1px solid #2a2a2a", minWidth: "170px" }}>
+        {LANGS.map((l) => (
+          <button key={l.code} onClick={() => { onSelect(l.code); onClose(); }} className="w-full flex items-center gap-2 px-3 py-2.5" style={{ background: current === l.code ? "#242424" : "transparent" }}>
+            <span style={{ fontSize: "16px" }}>{l.flag}</span>
+            <span style={{ color: "#fff", fontSize: "13px" }}>{l.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({ onClose, notifyRegions, setNotifyRegions, favoriteTeam, setFavoriteTeam, otherNotifs, setOtherNotifs, teams, T }) {
+  const allTeams = teams || [];
+
+  const otherItems = [
+    { key: "events", label: T.settingsNotifEvents },
+    { key: "bets", label: T.settingsNotifBets },
+    { key: "matchStart", label: T.settingsNotifMatchStart },
+    { key: "matchEnd", label: T.settingsNotifMatchEnd },
+  ];
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
+          <button onClick={onClose}><X size={20} color="#999" /></button>
+        </div>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1 }}>
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2 mt-1">{T.settingsNotifTitle}</p>
+          <div className="flex flex-col gap-2 mb-5">
+            {REGIONS.map((r) => (
+              <button key={r.key} onClick={() => setNotifyRegions((p) => ({ ...p, [r.key]: !p[r.key] }))} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "#181818" }}>
+                <span className="flex items-center gap-2">
+                  <span style={{ width: 8, height: 8, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
+                  <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{T.settingsNotifPrefix}{regionLabel(r.key, T)}</span>
+                </span>
+                <span className="rounded-full" style={{ width: 38, height: 22, background: notifyRegions[r.key] ? r.accent : "#2a2a2a", position: "relative" }}>
+                  <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: notifyRegions[r.key] ? 18 : 2, transition: "left 0.2s" }} />
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsNotifOtherTitle}</p>
+          <div className="flex flex-col gap-2 mb-5">
+            {otherItems.map((it) => (
+              <button key={it.key} onClick={() => setOtherNotifs((p) => ({ ...p, [it.key]: !p[it.key] }))} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "#181818" }}>
+                <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{it.label}</span>
+                <span className="rounded-full" style={{ width: 38, height: 22, background: otherNotifs[it.key] ? "#CCF71D" : "#2a2a2a", position: "relative" }}>
+                  <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: otherNotifs[it.key] ? 18 : 2, transition: "left 0.2s" }} />
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsFavTeam}</p>
+          <select value={favoriteTeam} onChange={(e) => setFavoriteTeam(e.target.value)} className="w-full rounded-xl mb-5" style={{ background: "#181818", color: "#fff", fontSize: "13px", padding: "10px 12px", border: "1px solid #2a2a2a" }}>
+            <option value="">{T.settingsFavTeamNone}</option>
+            {allTeams.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsAccount}</p>
+          <button className="w-full flex items-center justify-center gap-2 rounded-xl mb-3" style={{ background: "#fff", color: "#111", padding: "11px", fontSize: "13px", fontWeight: 700 }}>
+            <Chrome size={16} />{T.settingsGoogle}
+          </button>
+          <div className="flex items-center gap-2 mb-3">
+            <div style={{ flex: 1, height: 1, background: "#262626" }} />
+            <span style={{ color: "#555", fontSize: "11px" }}>{T.settingsOr}</span>
+            <div style={{ flex: 1, height: 1, background: "#262626" }} />
+          </div>
+          <div className="flex items-center gap-2 rounded-xl mb-2 px-3" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+            <Mail size={14} color="#666" />
+            <input placeholder={T.settingsEmail} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+          </div>
+          <div className="flex items-center gap-2 rounded-xl mb-3 px-3" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+            <Lock size={14} color="#666" />
+            <input type="password" placeholder={T.settingsPassword} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+          </div>
+          <button className="w-full rounded-xl" style={{ background: "#CCF71D", color: "#000", padding: "11px", fontSize: "13px", fontWeight: 700 }}>{T.settingsLogin}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CalendarModal({ onClose, T, lang }) {
+  const [expanded, setExpanded] = useState({});
+  const timeline = TIMELINE_I18N[lang] || TIMELINE_I18N.fr;
+  return (
+    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
+          <button onClick={onClose}><X size={20} color="#999" /></button>
+        </div>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
+          {timeline.map((item, idx) => (
+            <div key={item.key} className="flex gap-3 pb-5">
+              <div className="flex flex-col items-center">
+                <div className="rounded-full" style={{ width: 10, height: 10, background: item.status === "done" ? "#444" : "#CCF71D", marginTop: 4 }} />
+                {idx < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+              </div>
+              <div className="flex-1 pb-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-white" style={{ fontSize: item.big ? "22px" : "14px" }}>{item.title}</span>
+                  <span style={{ fontSize: "9px", fontWeight: 700, color: item.status === "done" ? "#666" : "#CCF71D", border: "1px solid " + (item.status === "done" ? "#333" : "#CCF71D55"), borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                    {item.status === "done" ? T.calendarDone : T.calendarSoon}
+                  </span>
+                </div>
+                {item.big && (
+                  <div className="flex gap-1 mt-1.5 mb-1">
+                    {REGIONS.map((r) => <span key={r.key} style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />)}
+                  </div>
+                )}
+                <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{item.range}</p>
+                {item.detail && (
+                  <>
+                    <button onClick={() => setExpanded((p) => ({ ...p, [item.key]: !p[item.key] }))} className="flex items-center gap-1 mt-2" style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>
+                      {expanded[item.key] ? T.calendarHideDetail : T.calendarShowDetail}
+                      <ChevronDown size={12} style={{ transform: expanded[item.key] ? "rotate(180deg)" : "rotate(0deg)" }} />
+                    </button>
+                    {expanded[item.key] && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        {item.detail.map((d) => {
+                          const reg = REGIONS.find((r) => r.key === d.region);
+                          return (
+                            <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                              <span style={{ color: reg ? reg.accent : "#fff", fontSize: "11px", fontWeight: 700 }}>{reg ? regionLabel(reg.key, T) : d.region}</span>
+                              <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
+  const lang = LANGS.find((l) => l.code === currentLang);
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#0a0a0a", borderBottom: "1px solid " + (isLight ? "#ddd" : "#1a1a1a") }}>
+      <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
+        <span style={{ fontSize: "14px" }}>{lang.flag}</span>
+        <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
+        <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
+      </button>
+      <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
+      <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
+        <Settings size={16} color={isLight ? "#444" : "#ccc"} />
+      </button>
+    </div>
+  );
+}
+
+function ScrollToTopButton({ visible, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="absolute rounded-full flex items-center justify-center"
+      style={{
+        right: "16px",
+        bottom: "84px",
+        width: "40px",
+        height: "40px",
+        background: "#CCF71D",
+        zIndex: 40,
+        boxShadow: "0 4px 14px rgba(0,0,0,0.4)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(8px)",
+        pointerEvents: visible ? "auto" : "none",
+        transition: "opacity 1s ease, transform 1s ease",
+      }}
+    >
+      <ChevronUp size={20} color="#000" strokeWidth={2.6} />
+    </button>
+  );
+}
+
+export default function ClutchApp() {
+  const [activeTab, setActiveTab] = useState("home");
+  const [selectedRegions, setSelectedRegions] = useState(["EMEA"]);
+  const [preAllRegions, setPreAllRegions] = useState(["EMEA"]);
+  // Sélection région CS2 : état séparé de Valorant (valeurs différentes —
+  // EUROPE/AMERICAS/ASIA), mais même mécanique de toggle (cf toggleRegionCS2
+  // plus bas). Toutes sélectionnées par défaut : contrairement à VCT, les
+  // stages CS2 mélangent les régions, donc pas de raison de partir filtré.
+  const [selectedRegionsCS2, setSelectedRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
+  const [preAllRegionsCS2, setPreAllRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
+  const [selectedStatuses, setSelectedStatuses] = useState(["upcoming"]);
+  const [selectedCats, setSelectedCats] = useState(["VALORANT"]);
+  const [preAllCats, setPreAllCats] = useState(["VALORANT"]);
+  // Prédictions + points persistés en local (localStorage) : pas encore de
+  // compte utilisateur (connexion à ajouter plus tard), donc on garde tout
+  // rattaché à cet appareil pour l'instant. Le jour où l'auth arrive, il
+  // suffira de remplacer ce stockage local par un appel serveur par utilisateur,
+  // la logique de calcul des points (calcMatchPoints) ne change pas.
+  const [predictions, setPredictions] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("split_predictions") || "{}");
+      // Les rectangles de détail (scores par map) ne doivent jamais rester
+      // ouverts après un reload : on repart toujours fermé, le reste de la
+      // prédiction (scores saisis, odds...) est conservé tel quel.
+      const reset = {};
+      for (const [id, pred] of Object.entries(stored)) {
+        reset[id] = { ...pred, expanded: false };
+      }
+      return reset;
+    } catch (e) {
+      return {};
+    }
+  });
+  const [userPoints, setUserPoints] = useState(() => {
+    const raw = parseInt(localStorage.getItem("split_points_total") || "0", 10);
+    return Number.isNaN(raw) ? 0 : raw;
+  });
+  const [settledMatchIds, setSettledMatchIds] = useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem("split_settled_matches") || "[]"));
+    } catch (e) {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("split_predictions", JSON.stringify(predictions));
+  }, [predictions]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [currentLang, setCurrentLang] = useState("fr");
+  const [notifyRegions, setNotifyRegions] = useState({ EMEA: true, PACIFIC: true, AMERICAS: true, CN: true });
+  const [otherNotifs, setOtherNotifs] = useState({ events: true, bets: true, matchStart: true, matchEnd: false });
+  const [favoriteTeam, setFavoriteTeam] = useState("");
+
+  const scrollRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
+  const hideTimerRef = useRef(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  function handleContentScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.scrollTop;
+    const goingUp = top < lastScrollTopRef.current - 2;
+    const goingDown = top > lastScrollTopRef.current + 2;
+    const farEnough = top > 400;
+    lastScrollTopRef.current = top;
+
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+
+    if (goingUp && farEnough) {
+      setShowScrollTop(true);
+      hideTimerRef.current = setTimeout(() => setShowScrollTop(false), 2000);
+    } else if (goingDown || !farEnough) {
+      setShowScrollTop(false);
+    }
+  }
+
+  function scrollContentToTop() {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: 0, behavior: "smooth" });
+    setShowScrollTop(false);
+  }
+
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [resultsMatches, setResultsMatches] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Même chose côté CS2, dans des états séparés : les deux jeux sont
+  // récupérés/rafraîchis indépendamment (cf effect dédié plus bas), jamais
+  // mélangés dans les mêmes tableaux.
+  const [cs2UpcomingMatches, setCs2UpcomingMatches] = useState([]);
+  const [cs2LiveMatches, setCs2LiveMatches] = useState([]);
+  const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
+  const [cs2DataLoading, setCs2DataLoading] = useState(true);
+
+  const T = STR[currentLang] || STR.fr;
+  const isLight = activeTab === "rocketleague";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchJson(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    async function load() {
+      try {
+        const [up, li, pa, history] = await Promise.all([
+          fetchJson("/api/valorant-upcoming"),
+          fetchJson("/api/valorant-live"),
+          fetchJson("/api/valorant-results"),
+          // Historique complet accumulé côté backend (mini base de données qui
+          // grossit à chaque nouveau résultat). Pas encore déployé -> on ne
+          // bloque jamais dessus, on retombe simplement sur les résultats
+          // récents (paT) ci-dessous. Jamais de donnée inventée dans les deux cas.
+          fetchJson("/api/match-history").catch(() => null),
+        ]);
+        if (cancelled) return;
+        const upT = Array.isArray(up) ? up.map(transformMatch).filter((m) => m.region) : [];
+        const liT = Array.isArray(li) ? li.map(transformMatch).filter((m) => m.region) : [];
+        const paT = Array.isArray(pa) ? pa.map(transformMatch).filter((m) => m.region) : [];
+        const historyT = Array.isArray(history) ? history.map(transformMatch).filter((m) => m.region) : [];
+        // On prend la source qui a le plus de matchs exploitables : dès que le
+        // backend expose l'historique accumulé (/api/match-history), il devient
+        // naturellement plus riche que la fenêtre récente et prend le relais.
+        const finishedMatches = historyT.length > paT.length ? historyT : paT;
+        setUpcomingMatches(attachComputedOdds(upT, finishedMatches));
+        setLiveMatches(attachComputedOdds(liT, finishedMatches));
+        // Avant : les matchs terminés (onglet "Match terminé") ne passaient
+        // jamais par attachComputedOdds -> match.odds1/odds2 restaient
+        // `undefined`, et le repli d'affichage (`match.odds1 != null ? ... : 0`)
+        // faisait donc afficher 0% / 0% sur TOUS les matchs déjà joués.
+        // On calcule les cotes de la même façon que pour upcoming/live, à
+        // partir de l'historique qui EXCLUT le match lui-même (sinon son
+        // propre résultat biaiserait sa propre cote).
+        setResultsMatches(
+          paT.map((m) => {
+            const historyWithoutSelf = finishedMatches.filter((h) => String(h.id) !== String(m.id));
+            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf);
+            return { ...m, odds1, odds2, cote1, cote2 };
+          })
+        );
+      } catch (e) {
+        // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
+      } finally {
+        if (!cancelled) setDataLoading(false);
+      }
+    }
+
+    load();
+    const interval = setInterval(load, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Même chose pour CS2, dans un effect séparé (pas de mélange des deux
+  // jeux). Différence avec Valorant : /api/cs2-results renvoie déjà
+  // l'historique accumulé fusionné côté backend (buildMergedResults dans
+  // cs2-routes.js), donc pas besoin d'un 2e appel séparé façon
+  // /api/match-history — `pa` fait déjà office de `finishedMatches`.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchJson(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    async function loadCS2() {
+      try {
+        const [up, li, pa] = await Promise.all([
+          fetchJson("/api/cs2-upcoming"),
+          fetchJson("/api/cs2-live"),
+          fetchJson("/api/cs2-results"),
+        ]);
+        if (cancelled) return;
+        const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
+        const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
+        const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
+        setCs2UpcomingMatches(attachComputedOdds(upT, paT, tierWeightCS2));
+        setCs2LiveMatches(attachComputedOdds(liT, paT, tierWeightCS2));
+        setCs2ResultsMatches(
+          paT.map((m) => {
+            const historyWithoutSelf = paT.filter((h) => String(h.id) !== String(m.id));
+            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf, tierWeightCS2);
+            return { ...m, odds1, odds2, cote1, cote2 };
+          })
+        );
+      } catch (e) {
+        // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
+      } finally {
+        if (!cancelled) setCs2DataLoading(false);
+      }
+    }
+
+    loadCS2();
+    const interval = setInterval(loadCS2, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const allTeams = React.useMemo(() => {
+    const set = [];
+    [...upcomingMatches, ...liveMatches, ...resultsMatches].forEach((m) => {
+      [m.team1, m.team2].forEach((t) => {
+        if (t && t !== "TBD" && set.indexOf(t) === -1) set.push(t);
+      });
+    });
+    return set.sort();
+  }, [upcomingMatches, liveMatches, resultsMatches]);
+
+  // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
+  // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
+  // quand PandaScore renvoie image_url: null pour un match "juste terminé"
+  // (leur cache met parfois du temps à suivre) alors que la même équipe a
+  // déjà un logo connu ailleurs (voir MatchCard).
+  const teamLogoCache = React.useMemo(() => {
+    const map = {};
+    for (const m of [...upcomingMatches, ...liveMatches, ...resultsMatches]) {
+      if (m.team1Logo && m.team1Name) map[normTeamName(m.team1Name)] = m.team1Logo;
+      if (m.team2Logo && m.team2Name) map[normTeamName(m.team2Name)] = m.team2Logo;
+    }
+    return map;
+  }, [upcomingMatches, liveMatches, resultsMatches]);
+
+  // Même cache logo, séparé pour CS2 (mêmes matchs que ceux passés à Cs2Tab).
+  const cs2TeamLogoCache = React.useMemo(() => {
+    const map = {};
+    for (const m of [...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches]) {
+      if (m.team1Logo && m.team1Name) map[normTeamName(m.team1Name)] = m.team1Logo;
+      if (m.team2Logo && m.team2Name) map[normTeamName(m.team2Name)] = m.team2Logo;
+    }
+    return map;
+  }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
+
+  function toggleRegion(key) {
+    const allKeys = REGIONS.map((r) => r.key);
+    if (key === "ALL") {
+      const isAllSelected = selectedRegions.length === allKeys.length;
+      if (isAllSelected) {
+        setSelectedRegions(preAllRegions.length ? preAllRegions : ["EMEA"]);
+      } else {
+        setPreAllRegions(selectedRegions);
+        setSelectedRegions(allKeys);
+      }
+    } else {
+      setSelectedRegions((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    }
+  }
+
+  // Même mécanique que toggleRegion, appliquée à REGIONS_CS2 (Europe/
+  // Americas/Asia) et à son propre état (selectedRegionsCS2).
+  function toggleRegionCS2(key) {
+    const allKeys = REGIONS_CS2.map((r) => r.key);
+    if (key === "ALL") {
+      const isAllSelected = selectedRegionsCS2.length === allKeys.length;
+      if (isAllSelected) {
+        setSelectedRegionsCS2(preAllRegionsCS2.length ? preAllRegionsCS2 : [allKeys[0]]);
+      } else {
+        setPreAllRegionsCS2(selectedRegionsCS2);
+        setSelectedRegionsCS2(allKeys);
+      }
+    } else {
+      setSelectedRegionsCS2((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    }
+  }
+
+  function toggleStatus(key) {
+    // Sélection exclusive : un seul des deux boutons actif à la fois.
+    setSelectedStatuses([key]);
+  }
+
+  function toggleCat(key) {
+    if (key === "ALL") {
+      const isAllSelected = selectedCats.length === CATS.length;
+      if (isAllSelected) {
+        setSelectedCats(preAllCats.length ? preAllCats : ["VALORANT"]);
+      } else {
+        setPreAllCats(selectedCats);
+        setSelectedCats([...CATS]);
+      }
+    } else {
+      setSelectedCats((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    }
+  }
+
+  function onSeriesChange(matchId, team, digit) {
+    setPredictions((prev) => {
+      const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
+      const next = { ...cur, [team]: digit };
+      const a = next.seriesA;
+      const b = next.seriesB;
+      if (a !== "" && b !== "") {
+        const an = parseInt(a, 10);
+        const bn = parseInt(b, 10);
+        const validPairs = [[2, 0], [2, 1], [1, 2], [0, 2]];
+        const ok = validPairs.some(([x, y]) => x === an && y === bn);
+        if (ok) {
+          const count = an + bn;
+          const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
+          // On fige les cotes affichées AU MOMENT du pari (avant que le match
+          // ne commence, seul instant où ce champ est éditable) : les points
+          // gagnés plus tard se basent toujours sur cette cote-là, jamais sur
+          // une cote recalculée après-coup une fois le résultat connu.
+          const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
+          const odds1 = src ? src.odds1 : cur.odds1;
+          const odds2 = src ? src.odds2 : cur.odds2;
+          return { ...prev, [matchId]: { ...next, games, expanded: true, odds1, odds2 } };
+        }
+      }
+      return { ...prev, [matchId]: next };
+    });
+  }
+
+  // Calcul pur (aucun state touché ici) : parcourt une liste de résultats et
+  // renvoie les paris à régler (nouveaux ids + points à ajouter). Utilisé
+  // par les deux effects ci-dessous (Valorant et CS2), qui partagent le même
+  // portefeuille de points (settledMatchIds/userPoints) — un seul point
+  // total, tous jeux confondus.
+  function computeSettlement(resultsList, now) {
+    let pointsToAdd = 0;
+    const newlySettled = [];
+    for (const m of resultsList) {
+      if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
+      if (settledMatchIds.has(String(m.id))) continue;
+      const pred = predictions[m.id];
+      if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
+
+      const predictedA = parseInt(pred.seriesA, 10) > parseInt(pred.seriesB, 10);
+      const actualA = m.score1 > m.score2;
+      const gotTeamRight = predictedA === actualA;
+      const hasGamePredictions = gotTeamRight && (pred.games || []).some((g) => g && g.a !== "" && g.b !== "");
+      const mapScoresPending = !Array.isArray(m.map_scores);
+      if (hasGamePredictions && mapScoresPending) {
+        const matchDayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
+        const withinGracePeriod = matchDayMs && now - matchDayMs < 48 * 60 * 60 * 1000;
+        if (withinGracePeriod) continue; // on retentera au prochain poll (60s)
+      }
+
+      newlySettled.push(String(m.id));
+      pointsToAdd += calcMatchPoints(m, pred);
+    }
+    return { newlySettled, pointsToAdd };
+  }
+
+  function applySettlement(newlySettled, pointsToAdd) {
+    if (newlySettled.length === 0) return;
+    setSettledMatchIds((prev) => {
+      const next = new Set(prev);
+      newlySettled.forEach((id) => next.add(id));
+      localStorage.setItem("split_settled_matches", JSON.stringify([...next]));
+      return next;
+    });
+    if (pointsToAdd > 0) {
+      setUserPoints((prev) => {
+        const next = prev + pointsToAdd;
+        localStorage.setItem("split_points_total", String(next));
+        return next;
+      });
+    }
+  }
+
+  // Dès qu'un match pronostiqué apparaît "finished" côté résultats, on règle
+  // le pari une seule fois (settledMatchIds évite de recompter les points à
+  // chaque repoll de /api/valorant-results toutes les 60s).
+  useEffect(() => {
+    if (!resultsMatches.length) return;
+    const { newlySettled, pointsToAdd } = computeSettlement(resultsMatches, Date.now());
+    applySettlement(newlySettled, pointsToAdd);
+  }, [resultsMatches]);
+
+  // Même règlement, même portefeuille de points, pour les pronostics CS2
+  // (cf /api/cs2-results, repollé toutes les 60s comme côté Valorant).
+  useEffect(() => {
+    if (!cs2ResultsMatches.length) return;
+    const { newlySettled, pointsToAdd } = computeSettlement(cs2ResultsMatches, Date.now());
+    applySettlement(newlySettled, pointsToAdd);
+  }, [cs2ResultsMatches]);
+
+  function toggleExpand(matchId) {
+    setPredictions((prev) => ({
+      ...prev,
+      [matchId]: { ...(prev[matchId] || { seriesA: "", seriesB: "", games: [] }), expanded: !(prev[matchId] && prev[matchId].expanded) },
+    }));
+  }
+
+  function changeScore(matchId, gameIndex, team, value) {
+    setPredictions((prev) => {
+      const m = prev[matchId];
+      if (!m) return prev;
+      const games = m.games.map((g, i) => (i === gameIndex ? { ...g, [team]: value } : g));
+      return { ...prev, [matchId]: { ...m, games } };
+    });
+  }
+
+  const navItems = [
+    { key: "home", label: T.navHome, Icon: Home },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG },
+    { key: "classement", label: T.navClassement, Icon: Trophy },
+  ];
+
+  return (
+    <div className="flex items-center justify-center p-4" style={{ background: "#000", minHeight: "700px" }}>
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
+        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
+
+        <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
+          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} T={T} />}
+          {activeTab === "valorant" && (
+            <ValorantTab
+              selectedRegions={selectedRegions}
+              toggleRegion={toggleRegion}
+              selectedStatuses={selectedStatuses}
+              toggleStatus={toggleStatus}
+              predictions={predictions}
+              onSeriesChange={onSeriesChange}
+              toggleExpand={toggleExpand}
+              changeScore={changeScore}
+              T={T}
+              lang={currentLang}
+              upcoming={upcomingMatches}
+              live={liveMatches}
+              results={resultsMatches}
+              teamLogoCache={teamLogoCache}
+              loading={dataLoading}
+            />
+          )}
+          {activeTab === "csgo" && (
+            <Cs2Tab
+              selectedRegions={selectedRegionsCS2}
+              toggleRegion={toggleRegionCS2}
+              selectedStatuses={selectedStatuses}
+              toggleStatus={toggleStatus}
+              predictions={predictions}
+              onSeriesChange={onSeriesChange}
+              toggleExpand={toggleExpand}
+              changeScore={changeScore}
+              T={T}
+              lang={currentLang}
+              upcoming={cs2UpcomingMatches}
+              live={cs2LiveMatches}
+              results={cs2ResultsMatches}
+              teamLogoCache={cs2TeamLogoCache}
+              loading={cs2DataLoading}
+            />
+          )}
+          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
+          {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} userPoints={userPoints} />}
+        </div>
+
+        <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
+
+        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
+          {navItems.map((item) => {
+            const active = activeTab === item.key;
+            const labelColor = active ? "#fff" : "#6b6b6b";
+            return (
+              <button key={item.key} onClick={() => setActiveTab(item.key)} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
+                {item.img ? (
+                  <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 20) + "px", height: (item.imgSize || 20) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
+                ) : (
+                  <item.Icon size={20} color={labelColor} strokeWidth={2.2} />
+                )}
+                <span style={{ color: labelColor, fontSize: "10px", fontWeight: active ? 700 : 500 }}>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {showLangMenu && <LanguageMenu current={currentLang} onSelect={setCurrentLang} onClose={() => setShowLangMenu(false)} />}
+        {showSettings && (
+          <SettingsModal
+            onClose={() => setShowSettings(false)}
+            notifyRegions={notifyRegions}
+            setNotifyRegions={setNotifyRegions}
+            favoriteTeam={favoriteTeam}
+            setFavoriteTeam={setFavoriteTeam}
+            otherNotifs={otherNotifs}
+            setOtherNotifs={setOtherNotifs}
+            teams={allTeams}
+            T={T}
+          />
+        )}
+        {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}
+      </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+      `}</style>
+    </div>
+  );
+}
