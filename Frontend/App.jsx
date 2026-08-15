@@ -109,6 +109,17 @@ const STR = {
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
+    cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
+    cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
+    cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
+    cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
+    cs2CircuitQualifiers: "Invitations & Qualifiers", cs2CircuitQualifiersDesc: "Les mieux classées de chaque région obtiennent une place ; la répartition varie selon les performances régionales.",
+    cs2CircuitStages: "Stages communs", cs2CircuitStagesDesc: "Les équipes qualifiées de toutes les régions se retrouvent dans les mêmes stages — jamais séparées par région.",
+    cs2CircuitPlayoffs: "Playoffs", cs2CircuitPlayoffsDesc: "Les meilleures équipes des stages communs s'affrontent pour une place en finale.",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "Le sommet du circuit, toutes régions confondues.",
+    cs2RankingTitle: "Classement régional", cs2RankingSubtitle: "Basé sur les résultats récents de chaque équipe", cs2RankingEmpty: "Pas encore assez de résultats pour établir un classement.",
     today: "Aujourd'hui", tomorrow: "Demain",
     teamsTbc: "Équipes à confirmer",
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
@@ -138,6 +149,17 @@ const STR = {
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
+    cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
+    cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
+    cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
+    cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
+    cs2CircuitQualifiers: "Invites & Qualifiers", cs2CircuitQualifiersDesc: "The top teams from each region earn a spot; how many spots per region can vary with regional performance.",
+    cs2CircuitStages: "Common stages", cs2CircuitStagesDesc: "Qualified teams from every region meet in the same stages — never split by region.",
+    cs2CircuitPlayoffs: "Playoffs", cs2CircuitPlayoffsDesc: "The best teams from the common stages fight for a spot in the final.",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "The top of the circuit, all regions combined.",
+    cs2RankingTitle: "Regional standings", cs2RankingSubtitle: "Based on each team's recent results", cs2RankingEmpty: "Not enough results yet to build a ranking.",
     today: "Today", tomorrow: "Tomorrow",
     teamsTbc: "Teams TBC",
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
@@ -167,6 +189,17 @@ const STR = {
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
+    cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "Ver el circuito CS2", cs2CircuitToggleHide: "Ocultar el circuito",
+    cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Inspirado en el sistema regional de Valorant, pero sin ligas cerradas: los equipos progresan por clasificación, no por franquicia.",
+    cs2CircuitRegions: "Regiones", cs2CircuitRegionsDesc: "3 grandes regiones: Europe, Americas, Asia.",
+    cs2CircuitRanking: "Ranking regional", cs2CircuitRankingDesc: "Cada equipo se clasifica en su región según sus resultados recientes.",
+    cs2CircuitQualifiers: "Invitaciones y Qualifiers", cs2CircuitQualifiersDesc: "Los mejores de cada región obtienen una plaza; el reparto varía según el rendimiento regional.",
+    cs2CircuitStages: "Fases comunes", cs2CircuitStagesDesc: "Los equipos clasificados de todas las regiones se reúnen en las mismas fases — nunca separados por región.",
+    cs2CircuitPlayoffs: "Playoffs", cs2CircuitPlayoffsDesc: "Los mejores equipos de las fases comunes luchan por un puesto en la final.",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "La cima del circuito, todas las regiones combinadas.",
+    cs2RankingTitle: "Clasificación regional", cs2RankingSubtitle: "Basada en los resultados recientes de cada equipo", cs2RankingEmpty: "Aún no hay suficientes resultados para una clasificación.",
     today: "Hoy", tomorrow: "Mañana",
     teamsTbc: "Equipos por confirmar",
     seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
@@ -194,6 +227,17 @@ const STR = {
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
+    cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "Vedi il circuito CS2", cs2CircuitToggleHide: "Nascondi il circuito",
+    cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Ispirato al sistema regionale di Valorant, ma senza leghe chiuse: le squadre avanzano tramite il ranking, non per franchising.",
+    cs2CircuitRegions: "Regioni", cs2CircuitRegionsDesc: "3 grandi regioni seguite: Europe, Americas, Asia.",
+    cs2CircuitRanking: "Ranking regionale", cs2CircuitRankingDesc: "Ogni squadra è classificata nella propria regione in base ai risultati recenti.",
+    cs2CircuitQualifiers: "Inviti e Qualifiers", cs2CircuitQualifiersDesc: "Le migliori squadre di ogni regione ottengono un posto; la ripartizione varia in base al rendimento regionale.",
+    cs2CircuitStages: "Fasi comuni", cs2CircuitStagesDesc: "Le squadre qualificate da tutte le regioni si ritrovano nelle stesse fasi — mai separate per regione.",
+    cs2CircuitPlayoffs: "Playoffs", cs2CircuitPlayoffsDesc: "Le migliori squadre delle fasi comuni si sfidano per un posto in finale.",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "Il vertice del circuito, tutte le regioni insieme.",
+    cs2RankingTitle: "Classifica regionale", cs2RankingSubtitle: "Basata sui risultati recenti di ogni squadra", cs2RankingEmpty: "Non ci sono ancora abbastanza risultati per una classifica.",
     today: "Oggi", tomorrow: "Domani",
     teamsTbc: "Squadre da confermare",
     seriesHint: "Inserisci un punteggio di serie valido sopra (es. 2-0, 2-1).",
@@ -221,6 +265,17 @@ const STR = {
     calendarLabel: "カレンダー", calendarCardTitle: "VCT 2026 カレンダー", calendarCardSub: "Kickoff・Masters・Playoffs・Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
+    cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "CS2サーキットを見る", cs2CircuitToggleHide: "サーキットを隠す",
+    cs2CircuitTitle: "CS2サーキット", cs2CircuitIntro: "Valorantの地域制度を参考にしつつ、クローズドリーグはなし：チームはフランチャイズではなくランキングで昇格します。",
+    cs2CircuitRegions: "地域", cs2CircuitRegionsDesc: "追跡する3大地域：Europe、Americas、Asia。",
+    cs2CircuitRanking: "地域ランキング", cs2CircuitRankingDesc: "各チームは直近の結果に基づき自地域内でランク付けされます。",
+    cs2CircuitQualifiers: "招待・予選", cs2CircuitQualifiersDesc: "各地域の上位チームが出場権を得ます。地域ごとの枠数は成績によって変動します。",
+    cs2CircuitStages: "共通ステージ", cs2CircuitStagesDesc: "全地域の出場チームが同じステージに集結します — 地域で分けられることはありません。",
+    cs2CircuitPlayoffs: "プレーオフ", cs2CircuitPlayoffsDesc: "共通ステージを勝ち抜いた上位チームが決勝進出をかけて対戦します。",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "全地域を統合したサーキットの頂点。",
+    cs2RankingTitle: "地域別ランキング", cs2RankingSubtitle: "各チームの直近の結果に基づく", cs2RankingEmpty: "ランキングを作成するにはまだ結果が足りません。",
     today: "今日", tomorrow: "明日",
     teamsTbc: "対戦カード未定",
     seriesHint: "上のボックスに有効なシリーズスコアを入力してください(例: 2-0、2-1)。",
@@ -248,6 +303,17 @@ const STR = {
     calendarLabel: "Kalender", calendarCardTitle: "VCT-2026-Kalender", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
+    cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "CS2-Circuit anzeigen", cs2CircuitToggleHide: "Circuit ausblenden",
+    cs2CircuitTitle: "CS2-Circuit", cs2CircuitIntro: "Inspiriert vom Valorant-Regionalsystem, aber ohne geschlossene Ligen: Teams steigen über das Ranking auf, nicht über ein Franchise.",
+    cs2CircuitRegions: "Regionen", cs2CircuitRegionsDesc: "3 große Regionen im Blick: Europe, Americas, Asia.",
+    cs2CircuitRanking: "Regionales Ranking", cs2CircuitRankingDesc: "Jedes Team wird innerhalb seiner Region nach den jüngsten Ergebnissen eingestuft.",
+    cs2CircuitQualifiers: "Einladungen & Qualifiers", cs2CircuitQualifiersDesc: "Die besten Teams jeder Region erhalten einen Startplatz; die Anzahl der Plätze pro Region hängt von der regionalen Leistung ab.",
+    cs2CircuitStages: "Gemeinsame Stages", cs2CircuitStagesDesc: "Qualifizierte Teams aus allen Regionen treffen in denselben Stages aufeinander — nie nach Region getrennt.",
+    cs2CircuitPlayoffs: "Playoffs", cs2CircuitPlayoffsDesc: "Die besten Teams der gemeinsamen Stages kämpfen um einen Finalplatz.",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "Die Spitze des Circuits, alle Regionen vereint.",
+    cs2RankingTitle: "Regionale Tabelle", cs2RankingSubtitle: "Basierend auf den jüngsten Ergebnissen jedes Teams", cs2RankingEmpty: "Noch nicht genug Ergebnisse für eine Rangliste.",
     today: "Heute", tomorrow: "Morgen",
     teamsTbc: "Teams noch offen",
     seriesHint: "Gib oben einen gültigen Serien-Score ein (z. B. 2-0, 2-1).",
@@ -275,6 +341,17 @@ const STR = {
     calendarLabel: "赛程日历", calendarCardTitle: "VCT 2026赛程日历", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
+    cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
+    cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    cs2CircuitToggleShow: "查看CS2赛事体系", cs2CircuitToggleHide: "隐藏赛事体系",
+    cs2CircuitTitle: "CS2赛事体系", cs2CircuitIntro: "灵感来自Valorant的分区制度，但没有封闭联赛：战队凭积分晋级，而非特许经营。",
+    cs2CircuitRegions: "赛区", cs2CircuitRegionsDesc: "追踪三大赛区：Europe、Americas、Asia。",
+    cs2CircuitRanking: "赛区排名", cs2CircuitRankingDesc: "每支战队根据近期战绩在其赛区内排名。",
+    cs2CircuitQualifiers: "邀请赛与资格赛", cs2CircuitQualifiersDesc: "各赛区排名靠前的战队获得名额；各赛区名额分配会随赛区整体战绩变化。",
+    cs2CircuitStages: "共同赛段", cs2CircuitStagesDesc: "各赛区晋级的战队汇聚到相同的赛段 — 从不按赛区分开。",
+    cs2CircuitPlayoffs: "季后赛", cs2CircuitPlayoffsDesc: "共同赛段的最佳战队争夺决赛名额。",
+    cs2CircuitChampions: "Champions", cs2CircuitChampionsDesc: "赛事体系的顶点，汇聚所有赛区。",
+    cs2RankingTitle: "赛区排行榜", cs2RankingSubtitle: "根据各战队近期战绩计算", cs2RankingEmpty: "战绩数据尚不足以生成排行榜。",
     today: "今天", tomorrow: "明天",
     teamsTbc: "对阵尚未确定",
     seriesHint: "请在上方输入有效的系列赛比分(如2-0、2-1)。",
@@ -407,6 +484,24 @@ function regionLabel(key, T) {
   return key;
 }
 
+// Régions du circuit CS2 : Europe / Americas / Asia, calquées sur le
+// découpage officiel Valve des RMR (Regional Major Rankings). Contrairement
+// à REGIONS (VCT), ceci classe des ÉQUIPES, pas des matchs/ligues — un match
+// peut très bien opposer une équipe EUROPE à une équipe AMERICAS dans un
+// stage commun (Major, IEM, BLAST...).
+const REGIONS_CS2 = [
+  { key: "EUROPE", accent: "#3B82F6" },
+  { key: "AMERICAS", accent: "#FF5A1F" },
+  { key: "ASIA", accent: "#F5C518" },
+];
+
+function regionLabelCS2(key, T) {
+  if (key === "EUROPE") return T.cs2RegionEurope;
+  if (key === "AMERICAS") return T.cs2RegionAmericas;
+  if (key === "ASIA") return T.cs2RegionAsia;
+  return key;
+}
+
 function catLabel(key, T) {
   if (key === "VALORANT") return T.navValorant;
   if (key === "CSGO") return T.navCsgo;
@@ -513,6 +608,53 @@ function transformMatch(m) {
   };
 }
 
+// --- Équivalent CS2 de transformMatch ---------------------------------
+// Différence clé avec Valorant : pas de `region` unique par MATCH (les
+// stages CS2 mélangent les régions), mais une région par ÉQUIPE
+// (team1Region/team2Region), déjà calculée côté backend (cf cs2-routes.js
+// `attachTeamRegions`, à partir du pays de chaque équipe) et renvoyée sur
+// les champs team1_region/team2_region du match brut PandaScore.
+function transformMatchCS2(m) {
+  const opponents = m.opponents || [];
+  const t1 = opponents[0] && opponents[0].opponent;
+  const t2 = opponents[1] && opponents[1].opponent;
+  const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
+  const d = beginRaw ? new Date(beginRaw) : null;
+  const results = m.results || [];
+  const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
+  const score2 = t2 ? (results.find((r) => r.team_id === t2.id) || {}).score : undefined;
+
+  return {
+    id: "cs2-" + m.id,
+    day: d ? isoDate(d) : null,
+    time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    league: (m.league && m.league.name) || "CS2",
+    phase: (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "",
+    tournamentName: (m.tournament && m.tournament.name) || "",
+    team1: teamCode(t1),
+    team2: teamCode(t2),
+    team1Name: t1 ? t1.name : null,
+    team2Name: t2 ? t2.name : null,
+    team1Logo: t1 ? t1.image_url : null,
+    team2Logo: t2 ? t2.image_url : null,
+    team1Region: m.team1_region || null,
+    team2Region: m.team2_region || null,
+    status: m.status || "not_started",
+    score1: score1,
+    score2: score2,
+    tier: m.tier || (m.league && m.league.name) || null,
+    // Score par map (13-9 etc.), récupéré directement depuis PandaScore côté
+    // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
+    // sans pont externe : PandaScore fournit lui-même le round_score par map
+    // pour CS2, contrairement à Valorant.
+    map_scores: m.map_scores || null,
+    // Flux officiel du match (streams_list PandaScore), si dispo — remplace
+    // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
+    // d'équivalent pour CS2 (pas de diffuseur officiel par région).
+    streamUrl: m.stream_url || null,
+  };
+}
+
 function isTbd(m) {
   return m.team1 === "TBD" || m.team2 === "TBD";
 }
@@ -581,12 +723,31 @@ const TIER_WEIGHTS = [
 ];
 const DEFAULT_TIER_WEIGHT = 0.35; // tournois non reconnus / petits circuits locaux
 
-function tierWeight(tierLabel) {
+function tierWeight(tierLabel, weights = TIER_WEIGHTS, defaultWeight = DEFAULT_TIER_WEIGHT) {
   const t = (tierLabel || "").toLowerCase();
-  for (const { match, weight } of TIER_WEIGHTS) {
+  for (const { match, weight } of weights) {
     if (t.includes(match)) return weight;
   }
-  return DEFAULT_TIER_WEIGHT;
+  return defaultWeight;
+}
+
+// Équivalent de TIER_WEIGHTS/DEFAULT_TIER_WEIGHT, pour CS2 : les Majors
+// Valve comptent comme le tournoi le plus prestigieux (comme "vct"/"champions"
+// côté Valorant), les gros LAN Tier 1 (IEM, BLAST Premier, ESL Pro League)
+// juste en dessous, le reste en poids par défaut. Recherche par sous-chaîne
+// (insensible à la casse) sur le libellé du tournoi, même logique que TIER_WEIGHTS.
+const CS2_TIER_WEIGHTS = [
+  { match: "major", weight: 1 },
+  { match: "iem", weight: 0.85 },
+  { match: "blast premier", weight: 0.85 },
+  { match: "blast", weight: 0.75 },
+  { match: "esl pro league", weight: 0.75 },
+  { match: "esports world cup", weight: 0.85 },
+  { match: "pgl", weight: 0.75 },
+];
+const CS2_DEFAULT_TIER_WEIGHT = 0.35;
+function tierWeightCS2(tierLabel) {
+  return tierWeight(tierLabel, CS2_TIER_WEIGHTS, CS2_DEFAULT_TIER_WEIGHT);
 }
 // Lissage bayésien : équivalent d'ajouter ODDS_PRIOR_WEIGHT matchs fictifs à 50/50.
 // Avec 2-3 matchs connus, le winrate reste prudent (proche de 50%) ; avec les
@@ -621,7 +782,7 @@ function teamResult(m, teamName) {
 // matchs pris en compte (la fenêtre "N derniers matchs" reste réelle) : il sert
 // ensuite à rabattre le winrate vers 50% quand la forme vient surtout de petits
 // tournois (voir qualityAdjustedWinrate).
-function recentWinrate(teamName, finishedMatches, limit) {
+function recentWinrate(teamName, finishedMatches, limit, tierWeightFn = tierWeight) {
   const sorted = [...finishedMatches].sort((a, b) => matchSortKey(b).localeCompare(matchSortKey(a)));
   let wins = 0;
   let played = 0;
@@ -631,7 +792,7 @@ function recentWinrate(teamName, finishedMatches, limit) {
     const r = teamResult(m, teamName);
     if (r == null) continue;
     played++;
-    weightSum += tierWeight(m.tier);
+    weightSum += tierWeightFn(m.tier);
     if (r === "W") wins++;
   }
   return { wins, played, weightSum };
@@ -640,7 +801,7 @@ function recentWinrate(teamName, finishedMatches, limit) {
 // Winrate BRUT de teamA spécifiquement contre teamB, sur leurs N dernières
 // confrontations directes, + le poids moyen de tournoi sur ces confrontations
 // (même logique que recentWinrate).
-function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
+function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit, tierWeightFn = tierWeight) {
   const a = normTeamName(teamAName);
   const b = normTeamName(teamBName);
   const sorted = finishedMatches
@@ -658,7 +819,7 @@ function headToHeadWinrate(teamAName, teamBName, finishedMatches, limit) {
     const r = teamResult(m, teamAName);
     if (r == null) continue;
     played++;
-    weightSum += tierWeight(m.tier);
+    weightSum += tierWeightFn(m.tier);
     if (r === "W") wins++;
   }
   return { wins, played, weightSum };
@@ -704,13 +865,13 @@ function pairJitter(nameA, nameB, delta) {
 
 // Calcule les cotes (% affiché + cote décimale façon bookmaker) pour un match donné,
 // à partir de l'historique des matchs terminés déjà récupérés côté app.
-function computeMatchOdds(match, finishedMatches) {
-  const gen1 = recentWinrate(match.team1Name, finishedMatches, ODDS_GENERAL_LIMIT);
-  const gen2 = recentWinrate(match.team2Name, finishedMatches, ODDS_GENERAL_LIMIT);
+function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
+  const gen1 = recentWinrate(match.team1Name, finishedMatches, ODDS_GENERAL_LIMIT, tierWeightFn);
+  const gen2 = recentWinrate(match.team2Name, finishedMatches, ODDS_GENERAL_LIMIT, tierWeightFn);
   let wr1 = qualityAdjustedWinrate(gen1.wins, gen1.played, gen1.weightSum);
   let wr2 = qualityAdjustedWinrate(gen2.wins, gen2.played, gen2.weightSum);
 
-  const h2h = headToHeadWinrate(match.team1Name, match.team2Name, finishedMatches, ODDS_H2H_LIMIT);
+  const h2h = headToHeadWinrate(match.team1Name, match.team2Name, finishedMatches, ODDS_H2H_LIMIT, tierWeightFn);
   if (h2h.played >= ODDS_H2H_MIN_SAMPLE) {
     const h2hWr1 = qualityAdjustedWinrate(h2h.wins, h2h.played, h2h.weightSum);
     wr1 = wr1 * (1 - ODDS_H2H_WEIGHT) + h2hWr1 * ODDS_H2H_WEIGHT;
@@ -748,10 +909,10 @@ function computeMatchOdds(match, finishedMatches) {
 
 // Applique le calcul ci-dessus à une liste de matchs (upcoming/live), en s'appuyant
 // sur l'historique des matchs terminés pour établir la forme de chaque équipe.
-function attachComputedOdds(matches, finishedMatches) {
+function attachComputedOdds(matches, finishedMatches, tierWeightFn = tierWeight) {
   return matches.map((m) => {
     if (isTbd(m)) return { ...m, odds1: 0, odds2: 0, cote1: null, cote2: null };
-    const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, finishedMatches);
+    const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, finishedMatches, tierWeightFn);
     return { ...m, odds1, odds2, cote1, cote2 };
   });
 }
@@ -1003,7 +1164,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -1042,20 +1203,25 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // vainqueur. Affiché comme erreur sur la Map 2, dès qu'elle est saisie.
   const overrunWinner = computeGameOverrunWinner(games, match.team1Name, match.team2Name);
 
-  // Chaîne Twitch selon la région du match (repli sur valorant_emea si inconnue)
-  const twitchChannel = REGION_TWITCH[match.region] || "valorant_emea";
-  const twitchLiveUrl = "https://www.twitch.tv/" + twitchChannel;
+  // Chaîne Twitch selon la région du match (repli sur valorant_emea si
+  // inconnue) — uniquement quand useRegionStreamFallback est actif
+  // (Valorant). Pour CS2, pas de repli région : soit un lien direct est
+  // fourni via `streamUrl` (flux officiel PandaScore du match), soit aucun
+  // bouton cliquable n'est proposé (cf JSX plus bas).
+  const twitchChannel = useRegionStreamFallback ? REGION_TWITCH[match.region] || "valorant_emea" : null;
+  const twitchLiveUrl = twitchChannel ? "https://www.twitch.tv/" + twitchChannel : null;
 
   // Lien du direct YouTube selon la région (repli sur EMEA si inconnue) -
-  // proposé en alternative à Twitch au clic sur "LIVE".
-  const youtubeLiveUrl = REGION_YOUTUBE_LIVE[match.region] || REGION_YOUTUBE_LIVE.EMEA;
+  // proposé en alternative à Twitch au clic sur "LIVE". Valorant uniquement.
+  const youtubeLiveUrl = useRegionStreamFallback ? REGION_YOUTUBE_LIVE[match.region] || REGION_YOUTUBE_LIVE.EMEA : null;
 
   // Petit sélecteur Twitch/YouTube affiché au clic sur "LIVE", plutôt que
   // d'ouvrir Twitch directement.
   const [showStreamPicker, setShowStreamPicker] = useState(false);
 
-  // Lien replay YouTube selon la région du match (repli sur EMEA si inconnue)
-  const replayUrl = REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA;
+  // Lien replay : priorité à l'override explicite (`replayUrlProp`, ex. flux
+  // officiel PandaScore côté CS2), sinon repli région (Valorant uniquement).
+  const effectiveReplayUrl = replayUrlProp || (useRegionStreamFallback ? REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA : null);
 
   // Détail des points gagnés sur ce match précis, uniquement si un pari a été
   // fait et le match est terminé (même règle que le règlement global des
@@ -1078,60 +1244,76 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
         </div>
         {running ? (
-          <div style={{ position: "relative" }}>
+          streamUrl ? (
             <button
-              onClick={() => setShowStreamPicker((v) => !v)}
+              onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
               className="flex items-center gap-1.5"
               style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
             </button>
-            {showStreamPicker && (
-              <>
-                {/* Zone invisible pleine page pour fermer le sélecteur au clic ailleurs */}
-                <div
-                  onClick={() => setShowStreamPicker(false)}
-                  style={{ position: "fixed", inset: 0, zIndex: 10 }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "calc(100% + 6px)",
-                    right: 0,
-                    zIndex: 11,
-                    background: "#1c1c1c",
-                    border: "1px solid #333",
-                    borderRadius: "10px",
-                    overflow: "hidden",
-                    minWidth: "120px",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      setShowStreamPicker(false);
-                      window.open(twitchLiveUrl, "_blank", "noopener,noreferrer");
+          ) : useRegionStreamFallback ? (
+            <div style={{ position: "relative" }}>
+              <button
+                onClick={() => setShowStreamPicker((v) => !v)}
+                className="flex items-center gap-1.5"
+                style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+              >
+                <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                LIVE
+              </button>
+              {showStreamPicker && (
+                <>
+                  {/* Zone invisible pleine page pour fermer le sélecteur au clic ailleurs */}
+                  <div
+                    onClick={() => setShowStreamPicker(false)}
+                    style={{ position: "fixed", inset: 0, zIndex: 10 }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 6px)",
+                      right: 0,
+                      zIndex: 11,
+                      background: "#1c1c1c",
+                      border: "1px solid #333",
+                      borderRadius: "10px",
+                      overflow: "hidden",
+                      minWidth: "120px",
+                      boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
                     }}
-                    className="w-full text-left"
-                    style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", borderBottom: "1px solid #2a2a2a" }}
                   >
-                    Twitch
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowStreamPicker(false);
-                      window.open(youtubeLiveUrl, "_blank", "noopener,noreferrer");
-                    }}
-                    className="w-full text-left"
-                    style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent" }}
-                  >
-                    YouTube
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+                    <button
+                      onClick={() => {
+                        setShowStreamPicker(false);
+                        window.open(twitchLiveUrl, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full text-left"
+                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", borderBottom: "1px solid #2a2a2a" }}
+                    >
+                      Twitch
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowStreamPicker(false);
+                        window.open(youtubeLiveUrl, "_blank", "noopener,noreferrer");
+                      }}
+                      className="w-full text-left"
+                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent" }}
+                    >
+                      YouTube
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <span className="flex items-center gap-1.5" style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+              LIVE
+            </span>
+          )
         ) : finished ? (
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
@@ -1261,14 +1443,18 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               </div>
 
               <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f" }}>
-                <button
-                  onClick={() => window.open(replayUrl, "_blank", "noopener,noreferrer")}
-                  className="flex items-center gap-1.5"
-                  style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
-                >
-                  <Play size={12} />
-                  {T.replay}
-                </button>
+                {effectiveReplayUrl ? (
+                  <button
+                    onClick={() => window.open(effectiveReplayUrl, "_blank", "noopener,noreferrer")}
+                    className="flex items-center gap-1.5"
+                    style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                  >
+                    <Play size={12} />
+                    {T.replay}
+                  </button>
+                ) : (
+                  <span />
+                )}
                 {pointsBreakdown && pointsBreakdown.total > 0 ? (
                   <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 700, textAlign: "right" }}>
                     Score : {pointsBreakdown.score} pts
@@ -1609,6 +1795,248 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   );
 }
 
+// Couleur d'accent unique pour les cartes CS2 : contrairement à Valorant, la
+// région n'est plus un attribut du MATCH (un match peut opposer deux
+// équipes de régions différentes), donc pas de couleur "par région" par
+// carte — juste une couleur CS2 fixe, cohérente sur tout l'onglet.
+const CS2_ACCENT = "#3B82F6";
+
+function regionAccentCS2(key) {
+  return (REGIONS_CS2.find((r) => r.key === key) || {}).accent || CS2_ACCENT;
+}
+
+// Petit classement régional "maison", construit à partir des résultats déjà
+// chargés (mêmes matchs terminés que l'onglet "Terminé") : pour chaque
+// équipe apparue dans la région choisie, compte victoires/défaites sur les
+// matchs disponibles. Volontairement simple (pas de pondération façon
+// computeMatchOdds) — c'est un aperçu de forme récente, pas un ranking
+// officiel façon VRS, qu'aucune API publique n'expose.
+function computeRegionalRankingCS2(results, regionKey) {
+  const table = new Map(); // nom d'équipe -> { wins, losses }
+  for (const m of results) {
+    if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
+    const entries = [
+      { name: m.team1Name, region: m.team1Region, won: m.score1 > m.score2 },
+      { name: m.team2Name, region: m.team2Region, won: m.score2 > m.score1 },
+    ];
+    for (const e of entries) {
+      if (!e.name || e.region !== regionKey) continue;
+      const cur = table.get(e.name) || { wins: 0, losses: 0 };
+      if (e.won) cur.wins++;
+      else cur.losses++;
+      table.set(e.name, cur);
+    }
+  }
+  return [...table.entries()]
+    .map(([name, rec]) => ({ name, ...rec, played: rec.wins + rec.losses }))
+    .sort((a, b) => b.wins - a.wins || b.played - a.played)
+    .slice(0, 8);
+}
+
+// Panneau explicatif + classement régional : "Régions → Ranking régional →
+// Invitations/Qualifiers → Stages communs → Playoffs → Champions". Repliable
+// pour ne pas alourdir la liste de matchs par défaut.
+function Cs2CircuitPanel({ T, results, selectedRegions }) {
+  const steps = [
+    { title: T.cs2CircuitRegions, desc: T.cs2CircuitRegionsDesc },
+    { title: T.cs2CircuitRanking, desc: T.cs2CircuitRankingDesc },
+    { title: T.cs2CircuitQualifiers, desc: T.cs2CircuitQualifiersDesc },
+    { title: T.cs2CircuitStages, desc: T.cs2CircuitStagesDesc },
+    { title: T.cs2CircuitPlayoffs, desc: T.cs2CircuitPlayoffsDesc },
+    { title: T.cs2CircuitChampions, desc: T.cs2CircuitChampionsDesc },
+  ];
+  const rankingRegion = selectedRegions.length === 1 ? selectedRegions[0] : REGIONS_CS2[0].key;
+  const ranking = React.useMemo(() => computeRegionalRankingCS2(results, rankingRegion), [results, rankingRegion]);
+
+  return (
+    <div className="mx-4 mb-4 rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #ddd" }}>
+      <div className="px-4 pt-4 pb-2">
+        <h3 className="font-black" style={{ color: "#111", fontSize: "15px" }}>{T.cs2CircuitTitle}</h3>
+        <p style={{ color: "#666", fontSize: "11.5px", marginTop: "3px", lineHeight: 1.4 }}>{T.cs2CircuitIntro}</p>
+      </div>
+      <div className="px-4 pb-4 flex flex-col gap-2.5">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-start gap-2.5">
+            <div
+              className="rounded-full flex items-center justify-center shrink-0 font-black"
+              style={{ width: "20px", height: "20px", background: CS2_ACCENT, color: "#fff", fontSize: "10px", marginTop: "1px" }}
+            >
+              {i + 1}
+            </div>
+            <div>
+              <div style={{ color: "#111", fontSize: "12px", fontWeight: 700 }}>{s.title}</div>
+              <div style={{ color: "#777", fontSize: "11px", lineHeight: 1.35 }}>{s.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="px-4 pb-4 pt-3" style={{ borderTop: "1px solid #eee" }}>
+        <div className="flex items-center justify-between mb-2">
+          <span style={{ color: "#111", fontSize: "12px", fontWeight: 800 }}>
+            {T.cs2RankingTitle} · {regionLabelCS2(rankingRegion, T)}
+          </span>
+        </div>
+        <p style={{ color: "#999", fontSize: "10px", marginBottom: "8px" }}>{T.cs2RankingSubtitle}</p>
+        {ranking.length === 0 ? (
+          <p style={{ color: "#999", fontSize: "11px" }}>{T.cs2RankingEmpty}</p>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            {ranking.map((r, i) => (
+              <div key={r.name} className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: "#f5f5f5" }}>
+                <span style={{ color: "#333", fontSize: "11.5px", fontWeight: 700 }}>
+                  {i + 1}. {r.name}
+                </span>
+                <span style={{ color: "#666", fontSize: "10.5px", fontWeight: 700 }}>{r.wins}V - {r.losses}D</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
+  const [showCircuit, setShowCircuit] = useState(false);
+  const allSelected = selectedRegions.length === REGIONS_CS2.length;
+  const showFinished = selectedStatuses[0] === "finished";
+
+  // Même logique de "grâce" que côté Valorant : un match "finished" côté
+  // PandaScore mais dont le score par map n'est pas encore résolu
+  // (retentative en cours côté backend, cf RETRY_DELAYS_MS dans
+  // cs2-history-store.js) reste affiché dans "à venir" plutôt que "Terminé",
+  // pour ne jamais montrer un faux 0-0.
+  const now = Date.now();
+  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
+  const stillWithinGrace = (m) => {
+    const dayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
+    return dayMs != null && now - dayMs < 48 * 60 * 60 * 1000;
+  };
+  const resultsReady = results.filter((m) => hasRealMapScore(m) || !stillWithinGrace(m));
+  const resultsPending = results.filter((m) => !hasRealMapScore(m) && stillWithinGrace(m));
+
+  function dedupeById(list) {
+    const seen = new Map();
+    for (const m of list) {
+      if (!seen.has(String(m.id))) seen.set(String(m.id), m);
+    }
+    return [...seen.values()];
+  }
+
+  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...live, ...upcoming]);
+
+  // Filtre par ÉQUIPE, pas par match : si toutes les régions sont
+  // sélectionnées (par défaut), on montre tout, y compris les stages
+  // communs / Majors où les deux équipes n'ont pas forcément de région
+  // connue. Si une sélection partielle est active, on ne garde que les
+  // matchs impliquant au moins une équipe de la/les région(s) choisie(s).
+  const combined = source
+    .filter((m) => allSelected || (m.team1Region && selectedRegions.includes(m.team1Region)) || (m.team2Region && selectedRegions.includes(m.team2Region)))
+    .sort((a, b) => {
+      const ka = (a.day || "") + (a.time || "");
+      const kb = (b.day || "") + (b.time || "");
+      return showFinished ? kb.localeCompare(ka) : ka.localeCompare(kb);
+    });
+
+  let lastDay = null;
+
+  return (
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + CS2_ACCENT + "22, transparent 70%)" }} />
+      <div className="relative px-4 pt-4 pb-2">
+        <h1 className="font-black" style={{ color: "#111", fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
+        <p style={{ color: "#666", fontSize: "12px" }}>{T.cs2Subtitle}</p>
+      </div>
+
+      <div className="px-4 pt-1">
+        <button
+          onClick={() => setShowCircuit((v) => !v)}
+          className="flex items-center gap-1.5"
+          style={{ color: CS2_ACCENT, fontSize: "11.5px", fontWeight: 800 }}
+        >
+          {showCircuit ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showCircuit ? T.cs2CircuitToggleHide : T.cs2CircuitToggleShow}
+        </button>
+      </div>
+
+      {showCircuit && <div className="pt-3"><Cs2CircuitPanel T={T} results={results} selectedRegions={selectedRegions} /></div>}
+
+      <div className="flex gap-2 px-4 pt-2">
+        {["upcoming", "finished"].map((s) => {
+          const active = selectedStatuses.includes(s);
+          return (
+            <button
+              key={s}
+              onClick={() => toggleStatus(s)}
+              className="rounded-full"
+              style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#111" : "#fff", color: active ? "#fff" : "#666", border: active ? "none" : "1px solid #ddd" }}
+            >
+              {s === "upcoming" ? T.statusUpcoming : T.calendarDone}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 relative">
+        <button
+          onClick={() => toggleRegion("ALL")}
+          className="shrink-0 rounded-full transition-all"
+          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#111" : "#fff", color: allSelected ? "#fff" : "#666", border: allSelected ? "none" : "1px solid #ddd" }}
+        >
+          {T.regionAll}
+        </button>
+        {REGIONS_CS2.map((r) => {
+          const active = selectedRegions.includes(r.key);
+          return (
+            <button
+              key={r.key}
+              onClick={() => toggleRegion(r.key)}
+              className="shrink-0 rounded-full transition-all"
+              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? r.accent : "#fff", color: active ? "#111" : "#666", border: active ? "none" : "1px solid #ddd" }}
+            >
+              {regionLabelCS2(r.key, T)}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="px-4 pb-6 relative">
+        {combined.map((m) => {
+          const showDay = m.day !== lastDay;
+          lastDay = m.day;
+          return (
+            <React.Fragment key={m.id}>
+              {showDay && (
+                <div className="pt-3 pb-2" style={{ color: "#888", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {dayLabel(m.day, lang, T)}
+                </div>
+              )}
+              <MatchCard
+                match={m}
+                accent={CS2_ACCENT}
+                pred={predictions[m.id]}
+                onSeriesChange={onSeriesChange}
+                onToggleExpand={toggleExpand}
+                onScoreChange={changeScore}
+                T={T}
+                lang={lang}
+                teamLogoCache={teamLogoCache}
+                streamUrl={m.streamUrl}
+                useRegionStreamFallback={false}
+              />
+            </React.Fragment>
+          );
+        })}
+        {combined.length === 0 && (
+          <p className="text-center pt-10" style={{ color: "#999", fontSize: "12px" }}>
+            {loading ? "…" : "—"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PlaceholderTab({ label, img, T }) {
   return (
     <div className="flex flex-col items-center justify-center px-8 text-center" style={{ minHeight: "560px" }}>
@@ -1866,6 +2294,12 @@ export default function ClutchApp() {
   const [activeTab, setActiveTab] = useState("home");
   const [selectedRegions, setSelectedRegions] = useState(["EMEA"]);
   const [preAllRegions, setPreAllRegions] = useState(["EMEA"]);
+  // Sélection région CS2 : état séparé de Valorant (valeurs différentes —
+  // EUROPE/AMERICAS/ASIA), mais même mécanique de toggle (cf toggleRegionCS2
+  // plus bas). Toutes sélectionnées par défaut : contrairement à VCT, les
+  // stages CS2 mélangent les régions, donc pas de raison de partir filtré.
+  const [selectedRegionsCS2, setSelectedRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
+  const [preAllRegionsCS2, setPreAllRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
   const [selectedStatuses, setSelectedStatuses] = useState(["upcoming"]);
   const [selectedCats, setSelectedCats] = useState(["VALORANT"]);
   const [preAllCats, setPreAllCats] = useState(["VALORANT"]);
@@ -1947,6 +2381,14 @@ export default function ClutchApp() {
   const [resultsMatches, setResultsMatches] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
 
+  // Même chose côté CS2, dans des états séparés : les deux jeux sont
+  // récupérés/rafraîchis indépendamment (cf effect dédié plus bas), jamais
+  // mélangés dans les mêmes tableaux.
+  const [cs2UpcomingMatches, setCs2UpcomingMatches] = useState([]);
+  const [cs2LiveMatches, setCs2LiveMatches] = useState([]);
+  const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
+  const [cs2DataLoading, setCs2DataLoading] = useState(true);
+
   const T = STR[currentLang] || STR.fr;
   const isLight = activeTab === "csgo" || activeTab === "rocketleague";
 
@@ -2011,6 +2453,55 @@ export default function ClutchApp() {
     };
   }, []);
 
+  // Même chose pour CS2, dans un effect séparé (pas de mélange des deux
+  // jeux). Différence avec Valorant : /api/cs2-results renvoie déjà
+  // l'historique accumulé fusionné côté backend (buildMergedResults dans
+  // cs2-routes.js), donc pas besoin d'un 2e appel séparé façon
+  // /api/match-history — `pa` fait déjà office de `finishedMatches`.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchJson(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    async function loadCS2() {
+      try {
+        const [up, li, pa] = await Promise.all([
+          fetchJson("/api/cs2-upcoming"),
+          fetchJson("/api/cs2-live"),
+          fetchJson("/api/cs2-results"),
+        ]);
+        if (cancelled) return;
+        const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
+        const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
+        const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
+        setCs2UpcomingMatches(attachComputedOdds(upT, paT, tierWeightCS2));
+        setCs2LiveMatches(attachComputedOdds(liT, paT, tierWeightCS2));
+        setCs2ResultsMatches(
+          paT.map((m) => {
+            const historyWithoutSelf = paT.filter((h) => String(h.id) !== String(m.id));
+            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf, tierWeightCS2);
+            return { ...m, odds1, odds2, cote1, cote2 };
+          })
+        );
+      } catch (e) {
+        // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
+      } finally {
+        if (!cancelled) setCs2DataLoading(false);
+      }
+    }
+
+    loadCS2();
+    const interval = setInterval(loadCS2, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
   const allTeams = React.useMemo(() => {
     const set = [];
     [...upcomingMatches, ...liveMatches, ...resultsMatches].forEach((m) => {
@@ -2035,6 +2526,16 @@ export default function ClutchApp() {
     return map;
   }, [upcomingMatches, liveMatches, resultsMatches]);
 
+  // Même cache logo, séparé pour CS2 (mêmes matchs que ceux passés à Cs2Tab).
+  const cs2TeamLogoCache = React.useMemo(() => {
+    const map = {};
+    for (const m of [...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches]) {
+      if (m.team1Logo && m.team1Name) map[normTeamName(m.team1Name)] = m.team1Logo;
+      if (m.team2Logo && m.team2Name) map[normTeamName(m.team2Name)] = m.team2Logo;
+    }
+    return map;
+  }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
+
   function toggleRegion(key) {
     const allKeys = REGIONS.map((r) => r.key);
     if (key === "ALL") {
@@ -2047,6 +2548,29 @@ export default function ClutchApp() {
       }
     } else {
       setSelectedRegions((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    }
+  }
+
+  // Même mécanique que toggleRegion, appliquée à REGIONS_CS2 (Europe/
+  // Americas/Asia) et à son propre état (selectedRegionsCS2).
+  function toggleRegionCS2(key) {
+    const allKeys = REGIONS_CS2.map((r) => r.key);
+    if (key === "ALL") {
+      const isAllSelected = selectedRegionsCS2.length === allKeys.length;
+      if (isAllSelected) {
+        setSelectedRegionsCS2(preAllRegionsCS2.length ? preAllRegionsCS2 : [allKeys[0]]);
+      } else {
+        setPreAllRegionsCS2(selectedRegionsCS2);
+        setSelectedRegionsCS2(allKeys);
+      }
+    } else {
+      setSelectedRegionsCS2((prev) => {
         if (prev.includes(key)) {
           if (prev.length === 1) return prev;
           return prev.filter((k) => k !== key);
@@ -2099,7 +2623,7 @@ export default function ClutchApp() {
           // ne commence, seul instant où ce champ est éditable) : les points
           // gagnés plus tard se basent toujours sur cette cote-là, jamais sur
           // une cote recalculée après-coup une fois le résultat connu.
-          const src = [...upcomingMatches, ...liveMatches].find((m) => String(m.id) === String(matchId));
+          const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
           const odds1 = src ? src.odds1 : cur.odds1;
           const odds2 = src ? src.odds2 : cur.odds2;
           return { ...prev, [matchId]: { ...next, games, expanded: true, odds1, odds2 } };
@@ -2109,15 +2633,15 @@ export default function ClutchApp() {
     });
   }
 
-  // Dès qu'un match pronostiqué apparaît "finished" côté résultats, on règle
-  // le pari une seule fois (settledMatchIds évite de recompter les points à
-  // chaque repoll de /api/valorant-results toutes les 60s).
-  useEffect(() => {
-    if (!resultsMatches.length) return;
+  // Calcul pur (aucun state touché ici) : parcourt une liste de résultats et
+  // renvoie les paris à régler (nouveaux ids + points à ajouter). Utilisé
+  // par les deux effects ci-dessous (Valorant et CS2), qui partagent le même
+  // portefeuille de points (settledMatchIds/userPoints) — un seul point
+  // total, tous jeux confondus.
+  function computeSettlement(resultsList, now) {
     let pointsToAdd = 0;
     const newlySettled = [];
-    const now = Date.now();
-    for (const m of resultsMatches) {
+    for (const m of resultsList) {
       if (m.status !== "finished" || m.score1 == null || m.score2 == null) continue;
       if (settledMatchIds.has(String(m.id))) continue;
       const pred = predictions[m.id];
@@ -2128,15 +2652,6 @@ export default function ClutchApp() {
       const gotTeamRight = predictedA === actualA;
       const hasGamePredictions = gotTeamRight && (pred.games || []).some((g) => g && g.a !== "" && g.b !== "");
       const mapScoresPending = !Array.isArray(m.map_scores);
-      // Si la bonne équipe a été pronostiquée ET qu'un score par map a été
-      // saisi, on attend que le vrai score par map (m.map_scores) soit connu
-      // avant de régler définitivement les points : sinon, un match réglé
-      // trop tôt (score par map encore en cours de retentative côté backend,
-      // cf. la retentative automatique sur vlr.gg) resterait bloqué sur le
-      // forfait "bonne équipe, mauvais score" (+20) même si le score exact
-      // aurait dû rapporter +30/map. On laisse une fenêtre de 48h après la
-      // date du match (le backend abandonne ses propres retentatives au bout
-      // d'environ 24h) avant de régler quand même avec ce qu'on a.
       if (hasGamePredictions && mapScoresPending) {
         const matchDayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
         const withinGracePeriod = matchDayMs && now - matchDayMs < 48 * 60 * 60 * 1000;
@@ -2146,22 +2661,42 @@ export default function ClutchApp() {
       newlySettled.push(String(m.id));
       pointsToAdd += calcMatchPoints(m, pred);
     }
-    if (newlySettled.length > 0) {
-      setSettledMatchIds((prev) => {
-        const next = new Set(prev);
-        newlySettled.forEach((id) => next.add(id));
-        localStorage.setItem("split_settled_matches", JSON.stringify([...next]));
+    return { newlySettled, pointsToAdd };
+  }
+
+  function applySettlement(newlySettled, pointsToAdd) {
+    if (newlySettled.length === 0) return;
+    setSettledMatchIds((prev) => {
+      const next = new Set(prev);
+      newlySettled.forEach((id) => next.add(id));
+      localStorage.setItem("split_settled_matches", JSON.stringify([...next]));
+      return next;
+    });
+    if (pointsToAdd > 0) {
+      setUserPoints((prev) => {
+        const next = prev + pointsToAdd;
+        localStorage.setItem("split_points_total", String(next));
         return next;
       });
-      if (pointsToAdd > 0) {
-        setUserPoints((prev) => {
-          const next = prev + pointsToAdd;
-          localStorage.setItem("split_points_total", String(next));
-          return next;
-        });
-      }
     }
+  }
+
+  // Dès qu'un match pronostiqué apparaît "finished" côté résultats, on règle
+  // le pari une seule fois (settledMatchIds évite de recompter les points à
+  // chaque repoll de /api/valorant-results toutes les 60s).
+  useEffect(() => {
+    if (!resultsMatches.length) return;
+    const { newlySettled, pointsToAdd } = computeSettlement(resultsMatches, Date.now());
+    applySettlement(newlySettled, pointsToAdd);
   }, [resultsMatches]);
+
+  // Même règlement, même portefeuille de points, pour les pronostics CS2
+  // (cf /api/cs2-results, repollé toutes les 60s comme côté Valorant).
+  useEffect(() => {
+    if (!cs2ResultsMatches.length) return;
+    const { newlySettled, pointsToAdd } = computeSettlement(cs2ResultsMatches, Date.now());
+    applySettlement(newlySettled, pointsToAdd);
+  }, [cs2ResultsMatches]);
 
   function toggleExpand(matchId) {
     setPredictions((prev) => ({
@@ -2213,7 +2748,25 @@ export default function ClutchApp() {
               loading={dataLoading}
             />
           )}
-          {activeTab === "csgo" && <PlaceholderTab label="CS:GO" img={NAV_CSGO_IMG} T={T} />}
+          {activeTab === "csgo" && (
+            <Cs2Tab
+              selectedRegions={selectedRegionsCS2}
+              toggleRegion={toggleRegionCS2}
+              selectedStatuses={selectedStatuses}
+              toggleStatus={toggleStatus}
+              predictions={predictions}
+              onSeriesChange={onSeriesChange}
+              toggleExpand={toggleExpand}
+              changeScore={changeScore}
+              T={T}
+              lang={currentLang}
+              upcoming={cs2UpcomingMatches}
+              live={cs2LiveMatches}
+              results={cs2ResultsMatches}
+              teamLogoCache={cs2TeamLogoCache}
+              loading={cs2DataLoading}
+            />
+          )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
           {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} userPoints={userPoints} />}
         </div>
