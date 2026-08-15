@@ -5,8 +5,10 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient de PandaScore lui-même (cs2-scores.js), pas
- *      d'un pont externe type vlr.gg.
+ *   1. Le score par map vient en priorité d'un suivi live via
+ *      hltv-match-api (cf hltv-scores.js), avec repli sur l'endpoint
+ *      PandaScore lui-même (cs2-scores.js, /csgo/games/{id}) si le suivi
+ *      live n'a rien capturé pour ce match.
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -32,6 +34,7 @@ import {
   saveMapScoresFailure,
   getMapScoresState,
 } from "./cs2-history-store.js";
+import { startHltvTracker, finalizeAndGet } from "./hltv-scores.js";
 
 const router = express.Router();
 
@@ -101,8 +104,8 @@ router.get("/api/cs2-upcoming", async (req, res) => {
 // Filet de sécurité simple : un match encore "running" depuis plus de 6h
 // (large marge pour un Bo5 CS2) est presque certainement bloqué côté statut
 // PandaScore -> on le masque plutôt que de le montrer "en direct" pour de
-// bon. Contrairement à Valorant, pas de double-vérification externe (pas de
-// pont façon vlr.gg pour CS2) : on reste simple et strictement défensif.
+// bon. Reconciliation "façon vlr.gg" volontairement pas reproduite ici (pas
+// nécessaire) : on reste simple et strictement défensif.
 const ABSOLUTE_HIDE_THRESHOLD_MS = 6 * 60 * 60 * 1000;
 
 router.get("/api/cs2-live", async (req, res) => {
@@ -118,6 +121,17 @@ router.get("/api/cs2-live", async (req, res) => {
   } catch (e) {
     console.error("cs2-live error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs CS2 en direct." });
+  }
+});
+
+// Démarre le sondage périodique hltv-match-api (no-op si HLTV_API_BASE
+// n'est pas configurée) : réutilise le même cache 60s ("cs2-live") que la
+// route ci-dessus, donc ne double jamais la charge sur PandaScore.
+startHltvTracker(async () => {
+  try {
+    return await cachedFetch("cs2-live", "/" + CS2_SLUG + "/matches/running?per_page=50");
+  } catch (e) {
+    return [];
   }
 });
 
@@ -178,11 +192,31 @@ async function enrichWithMapScores(data) {
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
     let mapScores = null;
-    try {
-      mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
-    } catch (e) {
-      console.log(`[cs2 map_scores] ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+
+    // 1) Priorité au suivi live hltv-match-api (capturé pendant que le
+    // match était en direct, cf hltv-scores.js) : gratuit, aucun plan
+    // PandaScore payant requis pour le score par map. `expectedTotalMaps` =
+    // nb de maps jouées d'après le score de série PandaScore (results),
+    // pour savoir si le suivi est complet.
+    const results = m.results || [];
+    const r1 = results.find((r) => r.team_id === t1.id);
+    const r2 = results.find((r) => r.team_id === t2.id);
+    const expectedTotalMaps = (r1 ? r1.score : 0) + (r2 ? r2.score : 0);
+    if (expectedTotalMaps > 0) {
+      mapScores = finalizeAndGet(m.id, expectedTotalMaps);
     }
+
+    // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si le
+    // suivi live n'a rien capturé (match manqué en tout début de sondage,
+    // service HLTV_API_BASE non configuré, etc.).
+    if (!mapScores) {
+      try {
+        mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
+      } catch (e) {
+        console.log(`[cs2 map_scores] ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
+    }
+
     m.map_scores = mapScores;
     if (mapScores) {
       saveMapScores(m.id, mapScores);
