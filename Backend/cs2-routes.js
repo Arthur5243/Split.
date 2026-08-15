@@ -169,6 +169,15 @@ function applyStoredMapScores(finished) {
   return stillUnknown;
 }
 
+// odds-api.io (plan gratuit, 100 req/h, jusqu'à 3 appels par match — cf
+// oddsapi-scores.js) ne supporte pas qu'on lui envoie tout un gros lot de
+// matchs d'affilée : au-delà d'une poignée, ses réponses passent en erreur
+// HTTP 429 (quota dépassé) pour TOUS les matchs suivants du lot, y compris
+// ceux qu'on aurait pu trouver. On plafonne donc ici le nombre de matchs
+// tentés par cycle ; les matchs laissés de côté retentent au prochain appel
+// de /api/cs2-results (cf RETRY_DELAYS_MS dans cs2-history-store.js).
+const MAX_ODDSAPI_LOOKUPS_PER_CYCLE = 8;
+
 async function enrichWithMapScores(data) {
   const finished = data
     .filter((m) => m.status === "finished")
@@ -177,6 +186,7 @@ async function enrichWithMapScores(data) {
   const toFetch = applyStoredMapScores(finished);
 
   await mapWithConcurrency(toFetch, 1, async (m) => {
+    const attemptIndex = toFetch.indexOf(m);
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
@@ -185,17 +195,21 @@ async function enrichWithMapScores(data) {
 
     // 1) Priorité à odds-api.io (cf oddsapi-scores.js) : source officielle,
     // pas de scraping/captcha, réutilise la même clé ODDS_API_KEY déjà en
-    // place pour les cotes Valorant historiques.
-    try {
-      mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
-    } catch (e) {
-      console.log(`[cs2 map_scores] odds-api.io ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+    // place pour les cotes Valorant historiques. Plafonné à
+    // MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf plus haut) :
+    // au-delà, on saute directement au repli PandaScore pour ce cycle-ci.
+    if (attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
+      try {
+        mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
+      } catch (e) {
+        console.log(`[cs2 map_scores] odds-api.io ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
     }
     // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
     // confirmé fonctionnel en prod) : trace chaque match traité ici.
     console.log(
       `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}) — ` +
-        `oddsapi=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
+        `oddsapi=${mapScores ? JSON.stringify(mapScores) : attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE ? "aucun (repli PandaScore)" : "pas tenté ce cycle (quota), repli PandaScore"}`
     );
 
     // 2) Repli : endpoint PandaScore lui-même (/csgo/games/{id}), si
