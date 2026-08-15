@@ -14,6 +14,19 @@
  * PandaScore via /events/search (par nom d'équipe), puis on récupère le
  * détail complet via /events/{id} pour lire ces scores.
  *
+ * IMPORTANT (corrigé après une 1ère version buguée) : `league` et `sport`
+ * sont des OBJETS `{name, slug}`, pas de simples chaînes — cf exemple
+ * officiel odds-api.io (`"league": {"name": "England - Premier League",
+ * "slug": "england-premier-league"}`). Une 1ère version comparait ces
+ * objets directement à du texte (→ "[object Object]"), ce qui faisait
+ * échouer le filtre CS2 sur 100% des events. `home`/`away` sont eux de
+ * simples chaînes de texte, d'après ce même exemple officiel.
+ *
+ * Tous les esports (CS2, Valorant, LoL, Dota2...) partagent le même
+ * `sport.slug === "esports"` chez odds-api.io (confirmé par leur propre
+ * blog : "Every esports event lives under the esports sport slug") — c'est
+ * le nom/slug de la LIGUE qui indique le jeu, pas un champ "sport" dédié.
+ *
  * Défensif comme le reste de l'app : clé absente, event introuvable, champ
  * scores absent -> on renvoie `null`, jamais un score inventé. L'appelant
  * (cs2-routes.js) retombe alors sur son repli PandaScore existant.
@@ -42,17 +55,29 @@ function similar(a, b) {
   return ca === cb || ca.includes(cb) || cb.includes(ca);
 }
 
-// Le champ qui identifie le jeu peut s'appeler league/title/game/category
-// selon les events (même incertitude défensive que isValorantEvent dans
-// odds.js) : on reste large sur les mots-clés CS2/CS:GO/Counter-Strike.
+// `sport`/`league` peuvent être un objet {name, slug} ou (selon l'endpoint)
+// une simple chaîne : on extrait le texte exploitable dans les deux cas.
+function fieldText(v) {
+  if (!v) return "";
+  if (typeof v === "string") return v;
+  return [v.name, v.slug].filter(Boolean).join(" ");
+}
+
+function isEsportsEvent(ev) {
+  return fieldText(ev.sport).toLowerCase().includes("esport");
+}
+
+// Mots-clés larges : les grosses marques de tournoi (BLAST, IEM, ESL...)
+// organisent aussi bien du CS2 que du Valorant, donc le nom de ligue seul
+// ne suffit pas toujours — mais c'est le seul signal exposé par l'API pour
+// distinguer les jeux au sein du sport unique "esports".
 function isCs2Event(ev) {
-  const haystack = [ev.league, ev.title, ev.game, ev.sport_title, ev.category]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  if (!isEsportsEvent(ev)) return false;
+  const haystack = [fieldText(ev.league), ev.title, ev.game].filter(Boolean).join(" ").toLowerCase();
   return (
     haystack.includes("cs2") ||
     haystack.includes("csgo") ||
+    haystack.includes("cs-go") ||
     haystack.includes("cs:go") ||
     haystack.includes("counter-strike") ||
     haystack.includes("counter strike")
@@ -108,7 +133,9 @@ async function getMapScoresFromOddsApi(team1Name, team2Name) {
   if (!found) {
     console.log(
       `[oddsapi] aucune correspondance CS2 pour ${team1Name} vs ${team2Name} parmi ${events.length} résultats : ` +
-        events.map((ev) => (ev.home || "?") + " vs " + (ev.away || "?") + " [" + (ev.league || ev.title || "?") + "]").join(" | ")
+        events
+          .map((ev) => (ev.home || "?") + " vs " + (ev.away || "?") + " [" + fieldText(ev.sport) + "/" + fieldText(ev.league) + "]")
+          .join(" | ")
     );
     return null;
   }
