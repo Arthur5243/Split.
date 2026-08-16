@@ -5,11 +5,11 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient en cascade de 3 sources, dans l'ordre :
- *      Liquipedia (cf liquipedia-scores.js — la plus complète, gratuite,
- *      sans scraping) → odds-api.io (cf oddsapi-scores.js — plus rapide
- *      mais couverture partielle, réutilise ODDS_API_KEY) → PandaScore
- *      lui-même (cs2-scores.js, /csgo/games/{id}) en dernier repli.
+ *   1. Le score par map vient UNIQUEMENT de Liquipedia (cf
+ *      liquipedia-scores.js) — odds-api.io et le repli PandaScore
+ *      (/csgo/games/{id}) ont été retirés du circuit. PandaScore ne sert
+ *      plus que pour le score de série (2-0, 2-1, etc.), déjà fourni
+ *      directement par son endpoint /matches sans appel supplémentaire.
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -24,7 +24,6 @@ import {
   mapWithConcurrency,
   sleep,
   classifyTeamRegion,
-  getMapScoresForMatch,
   CS2_SLUG,
   PANDASCORE_API_KEY,
 } from "./cs2-scores.js";
@@ -35,7 +34,6 @@ import {
   saveMapScoresFailure,
   getMapScoresState,
 } from "./cs2-history-store.js";
-import { getMapScoresFromOddsApi } from "./oddsapi-scores.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 
 const router = express.Router();
@@ -184,15 +182,6 @@ function applyStoredMapScores(finished) {
   return stillUnknown;
 }
 
-// odds-api.io (plan gratuit, 100 req/h, jusqu'à 3 appels par match — cf
-// oddsapi-scores.js) ne supporte pas qu'on lui envoie tout un gros lot de
-// matchs d'affilée : au-delà d'une poignée, ses réponses passent en erreur
-// HTTP 429 (quota dépassé) pour TOUS les matchs suivants du lot, y compris
-// ceux qu'on aurait pu trouver. On plafonne donc ici le nombre de matchs
-// tentés par cycle ; les matchs laissés de côté retentent au prochain appel
-// de /api/cs2-results (cf RETRY_DELAYS_MS dans cs2-history-store.js).
-const MAX_ODDSAPI_LOOKUPS_PER_CYCLE = 8;
-
 async function enrichWithMapScores(data) {
   const finished = data
     .filter((m) => m.status === "finished")
@@ -202,7 +191,7 @@ async function enrichWithMapScores(data) {
 
   await mapWithConcurrency(toFetch, 1, async (m) => {
     try {
-      await processOneMatch(m, toFetch, data);
+      await processOneMatch(m, data);
     } catch (e) {
       // Filet de sécurité : une erreur inattendue ici ne doit plus jamais
       // interrompre le traitement des matchs suivants du lot (c'est
@@ -214,8 +203,11 @@ async function enrichWithMapScores(data) {
   });
 }
 
-async function processOneMatch(m, toFetch, data) {
-    const attemptIndex = toFetch.indexOf(m);
+// Liquipedia est l'UNIQUE source du score par map (cf liquipedia-scores.js)
+// — odds-api.io et le repli PandaScore /csgo/games/{id} ont été retirés :
+// PandaScore ne sert plus que pour le score de série (2-0, 2-1, etc., déjà
+// fourni directement par son endpoint /matches, sans appel supplémentaire).
+async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
@@ -223,29 +215,10 @@ async function processOneMatch(m, toFetch, data) {
     const date = (m.begin_at || "").slice(0, 10);
     const tournamentName = m.league?.name || m.serie?.full_name || "";
 
-    // 1) Priorité à odds-api.io (cf oddsapi-scores.js) : rapide (quelques
-    // secondes), on le tente donc en premier pour ne pas ralentir tous les
-    // autres matchs derrière un éventuel essai Liquipedia infructueux.
-    // Plafonné à MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit).
-    if (attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
-      try {
-        mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
-      } catch (e) {
-        console.log(`[cs2 map_scores] odds-api.io ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
-    }
-
-    // 2) Repli : Liquipedia (cf liquipedia-scores.js) — source la plus
-    // complète (couvre aussi les petits matchs), gratuite, sans
-    // scraping/captcha, mais nettement plus lente (jusqu'à 30s par nouvelle
-    // page de tournoi jamais vue) : on ne la tente que si odds-api.io n'a
-    // rien trouvé, pour ne pas ralentir tout le lot à chaque fois.
-    if (!mapScores) {
-      try {
-        mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
-      } catch (e) {
-        console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
+    try {
+      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
+    } catch (e) {
+      console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
     // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
     // confirmé fonctionnel en prod) : trace chaque match traité ici, avec
@@ -257,17 +230,8 @@ async function processOneMatch(m, toFetch, data) {
     const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
-        `résultat=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
+        `résultat=${mapScores ? JSON.stringify(mapScores) : "aucun (Liquipedia n'a rien trouvé)"}`
     );
-
-    // 3) Dernier repli : endpoint PandaScore lui-même (/csgo/games/{id}).
-    if (!mapScores) {
-      try {
-        mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
-      } catch (e) {
-        console.log(`[cs2 map_scores] PandaScore ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
-    }
 
     m.map_scores = mapScores;
     if (mapScores) {
@@ -318,7 +282,7 @@ function buildMergedResults(liveData) {
 }
 
 // Rafraîchit et enrichit les résultats CS2 (fetch PandaScore + pose des
-// scores déjà connus + lance le sweep Liquipedia/odds-api.io/PandaScore en
+// scores déjà connus + lance le sweep Liquipedia en
 // tâche de fond si besoin). Extrait de la route pour pouvoir être appelé
 // aussi bien par une requête HTTP que par la tâche de fond périodique plus
 // bas — avant, tout le pipeline ne tournait que si quelqu'un avait l'app
