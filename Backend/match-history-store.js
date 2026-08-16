@@ -280,6 +280,23 @@ function getTeamHistory(teamCode, limit = 50) {
   return rows.map((r) => JSON.parse(r.raw_json));
 }
 
+// Remet à zéro (attempts=0, nextRetryAt=NULL, map_scores=NULL) tous les
+// matchs marqués "abandon définitif" (map_scores stocké comme la chaîne
+// "null", épuisé sur l'ANCIEN calendrier de retry, plus court) — sert après
+// avoir élargi RETRY_DELAYS_MS : sans ça, ces matchs restent bloqués pour
+// toujours, puisqu'un `map_scores` non-NULL en base (même "null") signifie
+// "already resolved, ne jamais retenter" pour applyStoredMapScores/
+// getMapScoresState, quelle que soit la longueur de RETRY_DELAYS_MS
+// désormais. Renvoie le nombre de matchs réinitialisés.
+const resetAbandonedStmt = db.prepare(
+  `UPDATE matches SET map_scores = NULL, map_scores_attempts = 0, map_scores_next_retry_at = NULL
+   WHERE map_scores = 'null'`
+);
+function resetAbandonedMapScores() {
+  const result = resetAbandonedStmt.run();
+  return result.changes;
+}
+
 export {
   storeFinishedMatches,
   getFullHistory,
@@ -289,4 +306,5 @@ export {
   saveMapScores,
   saveMapScoresFailure,
   getMapScoresState,
+  resetAbandonedMapScores,
 };
