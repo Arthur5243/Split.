@@ -201,6 +201,20 @@ async function enrichWithMapScores(data) {
   const toFetch = applyStoredMapScores(finished);
 
   await mapWithConcurrency(toFetch, 1, async (m) => {
+    try {
+      await processOneMatch(m, toFetch, data);
+    } catch (e) {
+      // Filet de sécurité : une erreur inattendue ici ne doit plus jamais
+      // interrompre le traitement des matchs suivants du lot (c'est
+      // exactement ce qui s'est produit avec le bug "results is not
+      // defined" — silencieux, il a fait planter tout le reste du cycle
+      // sans qu'on le sache).
+      console.error(`[cs2-map-diag] erreur inattendue sur le match ${m.id}:`, e.message);
+    }
+  });
+}
+
+async function processOneMatch(m, toFetch, data) {
     const attemptIndex = toFetch.indexOf(m);
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
@@ -237,8 +251,9 @@ async function enrichWithMapScores(data) {
     // confirmé fonctionnel en prod) : trace chaque match traité ici, avec
     // le score de série (X-Y, ex: 2-1) pour pouvoir lister les matchs sans
     // score par map à implémenter à la main en attendant.
-    const seriesR1 = results.find((r) => r.team_id === t1.id);
-    const seriesR2 = results.find((r) => r.team_id === t2.id);
+    const seriesResults = m.results || [];
+    const seriesR1 = seriesResults.find((r) => r.team_id === t1.id);
+    const seriesR2 = seriesResults.find((r) => r.team_id === t2.id);
     const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
@@ -262,7 +277,6 @@ async function enrichWithMapScores(data) {
       saveMapScoresFailure(m.id);
     }
     await sleep(600); // pause entre chaque match traité, par courtoisie envers HLTV/PandaScore
-  });
 }
 
 function toLiveHistoryShape(row) {
