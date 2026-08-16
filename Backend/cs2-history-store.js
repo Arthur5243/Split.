@@ -168,10 +168,25 @@ function getFullHistoryFlat(limit = 5000) {
   }));
 }
 
+// Remet à zéro (attempts=0, nextRetryAt=NULL, map_scores=NULL) tous les
+// matchs marqués "abandon définitif" — même principe que côté Valorant (cf
+// match-history-store.js) : sert après avoir élargi/changé RETRY_DELAYS_MS
+// ou la source de scores (Liquipedia seul désormais), sinon ces matchs
+// restent bloqués pour toujours. Renvoie le nombre de matchs réinitialisés.
+const resetAbandonedStmt = db.prepare(
+  `UPDATE matches SET map_scores = NULL, map_scores_attempts = 0, map_scores_next_retry_at = NULL
+   WHERE map_scores = 'null'`
+);
+function resetAbandonedMapScores() {
+  const result = resetAbandonedStmt.run();
+  return result.changes;
+}
+
 export {
   storeFinishedMatches,
   getFullHistoryFlat,
   saveMapScores,
   saveMapScoresFailure,
   getMapScoresState,
+  resetAbandonedMapScores,
 };
