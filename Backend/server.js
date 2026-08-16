@@ -15,6 +15,7 @@ import {
   saveMapScores,
   saveMapScoresFailure,
   getMapScoresState,
+  resetAbandonedMapScores,
 } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1151,4 +1152,17 @@ app.get("/api/map-scores", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
+  // Ponctuel : remet à zéro les matchs marqués "abandon définitif" sous
+  // l'ANCIEN calendrier de retry (plus court) — sans ça, l'élargissement de
+  // RETRY_DELAYS_MS ne les débloque jamais tout seul, puisqu'un
+  // `map_scores` non-NULL en base (même "null") = "déjà résolu, ne jamais
+  // retenter" pour le code qui décide quoi (re)tenter.
+  try {
+    const resetCount = resetAbandonedMapScores();
+    if (resetCount > 0) {
+      console.log(`[startup] ${resetCount} match(s) Valorant marqué(s) "abandon définitif" remis en jeu pour le nouveau calendrier de retry.`);
+    }
+  } catch (e) {
+    console.error("[startup] échec de la réinitialisation des matchs abandonnés:", e.message);
+  }
 });
