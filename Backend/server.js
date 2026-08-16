@@ -393,7 +393,7 @@ async function enrichWithMapScores(data) {
   // redemander la même requête en boucle.
   const toFetch = applyStoredMapScores(finished);
 
-  await mapWithConcurrency(toFetch, 1, async (m) => {
+  await mapWithConcurrency(toFetch, 3, async (m) => {
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
