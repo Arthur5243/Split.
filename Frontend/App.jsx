@@ -591,6 +591,25 @@ function teamCode(opp) {
   return TEAM_CODE_OVERRIDES[raw] || raw;
 }
 
+// Garde-fou anti-données incohérentes (Valorant + CS2) : si le score de
+// série dit 2-0, aucune map ne doit donner l'équipe perdante gagnante — ça
+// n'a aucun sens et trahit presque toujours une mauvaise correspondance
+// automatique (Liquipedia/odds-api.io qui a trouvé le score d'un AUTRE
+// match). On compte les maps gagnées par chaque équipe dans map_scores et on
+// vérifie que ça correspond exactement au score de série connu ; si ce n'est
+// pas le cas, on préfère n'afficher AUCUN score par map plutôt qu'un faux.
+function isMapScoresConsistent(mapScores, score1, score2) {
+  if (!Array.isArray(mapScores) || mapScores.length === 0) return true;
+  if (score1 == null || score2 == null) return true; // pas de score de série à comparer
+  let wins1 = 0;
+  let wins2 = 0;
+  for (const mp of mapScores) {
+    if (mp.score1 > mp.score2) wins1++;
+    else if (mp.score2 > mp.score1) wins2++;
+  }
+  return wins1 === score1 && wins2 === score2;
+}
+
 function transformMatch(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -630,7 +649,9 @@ function transformMatch(m) {
     // Score détaillé par map (13-9 etc.), récupéré via vlr.gg côté backend
     // (/api/valorant-results). Sans cette ligne, la donnée existe dans la
     // réponse brute du backend mais se perd ici avant d'arriver à MatchCard.
-    map_scores: m.map_scores || null,
+    // Passée au garde-fou de cohérence (cf isMapScoresConsistent) avant
+    // d'être acceptée.
+    map_scores: isMapScoresConsistent(m.map_scores, score1, score2) ? m.map_scores || null : null,
   };
 }
 
@@ -724,7 +745,13 @@ function transformMatchCS2(m) {
     // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
     // sans pont externe : PandaScore fournit lui-même le round_score par map
     // pour CS2, contrairement à Valorant.
-    map_scores: findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || m.map_scores || null,
+    // Score par map : manuel (id) > manuel (équipes) > automatique. Passé
+    // au garde-fou de cohérence (cf isMapScoresConsistent) avant d'être
+    // accepté, quelle que soit la source.
+    map_scores: (() => {
+      const resolved = findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || m.map_scores || null;
+      return isMapScoresConsistent(resolved, score1, score2) ? resolved : null;
+    })(),
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
     // d'équivalent pour CS2 (pas de diffuseur officiel par région).
