@@ -289,9 +289,14 @@ function buildMergedResults(liveData) {
 // ouverte et appelait /api/cs2-results ; si personne n'était connecté, rien
 // ne se mettait jamais à jour, même pour des matchs terminés depuis
 // longtemps.
-async function refreshCS2Results() {
+//
+// `force` : ignore la fraîcheur du cache (tout en respectant
+// enrichInProgress). BUG CORRIGÉ : sans ce paramètre, la tâche de fond
+// (toutes les 5 min) tombait TOUJOURS sur "cache encore frais" (TTL de
+// 10 min) et ne faisait donc jamais de vrai travail après le 1er passage.
+async function refreshCS2Results(force = false) {
   const now = Date.now();
-  if (enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS) {
+  if (!force && enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS) {
     return enrichedResultsCache.data;
   }
 
@@ -336,12 +341,12 @@ router.get("/api/cs2-results", async (req, res) => {
 // Tâche de fond : rejoue le même rafraîchissement toutes les
 // BACKGROUND_REFRESH_INTERVAL_MS, indépendamment de toute requête HTTP —
 // c'est ça qui garantit que les scores CS2 se posent même si personne n'a
-// l'app ouverte. `refreshCS2Results` gère déjà son propre cache/anti-doublon
-// (enrichedResultsCache / enrichInProgress), donc un appel "pour rien" ici
-// est gratuit (pas de nouvel appel réseau si le cache est encore frais).
+// l'app ouverte. `force=true` : garantit un vrai travail à chaque passage
+// (cf commentaire sur refreshCS2Results) ; `enrichInProgress` protège quand
+// même contre le chevauchement.
 const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 setInterval(() => {
-  refreshCS2Results().catch((e) => console.error("[cs2 background refresh]", e.message));
+  refreshCS2Results(true).catch((e) => console.error("[cs2 background refresh]", e.message));
 }, CS2_BACKGROUND_REFRESH_INTERVAL_MS);
 
 export default router;
