@@ -352,6 +352,7 @@ function applyStoredMapScores(finished) {
     const date = (m.begin_at || "").slice(0, 10);
     const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
     if (manual) {
+      console.log(`[map_scores] ${t1} vs ${t2} (${date}) → trouvé en saisie manuelle (manual-map-scores.json)`);
       m.map_scores = manual;
       saveMapScores(m.id, manual); // persiste aussi en base, pour cohérence avec getFullHistory
       continue;
