@@ -80,12 +80,16 @@ function attachTeamRegions(m) {
 // (S > A > B > C > D > Unranked, cf leur doc officielle). CONFIRMÉ par
 // diagnostic en prod : le champ direct `m.tier` n'existe pas (toujours
 // undefined) — le vrai champ est `m.tournament.tier` ("s"/"a"/"b"/"c"/"d").
-// On ne garde que S et A ; à élargir facilement si trop restrictif
-// (ajouter "b" au tableau).
+// On garde S/A/B, PLUS tout match d'un stage Kickoff ou Playoffs quel que
+// soit son tier (ce sont les moments clés d'un tournoi, même quand le
+// tournoi global n'est pas noté S/A/B) — le nom du stage vient de
+// `m.tournament.name` côté PandaScore (ex: "Playoffs", "Kickoff").
 const NOTABLE_TIERS = ["s", "a", "b"];
+const KEY_STAGE_PATTERN = /kickoff|playoffs?/i;
 function isNotableTier(m) {
   const tier = (m.tournament?.tier || "").toLowerCase();
-  return NOTABLE_TIERS.includes(tier);
+  if (NOTABLE_TIERS.includes(tier)) return true;
+  return KEY_STAGE_PATTERN.test(m.tournament?.name || "");
 }
 
 router.get("/api/cs2-upcoming", async (req, res) => {
