@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
   Trophy,
@@ -637,8 +638,40 @@ function transformMatch(m) {
 // Différence clé avec Valorant : pas de `region` unique par MATCH (les
 // stages CS2 mélangent les régions), mais une région par ÉQUIPE
 // (team1Region/team2Region), déjà calculée côté backend (cf cs2-routes.js
-// `attachTeamRegions`, à partir du pays de chaque équipe) et renvoyée sur
-// les champs team1_region/team2_region du match brut PandaScore.
+// Résultats CS2 saisis à la main : lus depuis cs2-manual-results.json (un
+// simple fichier de données à côté de ce fichier, pas du code) — sert de
+// repli en attendant que Liquipedia/odds-api.io/PandaScore trouvent le
+// score par map tout seuls pour ces matchs précis. Purement côté front,
+// aucun fichier backend touché. Pour ajouter un résultat : éditer
+// directement cs2-manual-results.json, pas besoin de toucher à App.jsx.
+function normTeamNameCS2(s) {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+function findManualMapScoresCS2ByTeams(t1Name, t2Name) {
+  const n1 = normTeamNameCS2(t1Name);
+  const n2 = normTeamNameCS2(t2Name);
+  if (!n1 || !n2) return null;
+  const byTeams = cs2ManualResults.byTeams || [];
+  for (const entry of byTeams) {
+    const [a, b] = entry.teams.map(normTeamNameCS2);
+    if ((n1.includes(a) || a.includes(n1)) && (n2.includes(b) || b.includes(n2))) {
+      return entry.maps;
+    }
+    if ((n1.includes(b) || b.includes(n1)) && (n2.includes(a) || a.includes(n2))) {
+      return entry.maps.map((mp) => ({ map: mp.map, score1: mp.score2, score2: mp.score1 }));
+    }
+  }
+  return null;
+}
+function findManualMapScoresCS2ById(matchId) {
+  const entry = (cs2ManualResults.byId || {})[matchId];
+  return entry ? entry.maps : null;
+}
+
 function transformMatchCS2(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -672,7 +705,7 @@ function transformMatchCS2(m) {
     // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
     // sans pont externe : PandaScore fournit lui-même le round_score par map
     // pour CS2, contrairement à Valorant.
-    map_scores: m.map_scores || null,
+    map_scores: m.map_scores || findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || null,
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
     // d'équivalent pour CS2 (pas de diffuseur officiel par région).
