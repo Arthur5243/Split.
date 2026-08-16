@@ -79,7 +79,7 @@ async function liquipediaFetch(params, { isParse = false } = {}) {
 // "2026"). L'appelant essaie chaque candidat jusqu'à en trouver un qui
 // contient réellement des {{Match}} exploitables.
 async function searchTournamentPages(query) {
-  const json = await liquipediaFetch({ action: "query", list: "search", srsearch: query, srlimit: "5" });
+  const json = await liquipediaFetch({ action: "query", list: "search", srsearch: query, srlimit: "3" });
   const results = json?.query?.search || [];
   return results.map((r) => r.title);
 }
