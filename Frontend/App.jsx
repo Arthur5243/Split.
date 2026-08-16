@@ -491,10 +491,7 @@ function addDaysISO(iso, n) {
 
 function dayLabel(dateStr, lang, T) {
   const today = getTodayISO();
-  if (dateStr === today) {
-    const now = new Date();
-    return `${T.today} · ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-  }
+  if (dateStr === today) return T.today;
   if (dateStr === addDaysISO(today, 1)) return T.tomorrow;
   const locale = LOCALE_MAP[lang] || "fr-FR";
   const d = new Date(dateStr + "T00:00:00");
@@ -1321,7 +1318,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
           </span>
-          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>{match.day ? dayLabel(match.day, lang, T) : ""}</div>
+          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
+            {match.day ? dayLabel(match.day, lang, T) : ""}
+            {match.time ? " · " + match.time : ""}
+          </div>
         </div>
         {running ? (
           streamUrl ? (
