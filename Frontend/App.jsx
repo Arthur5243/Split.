@@ -1956,7 +1956,22 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
     .sort((a, b) => {
       const ka = (a.day || "") + (a.time || "");
       const kb = (b.day || "") + (b.time || "");
-      return showFinished ? kb.localeCompare(ka) : ka.localeCompare(kb);
+      if (showFinished) return kb.localeCompare(ka);
+      // Onglet "à venir" : priorité par catégorie d'abord (terminés sans
+      // score par map tout en haut, puis live, puis à venir en dessous),
+      // le tri par date ne s'applique qu'À L'INTÉRIEUR de chaque catégorie
+      // — sinon la date toute seule mélangeait tout et cassait l'ordre.
+      function categoryRank(m) {
+        if (m.status === "finished") return 0; // terminé, en attente de son score par map
+        if (m.status === "running") return 1; // live
+        return 2; // à venir
+      }
+      const ra = categoryRank(a);
+      const rb = categoryRank(b);
+      if (ra !== rb) return ra - rb;
+      // Terminés récemment en attente : le plus récent d'abord. Live/à
+      // venir : le plus proche d'abord.
+      return ra === 0 ? kb.localeCompare(ka) : ka.localeCompare(kb);
     });
 
   let lastDay = null;
