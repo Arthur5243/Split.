@@ -491,7 +491,10 @@ function addDaysISO(iso, n) {
 
 function dayLabel(dateStr, lang, T) {
   const today = getTodayISO();
-  if (dateStr === today) return T.today;
+  if (dateStr === today) {
+    const now = new Date();
+    return `${T.today} · ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  }
   if (dateStr === addDaysISO(today, 1)) return T.tomorrow;
   const locale = LOCALE_MAP[lang] || "fr-FR";
   const d = new Date(dateStr + "T00:00:00");
@@ -672,6 +675,19 @@ function findManualMapScoresCS2ById(matchId) {
   return entry ? entry.maps : null;
 }
 
+// Abréviations de ligues CS2, appliquées uniquement à l'affichage (Valorant
+// non concerné) : les noms complets renvoyés par PandaScore sont parfois
+// longs, on les raccourcit ici pour l'affichage sur les cartes de match.
+const CS2_LEAGUE_ABBREV = {
+  "european pro league": "EPL",
+  "cct south america": "CSA",
+  "esl challenger league": "ECL",
+};
+function abbreviateCS2League(name) {
+  if (!name) return name;
+  return CS2_LEAGUE_ABBREV[name.toLowerCase().trim()] || name;
+}
+
 function transformMatchCS2(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -682,12 +698,18 @@ function transformMatchCS2(m) {
   const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
   const score2 = t2 ? (results.find((r) => r.team_id === t2.id) || {}).score : undefined;
 
+  const rawLeague = (m.league && m.league.name) || "CS2";
+  const rawPhase = (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "";
+  // Cas précis demandé : "European Pro League" + "Season 6" (sans année)
+  // -> on ajoute "2026" pour que ce soit clair (l'API ne le précise pas).
+  const phase = rawLeague.toLowerCase().trim() === "european pro league" && /^season\s*\d+$/i.test(rawPhase.trim()) ? rawPhase + " 2026" : rawPhase;
+
   return {
     id: "cs2-" + m.id,
     day: d ? isoDate(d) : null,
     time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
-    league: (m.league && m.league.name) || "CS2",
-    phase: (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "",
+    league: abbreviateCS2League(rawLeague),
+    phase: phase,
     tournamentName: (m.tournament && m.tournament.name) || "",
     team1: teamCode(t1),
     team2: teamCode(t2),
