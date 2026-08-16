@@ -1,0 +1,50 @@
+{
+  "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Sert de repli quand Liquipedia/odds-api.io/PandaScore n'ont pas (encore) trouvé le score par map d'un match tout seuls — jamais touché par le code des APIs. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
+
+  "byId": {
+    "1624085": {
+      "_comment": "BIG vs Spirit — Esports World Cup 2026, 15 août 2026",
+      "maps": [
+        { "map": "Cache", "score1": 13, "score2": 9 },
+        { "map": "Dust2", "score1": 10, "score2": 13 },
+        { "map": "Mirage", "score1": 7, "score2": 13 }
+      ]
+    },
+    "1624324": {
+      "_comment": "FURIA vs 9z — Esports World Cup 2026, 15 août 2026",
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 6 },
+        { "map": "Mirage", "score1": 13, "score2": 16 },
+        { "map": "Nuke", "score1": 13, "score2": 6 }
+      ]
+    },
+    "1624086": {
+      "_comment": "JiJieHao vs Aurora Gaming — Esports World Cup 2026, 15 août 2026",
+      "maps": [
+        { "map": "Mirage", "score1": 6, "score2": 13 },
+        { "map": "Anubis", "score1": 4, "score2": 13 }
+      ]
+    }
+  },
+
+  "byTeams": [
+    {
+      "_comment": "METANOIA WOLVES vs MEIA NOITE — 15 août 2026",
+      "teams": ["metanoia wolves", "meia noite"],
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 7 },
+        { "map": "Mirage", "score1": 20, "score2": 22 },
+        { "map": "Ancient", "score1": 16, "score2": 12 }
+      ]
+    },
+    {
+      "_comment": "BESTIA vs ALKA — 15 août 2026",
+      "teams": ["bestia", "alka"],
+      "maps": [
+        { "map": "Cache", "score1": 8, "score2": 13 },
+        { "map": "Dust2", "score1": 13, "score2": 8 },
+        { "map": "Ancient", "score1": 19, "score2": 15 }
+      ]
+    }
+  ]
+}
