@@ -1,5 +1,5 @@
 {
-  "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Ces résultats sont désormais PRIORITAIRES sur ceux trouvés automatiquement (Liquipedia/odds-api.io/PandaScore) — ils sont vérifiés à la main contre des sources précises, donc plus fiables qu'une correspondance automatique qui peut se tromper de match. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
+  "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Ces résultats sont TOUJOURS prioritaires sur ceux trouvés automatiquement (Liquipedia/odds-api.io/PandaScore) — vérifiés à la main contre des sources précises, donc plus fiables qu'une correspondance automatique qui peut se tromper de match. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
 
   "byId": {
     "1624085": {
@@ -47,6 +47,28 @@
         { "map": "Dust2", "score1": 13, "score2": 6 },
         { "map": "Ancient", "score1": 13, "score2": 7 }
       ]
+    },
+    "1636202": {
+      "_comment": "Imperial vs BESTIA — 15 août 2026, tournoi BetBoom Storm — détail vérifié",
+      "maps": [
+        { "map": "Nuke", "score1": 13, "score2": 10 },
+        { "map": "Inferno", "score1": 9, "score2": 13 },
+        { "map": "Mirage", "score1": 13, "score2": 4 }
+      ]
+    },
+    "1632582": {
+      "_comment": "paiN Gaming Academy vs ALKA — 15 août 2026, CCT South America — détail vérifié : CORRIGE un résultat automatique erroné trouvé plus tôt (mauvaises maps)",
+      "maps": [
+        { "map": "Cache", "score1": 7, "score2": 13 },
+        { "map": "Dust2", "score1": 8, "score2": 13 }
+      ]
+    },
+    "1632586": {
+      "_comment": "QUINTESSÊNCIA vs Metanoia Wolves — 15 août 2026, CCT South America — détail vérifié",
+      "maps": [
+        { "map": "Mirage", "score1": 13, "score2": 11 },
+        { "map": "Dust2", "score1": 13, "score2": 11 }
+      ]
     }
   },
 
@@ -92,6 +114,65 @@
         { "map": "Inferno", "score1": 6, "score2": 13 },
         { "map": "Ancient", "score1": 13, "score2": 11 },
         { "map": "Nuke", "score1": 7, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "ex-Sashi Academy vs SAW Youngsters — 15 août 2026 — détail vérifié",
+      "teams": ["ex-sashi", "saw"],
+      "maps": [
+        { "map": "Inferno", "score1": 14, "score2": 16 },
+        { "map": "Mirage", "score1": 6, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "Keyd Stars vs Galorys — 15 août 2026 — détail vérifié",
+      "teams": ["keyd", "galorys"],
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 7 },
+        { "map": "Ancient", "score1": 11, "score2": 13 },
+        { "map": "Anubis", "score1": 13, "score2": 7 }
+      ]
+    },
+    {
+      "_comment": "BASEMENT BOYS vs BakS eSports — 15 août 2026 — détail vérifié : série réelle 1-2 (corrige une note précédente erronée de 2-1)",
+      "teams": ["basement boys", "baks"],
+      "maps": [
+        { "map": "Cache", "score1": 5, "score2": 13 },
+        { "map": "Nuke", "score1": 13, "score2": 4 },
+        { "map": "Dust2", "score1": 4, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "Lavked vs OG Gaming — 15 août 2026 — détail vérifié",
+      "teams": ["lavked", "og gaming"],
+      "maps": [
+        { "map": "Ancient", "score1": 13, "score2": 11 },
+        { "map": "Dust2", "score1": 13, "score2": 9 }
+      ]
+    },
+    {
+      "_comment": "Esport Academy Copenhagen vs ex-MANA — 15 août 2026 — détail vérifié",
+      "teams": ["esport academy copenhagen", "ex-mana"],
+      "maps": [
+        { "map": "Mirage", "score1": 13, "score2": 9 },
+        { "map": "Anubis", "score1": 8, "score2": 13 },
+        { "map": "Ancient", "score1": 13, "score2": 10 }
+      ]
+    },
+    {
+      "_comment": "INOX Division vs Misa Esports — 15 août 2026 — détail vérifié",
+      "teams": ["inox", "misa"],
+      "maps": [
+        { "map": "Anubis", "score1": 13, "score2": 7 },
+        { "map": "Inferno", "score1": 13, "score2": 8 }
+      ]
+    },
+    {
+      "_comment": "ZOTIX vs Insiders Esport — 15 août 2026 — série confirmée, détail retrouvé via Liquipedia",
+      "teams": ["zotix", "insiders esport"],
+      "maps": [
+        { "map": "Ancient", "score1": 9, "score2": 13 },
+        { "map": "Dust2", "score1": 9, "score2": 13 }
       ]
     }
   ]
