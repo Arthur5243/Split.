@@ -33,10 +33,25 @@ import {
   saveMapScores,
   saveMapScoresFailure,
   getMapScoresState,
+  resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 
 const router = express.Router();
+
+// Ponctuel, au démarrage : remet en jeu les matchs marqués "abandon
+// définitif" avant la simplification de la source (Liquipedia seul
+// désormais) — sinon un `map_scores` non-NULL en base (même "null") reste
+// "déjà résolu, ne jamais retenter" pour toujours, peu importe le
+// changement de code fait depuis.
+try {
+  const resetCount = resetAbandonedMapScores();
+  if (resetCount > 0) {
+    console.log(`[startup] ${resetCount} match(s) CS2 marqué(s) "abandon définitif" remis en jeu pour Liquipedia.`);
+  }
+} catch (e) {
+  console.error("[startup] échec de la réinitialisation CS2 des matchs abandonnés:", e.message);
+}
 
 if (!PANDASCORE_API_KEY) {
   console.warn(
