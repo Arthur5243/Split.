@@ -500,72 +500,93 @@ function buildMergedResults(liveData) {
   return filtered.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
 }
 
+// Rafraîchit et enrichit les résultats Valorant (fetch PandaScore + pose des
+// scores déjà connus + lance le sweep vlr.gg en tâche de fond si besoin).
+// Extrait de la route pour pouvoir être appelé aussi bien par une requête
+// HTTP que par la tâche de fond périodique plus bas (cf
+// startValorantBackgroundRefresh) — avant, tout le pipeline ne tournait que
+// si quelqu'un avait l'app ouverte et appelait /api/valorant-results ; si
+// personne n'était connecté, rien ne se mettait jamais à jour, même pour des
+// matchs terminés depuis longtemps.
+//
+// `force` : ignore la fraîcheur du cache (mais respecte toujours
+// enrichInProgress, pour ne jamais chevaucher deux sweeps). Utilisé par la
+// tâche de fond périodique — BUG CORRIGÉ : sans ce paramètre, la tâche de
+// fond (toutes les 5 min) tombait TOUJOURS sur "cache encore frais" (TTL de
+// 10 min, mis à jour par son propre appel précédent) et ne faisait donc
+// jamais de vrai travail après le tout premier passage.
+async function refreshValorantResults(force = false) {
+  const now = Date.now();
+  const cacheIsFresh = !force && enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS;
+
+  // Si un enrichissement est déjà en cours sur les données actuelles, on
+  // sert ce cache tel quel plutôt que de relancer un fetch + un nouveau
+  // sweep : sinon le sweep en cours devient orphelin (il continue de muter
+  // un tableau `data` qui n'est plus celui référencé par le cache) et ses
+  // résultats sont perdus -> plus aucun map_scores ne se pose jamais sur ce
+  // qui est réellement servi.
+  if (cacheIsFresh || (enrichedResultsCache && enrichInProgress)) {
+    return enrichedResultsCache.data;
+  }
+
+  const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
+
+  const rows = data.map(toHistoryRow).filter(Boolean);
+  storeFinishedMatches(rows);
+
+  // Pose tout de suite les scores déjà connus en base (aucun appel réseau,
+  // donc ça ne retarde pas la réponse) — jamais besoin d'attendre un sweep
+  // pour un match déjà résolu, même juste après un redeploy.
+  const finished = data.filter((m) => m.status === "finished");
+  for (const m of finished) {
+    const t1 = m.opponents?.[0]?.opponent?.name;
+    const t2 = m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || "").slice(0, 10);
+    const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
+    if (manual) {
+      m.map_scores = manual;
+      continue;
+    }
+    const stored = getStoredMapScores(m.id);
+    if (stored !== undefined) m.map_scores = stored;
+  }
+
+  // On répond IMMÉDIATEMENT (jamais "pas de matchs"), et on va chercher sur
+  // vlr.gg uniquement les scores encore inconnus, en arrière-plan. Avant :
+  // on attendait (await) enrichWithMapScores sur TOUS les matchs terminés
+  // avant de répondre -> avec les retries sur 429, la requête pouvait
+  // prendre des dizaines de secondes et le front/proxy Railway coupait la
+  // connexion (statut 499) -> plus aucun match affiché, alors que
+  // PandaScore avait bien répondu depuis longtemps.
+  //
+  // On fusionne aussi avec l'historique accumulé en base (voir
+  // buildMergedResults) : sinon un match tombé hors des 50 plus récents
+  // PandaScore (tous jeux/régions confondus) disparaîtrait purement et
+  // simplement de l'onglet "Match terminé", alors qu'on l'a déjà vu et
+  // qu'on a déjà ses scores (série + par map).
+  const merged = buildMergedResults(data);
+  enrichedResultsCache = { data: merged, time: now };
+
+  enrichInProgress = true;
+  enrichWithMapScores(data)
+    .then(() => {
+      // Les objets `data` sont mutés en place par enrichWithMapScores, donc
+      // on refait la fusion avec l'historique accumulé pour que le cache
+      // reflète bien les scores fraîchement trouvés.
+      enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
+    })
+    .catch((e) => console.error("[enrich background]", e.message))
+    .finally(() => {
+      enrichInProgress = false;
+    });
+
+  return merged;
+}
+
 app.get("/api/valorant-results", async (req, res) => {
   try {
-    const now = Date.now();
-    const cacheIsFresh = enrichedResultsCache && now - enrichedResultsCache.time < ENRICHED_RESULTS_TTL_MS;
-
-    // Si un enrichissement est déjà en cours sur les données actuelles, on
-    // sert ce cache tel quel plutôt que de relancer un fetch + un nouveau
-    // sweep : sinon le sweep en cours devient orphelin (il continue de
-    // muter un tableau `data` qui n'est plus celui référencé par le cache)
-    // et ses résultats sont perdus -> plus aucun map_scores ne se pose
-    // jamais sur ce qui est réellement servi.
-    if (cacheIsFresh || (enrichedResultsCache && enrichInProgress)) {
-      return res.json(enrichedResultsCache.data);
-    }
-
-    const data = await cachedFetch("results", "/valorant/matches/past?per_page=50");
-
-    const rows = data.map(toHistoryRow).filter(Boolean);
-    storeFinishedMatches(rows);
-
-    // Pose tout de suite les scores déjà connus en base (aucun appel réseau,
-    // donc ça ne retarde pas la réponse) — jamais besoin d'attendre un sweep
-    // pour un match déjà résolu, même juste après un redeploy.
-    const finished = data.filter((m) => m.status === "finished");
-    for (const m of finished) {
-      const t1 = m.opponents?.[0]?.opponent?.name;
-      const t2 = m.opponents?.[1]?.opponent?.name;
-      const date = (m.begin_at || "").slice(0, 10);
-      const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
-      if (manual) {
-        m.map_scores = manual;
-        continue;
-      }
-      const stored = getStoredMapScores(m.id);
-      if (stored !== undefined) m.map_scores = stored;
-    }
-
-    // On répond IMMÉDIATEMENT (jamais "pas de matchs"), et on va chercher sur
-    // vlr.gg uniquement les scores encore inconnus, en arrière-plan. Avant :
-    // on attendait (await) enrichWithMapScores sur TOUS les matchs terminés
-    // avant de répondre -> avec les retries sur 429, la requête pouvait
-    // prendre des dizaines de secondes et le front/proxy Railway coupait la
-    // connexion (statut 499) -> plus aucun match affiché, alors que
-    // PandaScore avait bien répondu depuis longtemps.
-    //
-    // On fusionne aussi avec l'historique accumulé en base (voir
-    // buildMergedResults) : sinon un match tombé hors des 50 plus récents
-    // PandaScore (tous jeux/régions confondus) disparaîtrait purement et
-    // simplement de l'onglet "Match terminé", alors qu'on l'a déjà vu et
-    // qu'on a déjà ses scores (série + par map).
-    const merged = buildMergedResults(data);
-    enrichedResultsCache = { data: merged, time: now };
+    const merged = await refreshValorantResults();
     res.json(merged);
-
-    enrichInProgress = true;
-    enrichWithMapScores(data)
-      .then(() => {
-        // Les objets `data` sont mutés en place par enrichWithMapScores,
-        // donc on refait la fusion avec l'historique accumulé pour que le
-        // cache reflète bien les scores fraîchement trouvés.
-        enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
-      })
-      .catch((e) => console.error("[enrich background]", e.message))
-      .finally(() => {
-        enrichInProgress = false;
-      });
   } catch (e) {
     console.error(e);
     // Si le sweep échoue mais qu'on a un cache même périmé, mieux vaut le
@@ -574,6 +595,18 @@ app.get("/api/valorant-results", async (req, res) => {
     res.status(502).json({ error: "Impossible de récupérer les résultats." });
   }
 });
+
+// Tâche de fond : rejoue le même rafraîchissement toutes les
+// BACKGROUND_REFRESH_INTERVAL_MS, indépendamment de toute requête HTTP —
+// c'est ça qui garantit que les scores se posent même si personne n'a l'app
+// ouverte. `force=true` : ignore la fraîcheur du cache (sinon avec un TTL de
+// 10 min et un intervalle de 5 min, la tâche de fond tombait toujours sur
+// "cache encore frais" et ne faisait jamais de vrai travail après le 1er
+// passage) — `enrichInProgress` protège quand même contre le chevauchement.
+const BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+setInterval(() => {
+  refreshValorantResults(true).catch((e) => console.error("[valorant background refresh]", e.message));
+}, BACKGROUND_REFRESH_INTERVAL_MS);
 
 // Convertit une entrée "maison" de matches.json (team1/team2/score "2-0"/winner)
 // vers la forme brute PandaScore que le front sait déjà lire via transformMatch()
