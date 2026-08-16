@@ -705,7 +705,7 @@ function transformMatchCS2(m) {
     // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
     // sans pont externe : PandaScore fournit lui-même le round_score par map
     // pour CS2, contrairement à Valorant.
-    map_scores: m.map_scores || findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || null,
+    map_scores: findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || m.map_scores || null,
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
     // d'équivalent pour CS2 (pas de diffuseur officiel par région).
