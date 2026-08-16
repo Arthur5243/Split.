@@ -639,31 +639,6 @@ function transformMatch(m) {
 // (team1Region/team2Region), déjà calculée côté backend (cf cs2-routes.js
 // `attachTeamRegions`, à partir du pays de chaque équipe) et renvoyée sur
 // les champs team1_region/team2_region du match brut PandaScore.
-// Résultats saisis à la main (fournis directement par l'utilisateur, sources
-// HLTV/BLAST/Strafe/BO3.GG vérifiées) en attendant que Liquipedia/odds-api.io/
-// PandaScore les trouvent automatiquement pour ces matchs précis. Purement
-// côté front, aucun fichier backend touché. Clé = id PandaScore brut du
-// match. À retirer une fois que la source automatique fonctionne pour eux.
-const MANUAL_MAP_SCORES_CS2 = {
-  1624085: [
-    // BIG vs Spirit — Esports World Cup 2026, 15 août 2026
-    { map: "Cache", score1: 13, score2: 9 },
-    { map: "Dust2", score1: 10, score2: 13 },
-    { map: "Mirage", score1: 7, score2: 13 },
-  ],
-  1624324: [
-    // FURIA vs 9z — Esports World Cup 2026, 15 août 2026
-    { map: "Dust2", score1: 13, score2: 6 },
-    { map: "Mirage", score1: 13, score2: 16 },
-    { map: "Nuke", score1: 13, score2: 6 },
-  ],
-  1624086: [
-    // JiJieHao vs Aurora Gaming — Esports World Cup 2026, 15 août 2026
-    { map: "Mirage", score1: 6, score2: 13 },
-    { map: "Anubis", score1: 4, score2: 13 },
-  ],
-};
-
 function transformMatchCS2(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -697,7 +672,7 @@ function transformMatchCS2(m) {
     // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
     // sans pont externe : PandaScore fournit lui-même le round_score par map
     // pour CS2, contrairement à Valorant.
-    map_scores: m.map_scores || MANUAL_MAP_SCORES_CS2[m.id] || null,
+    map_scores: m.map_scores || null,
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
     // d'équivalent pour CS2 (pas de diffuseur officiel par région).
