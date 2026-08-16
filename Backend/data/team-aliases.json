@@ -203,6 +203,10 @@
     "vlr_name": "DOT EXE",
     "vlr_id": "17664"
   },
+  "DRX": {
+    "vlr_name": "KIWOOM DRX",
+    "vlr_id": "8185"
+  },
   "DRX Youth": {
     "vlr_name": "DRX Youth",
     "vlr_id": "20789"
