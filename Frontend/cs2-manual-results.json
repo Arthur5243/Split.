@@ -134,12 +134,12 @@
       ]
     },
     {
-      "_comment": "BASEMENT BOYS vs BakS eSports — 15 août 2026 — détail vérifié : série réelle 1-2 (corrige une note précédente erronée de 2-1)",
+      "_comment": "BASEMENT BOYS vs BAKS — ESL Challenger League Season 52 Europe Cup 3, 15 août 2026 — CORRIGÉ via hltv.org/matches/2396829 (l'entrée précédente avait très probablement les équipes inversées : mêmes 3 maps, scores exactement en miroir)",
       "teams": ["basement boys", "baks"],
       "maps": [
-        { "map": "Cache", "score1": 5, "score2": 13 },
-        { "map": "Nuke", "score1": 13, "score2": 4 },
-        { "map": "Dust2", "score1": 4, "score2": 13 }
+        { "map": "Cache", "score1": 13, "score2": 5 },
+        { "map": "Nuke", "score1": 4, "score2": 13 },
+        { "map": "Dust2", "score1": 13, "score2": 4 }
       ]
     },
     {
