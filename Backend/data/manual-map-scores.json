@@ -754,5 +754,122 @@
         "pick": null
       }
     ]
+  },
+  {
+    "date": "2026-08-15",
+    "region": "Pacific",
+    "team1": "KIWOOM DRX",
+    "team2": "ZETA DIVISION",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Lotus",
+        "score1": 13,
+        "score2": 11,
+        "pick": "KIWOOM DRX"
+      },
+      {
+        "map": "Sunset",
+        "score1": 11,
+        "score2": 13,
+        "pick": "ZETA DIVISION"
+      },
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 6,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-15",
+    "region": "Americas",
+    "team1": "KRÜ Esports",
+    "team2": "MIBR",
+    "score": "0-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 6,
+        "score2": 13,
+        "pick": "KRÜ Esports"
+      },
+      {
+        "map": "Sunset",
+        "score1": 6,
+        "score2": 13,
+        "pick": "MIBR"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-16",
+    "region": "Americas",
+    "team1": "ENVY",
+    "team2": "Sentinels",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Ascent",
+        "score1": 13,
+        "score2": 10,
+        "pick": "ENVY"
+      },
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 3,
+        "pick": "Sentinels"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-16",
+    "region": "China",
+    "team1": "Nova Esports",
+    "team2": "TEC Esports",
+    "score": "2-0",
+    "maps": [
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 11,
+        "pick": "Nova Esports"
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 8,
+        "pick": "TEC Esports"
+      }
+    ]
+  },
+  {
+    "date": "2026-08-16",
+    "region": "China",
+    "team1": "Trace Esports",
+    "team2": "All Gamers",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 15,
+        "score2": 13,
+        "pick": "Trace Esports"
+      },
+      {
+        "map": "Lotus",
+        "score1": 13,
+        "score2": 15,
+        "pick": "All Gamers"
+      },
+      {
+        "map": "Ascent",
+        "score1": 9,
+        "score2": 13,
+        "pick": null
+      }
+    ]
   }
 ]
