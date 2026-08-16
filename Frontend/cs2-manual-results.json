@@ -281,6 +281,24 @@
         { "map": "Mirage", "score1": 12, "score2": 16 },
         { "map": "Inferno", "score1": 7, "score2": 13 }
       ]
+    },
+    {
+      "_comment": "EAC vs BASEMENT BOYS — ESL Challenger League Season 52 Europe Cup 3, 16 août 2026 — 2-1 EAC (source: hltv.org/matches/2396835)",
+      "teams": ["eac", "basement boys"],
+      "maps": [
+        { "map": "Nuke", "score1": 13, "score2": 4 },
+        { "map": "Mirage", "score1": 6, "score2": 13 },
+        { "map": "Ancient", "score1": 19, "score2": 16 }
+      ]
+    },
+    {
+      "_comment": "BASEMENT BOYS vs INOX Division — ESL Challenger League Season 52 Europe Cup 3, 16 août 2026 — 2-1 BASEMENT BOYS (source: hltv.org/matches/2396832)",
+      "teams": ["basement boys", "inox division"],
+      "maps": [
+        { "map": "Ancient", "score1": 16, "score2": 12 },
+        { "map": "Nuke", "score1": 7, "score2": 13 },
+        { "map": "Dust2", "score1": 13, "score2": 11 }
+      ]
     }
   ]
 }
