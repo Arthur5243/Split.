@@ -494,6 +494,26 @@ function buildMergedResults(liveData) {
   const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
     .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
     .map(toLiveHistoryShape);
+
+  // BUG CORRIGÉ : un match sorti des 50 plus récents de PandaScore (mais
+  // toujours affiché via l'historique accumulé ci-dessus) ne passait
+  // jamais par applyStoredMapScores — donc jamais par la vérification de
+  // saisie manuelle non plus. Un match ajouté à manual-map-scores.json
+  // après être déjà sorti de cette fenêtre restait donc bloqué pour
+  // toujours, même avec la bonne donnée dans le fichier. On revérifie ici
+  // pour ceux qui n'ont encore aucun score par map.
+  for (const m of accumulated) {
+    if (m.map_scores) continue;
+    const t1 = m.opponents?.[0]?.opponent?.name;
+    const t2 = m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || "").slice(0, 10);
+    const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
+    if (manual) {
+      m.map_scores = manual;
+      saveMapScores(m.id, manual); // persiste pour cohérence avec getFullHistory
+    }
+  }
+
   const merged = [...liveData, ...accumulated];
   const cutoffMs = RESULTS_CUTOFF ? new Date(RESULTS_CUTOFF).getTime() : null;
   const filtered = cutoffMs
