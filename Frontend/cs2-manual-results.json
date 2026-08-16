@@ -208,6 +208,63 @@
         { "map": "Ancient", "score1": 13, "score2": 2 },
         { "map": "Inferno", "score1": 13, "score2": 3 }
       ]
+    },
+    {
+      "_comment": "Astralis vs NIP — 2–1 pour Astralis",
+      "teams": ["astralis", "nip"],
+      "maps": [
+        { "map": "Nuke", "score1": 13, "score2": 3 },
+        { "map": "Inferno", "score1": 10, "score2": 13 },
+        { "map": "Cache", "score1": 13, "score2": 7 }
+      ]
+    },
+    {
+      "_comment": "EAC vs Lavked — 2–0 pour EAC",
+      "teams": ["eac", "lavked"],
+      "maps": [
+        { "map": "Ancient", "score1": 13, "score2": 8 },
+        { "map": "Mirage", "score1": 13, "score2": 6 }
+      ]
+    },
+    {
+      "_comment": "MOUZ vs PARIVISION — 2–0 pour MOUZ",
+      "teams": ["mouz", "parivision"],
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 4 },
+        { "map": "Inferno", "score1": 13, "score2": 10 }
+      ]
+    },
+    {
+      "_comment": "ENCE vs WBT — 0–2, WBT gagne",
+      "teams": ["ence", "wbt"],
+      "maps": [
+        { "map": "Nuke", "score1": 8, "score2": 13 },
+        { "map": "Anubis", "score1": 6, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "Bushido Wildcats vs Fortress — 2–0 pour Bushido Wildcats",
+      "teams": ["bushido wildcats", "fortress"],
+      "maps": [
+        { "map": "Inferno", "score1": 13, "score2": 6 },
+        { "map": "Mirage", "score1": 13, "score2": 8 }
+      ]
+    },
+    {
+      "_comment": "Vitality vs Lynn Vision — 2–0 pour Vitality",
+      "teams": ["vitality", "lynn vision"],
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 2 },
+        { "map": "Inferno", "score1": 13, "score2": 5 }
+      ]
+    },
+    {
+      "_comment": "The MongolZ vs paiN — 2–0 pour The MongolZ",
+      "teams": ["the mongolz", "pain"],
+      "maps": [
+        { "map": "Nuke", "score1": 13, "score2": 10 },
+        { "map": "Inferno", "score1": 13, "score2": 4 }
+      ]
     }
   ]
 }
