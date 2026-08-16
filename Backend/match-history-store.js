@@ -103,13 +103,16 @@ const getMapScoresRowStmt = db.prepare(
 // RRQ vs SPE : requête faite trop tôt -> null -> on retente plus tard au
 // lieu d'enregistrer ce null pour de bon).
 // Après le dernier palier, on abandonne définitivement pour ce match-là.
+// Élargi (plus de paliers, jusqu'à 4h) : vlr.gg supporte largement ce
+// volume de requêtes, pas besoin d'abandonner aussi vite qu'avant.
 const RETRY_DELAYS_MS = [
   1 * 60 * 1000, // 1er échec -> retente dans 1 min
-  3 * 60 * 1000, // 2e -> 3 min
+  2 * 60 * 1000, // 2e -> 2 min
   4 * 60 * 1000, // 3e -> 4 min
-  5 * 60 * 1000, // 4e -> 5 min
-  15 * 60 * 1000, // 5e -> 15 min
-  2 * 60 * 60 * 1000, // 6e -> 2h, puis abandon définitif
+  15 * 60 * 1000, // 4e -> 15 min
+  45 * 60 * 1000, // 5e -> 45 min
+  2 * 60 * 60 * 1000, // 6e -> 2h
+  4 * 60 * 60 * 1000, // 7e -> 4h, puis abandon définitif
 ];
 
 /**
@@ -173,7 +176,7 @@ function saveMapScores(id, mapScores) {
 /**
  * Persiste un ÉCHEC de récupération (vlr.gg n'a rien renvoyé pour ce match).
  * Au lieu d'écrire `null` définitivement dès le 1er essai, on programme une
- * retentative selon RETRY_DELAYS_MS (1min, 3min, 4min, 5min, 15min, 2h). On
+ * retentative selon RETRY_DELAYS_MS (1min, 2min, 4min, 15min, 45min, 2h, 4h). On
  * abandonne pour de bon (map_scores fixé à `null`) après ce dernier palier.
  */
 function saveMapScoresFailure(id) {
