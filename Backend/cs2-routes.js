@@ -209,34 +209,39 @@ async function enrichWithMapScores(data) {
     const date = (m.begin_at || "").slice(0, 10);
     const tournamentName = m.league?.name || m.serie?.full_name || "";
 
-    // 1) Priorité à Liquipedia (cf liquipedia-scores.js) : source la plus
-    // complète (couvre aussi les petits matchs, pas seulement ceux avec un
-    // marché de paris), gratuite, sans scraping/captcha. Le module gère
-    // lui-même son propre débit (throttleGeneral/throttleParse), pas besoin
-    // de plafond ici comme pour odds-api.io — chaque page de tournoi est
-    // mise en cache, donc les matchs suivants d'un même tournoi sont
-    // quasi-instantanés une fois la page récupérée une 1ère fois.
-    try {
-      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
-    } catch (e) {
-      console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-    }
-
-    // 2) Repli : odds-api.io (cf oddsapi-scores.js), si Liquipedia n'a rien
-    // trouvé pour ce match (tournoi introuvable sur leur wiki, etc.).
-    // Plafonné à MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit, cf
-    // plus haut) : au-delà, on saute directement au repli PandaScore.
-    if (!mapScores && attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
+    // 1) Priorité à odds-api.io (cf oddsapi-scores.js) : rapide (quelques
+    // secondes), on le tente donc en premier pour ne pas ralentir tous les
+    // autres matchs derrière un éventuel essai Liquipedia infructueux.
+    // Plafonné à MAX_ODDSAPI_LOOKUPS_PER_CYCLE par lot (quota gratuit).
+    if (attemptIndex < MAX_ODDSAPI_LOOKUPS_PER_CYCLE) {
       try {
         mapScores = await getMapScoresFromOddsApi(t1.name, t2.name);
       } catch (e) {
         console.log(`[cs2 map_scores] odds-api.io ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
       }
     }
+
+    // 2) Repli : Liquipedia (cf liquipedia-scores.js) — source la plus
+    // complète (couvre aussi les petits matchs), gratuite, sans
+    // scraping/captcha, mais nettement plus lente (jusqu'à 30s par nouvelle
+    // page de tournoi jamais vue) : on ne la tente que si odds-api.io n'a
+    // rien trouvé, pour ne pas ralentir tout le lot à chaque fois.
+    if (!mapScores) {
+      try {
+        mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
+      } catch (e) {
+        console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
+    }
     // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
-    // confirmé fonctionnel en prod) : trace chaque match traité ici.
+    // confirmé fonctionnel en prod) : trace chaque match traité ici, avec
+    // le score de série (X-Y, ex: 2-1) pour pouvoir lister les matchs sans
+    // score par map à implémenter à la main en attendant.
+    const seriesR1 = results.find((r) => r.team_id === t1.id);
+    const seriesR2 = results.find((r) => r.team_id === t2.id);
+    const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
     console.log(
-      `[cs2-map-diag] ${t1.name} vs ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
+      `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
         `résultat=${mapScores ? JSON.stringify(mapScores) : "aucun (repli PandaScore)"}`
     );
 
