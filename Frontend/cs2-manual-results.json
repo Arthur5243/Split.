@@ -144,7 +144,7 @@
     },
     {
       "_comment": "Lavked vs OG Gaming — 15 août 2026 — détail vérifié",
-      "teams": ["lavked", "og gaming"],
+      "teams": ["lvkd", "og gaming"],
       "maps": [
         { "map": "Ancient", "score1": 13, "score2": 11 },
         { "map": "Dust2", "score1": 13, "score2": 9 }
@@ -220,7 +220,7 @@
     },
     {
       "_comment": "EAC vs Lavked — 2–0 pour EAC",
-      "teams": ["eac", "lavked"],
+      "teams": ["eac", "lvkd"],
       "maps": [
         { "map": "Ancient", "score1": 13, "score2": 8 },
         { "map": "Mirage", "score1": 13, "score2": 6 }
@@ -264,6 +264,22 @@
       "maps": [
         { "map": "Nuke", "score1": 13, "score2": 10 },
         { "map": "Inferno", "score1": 13, "score2": 4 }
+      ]
+    },
+    {
+      "_comment": "Legacy vs MIBR — 2–0 pour Legacy",
+      "teams": ["legacy", "mibr"],
+      "maps": [
+        { "map": "Nuke", "score1": 13, "score2": 11 },
+        { "map": "Inferno", "score1": 13, "score2": 8 }
+      ]
+    },
+    {
+      "_comment": "Keyd Stars vs Imperial — 0–2, Imperial gagne — match différent de Keyd Stars vs Galorys",
+      "teams": ["keyd stars", "imperial"],
+      "maps": [
+        { "map": "Mirage", "score1": 12, "score2": 16 },
+        { "map": "Inferno", "score1": 7, "score2": 13 }
       ]
     }
   ]
