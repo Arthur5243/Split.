@@ -1,5 +1,5 @@
 {
-  "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Sert de repli quand Liquipedia/odds-api.io/PandaScore n'ont pas (encore) trouvé le score par map d'un match tout seuls — jamais touché par le code des APIs. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
+  "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Ces résultats sont désormais PRIORITAIRES sur ceux trouvés automatiquement (Liquipedia/odds-api.io/PandaScore) — ils sont vérifiés à la main contre des sources précises, donc plus fiables qu'une correspondance automatique qui peut se tromper de match. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
 
   "byId": {
     "1624085": {
@@ -24,6 +24,29 @@
         { "map": "Mirage", "score1": 6, "score2": 13 },
         { "map": "Anubis", "score1": 4, "score2": 13 }
       ]
+    },
+    "1624326": {
+      "_comment": "Wildcard vs paiN — Esports World Cup 2026, 15 août 2026 (source: hltv.org/matches/2396590)",
+      "maps": [
+        { "map": "Inferno", "score1": 16, "score2": 12 },
+        { "map": "Nuke", "score1": 3, "score2": 13 },
+        { "map": "Mirage", "score1": 7, "score2": 13 }
+      ]
+    },
+    "1624323": {
+      "_comment": "The MongolZ vs NAVI — Esports World Cup 2026, 15 août 2026 (source: navi.gg/en/tournaments/ewc-2026/match/13858) — corrige un résultat automatique partiel/erroné trouvé plus tôt",
+      "maps": [
+        { "map": "Inferno", "score1": 5, "score2": 13 },
+        { "map": "Ancient", "score1": 13, "score2": 9 },
+        { "map": "Mirage", "score1": 8, "score2": 13 }
+      ]
+    },
+    "1624325": {
+      "_comment": "magic vs 3DMAX — Esports World Cup 2026, 15 août 2026 (source: hltv.org/matches/2396589)",
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 6 },
+        { "map": "Ancient", "score1": 13, "score2": 7 }
+      ]
     }
   },
 
@@ -44,6 +67,31 @@
         { "map": "Cache", "score1": 8, "score2": 13 },
         { "map": "Dust2", "score1": 13, "score2": 8 },
         { "map": "Ancient", "score1": 19, "score2": 15 }
+      ]
+    },
+    {
+      "_comment": "PUGDESONESTO vs QUINTESSÊNCIA — CCT South America Series 2, 15 août 2026 (source: hltv.org/matches/2396803)",
+      "teams": ["pugdesonesto", "quintessencia"],
+      "maps": [
+        { "map": "Cache", "score1": 11, "score2": 13 },
+        { "map": "Inferno", "score1": 11, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "ex-MANA vs MISA — CCT Europe Series 5, 15 août 2026 (source: hltv.org/matches/2396846)",
+      "teams": ["ex-mana", "misa"],
+      "maps": [
+        { "map": "Anubis", "score1": 11, "score2": 13 },
+        { "map": "Mirage", "score1": 7, "score2": 13 }
+      ]
+    },
+    {
+      "_comment": "Atreides vs LPH — CCT Europe Series 5, 15 août 2026 (source: hltv.org/matches/2396843)",
+      "teams": ["atreides", "lph"],
+      "maps": [
+        { "map": "Inferno", "score1": 6, "score2": 13 },
+        { "map": "Ancient", "score1": 13, "score2": 11 },
+        { "map": "Nuke", "score1": 7, "score2": 13 }
       ]
     }
   ]
