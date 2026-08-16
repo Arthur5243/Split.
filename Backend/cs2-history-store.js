@@ -63,16 +63,16 @@ const getMapScoresRowStmt = db.prepare(
   `SELECT map_scores, map_scores_attempts, map_scores_next_retry_at FROM matches WHERE id = ?`
 );
 
-// Paliers de retentative si /csgo/games/{id} n'a pas encore les stats
-// détaillées (PandaScore documente ~15 min de délai après la fin du match
-// avant que les stats post-match soient disponibles). Croissants, comme côté
-// Valorant, jusqu'à abandon définitif.
+// Paliers de retentative si aucune source (Liquipedia/odds-api.io/
+// PandaScore) n'a encore le score par map. Espacés de plus en plus, jusqu'à
+// abandon définitif après le dernier palier.
 const RETRY_DELAYS_MS = [
-  5 * 60 * 1000, // 1er échec -> 5 min (le temps que PandaScore publie le post-match)
-  10 * 60 * 1000, // 2e -> 10 min
-  20 * 60 * 1000, // 3e -> 20 min
-  45 * 60 * 1000, // 4e -> 45 min
-  2 * 60 * 60 * 1000, // 5e -> 2h, puis abandon définitif
+  1 * 60 * 1000, // 1er échec -> 1 min
+  2 * 60 * 1000, // 2e -> 2 min
+  4 * 60 * 1000, // 3e -> 4 min
+  5 * 60 * 1000, // 4e -> 5 min
+  30 * 60 * 1000, // 5e -> 30 min
+  2 * 60 * 60 * 1000, // 6e -> 2h, puis abandon définitif
 ];
 
 function storeFinishedMatches(matches) {
