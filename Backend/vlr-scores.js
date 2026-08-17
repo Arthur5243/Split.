@@ -105,6 +105,24 @@ function resolveCanonicalName(teamName) {
   return full || teamName;
 }
 
+// Sens inverse de nameOverrides (nom complet -> sigle), pour proposer le
+// sigle comme candidat de matching quand on compare à l'adversaire (ex:
+// vlr.gg peut afficher "G2" dans une liste de matchs alors qu'on cherche
+// "G2 Esports" ; sans ça la comparaison stricte ratait ce genre de cas -
+// bug identifié le 17/08 sur FURIA vs G2 et Cloud9 vs Evil Geniuses).
+const reverseNameOverrides = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(NAME_OVERRIDES_PATH, "utf-8"));
+    const map = new Map();
+    for (const [abbrev, fullName] of Object.entries(raw)) {
+      map.set(normalize(fullName), abbrev);
+    }
+    return map;
+  } catch (e) {
+    return new Map();
+  }
+})();
+
 function daysBetweenDates(d1, d2) {
   const t1 = new Date(d1 + "T00:00:00").getTime();
   const t2 = new Date(d2 + "T00:00:00").getTime();
@@ -282,6 +300,53 @@ async function findTeamId(teamName) {
   }
 }
 
+// Construit l'ensemble des façons plausibles dont vlr.gg peut désigner une
+// équipe dans une liste de matchs : nom complet, nom vlr.gg connu (alias),
+// sigle connu (via nameOverrides inversé), et nom sans le suffixe
+// "Esports"/"Esport" (très fréquent : "G2 Esports" -> "G2",
+// "2Game Esports" -> "2Game"). Sert de base commune de comparaison au lieu
+// d'une égalité stricte sur un seul nom, qui ratait des matchs valides
+// (ex: FURIA vs G2, Cloud9 vs Evil Geniuses).
+function buildNameCandidates(teamName) {
+  const candidates = new Set();
+  const add = (s) => {
+    if (!s) return;
+    candidates.add(normalize(s));
+    candidates.add(looseNormalize(s));
+  };
+  add(teamName);
+  const vlrName = resolveVlrName(teamName);
+  if (vlrName) add(vlrName);
+  const abbrev = reverseNameOverrides.get(normalize(teamName));
+  if (abbrev) add(abbrev);
+  const stripped = teamName.replace(/\s+e-?sports?$/i, "").trim();
+  if (stripped && stripped !== teamName) add(stripped);
+  return candidates;
+}
+
+// Extrait les candidats de nom pour UN côté (team1 ou team2) d'un match tel
+// que renvoyé par vlr.gg : le champ `name` ET le champ `tag` (sigle, ex
+// "G2", "C9") s'il existe — le tag n'était auparavant jamais comparé alors
+// qu'il correspond exactement au format le plus court utilisé par
+// nameOverrides.
+function matchSideCandidates(side) {
+  const candidates = new Set();
+  if (!side) return candidates;
+  if (side.name) {
+    candidates.add(normalize(side.name));
+    candidates.add(looseNormalize(side.name));
+  }
+  if (side.tag) candidates.add(normalize(side.tag));
+  return candidates;
+}
+
+function hasOverlap(setA, setB) {
+  for (const v of setA) {
+    if (v && setB.has(v)) return true;
+  }
+  return false;
+}
+
 /**
  * Parmi les matchs récents d'une équipe (vlr.gg), trouve celui qui oppose
  * team1 à team2 à une date donnée (tolérance de +/- 1 jour pour les fuseaux
@@ -304,33 +369,64 @@ async function findMatchId(team1Name, team2Name, dateStr) {
       setCached(cacheKey, null);
       return null;
     }
-    const json = await vlrFetch("/v2/team?id=" + teamId + "&q=matches&page=1");
-    // L'API renvoie la liste sous "segments", pas "matches".
-    const matches = (json && json.data && json.data.segments) || [];
     // Bug historique : comparer directement le nom PandaScore brut de
     // l'adversaire (ex: "TEC Esports") au nom affiché par vlr.gg dans la
     // liste des matchs (ex: "Titan Esports Club") ne matche jamais quand
-    // les deux noms diffèrent. On résout donc l'adversaire via le même
-    // fichier d'alias que celui utilisé pour l'équipe de départ.
-    const targetOpponent = normalize(resolveVlrName(team2Name));
+    // les deux noms diffèrent. On construit maintenant un ENSEMBLE de noms
+    // plausibles pour l'adversaire (nom complet, nom vlr.gg, sigle connu,
+    // nom sans "Esports") et on le compare à la fois au champ `name` ET au
+    // champ `tag` renvoyé par vlr.gg pour chaque équipe du match — une
+    // égalité stricte sur un seul nom ratait des matchs valides comme
+    // FURIA vs G2 ou Cloud9 vs Evil Geniuses (bug identifié le 17/08).
+    const opponentCandidates = buildNameCandidates(team2Name);
     const targetDate = new Date(dateStr + "T00:00:00");
 
+    // page=1 seule ratait parfois le match si l'équipe a rejoué depuis
+    // (le match cherché poussé hors de la 1ère page) : on essaie la page 2
+    // en repli, seulement si rien n'est trouvé sur la page 1.
     let best = null;
-    for (const m of matches) {
-      // team1/team2 sont des objets {name, tag, logo} au niveau racine du
-      // match, pas sous une clé "teams".
-      const teamsInMatch = [normalize(m.team1 && m.team1.name), normalize(m.team2 && m.team2.name)];
-      if (!teamsInMatch.includes(targetOpponent)) continue;
+    let totalChecked = 0;
+    for (const page of [1, 2]) {
+      const json = await vlrFetch("/v2/team?id=" + teamId + "&q=matches&page=" + page);
+      // L'API renvoie la liste sous "segments", pas "matches".
+      const matches = (json && json.data && json.data.segments) || [];
+      if (matches.length === 0) break; // page vide -> pas la peine d'aller plus loin
+      totalChecked += matches.length;
 
-      const matchDate = m.date ? new Date(m.date) : null;
-      if (!matchDate) continue;
-      const diffDays = Math.abs((matchDate - targetDate) / 86400000);
-      if (diffDays <= 1) {
-        best = m.match_id;
+      let closestOffDate = null; // filet de sécurité si aucune date ne matche à ±1j
+      for (const m of matches) {
+        // team1/team2 sont des objets {name, tag, logo} au niveau racine du
+        // match, pas sous une clé "teams".
+        const side1 = matchSideCandidates(m.team1);
+        const side2 = matchSideCandidates(m.team2);
+        const opponentInMatch = hasOverlap(opponentCandidates, side1) || hasOverlap(opponentCandidates, side2);
+        if (!opponentInMatch) continue;
+
+        const matchDate = m.date ? new Date(m.date) : null;
+        if (!matchDate) continue;
+        const diffDays = Math.abs((matchDate - targetDate) / 86400000);
+        if (diffDays <= 1) {
+          best = m.match_id;
+          break;
+        }
+        // Garde le candidat le plus proche en date au cas où aucun ne rentre
+        // dans la tolérance stricte (ex: décalage horaire de publication).
+        if (!closestOffDate || diffDays < closestOffDate.diffDays) {
+          closestOffDate = { matchId: m.match_id, diffDays };
+        }
+      }
+      if (best) break;
+      // Filet de sécurité : un seul adversaire correspondant trouvé sur
+      // toute la page mais hors tolérance stricte -> on l'accepte quand
+      // même si l'écart reste raisonnable (< 3 jours), plutôt que de
+      // renvoyer null pour un match qui existe bel et bien.
+      if (!best && closestOffDate && closestOffDate.diffDays < 3) {
+        best = closestOffDate.matchId;
+        console.log(`[vlr-scores] ${team1Name} vs ${team2Name} (${dateStr}) → match retenu hors tolérance stricte (écart ${closestOffDate.diffDays.toFixed(1)}j)`);
         break;
       }
     }
-    console.log(`[vlr-scores] match ${team1Name} vs ${team2Name} (${dateStr}) → ${best ? "match_id " + best : "AUCUN MATCH TROUVÉ parmi " + matches.length}`);
+    console.log(`[vlr-scores] match ${team1Name} vs ${team2Name} (${dateStr}) → ${best ? "match_id " + best : "AUCUN MATCH TROUVÉ parmi " + totalChecked}`);
     setCached(cacheKey, best);
     return best;
   } catch (e) {
