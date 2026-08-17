@@ -39,18 +39,19 @@ import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 
 const router = express.Router();
 
-// Ponctuel, au démarrage : remet en jeu les matchs marqués "abandon
-// définitif" avant la simplification de la source (Liquipedia seul
-// désormais) — sinon un `map_scores` non-NULL en base (même "null") reste
-// "déjà résolu, ne jamais retenter" pour toujours, peu importe le
-// changement de code fait depuis.
-try {
-  const resetCount = resetAbandonedMapScores();
-  if (resetCount > 0) {
-    console.log(`[startup] ${resetCount} match(s) CS2 marqué(s) "abandon définitif" remis en jeu pour Liquipedia.`);
+// Remise à zéro des matchs CS2 "abandon définitif" — CONDITIONNÉE à la même
+// variable d'env RESET_ABANDONED_MAP_SCORES=1 que côté Valorant, au lieu de
+// se déclencher à chaque démarrage. Raison identique : le serveur redémarre
+// à chaque déploiement, et relancer toute la file à chaque push l'empêchait
+// de se vider (surtout côté CS2 où chaque match coûte jusqu'à 31s de
+// throttle Liquipedia). À activer ponctuellement, puis retirer la variable.
+if (process.env.RESET_ABANDONED_MAP_SCORES === "1") {
+  try {
+    const resetCount = resetAbandonedMapScores();
+    console.log(`[startup] RESET_ABANDONED_MAP_SCORES=1 → ${resetCount} match(s) CS2 "abandon définitif" remis en jeu. Pense à retirer la variable d'env.`);
+  } catch (e) {
+    console.error("[startup] échec de la réinitialisation CS2 des matchs abandonnés:", e.message);
   }
-} catch (e) {
-  console.error("[startup] échec de la réinitialisation CS2 des matchs abandonnés:", e.message);
 }
 
 if (!PANDASCORE_API_KEY) {
