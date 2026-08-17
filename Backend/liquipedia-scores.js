@@ -37,6 +37,8 @@
  * inventé. L'appelant (cs2-routes.js) retombe alors sur ses autres replis.
  */
 
+import { getCachedWikitext, setCachedWikitext } from "./cs2-history-store.js";
+
 const LIQUIPEDIA_BASE = "https://liquipedia.net/counterstrike/api.php";
 // Liquipedia bloque les User-Agent génériques ; celui-ci identifie le
 // projet comme demandé par leurs conditions d'utilisation.
@@ -86,17 +88,20 @@ async function searchTournamentPages(query) {
 
 // --- Récupération + cache du wikitext d'une page ------------------------
 
-const wikitextCache = new Map(); // page title -> { text, time }
-const WIKITEXT_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6h : une page de tournoi ne change plus une fois les matchs finis
+// Le cache du wikitext est désormais PERSISTANT (SQLite, cf
+// cs2-history-store.js) au lieu d'une Map() en mémoire : il survit aux
+// redémarrages du serveur. Sans ça, chaque déploiement jetait tout le cache
+// et forçait à re-télécharger chaque page de tournoi à 31s pièce (throttle
+// action=parse) — le principal goulot qui empêchait les scores de se poser.
 
 async function getWikitext(pageTitle) {
-  const cached = wikitextCache.get(pageTitle);
-  if (cached && Date.now() - cached.time < WIKITEXT_CACHE_TTL_MS) return cached.text;
+  const cached = getCachedWikitext(pageTitle);
+  if (cached !== undefined) return cached;
 
   const json = await liquipediaFetch({ action: "parse", page: pageTitle, prop: "wikitext" }, { isParse: true });
   const text = json?.parse?.wikitext?.["*"];
   if (typeof text !== "string") return null;
-  wikitextCache.set(pageTitle, { text, time: Date.now() });
+  setCachedWikitext(pageTitle, text);
   return text;
 }
 
