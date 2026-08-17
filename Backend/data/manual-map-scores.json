@@ -1,5 +1,59 @@
 [
   {
+    "date": "2026-08-16",
+    "region": "Americas",
+    "team1": "FURIA",
+    "team2": "G2 Esports",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Split",
+        "score1": 12,
+        "score2": 14,
+        "pick": null
+      },
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 10,
+        "pick": null
+      },
+      {
+        "map": "Breeze",
+        "score1": 13,
+        "score2": 9,
+        "pick": null
+      }
+    ]
+  },
+  {
+    "date": "2026-08-17",
+    "region": "Americas",
+    "team1": "Evil Geniuses",
+    "team2": "Cloud9",
+    "score": "2-1",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 6,
+        "score2": 13,
+        "pick": null
+      },
+      {
+        "map": "Haven",
+        "score1": 13,
+        "score2": 6,
+        "pick": null
+      },
+      {
+        "map": "Sunset",
+        "score1": 13,
+        "score2": 11,
+        "pick": null
+      }
+    ]
+  },
+  {
     "date": "2026-08-13",
     "region": "Pacific",
     "team1": "Rex Regum Qeon",
