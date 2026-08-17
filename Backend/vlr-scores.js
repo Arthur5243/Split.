@@ -154,22 +154,28 @@ function looseNormalize(s) {
  */
 function findManualMapScores(team1Name, team2Name, dateStr) {
   if (manualScores.length === 0) return null;
-  const n1 = normalize(team1Name);
-  const n2 = normalize(team2Name);
-  const ln1 = looseNormalize(team1Name);
-  const ln2 = looseNormalize(team2Name);
+  // Comme pour le matching vlr.gg : on compare via buildNameCandidates plutôt
+  // qu'une égalité stricte, pour que ça marche même quand PandaScore renvoie
+  // un sigle brut ("FUR", "G2", "C9", "EG") au lieu du nom complet utilisé
+  // dans manual-map-scores.json — bug identifié le 17/08 sur FURIA vs G2 et
+  // Cloud9 vs Evil Geniuses, qui empêchait aussi la saisie manuelle de
+  // matcher tant que ce fichier gardait une comparaison stricte.
+  const c1 = buildNameCandidates(team1Name);
+  const c2 = buildNameCandidates(team2Name);
+  const overlaps = (setA, setB) => {
+    for (const v of setA) if (setB.has(v)) return true;
+    return false;
+  };
 
   for (const entry of manualScores) {
     if (dateStr && daysBetweenDates(entry.date, dateStr) > 1) continue;
-    const e1 = normalize(entry.team1);
-    const e2 = normalize(entry.team2);
-    const le1 = looseNormalize(entry.team1);
-    const le2 = looseNormalize(entry.team2);
+    const ce1 = buildNameCandidates(entry.team1);
+    const ce2 = buildNameCandidates(entry.team2);
 
-    if ((e1 === n1 && e2 === n2) || (le1 === ln1 && le2 === ln2)) {
+    if (overlaps(ce1, c1) && overlaps(ce2, c2)) {
       return entry.maps.map((m) => ({ map: m.map, score1: m.score1, score2: m.score2 }));
     }
-    if ((e1 === n2 && e2 === n1) || (le1 === ln2 && le2 === ln1)) {
+    if (overlaps(ce1, c2) && overlaps(ce2, c1)) {
       // Même match mais équipes dans l'ordre inverse -> on retourne les scores.
       return entry.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 }));
     }
