@@ -24,6 +24,7 @@ const UNMATCHED_PATH = path.join(__dirname, "data", "unmatched-teams.log");
 
 const VLR_API_BASE = process.env.VLR_API_BASE || "https://vlrggapi-production-b3a0.up.railway.app";
 const MANUAL_SCORES_PATH = path.join(__dirname, "data", "manual-map-scores.json");
+const NAME_OVERRIDES_PATH = path.join(__dirname, "data", "team-name-overrides.json");
 
 // Fichier d'alias équipe PandaScore -> équipe vlr.gg, construit à l'avance
 // par scripts/build-team-aliases.js. Chargé une seule fois au démarrage :
@@ -69,6 +70,40 @@ const manualScores = (() => {
     return []; // fichier absent -> aucun impact, on retombe sur vlr.gg comme avant
   }
 })();
+
+// Bug identifié le 17/08 : pour certains matchs, PandaScore renvoie dans
+// `opponent.name` le SIGLE de l'équipe ("FUR", "G2", "C9", "EG") au lieu du
+// nom complet ("FURIA Esports", "G2 Esports", "Cloud9", "Evil Geniuses") -
+// probablement une incohérence de données côté PandaScore selon le
+// tournoi/l'endpoint. Comme team-aliases.json est indexé sur le nom COMPLET
+// (celui présent dans matches.json au moment du build), un sigle brut ne
+// matche jamais l'alias -> on retombe sur la recherche live vlr.gg avec une
+// requête trop courte/ambiguë ("G2", "C9"...) qui échoue ou choisit la
+// mauvaise équipe (fallback `teams[0]`).
+//
+// Fichier Backend/data/team-name-overrides.json : mapping simple
+// "sigle PandaScore" -> "nom complet PandaScore" pour les cas identifiés à la
+// main (même logique que manual-map-scores.json). Vérifié EN PREMIER, avant
+// tout lookup dans teamAliases ou toute requête réseau : si le nom reçu est
+// un sigle connu, on le remplace par son nom complet et tout le reste du
+// pipeline (alias, recherche live, cache, logs) fonctionne sans y toucher.
+const nameOverrides = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(NAME_OVERRIDES_PATH, "utf-8"));
+    const map = new Map();
+    for (const [abbrev, fullName] of Object.entries(raw)) {
+      map.set(normalize(abbrev), fullName);
+    }
+    return map;
+  } catch (e) {
+    return new Map(); // fichier absent -> aucun impact, comportement identique à avant
+  }
+})();
+
+function resolveCanonicalName(teamName) {
+  const full = nameOverrides.get(normalize(teamName));
+  return full || teamName;
+}
 
 function daysBetweenDates(d1, d2) {
   const t1 = new Date(d1 + "T00:00:00").getTime();
@@ -200,6 +235,7 @@ async function vlrFetch(path, attempt = 0) {
  * utilise toujours le nom vlr.gg).
  */
 function resolveVlrName(teamName) {
+  teamName = resolveCanonicalName(teamName);
   const alias = teamAliases.get(normalize(teamName));
   return alias ? alias.vlr_name : teamName;
 }
@@ -209,6 +245,10 @@ function resolveVlrName(teamName) {
  * Renvoie null si rien trouvé.
  */
 async function findTeamId(teamName) {
+  // 0) Sigle connu ("FUR", "G2", "C9"...) -> nom complet PandaScore, AVANT
+  // tout le reste. Voir le commentaire au-dessus de nameOverrides plus haut.
+  teamName = resolveCanonicalName(teamName);
+
   // 1) Fichier d'alias construit à l'avance : instantané, zéro requête réseau,
   // zéro faux positif possible (rempli uniquement avec des matchs exacts).
   const alias = teamAliases.get(normalize(teamName));
@@ -248,6 +288,12 @@ async function findTeamId(teamName) {
  * horaires / heures de publication différentes entre les 2 sources).
  */
 async function findMatchId(team1Name, team2Name, dateStr) {
+  // Sigle -> nom complet AVANT de construire la cacheKey, sinon "FUR vs G2"
+  // et "FURIA Esports vs G2 Esports" seraient traités comme deux matchs
+  // différents en cache (et seul le 2e aurait une vraie chance de matcher).
+  team1Name = resolveCanonicalName(team1Name);
+  team2Name = resolveCanonicalName(team2Name);
+
   const cacheKey = "match-id:" + normalize(team1Name) + ":" + normalize(team2Name) + ":" + dateStr;
   const cached = getCached(cacheKey);
   if (cached !== undefined) return cached;
@@ -299,6 +345,11 @@ async function findMatchId(team1Name, team2Name, dateStr) {
  * ou null si introuvable / API indisponible.
  */
 async function getMapScores(team1Name, team2Name, dateStr) {
+  // 0. Sigle -> nom complet AVANT même la saisie manuelle, pour que tout le
+  // reste de la fonction (logs inclus) travaille avec des noms cohérents.
+  team1Name = resolveCanonicalName(team1Name);
+  team2Name = resolveCanonicalName(team2Name);
+
   // 1. Saisie manuelle en premier : instantané, jamais bloqué par Cloudflare,
   // et prioritaire même si vlr.gg a déjà été tenté sans succès pour ce match.
   const manual = findManualMapScores(team1Name, team2Name, dateStr);
@@ -360,6 +411,7 @@ async function getMapScores(team1Name, team2Name, dateStr) {
  * côté PandaScore (ex: Playoffs Americas pas encore créés côté PandaScore).
  */
 async function getUpcomingMatchesForTeam(teamName) {
+  teamName = resolveCanonicalName(teamName);
   const teamId = await findTeamId(teamName);
   if (!teamId) return { team: teamName, found_on_vlr: false, matches: [] };
 
