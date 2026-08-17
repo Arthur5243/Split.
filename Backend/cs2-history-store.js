@@ -47,6 +47,43 @@ db.exec(`
   )
 `);
 
+// Cache PERSISTANT du wikitext Liquipedia (page de tournoi -> contenu).
+// Avant, ce cache était une Map() en mémoire dans liquipedia-scores.js,
+// donc PERDU à chaque redémarrage du serveur — et comme le serveur
+// redémarre à chaque déploiement, chaque page de tournoi devait être
+// re-téléchargée à 31s pièce (throttle action=parse de Liquipedia) après
+// chaque push. En le persistant ici (même base SQLite/volume que le reste),
+// une page déjà récupérée le reste à travers les redémarrages : les matchs
+// d'un tournoi déjà vu se résolvent alors en secondes, pas en minutes.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS wikitext_cache (
+    page_title TEXT PRIMARY KEY,
+    wikitext TEXT,
+    fetched_at INTEGER
+  )
+`);
+
+const getWikitextCacheStmt = db.prepare(
+  `SELECT wikitext, fetched_at FROM wikitext_cache WHERE page_title = ?`
+);
+const setWikitextCacheStmt = db.prepare(
+  `INSERT OR REPLACE INTO wikitext_cache (page_title, wikitext, fetched_at) VALUES (@pageTitle, @wikitext, @fetchedAt)`
+);
+
+// TTL 6h : une page de tournoi ne change plus une fois les matchs finis.
+const WIKITEXT_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function getCachedWikitext(pageTitle) {
+  const row = getWikitextCacheStmt.get(pageTitle);
+  if (!row) return undefined;
+  if (Date.now() - row.fetched_at > WIKITEXT_CACHE_TTL_MS) return undefined;
+  return row.wikitext;
+}
+
+function setCachedWikitext(pageTitle, wikitext) {
+  setWikitextCacheStmt.run({ pageTitle, wikitext, fetchedAt: Date.now() });
+}
+
 const upsertStmt = db.prepare(`
   INSERT OR IGNORE INTO matches
     (id, team1, team2, team1_name, team2_name, score1, score2, status, team1_region, team2_region, league, phase, day, time, raw_json)
@@ -189,4 +226,6 @@ export {
   saveMapScoresFailure,
   getMapScoresState,
   resetAbandonedMapScores,
+  getCachedWikitext,
+  setCachedWikitext,
 };
