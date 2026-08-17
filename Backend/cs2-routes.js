@@ -198,12 +198,19 @@ function applyStoredMapScores(finished) {
   return stillUnknown;
 }
 
-async function enrichWithMapScores(data) {
+async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   const finished = data
     .filter((m) => m.status === "finished")
     .sort((a, b) => new Date(b.begin_at) - new Date(a.begin_at));
 
-  const toFetch = applyStoredMapScores(finished);
+  const gated = applyStoredMapScores(finished);
+  // EXCEPTION : les matchs dans forceRecheckIds (ceux tout juste devenus
+  // éligibles au sweep automatique parce qu'ils viennent de l'historique
+  // accumulé) contournent le filtre normal — sinon un match déjà marqué
+  // "abandon définitif" AVANT que ce sweep existe reste bloqué pour
+  // toujours, même une fois la vraie cause corrigée.
+  const forced = finished.filter((m) => forceRecheckIds.has(String(m.id)) && !gated.includes(m));
+  const toFetch = [...gated, ...forced];
 
   await mapWithConcurrency(toFetch, 1, async (m) => {
     try {
@@ -293,8 +300,20 @@ function buildMergedResults(liveData) {
   const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
     .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
     .map(toLiveHistoryShape);
+
+  // BUG CORRIGÉ (même cause que côté Valorant, cf server.js) : un match
+  // sorti des 50 plus récents de PandaScore mais toujours affiché via
+  // l'historique accumulé ci-dessus ne recevait JAMAIS l'appel Liquipedia —
+  // enrichWithMapScores() n'était appelé que sur `liveData` (la fenêtre
+  // fraîche), jamais sur l'accumulé. On expose ici la liste de ceux qui ont
+  // encore besoin d'un sweep, pour que l'appelant (refreshCS2Results) les
+  // ajoute au lot envoyé à enrichWithMapScores.
+  const accumulatedNeedingSweep = accumulated.filter((m) => !m.map_scores);
+
   const merged = [...liveData, ...accumulated];
-  return merged.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
+  const sorted = merged.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
+  sorted.accumulatedNeedingSweep = accumulatedNeedingSweep; // attaché sans changer la forme du tableau
+  return sorted;
 }
 
 // Rafraîchit et enrichit les résultats CS2 (fetch PandaScore + pose des
@@ -332,9 +351,18 @@ async function refreshCS2Results(force = false) {
   const merged = buildMergedResults(data);
   enrichedResultsCache = { data: merged, time: now };
 
+  // Le lot envoyé au sweep Liquipedia inclut maintenant aussi les matchs
+  // accumulés sans score (cf commentaire sur buildMergedResults), avec
+  // bypass du blocage "abandon définitif" hérité pour eux (cf commentaire
+  // sur enrichWithMapScores) — sinon ils ne sont jamais tentés du tout,
+  // silencieusement.
+  const accumulatedNeedingSweep = merged.accumulatedNeedingSweep || [];
+  const dataToEnrich = [...data, ...accumulatedNeedingSweep];
+  const forceRecheckIds = new Set(accumulatedNeedingSweep.map((m) => String(m.id)));
+
   if (!enrichInProgress) {
     enrichInProgress = true;
-    enrichWithMapScores(data)
+    enrichWithMapScores(dataToEnrich, forceRecheckIds)
       .catch((e) => console.error("cs2 enrichWithMapScores error:", e.message))
       .finally(() => {
         enrichInProgress = false;
