@@ -108,7 +108,7 @@ const RETRY_DELAYS_MS = [
   2 * 60 * 1000, // 2e -> 2 min
   4 * 60 * 1000, // 3e -> 4 min
   5 * 60 * 1000, // 4e -> 5 min
-  30 * 60 * 1000, // 5e -> 30 min
+  1 * 60 * 1000, // 5e -> 1 min
   2 * 60 * 60 * 1000, // 6e -> 2h, puis abandon définitif
 ];
 
