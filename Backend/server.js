@@ -489,19 +489,25 @@ const RESULTS_CUTOFF = "2026-08-07T23:59:59Z";
 // a déjà accumulé en base. Un match une fois vu une fois reste visible pour
 // de bon, même une fois poussé hors des 50 plus récents (tous jeux/régions
 // confondus) par le volume de matchs plus récents.
+//
+// BUG CORRIGÉ : un match accumulé sans score par map ne passait QUE par la
+// vérification de saisie manuelle (ci-dessous), jamais par la recherche
+// automatique vlr.gg — parce que enrichWithMapScores() n'était appelé que
+// sur `data` (la fenêtre fraîche PandaScore), jamais sur l'accumulé. Un
+// match tombé hors des 50 plus récents PandaScore restait donc bloqué pour
+// toujours, même quand vlr.gg avait le score en clair (cas FURIA vs G2 et
+// Cloud9 vs Evil Geniuses : score trouvé en tout premier résultat sur
+// vlrggapi, jamais tenté par notre code car jamais transmis à
+// enrichWithMapScores). Cette fonction renvoie maintenant aussi la liste des
+// matchs accumulés qui ont encore besoin d'un sweep automatique, pour que
+// l'appelant les ajoute au lot passé à enrichWithMapScores.
 function buildMergedResults(liveData) {
   const liveIds = new Set(liveData.map((m) => String(m.id)));
   const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
     .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
     .map(toLiveHistoryShape);
 
-  // BUG CORRIGÉ : un match sorti des 50 plus récents de PandaScore (mais
-  // toujours affiché via l'historique accumulé ci-dessus) ne passait
-  // jamais par applyStoredMapScores — donc jamais par la vérification de
-  // saisie manuelle non plus. Un match ajouté à manual-map-scores.json
-  // après être déjà sorti de cette fenêtre restait donc bloqué pour
-  // toujours, même avec la bonne donnée dans le fichier. On revérifie ici
-  // pour ceux qui n'ont encore aucun score par map.
+  const stillNeedingSweep = [];
   for (const m of accumulated) {
     if (m.map_scores) continue;
     const t1 = m.opponents?.[0]?.opponent?.name;
@@ -511,6 +517,8 @@ function buildMergedResults(liveData) {
     if (manual) {
       m.map_scores = manual;
       saveMapScores(m.id, manual); // persiste pour cohérence avec getFullHistory
+    } else {
+      stillNeedingSweep.push(m);
     }
   }
 
@@ -519,7 +527,9 @@ function buildMergedResults(liveData) {
   const filtered = cutoffMs
     ? merged.filter((m) => m.begin_at && new Date(m.begin_at).getTime() > cutoffMs)
     : merged;
-  return filtered.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
+  const sorted = filtered.sort((a, b) => new Date(b.begin_at || 0) - new Date(a.begin_at || 0));
+  sorted.accumulatedNeedingSweep = stillNeedingSweep; // attaché pour l'appelant, sans changer la forme du tableau
+  return sorted;
 }
 
 // Rafraîchit et enrichit les résultats Valorant (fetch PandaScore + pose des
@@ -589,8 +599,14 @@ async function refreshValorantResults(force = false) {
   const merged = buildMergedResults(data);
   enrichedResultsCache = { data: merged, time: now };
 
+  // Le lot envoyé au sweep vlr.gg inclut maintenant aussi les matchs
+  // accumulés sans score (cf commentaire sur buildMergedResults) — sinon
+  // ils ne sont jamais tentés du tout, silencieusement, même quand vlr.gg a
+  // le score en clair.
+  const dataToEnrich = [...data, ...(merged.accumulatedNeedingSweep || [])];
+
   enrichInProgress = true;
-  enrichWithMapScores(data)
+  enrichWithMapScores(dataToEnrich)
     .then(() => {
       // Les objets `data` sont mutés en place par enrichWithMapScores, donc
       // on refait la fusion avec l'historique accumulé pour que le cache
