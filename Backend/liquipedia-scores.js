@@ -339,6 +339,21 @@ function findMatchInWikitext(wikitext, team1Name, team2Name, dateStr) {
  * une qui contient réellement le match — le 1er résultat de recherche est
  * souvent une page d'index générique sans données exploitables.
  */
+
+// Pages d'index Liquipedia (listes de tournois par tier, pages de qualif
+// génériques...) : elles ne contiennent JAMAIS de {{Match}} exploitable,
+// mais la recherche plein texte les remonte souvent en tête. Avant, on les
+// téléchargeait quand même (30s chacune, throttle action=parse) pour
+// découvrir qu'elles étaient vides. On les repère maintenant par leur titre
+// et on les saute SANS les télécharger — gros gain de temps par match.
+const INDEX_PAGE_TITLE_RE = /(^|\/)(s|a|b|c|d)-tier tournaments|qualifier tournaments|tier tournaments/i;
+
+// Plafond de pages réellement téléchargées par match : au-delà, on
+// abandonne ce match pour ce cycle (il sera retenté plus tard) plutôt que de
+// monopoliser tout le cycle sur un seul match introuvable — un match qui a
+// testé 6+ pages à 30s brûle 3 min et bloque tous les suivants.
+const MAX_PAGES_FETCHED_PER_MATCH = 3;
+
 async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, dateStr) {
   if (!team1Name || !team2Name) return null;
 
@@ -364,25 +379,42 @@ async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, 
       continue;
     }
     for (const title of results || []) {
-      if (!seen.has(title)) {
-        seen.add(title);
-        pageTitles.push(title);
+      if (seen.has(title)) continue;
+      seen.add(title);
+      // Ignore les pages d'index tout de suite (pas de téléchargement) :
+      // elles n'ont jamais de {{Match}}, inutile de payer 30s pour le
+      // vérifier.
+      if (INDEX_PAGE_TITLE_RE.test(title)) {
+        console.log(`[liquipedia] "${title}" → page d'index ignorée sans téléchargement`);
+        continue;
       }
+      pageTitles.push(title);
     }
   }
   if (pageTitles.length === 0) {
-    console.log(`[liquipedia] search(${team1Name} ${team2Name}) → aucune page trouvée`);
+    console.log(`[liquipedia] search(${team1Name} ${team2Name}) → aucune page exploitable trouvée`);
     return null;
   }
 
+  let fetchedCount = 0;
   for (const pageTitle of pageTitles) {
+    if (fetchedCount >= MAX_PAGES_FETCHED_PER_MATCH) {
+      console.log(
+        `[liquipedia] ${team1Name} vs ${team2Name} → ${MAX_PAGES_FETCHED_PER_MATCH} pages testées sans succès, on abandonne pour ce cycle (retenté plus tard)`
+      );
+      break;
+    }
     let wikitext;
+    const wasCached = getCachedWikitext(pageTitle) !== undefined;
     try {
       wikitext = await getWikitext(pageTitle);
     } catch (e) {
       console.log(`[liquipedia] wikitext(${pageTitle}) → ERREUR:`, e.message);
       continue;
     }
+    // Ne compte dans le plafond que les pages RÉELLEMENT téléchargées (une
+    // page déjà en cache est quasi-gratuite, inutile de la compter).
+    if (!wasCached) fetchedCount++;
     if (!wikitext) continue;
 
     const { maps, matchCount } = findMatchInWikitext(wikitext, team1Name, team2Name, dateStr);
