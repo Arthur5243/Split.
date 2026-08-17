@@ -376,7 +376,7 @@ function applyStoredMapScores(finished) {
   return stillUnknown;
 }
 
-async function enrichWithMapScores(data) {
+async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   // Restriction retirée : on va chercher le détail par map pour TOUS les
   // matchs terminés renvoyés par PandaScore (jusqu'à 50, cf per_page côté
   // /api/valorant-results), pas seulement les N plus récents. Ça reste une
@@ -392,7 +392,16 @@ async function enrichWithMapScores(data) {
   // redeploys tant qu'un volume Railway est monté) — on ne rappelle vlr.gg
   // QUE pour les matchs jamais résolus jusqu'ici. C'est ce qui évite de
   // redemander la même requête en boucle.
-  const toFetch = applyStoredMapScores(finished);
+  //
+  // EXCEPTION : les matchs dans forceRecheckIds (ceux tout juste devenus
+  // éligibles au sweep automatique parce qu'ils viennent de l'historique
+  // accumulé, cf accumulatedNeedingSweep) contournent ce filtre. Sans ça,
+  // un match déjà marqué "abandon définitif" AVANT que ce sweep existe
+  // restait bloqué pour toujours, même une fois la vraie cause corrigée —
+  // exactement le cas de FURIA vs G2 et Cloud9 vs Evil Geniuses.
+  const gated = applyStoredMapScores(finished);
+  const forced = finished.filter((m) => forceRecheckIds.has(String(m.id)) && !gated.includes(m));
+  const toFetch = [...gated, ...forced];
 
   await mapWithConcurrency(toFetch, 3, async (m) => {
     const t1 = m.opponents?.[0]?.opponent?.name;
@@ -602,11 +611,16 @@ async function refreshValorantResults(force = false) {
   // Le lot envoyé au sweep vlr.gg inclut maintenant aussi les matchs
   // accumulés sans score (cf commentaire sur buildMergedResults) — sinon
   // ils ne sont jamais tentés du tout, silencieusement, même quand vlr.gg a
-  // le score en clair.
-  const dataToEnrich = [...data, ...(merged.accumulatedNeedingSweep || [])];
+  // le score en clair. Leurs id sont aussi passés en forceRecheckIds : s'ils
+  // ont été marqués "abandon définitif" AVANT que ce sweep n'existe, ce
+  // vieux statut ne doit plus les bloquer maintenant qu'ils sont enfin
+  // éligibles au sweep automatique.
+  const accumulatedNeedingSweep = merged.accumulatedNeedingSweep || [];
+  const dataToEnrich = [...data, ...accumulatedNeedingSweep];
+  const forceRecheckIds = new Set(accumulatedNeedingSweep.map((m) => String(m.id)));
 
   enrichInProgress = true;
-  enrichWithMapScores(dataToEnrich)
+  enrichWithMapScores(dataToEnrich, forceRecheckIds)
     .then(() => {
       // Les objets `data` sont mutés en place par enrichWithMapScores, donc
       // on refait la fusion avec l'historique accumulé pour que le cache
@@ -703,6 +717,32 @@ app.get("/api/match-history", (req, res) => {
 // Petite page de diag, pour vérifier vite fait (sans ouvrir le gros JSON)
 // que l'historique est bien là et qu'une équipe précise y apparaît.
 // Ex: /admin/check-team?name=Gentle Mates
+// Route de diagnostic PONCTUELLE (à retirer une fois le test fait) : teste
+// si HLTV.org répond normalement à une requête venant de Railway, ou si
+// elle est bloquée (Cloudflare). Aucune logique de scraping ici — juste le
+// statut HTTP brut et le début de la réponse, pour distinguer une vraie
+// page HLTV d'une page de challenge Cloudflare.
+app.get("/admin/test-hltv-access", async (req, res) => {
+  try {
+    const response = await fetch("https://www.hltv.org/results", {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+    const text = await response.text();
+    const looksBlocked = /cloudflare|attention required|checking your browser|cf-browser-verification/i.test(text);
+    res.json({
+      status_http: response.status,
+      probablement_bloque: looksBlocked,
+      taille_reponse: text.length,
+      debut_reponse: text.slice(0, 500),
+    });
+  } catch (e) {
+    res.status(500).json({ erreur: e.message });
+  }
+});
+
 app.get("/admin/check-team", (req, res) => {
   try {
     const raw = fs.readFileSync(MATCHES_PATH, "utf-8");
