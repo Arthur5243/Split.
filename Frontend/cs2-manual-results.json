@@ -299,6 +299,39 @@
         { "map": "Nuke", "score1": 7, "score2": 13 },
         { "map": "Dust2", "score1": 13, "score2": 11 }
       ]
+    },
+    {
+      "_comment": "STATE vs VP.Prodigy — 17 août 2026 — 2-0 STATE (source: strafe)",
+      "teams": ["state", "vp.prodigy"],
+      "maps": [
+        { "map": "Cache", "score1": 13, "score2": 4 },
+        { "map": "Nuke", "score1": 13, "score2": 3 }
+      ]
+    },
+    {
+      "_comment": "Lavked vs INOX Division — 17 août 2026 — 2-1 Lavked (source: hltv.org)",
+      "teams": ["lavked", "inox division"],
+      "maps": [
+        { "map": "Ancient", "score1": 7, "score2": 13 },
+        { "map": "Nuke", "score1": 16, "score2": 12 },
+        { "map": "Dust2", "score1": 13, "score2": 11 }
+      ]
+    },
+    {
+      "_comment": "Mai Tai vs Esport BERG — 17 août 2026 — 2-0 Mai Tai (source: hltv.org)",
+      "teams": ["mai tai", "esport berg"],
+      "maps": [
+        { "map": "Mirage", "score1": 13, "score2": 9 },
+        { "map": "Ancient", "score1": 13, "score2": 1 }
+      ]
+    },
+    {
+      "_comment": "Lavked vs Esport Academy Copenhagen — 17 août 2026 — 0-2 Lavked (source: hltv.org)",
+      "teams": ["lavked", "esport academy copenhagen"],
+      "maps": [
+        { "map": "Ancient", "score1": 8, "score2": 13 },
+        { "map": "Mirage", "score1": 6, "score2": 13 }
+      ]
     }
   ]
 }
