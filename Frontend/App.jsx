@@ -726,6 +726,7 @@ function transformMatchCS2(m) {
     id: "cs2-" + m.id,
     day: d ? isoDate(d) : null,
     time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    beginAt: beginRaw || null,
     league: abbreviateCS2League(rawLeague),
     phase: phase,
     tournamentName: (m.tournament && m.tournament.name) || "",
@@ -968,7 +969,141 @@ function pairJitter(nameA, nameB, delta) {
 }
 
 // Calcule les cotes (% affiché + cote décimale façon bookmaker) pour un match donné,
-// à partir de l'historique des matchs terminés déjà récupérés côté app.
+// --- Système Elo (remplace le lissage vers 50%) -------------------------
+//
+// Avant : winrate lissé vers 50% quand peu/pas d'historique connu -> tous
+// les matchs sans historique affichaient un % quasi identique (50/50,
+// 51/49...), qu'une équipe soit réellement meilleure ou pas — la "prudence"
+// du lissage bayésien masquait toute vraie différence de niveau.
+//
+// Maintenant : un rating Elo par équipe, mis à jour match par match sur tout
+// l'historique connu, traité chronologiquement. Le Elo capture nativement
+// la forme récente (le rating reflète toujours le dernier état connu d'une
+// équipe, pas une moyenne plate sur toute la période) et le niveau relatif
+// des adversaires rencontrés (battre une équipe forte fait plus progresser
+// que battre une équipe faible). Un H2H direct entre les deux équipes vient
+// ensuite corriger légèrement le %.
+//
+// Si une des deux équipes a moins de MIN_RATED_MATCHES matchs notés dans
+// l'historique connu, on n'invente PAS de %/50-50 : odds1/odds2 valent
+// null, et l'affichage indique l'absence de donnée (cf MatchCard).
+const ELO_DEFAULT = 1500;
+const ELO_K_BASE = 32;
+const MIN_RATED_MATCHES = 3;
+
+function computeEloRatings(finishedMatches, tierWeightFn) {
+  const ratings = new Map();
+  const matchCounts = new Map();
+
+  const usable = finishedMatches.filter(
+    (m) => m.team1Name && m.team2Name && m.score1 != null && m.score2 != null && m.score1 !== m.score2
+  );
+  const sorted = [...usable].sort((a, b) => new Date(a.beginAt || a.day || 0) - new Date(b.beginAt || b.day || 0));
+
+  for (const m of sorted) {
+    const t1 = normTeamName(m.team1Name);
+    const t2 = normTeamName(m.team2Name);
+    const r1 = ratings.get(t1) ?? ELO_DEFAULT;
+    const r2 = ratings.get(t2) ?? ELO_DEFAULT;
+
+    const expected1 = 1 / (1 + Math.pow(10, (r2 - r1) / 400));
+    const actual1 = m.score1 > m.score2 ? 1 : 0;
+    // Un match de faible enjeu compte quand même un minimum (0.4x), un
+    // match de tier max compte plein pot — pondère l'ampleur de la mise à
+    // jour de rating, pas juste sa direction.
+    const weight = tierWeightFn(m.tier);
+    const k = ELO_K_BASE * (0.4 + 0.6 * weight);
+
+    const delta = k * (actual1 - expected1);
+    ratings.set(t1, r1 + delta);
+    ratings.set(t2, r2 - delta);
+    matchCounts.set(t1, (matchCounts.get(t1) ?? 0) + 1);
+    matchCounts.set(t2, (matchCounts.get(t2) ?? 0) + 1);
+  }
+
+  return { ratings, matchCounts };
+}
+
+// Correctif basé sur les confrontations directes connues entre les deux
+// équipes précises de ce match — reste un indice mineur (plafonné à ±7.5
+// points de %), jamais la base du calcul : un H2H sur 2-3 matchs peut être
+// trompeur, le Elo (construit sur bien plus de matchs, contre bien plus
+// d'adversaires) reste la référence principale.
+function h2hAdjustment(team1Name, team2Name, finishedMatches) {
+  const t1 = normTeamName(team1Name);
+  const t2 = normTeamName(team2Name);
+  let wins1 = 0;
+  let wins2 = 0;
+  for (const m of finishedMatches) {
+    if (!m.team1Name || !m.team2Name || m.score1 == null || m.score2 == null || m.score1 === m.score2) continue;
+    const a = normTeamName(m.team1Name);
+    const b = normTeamName(m.team2Name);
+    const team1WonThisMatch = m.score1 > m.score2;
+    if (a === t1 && b === t2) {
+      team1WonThisMatch ? wins1++ : wins2++;
+    } else if (a === t2 && b === t1) {
+      team1WonThisMatch ? wins2++ : wins1++;
+    }
+  }
+  const total = wins1 + wins2;
+  if (total === 0) return 0;
+  const h2hWinrate = wins1 / total;
+  const confidence = Math.min(total / 5, 1); // plein effet à partir de 5 confrontations connues
+  return (h2hWinrate - 0.5) * confidence * 0.15;
+}
+
+// Calcule les % à partir du Elo + H2H pour UN match, à partir d'un Elo déjà
+// calculé (cf computeEloRatings, à calculer une seule fois pour tout un lot
+// de matchs, pas à chaque match individuellement). Renvoie
+// insufficientData=true (odds à null) si l'une des deux équipes n'a pas
+// assez de matchs notés dans l'historique connu.
+function computeMatchOddsElo(match, finishedMatches, eloData) {
+  const t1 = normTeamName(match.team1Name);
+  const t2 = normTeamName(match.team2Name);
+  const n1 = eloData.matchCounts.get(t1) ?? 0;
+  const n2 = eloData.matchCounts.get(t2) ?? 0;
+
+  if (n1 < MIN_RATED_MATCHES || n2 < MIN_RATED_MATCHES) {
+    return { odds1: null, odds2: null, cote1: null, cote2: null, insufficientData: true };
+  }
+
+  const r1 = eloData.ratings.get(t1) ?? ELO_DEFAULT;
+  const r2 = eloData.ratings.get(t2) ?? ELO_DEFAULT;
+  let p1 = 1 / (1 + Math.pow(10, (r2 - r1) / 400));
+
+  p1 += h2hAdjustment(match.team1Name, match.team2Name, finishedMatches);
+  // Petit décalage anti-alignement (jamais deux affrontements différents
+  // pile au même %), marginal comparé au signal Elo/H2H.
+  p1 += pairJitter(match.team1Name, match.team2Name, 0.01);
+  p1 = Math.min(0.97, Math.max(0.03, p1));
+
+  const odds1 = Math.round(p1 * 100);
+  const odds2 = 100 - odds1;
+  const margin = 0.9;
+  return {
+    odds1,
+    odds2,
+    cote1: odds1 > 0 ? Math.round((100 / odds1) * margin * 100) / 100 : null,
+    cote2: odds2 > 0 ? Math.round((100 / odds2) * margin * 100) / 100 : null,
+    insufficientData: false,
+  };
+}
+
+// Applique le calcul ci-dessus à une liste de matchs (upcoming/live) : calcule
+// le Elo UNE SEULE FOIS pour tout le lot (pas à chaque match), puis applique
+// le résultat à chacun.
+function attachComputedOdds(matches, finishedMatches, tierWeightFn = tierWeight) {
+  const eloData = computeEloRatings(finishedMatches, tierWeightFn);
+  return matches.map((m) => {
+    if (isTbd(m)) return { ...m, odds1: null, odds2: null, cote1: null, cote2: null, insufficientData: true };
+    const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, finishedMatches, eloData);
+    return { ...m, odds1, odds2, cote1, cote2, insufficientData };
+  });
+}
+
+// Version historique (winrate lissé) conservée pour compatibilité — plus
+// utilisée directement pour l'affichage des cotes, gardée au cas où
+// d'autres calculs internes s'appuient encore dessus.
 function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
   const gen1 = recentWinrate(match.team1Name, finishedMatches, ODDS_GENERAL_LIMIT, tierWeightFn);
   const gen2 = recentWinrate(match.team2Name, finishedMatches, ODDS_GENERAL_LIMIT, tierWeightFn);
@@ -982,22 +1117,15 @@ function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
     wr2 = wr2 * (1 - ODDS_H2H_WEIGHT) + (1 - h2hWr1) * ODDS_H2H_WEIGHT;
   }
 
-  // Normalisation pour que les deux probabilités se répondent (somme = 100%).
   const total = wr1 + wr2;
   let p1 = total > 0 ? wr1 / total : 0.5;
 
-  // Décalage déterministe par paire d'équipes : plus fort quand on a peu de
-  // données réelles (échantillon faible des deux côtés), plus léger sinon.
-  // Ça casse les 50/50 et 46/54 identiques d'un match sans historique à
-  // l'autre, sans jamais changer de valeur au rechargement.
   const knownSample = gen1.played + gen2.played;
   const jitterDelta = knownSample < 4 ? 0.07 : knownSample < 10 ? 0.03 : 0.015;
   p1 += pairJitter(match.team1Name, match.team2Name, jitterDelta);
 
-  // Garde-fou : jamais 0% ni 100% pile, pour garder un peu d'incertitude.
   p1 = Math.min(0.95, Math.max(0.05, p1));
 
-  // odds2 dérivé de odds1 (pas arrondi séparément) pour garantir une somme à 100%.
   const odds1 = Math.round(p1 * 100);
   const odds2 = 100 - odds1;
   const p2 = odds2 / 100;
@@ -1009,16 +1137,6 @@ function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
     cote1: Math.round((1 / p1) * margin * 100) / 100,
     cote2: Math.round((1 / p2) * margin * 100) / 100,
   };
-}
-
-// Applique le calcul ci-dessus à une liste de matchs (upcoming/live), en s'appuyant
-// sur l'historique des matchs terminés pour établir la forme de chaque équipe.
-function attachComputedOdds(matches, finishedMatches, tierWeightFn = tierWeight) {
-  return matches.map((m) => {
-    if (isTbd(m)) return { ...m, odds1: 0, odds2: 0, cote1: null, cote2: null };
-    const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, finishedMatches, tierWeightFn);
-    return { ...m, odds1, odds2, cote1, cote2 };
-  });
 }
 
 // --- Système de points ---
@@ -1432,7 +1550,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
-            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 : 0}%</span>}
+            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5">
             {team1RegionColor && (
@@ -1471,7 +1589,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2 flex-row-reverse">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
-            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 : 0}%</span>}
+            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
@@ -2592,11 +2710,14 @@ export default function ClutchApp() {
         // partir de l'historique qui EXCLUT le match lui-même (sinon son
         // propre résultat biaiserait sa propre cote).
         setResultsMatches(
-          paT.map((m) => {
-            const historyWithoutSelf = finishedMatches.filter((h) => String(h.id) !== String(m.id));
-            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf);
-            return { ...m, odds1, odds2, cote1, cote2 };
-          })
+          (() => {
+            const eloDataResults = computeEloRatings(finishedMatches, tierWeight);
+            return paT.map((m) => {
+              const historyWithoutSelf = finishedMatches.filter((h) => String(h.id) !== String(m.id));
+              const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataResults);
+              return { ...m, odds1, odds2, cote1, cote2, insufficientData };
+            });
+          })()
         );
       } catch (e) {
         // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
@@ -2648,14 +2769,44 @@ export default function ClutchApp() {
         const historyT = Array.isArray(history) ? history.map(transformMatchCS2) : [];
         // Même règle que Valorant : on prend la source la plus riche.
         const finishedMatchesCS2 = historyT.length > paT.length ? historyT : paT;
-        setCs2UpcomingMatches(attachComputedOdds(upT, finishedMatchesCS2, tierWeightCS2));
-        setCs2LiveMatches(attachComputedOdds(liT, finishedMatchesCS2, tierWeightCS2));
+
+        // Déduplique par id (garde la 1ère occurrence) — sinon un même match
+        // qui ressort deux fois côté backend (pagination PandaScore instable
+        // quand plusieurs matchs partagent le même begin_at) s'affichait en
+        // double dans "à venir".
+        function dedupeByIdCS2(list) {
+          const seen = new Set();
+          const out = [];
+          for (const m of list) {
+            const key = String(m.id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(m);
+          }
+          return out;
+        }
+        // Ne garde que les matchs réellement futurs (begin_at > maintenant)
+        // dans "à venir" — un match déjà commencé/terminé ne doit jamais y
+        // apparaître, même si PandaScore le renvoie encore sur cet endpoint.
+        const now = Date.now();
+        const upFuture = dedupeByIdCS2(upT).filter((m) => {
+          if (!m.beginAt) return true; // pas de date connue -> on ne le cache pas à tort
+          const t = new Date(m.beginAt).getTime();
+          return Number.isNaN(t) || t > now;
+        });
+        const liDeduped = dedupeByIdCS2(liT);
+
+        setCs2UpcomingMatches(attachComputedOdds(upFuture, finishedMatchesCS2, tierWeightCS2));
+        setCs2LiveMatches(attachComputedOdds(liDeduped, finishedMatchesCS2, tierWeightCS2));
         setCs2ResultsMatches(
-          paT.map((m) => {
-            const historyWithoutSelf = finishedMatchesCS2.filter((h) => String(h.id) !== String(m.id));
-            const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf, tierWeightCS2);
-            return { ...m, odds1, odds2, cote1, cote2 };
-          })
+          (() => {
+            const eloDataCS2Results = computeEloRatings(finishedMatchesCS2, tierWeightCS2);
+            return paT.map((m) => {
+              const historyWithoutSelf = finishedMatchesCS2.filter((h) => String(h.id) !== String(m.id));
+              const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataCS2Results);
+              return { ...m, odds1, odds2, cote1, cote2, insufficientData };
+            });
+          })()
         );
       } catch (e) {
         // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
