@@ -18,6 +18,9 @@
  */
 
 import express from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
   pandaFetch,
   cachedFetch,
@@ -36,6 +39,10 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ADMIN_KEY = process.env.ADMIN_KEY;
+const CS2_MATCHES_PATH = path.join(__dirname, "data", "matches-cs2.json");
 
 const router = express.Router();
 
@@ -419,5 +426,139 @@ const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 setInterval(() => {
   refreshCS2Results(true).catch((e) => console.error("[cs2 background refresh]", e.message));
 }, CS2_BACKGROUND_REFRESH_INTERVAL_MS);
+
+// --- Historique profond CS2 (équivalent matches.json / /admin/export-matches côté Valorant) ---
+//
+// Le système de cotes "maison" (attachComputedOdds) a besoin d'un gros
+// historique de matchs terminés pour calculer des winrates fiables. Côté
+// Valorant, ça vient de Backend/data/matches.json (2500+ matchs depuis
+// janvier 2025, alimenté via /admin/export-matches). CS2 n'avait pas
+// d'équivalent — juste l'historique accumulé organiquement depuis qu'on
+// travaille sur ce projet, beaucoup trop mince pour des cotes fiables.
+//
+// Même workflow que Valorant : /admin/export-matches-cs2 télécharge un gros
+// JSON (tous les matchs CS2 terminés depuis 2025 sur PandaScore), à coller
+// tel quel dans Backend/data/matches-cs2.json sur GitHub.
+
+function toStoredShapeCS2(raw, index) {
+  const t1 = raw.opponents?.[0]?.opponent;
+  const t2 = raw.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return null;
+
+  const date = raw.begin_at ? raw.begin_at.slice(0, 10) : null;
+  if (!date) return null;
+
+  const results = raw.results || [];
+  const r1 = results.find((r) => r.team_id === t1.id);
+  const r2 = results.find((r) => r.team_id === t2.id);
+  if (!r1 || !r2) return null;
+  if (r1.score === 0 && r2.score === 0) return null;
+
+  const winner = raw.winner?.name || (r1.score > r2.score ? t1.name : r2.score > r1.score ? t2.name : null);
+
+  return {
+    match_id: index + 1,
+    pandascore_id: raw.id,
+    tournament_id: raw.tournament?.id ? "PANDA_" + raw.tournament.id : "PANDA_UNKNOWN",
+    tournament_name: raw.tournament?.name || raw.league?.name || "Unknown",
+    tier: raw.league?.name || "Unknown",
+    region: "AUTO",
+    date,
+    stage: raw.serie?.full_name || raw.name || "Unknown",
+    team1: t1.name,
+    team2: t2.name,
+    score: r1.score + "-" + r2.score,
+    winner,
+  };
+}
+
+async function fetchAllPastMatchesCS2() {
+  const all = [];
+  const MAX_PAGES = 30; // 30 x 100 = 3000 matchs max, largement assez pour 2025-2026
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch = await pandaFetch("/" + CS2_SLUG + "/matches/past?per_page=100&page=" + page + "&sort=-begin_at");
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    all.push(...batch);
+    const oldest = batch[batch.length - 1];
+    if (oldest?.begin_at && oldest.begin_at.slice(0, 4) < "2025") break;
+  }
+  return all;
+}
+
+router.get("/admin/export-matches-cs2", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) {
+    return res.status(403).send("Accès refusé.");
+  }
+  try {
+    const raw = await fetchAllPastMatchesCS2();
+    const inRange = raw.filter((m) => {
+      const y = m.begin_at ? m.begin_at.slice(0, 4) : null;
+      return y === "2025" || y === "2026";
+    });
+    const seen = new Set();
+    const cleaned = [];
+    for (const m of inRange) {
+      if (seen.has(m.id)) continue;
+      seen.add(m.id);
+      cleaned.push(m);
+    }
+    cleaned.sort((a, b) => (a.begin_at || "").localeCompare(b.begin_at || ""));
+
+    const formatted = cleaned.map(toStoredShapeCS2).filter(Boolean);
+    const json = JSON.stringify(formatted, null, 2);
+
+    console.log(`export-matches-cs2: ${formatted.length} matchs, ${json.length} caractères`);
+    res.setHeader("Content-Disposition", 'attachment; filename="matches-cs2.json"');
+    res.type("application/json").send(json);
+  } catch (e) {
+    console.error("export-matches-cs2 error:", e.message);
+    res.status(502).send("Erreur PandaScore : " + e.message);
+  }
+});
+
+// Même conversion que toPandaScoreShape côté Valorant (server.js) : rend
+// data/matches-cs2.json exploitable par transformMatchCS2() côté front, sans
+// rien changer à App.jsx au-delà du branchement (comme pour Valorant).
+function toPandaScoreShapeCS2(m, index) {
+  const id1 = "h1_" + (m.match_id ?? index);
+  const id2 = "h2_" + (m.match_id ?? index);
+  const parts = (m.score || "").split("-").map((s) => parseInt(s.trim(), 10));
+  const hasScore = parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1]);
+
+  return {
+    id: m.pandascore_id || "hist_" + m.match_id,
+    begin_at: m.date ? m.date + "T00:00:00Z" : null,
+    status: "finished",
+    tier: m.tier || null,
+    tournament: { name: m.tournament_name },
+    serie: { full_name: m.tournament_name, name: m.tournament_name },
+    league: { name: m.tournament_name || "CS2" },
+    opponents: [
+      { opponent: { id: id1, name: m.team1, acronym: null, image_url: null } },
+      { opponent: { id: id2, name: m.team2, acronym: null, image_url: null } },
+    ],
+    results: hasScore
+      ? [
+          { team_id: id1, score: parts[0] },
+          { team_id: id2, score: parts[1] },
+        ]
+      : [],
+  };
+}
+
+router.get("/api/cs2-match-history", (req, res) => {
+  try {
+    if (!fs.existsSync(CS2_MATCHES_PATH)) {
+      return res.json([]); // pas encore backfillé -> liste vide, jamais d'erreur
+    }
+    const raw = fs.readFileSync(CS2_MATCHES_PATH, "utf-8");
+    const matches = JSON.parse(raw);
+    const usable = matches.filter((m) => m.team1 && m.team2 && m.team1 !== "TBD" && m.team2 !== "TBD");
+    res.json(usable.map(toPandaScoreShapeCS2));
+  } catch (e) {
+    console.error("cs2-match-history error:", e.message);
+    res.status(500).json({ error: "Impossible de lire l'historique CS2." });
+  }
+});
 
 export default router;
