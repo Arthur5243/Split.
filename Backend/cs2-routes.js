@@ -153,7 +153,27 @@ router.get("/api/cs2-upcoming", async (req, res) => {
       if (pageData.length < PER_PAGE) break;
       await sleep(200);
     }
-    const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m) && !isHiddenMatchup(m)).map(attachTeamRegions);
+    // Déduplique par id PandaScore : la pagination peut renvoyer le même
+    // match deux fois si plusieurs matchs partagent exactement le même
+    // begin_at (tri PandaScore alors instable d'un appel à l'autre).
+    const seenIds = new Set();
+    const deduped = all.filter((m) => {
+      if (seenIds.has(m.id)) return false;
+      seenIds.add(m.id);
+      return true;
+    });
+    const now = Date.now();
+    const data = deduped
+      .filter((m) => !isFullyUnknown(m) && isNotableTier(m) && !isHiddenMatchup(m))
+      // Ne garde que les matchs réellement futurs — un match déjà commencé
+      // (statut pas encore mis à jour côté PandaScore) ne doit pas polluer
+      // "à venir".
+      .filter((m) => {
+        if (!m.begin_at) return true;
+        const t = new Date(m.begin_at).getTime();
+        return Number.isNaN(t) || t > now;
+      })
+      .map(attachTeamRegions);
     res.json(data);
   } catch (e) {
     console.error("cs2-upcoming error:", e.message);
