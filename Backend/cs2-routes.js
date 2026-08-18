@@ -445,7 +445,9 @@ async function refreshCS2Results(force = false) {
   applyStoredMapScores(data.filter((m) => m.status === "finished"));
 
   const merged = buildMergedResults(data);
+  applyKnownOdds(merged);
   enrichedResultsCache = { data: merged, time: now };
+  scheduleOddsRefresh(merged);
 
   // Le lot envoyé au sweep Liquipedia inclut maintenant aussi les matchs
   // accumulés sans score (cf commentaire sur buildMergedResults), avec
