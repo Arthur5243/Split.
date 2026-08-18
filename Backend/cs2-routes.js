@@ -36,7 +36,6 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
-import { getCS2WinPercentages } from "./cs2-oddspapi-scores.js";
 
 const router = express.Router();
 
@@ -148,78 +147,12 @@ router.get("/api/cs2-upcoming", async (req, res) => {
       await sleep(200);
     }
     const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m) && !isHiddenMatchup(m)).map(attachTeamRegions);
-    applyKnownOdds(data);
     res.json(data);
-    scheduleOddsRefresh(data);
   } catch (e) {
     console.error("cs2-upcoming error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs CS2 à venir." });
   }
 });
-
-// Cache mémoire des % déjà trouvés (match PandaScore id -> {odds1, odds2,
-// time}), TTL 30 min (les cotes évoluent mais pas d'une minute à l'autre).
-//
-// BUG CORRIGÉ : la 1ère version attendait (await) l'appel réseau OddsPapi
-// pour CHAQUE match avant de répondre (jusqu'à 900ms/match) -> avec
-// plusieurs dizaines de matchs à venir, /api/cs2-upcoming devenait bien
-// trop lent, le proxy Railway coupait la connexion, et le front recevait
-// une réponse tronquée/périmée — ce qui donnait l'impression que des
-// matchs déjà terminés "revenaient" dans l'onglet à venir (en réalité :
-// vieille réponse mise en cache côté navigateur/proxy pendant l'échec).
-// Même schéma que pour les scores par map (Liquipedia/vlr.gg) : on répond
-// IMMÉDIATEMENT avec ce qu'on sait déjà, et on va chercher le reste en
-// arrière-plan pour le prochain appel (poll 60s côté front).
-const oddsCache = new Map(); // matchId -> { odds1, odds2, time }
-const ODDS_CACHE_TTL_MS = 30 * 60 * 1000;
-let oddsRefreshInProgress = false;
-
-function applyKnownOdds(matches) {
-  const now = Date.now();
-  for (const m of matches) {
-    const cached = oddsCache.get(String(m.id));
-    if (cached && now - cached.time < ODDS_CACHE_TTL_MS) {
-      m.odds1 = cached.odds1;
-      m.odds2 = cached.odds2;
-    }
-  }
-}
-
-// Va chercher les % manquants (ou périmés) en tâche de fond, SANS bloquer
-// la réponse HTTP en cours. Concurrence limitée + pause entre appels pour
-// respecter le délai minimal d'OddsPapi (~0.88s) entre deux appels /odds.
-function scheduleOddsRefresh(matches) {
-  if (oddsRefreshInProgress) return;
-  const now = Date.now();
-  const needsRefresh = matches.filter((m) => {
-    const cached = oddsCache.get(String(m.id));
-    return !cached || now - cached.time >= ODDS_CACHE_TTL_MS;
-  });
-  if (needsRefresh.length === 0) return;
-
-  oddsRefreshInProgress = true;
-  mapWithConcurrency(needsRefresh, 2, async (m) => {
-    const t1 = m.opponents?.[0]?.opponent?.name;
-    const t2 = m.opponents?.[1]?.opponent?.name;
-    const date = (m.begin_at || "").slice(0, 10);
-    try {
-      const pct = await getCS2WinPercentages(t1, t2, date);
-      if (pct) {
-        oddsCache.set(String(m.id), { odds1: pct.odds1, odds2: pct.odds2, time: Date.now() });
-        console.log(`[oddspapi] ${t1} vs ${t2} (${date}) → ${pct.odds1}%/${pct.odds2}%`);
-      } else {
-        console.log(`[oddspapi] ${t1} vs ${t2} (${date}) → aucun fixture/cote correspondant trouvé`);
-      }
-    } catch (e) {
-      console.log(`[oddspapi] ${t1} vs ${t2} → ERREUR:`, e.message);
-    }
-    await sleep(900);
-  })
-    .catch((e) => console.error("[oddspapi background refresh]", e.message))
-    .finally(() => {
-      oddsRefreshInProgress = false;
-    });
-}
 
 // Filet de sécurité simple : un match encore "running" depuis plus de 6h
 // (large marge pour un Bo5 CS2) est presque certainement bloqué côté statut
@@ -239,9 +172,7 @@ router.get("/api/cs2-live", async (req, res) => {
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
     const withRegions = visible.map(attachTeamRegions);
-    applyKnownOdds(withRegions);
     res.json(withRegions);
-    scheduleOddsRefresh(withRegions);
   } catch (e) {
     console.error("cs2-live error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs CS2 en direct." });
@@ -445,9 +376,7 @@ async function refreshCS2Results(force = false) {
   applyStoredMapScores(data.filter((m) => m.status === "finished"));
 
   const merged = buildMergedResults(data);
-  applyKnownOdds(merged);
   enrichedResultsCache = { data: merged, time: now };
-  scheduleOddsRefresh(merged);
 
   // Le lot envoyé au sweep Liquipedia inclut maintenant aussi les matchs
   // accumulés sans score (cf commentaire sur buildMergedResults), avec
