@@ -31,8 +31,9 @@ async function oddspapiFetch(path, params = {}) {
 }
 
 // Diagnostic : renvoie un échantillon brut des tournois CS2 + des matchs à
-// venir des 3 prochains jours, pour inspecter les vrais noms de champs
-// avant d'écrire la logique de correspondance avec PandaScore.
+// venir des 3 prochains jours + les cotes réelles du 1er match trouvé, pour
+// inspecter les vrais noms de champs avant d'écrire la logique de
+// correspondance avec PandaScore.
 async function diagnosticSample() {
   const tournaments = await oddspapiFetch("/tournaments", { sportId: CS2_SPORT_ID });
 
@@ -45,11 +46,24 @@ async function diagnosticSample() {
     to: fmt(in3days),
   });
 
+  let odds = null;
+  let oddsError = null;
+  if (Array.isArray(fixtures) && fixtures.length > 0) {
+    try {
+      odds = await oddspapiFetch("/odds", { fixtureId: fixtures[0].fixtureId });
+    } catch (e) {
+      oddsError = e.message;
+    }
+  }
+
   return {
     nb_tournois: Array.isArray(tournaments) ? tournaments.length : "format inattendu",
     echantillon_tournois: Array.isArray(tournaments) ? tournaments.slice(0, 3) : tournaments,
     nb_matchs: Array.isArray(fixtures) ? fixtures.length : "format inattendu",
     echantillon_matchs: Array.isArray(fixtures) ? fixtures.slice(0, 3) : fixtures,
+    fixture_teste_pour_les_cotes: Array.isArray(fixtures) && fixtures.length > 0 ? fixtures[0].fixtureId : null,
+    cotes: odds,
+    erreur_cotes: oddsError,
   };
 }
 
