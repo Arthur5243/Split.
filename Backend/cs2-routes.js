@@ -27,7 +27,6 @@ import {
   mapWithConcurrency,
   sleep,
   classifyTeamRegion,
-  getMapScoresForMatch,
   CS2_SLUG,
   PANDASCORE_API_KEY,
 } from "./cs2-scores.js";
@@ -80,6 +79,7 @@ function isFullyUnknown(m) {
 const HIDDEN_MATCHUPS = [
   ["vitality academy", "phantom academy"],
   ["atreides", "ex-sashi academy"],
+  ["bestia academy", "red canids academy"],
 ];
 function isHiddenMatchup(m) {
   const t1 = (m.opponents?.[0]?.opponent?.name || "").toLowerCase();
@@ -299,32 +299,25 @@ async function processOneMatch(m, data) {
 
     let mapScores = null;
     const date = (m.begin_at || "").slice(0, 10);
-    const tournamentName = m.league?.name || m.serie?.full_name || "";
+    const leagueName = m.league?.name || "";
+    const serieName = m.serie?.full_name || m.serie?.name || "";
     let source = null;
 
     try {
-      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
+      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName);
       if (mapScores) source = "liquipedia";
     } catch (e) {
       console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-    }
-
-    if (!mapScores) {
-      try {
-        mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
-        if (mapScores) source = "pandascore";
-      } catch (e) {
-        console.log(`[cs2 map_scores] pandascore ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
     }
 
     const seriesResults = m.results || [];
     const seriesR1 = seriesResults.find((r) => r.team_id === t1.id);
     const seriesR2 = seriesResults.find((r) => r.team_id === t2.id);
     const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
+    const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
-      `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia ni PandaScore)"}`
+      `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (Liquipedia n'a rien trouvé)"}`
     );
 
     if (mapScores) {
@@ -408,7 +401,7 @@ async function refreshCS2Results(force = false) {
   }
 
   const data = (await cachedFetch("cs2-results", "/" + CS2_SLUG + "/matches/past?per_page=50"))
-    .filter((m) => isNotableTier(m) && !isHiddenMatchup(m))
+    .filter((m) => m.status !== "canceled" && isNotableTier(m) && !isHiddenMatchup(m))
     .map(attachTeamRegions);
 
   storeFinishedMatches(data.map(toHistoryRow).filter(Boolean));

@@ -292,11 +292,12 @@ function findMatchInWikitext(wikitext, team1Name, team2Name, dateStr) {
   const candidates = blocks.map(parseMatchBlock).filter(Boolean);
   if (candidates.length === 0) return { maps: null, matchCount: 0 };
 
+  const isUsable = (m) => m.finished || m.maps.length > 0;
   const sameOrderMatches = candidates.filter(
-    (m) => m.finished && slugMatchesName(m.opponent1, team1Name) && slugMatchesName(m.opponent2, team2Name)
+    (m) => isUsable(m) && slugMatchesName(m.opponent1, team1Name) && slugMatchesName(m.opponent2, team2Name)
   );
   const swappedMatches = candidates.filter(
-    (m) => m.finished && slugMatchesName(m.opponent1, team2Name) && slugMatchesName(m.opponent2, team1Name)
+    (m) => isUsable(m) && slugMatchesName(m.opponent1, team2Name) && slugMatchesName(m.opponent2, team1Name)
   );
 
   // Si l'une des 2 équipes se rencontre plusieurs fois dans le tournoi
@@ -354,17 +355,15 @@ const INDEX_PAGE_TITLE_RE = /(^|\/)(s|a|b|c|d)-tier tournaments|qualifier tourna
 // testé 6+ pages à 30s brûle 3 min et bloque tous les suivants.
 const MAX_PAGES_FETCHED_PER_MATCH = 3;
 
-async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, dateStr) {
+async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, dateStr, serieName) {
   if (!team1Name || !team2Name) return null;
 
   const queries = [];
   const year = dateStr && /^\d{4}/.test(dateStr) ? dateStr.slice(0, 4) : "";
-  if (tournamentName && !/^\d{4}$/.test(tournamentName.trim())) {
-    // L'année évite de tomber sur une édition passée du même tournoi
-    // (ex: "Esports World Cup" seul remonte l'édition 2025 alors que le
-    // match cherché est en 2026).
-    queries.push(`${team1Name} ${team2Name} ${tournamentName} ${year}`.trim());
-    queries.push(`${team1Name} ${team2Name} ${tournamentName}`);
+  const names = [serieName, tournamentName].filter((n) => n && !/^\d{4}$/.test(n.trim()));
+  for (const name of names) {
+    queries.push(`${team1Name} ${team2Name} ${name} ${year}`.trim());
+    queries.push(`${team1Name} ${team2Name} ${name}`);
   }
   queries.push(`${team1Name} ${team2Name}`);
 

@@ -70,8 +70,10 @@ const setWikitextCacheStmt = db.prepare(
   `INSERT OR REPLACE INTO wikitext_cache (page_title, wikitext, fetched_at) VALUES (@pageTitle, @wikitext, @fetchedAt)`
 );
 
-// TTL 6h : une page de tournoi ne change plus une fois les matchs finis.
-const WIKITEXT_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+// TTL 1h : les pages de tournois en cours sont mises à jour fréquemment
+// par les éditeurs Liquipedia (|finished= passe de vide à true, scores
+// ajoutés). 6h était trop long et bloquait les scores pendant des heures.
+const WIKITEXT_CACHE_TTL_MS = 1 * 60 * 60 * 1000;
 
 function getCachedWikitext(pageTitle) {
   const row = getWikitextCacheStmt.get(pageTitle);
