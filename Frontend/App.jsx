@@ -2104,7 +2104,6 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 teamLogoCache={teamLogoCache}
                 streamUrl={m.streamUrl}
                 useRegionStreamFallback={false}
-                hideOdds
                 team1RegionColor={m.team1Region ? regionAccentCS2(m.team1Region) : null}
                 team2RegionColor={m.team2Region ? regionAccentCS2(m.team2Region) : null}
                 team1RegionCode={m.team1Region ? regionCodeCS2(m.team1Region) : null}
