@@ -67,6 +67,21 @@ function isFullyUnknown(m) {
   return !t1 && !t2;
 }
 
+// Matchs à masquer complètement de l'app (demande explicite) — coincés sur
+// une mauvaise date côté PandaScore, sans résultat fiable trouvable.
+// Comparaison par paire de noms (les deux sens), insensible à la casse.
+const HIDDEN_MATCHUPS = [
+  ["vitality academy", "phantom academy"],
+  ["atreides", "ex-sashi academy"],
+];
+function isHiddenMatchup(m) {
+  const t1 = (m.opponents?.[0]?.opponent?.name || "").toLowerCase();
+  const t2 = (m.opponents?.[1]?.opponent?.name || "").toLowerCase();
+  return HIDDEN_MATCHUPS.some(
+    ([a, b]) => (t1.includes(a) && t2.includes(b)) || (t1.includes(b) && t2.includes(a))
+  );
+}
+
 // Ajoute team1_region / team2_region (pays -> région) et stream_url (flux
 // officiel du match si PandaScore le fournit, via `streams_list`) sur le
 // match brut PandaScore. Fait une seule fois ici (backend) plutôt que côté
@@ -132,7 +147,7 @@ router.get("/api/cs2-upcoming", async (req, res) => {
       if (pageData.length < PER_PAGE) break;
       await sleep(200);
     }
-    const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m)).map(attachTeamRegions);
+    const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m) && !isHiddenMatchup(m)).map(attachTeamRegions);
     applyKnownOdds(data);
     res.json(data);
     scheduleOddsRefresh(data);
@@ -218,7 +233,7 @@ router.get("/api/cs2-live", async (req, res) => {
     const data = await cachedFetch("cs2-live", "/" + CS2_SLUG + "/matches/running?per_page=50");
     const now = Date.now();
     const visible = (data || []).filter((m) => {
-      if (!isNotableTier(m)) return false;
+      if (!isNotableTier(m) || isHiddenMatchup(m)) return false;
       if (m.status !== "running") return true;
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
@@ -379,7 +394,8 @@ function buildMergedResults(liveData) {
   const liveIds = new Set(liveData.map((m) => String(m.id)));
   const accumulated = getFullHistoryFlat(ACCUMULATED_HISTORY_LIMIT)
     .filter((row) => row.status === "finished" && !liveIds.has(String(row.id)))
-    .map(toLiveHistoryShape);
+    .map(toLiveHistoryShape)
+    .filter((m) => !isHiddenMatchup(m));
 
   // BUG CORRIGÉ (même cause que côté Valorant, cf server.js) : un match
   // sorti des 50 plus récents de PandaScore mais toujours affiché via
@@ -416,7 +432,7 @@ async function refreshCS2Results(force = false) {
   }
 
   const data = (await cachedFetch("cs2-results", "/" + CS2_SLUG + "/matches/past?per_page=50"))
-    .filter(isNotableTier)
+    .filter((m) => isNotableTier(m) && !isHiddenMatchup(m))
     .map(attachTeamRegions);
 
   storeFinishedMatches(data.map(toHistoryRow).filter(Boolean));
