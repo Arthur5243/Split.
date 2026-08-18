@@ -181,6 +181,11 @@ function saveMapScores(id, mapScores) {
  */
 function saveMapScoresFailure(id) {
   const row = getMapScoresRowStmt.get(String(id));
+  // Verrou définitif : si ce match a déjà un VRAI score enregistré (pas
+  // juste "null" = abandon), on ne touche plus jamais à cette ligne, quoi
+  // qu'il arrive. Protège contre un appel erroné qui écraserait un score
+  // déjà trouvé avec succès.
+  if (row && row.map_scores != null && row.map_scores !== "null") return;
   const attempts = ((row && row.map_scores_attempts) || 0) + 1;
   const gaveUp = attempts > RETRY_DELAYS_MS.length;
   saveMapScoresStmt.run({
