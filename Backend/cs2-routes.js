@@ -36,7 +36,7 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
-import { diagnosticSample } from "./cs2-oddspapi-scores.js";
+import { getCS2WinPercentages } from "./cs2-oddspapi-scores.js";
 
 const router = express.Router();
 
@@ -133,12 +133,36 @@ router.get("/api/cs2-upcoming", async (req, res) => {
       await sleep(200);
     }
     const data = all.filter((m) => !isFullyUnknown(m) && isNotableTier(m)).map(attachTeamRegions);
+    await attachOddsPercentages(data);
     res.json(data);
   } catch (e) {
     console.error("cs2-upcoming error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs CS2 à venir." });
   }
 });
+
+// Attache odds1/odds2 (% de victoire, cf cs2-oddspapi-scores.js) sur chaque
+// match, en mutant les objets en place — même convention que le système
+// maison de Valorant (App.jsx), pour que le frontend n'ait rien à changer.
+// Concurrence limitée + petite pause entre appels : OddsPapi applique un
+// délai minimal (~0.88s) entre deux appels au même endpoint (/odds).
+async function attachOddsPercentages(matches) {
+  await mapWithConcurrency(matches, 2, async (m) => {
+    const t1 = m.opponents?.[0]?.opponent?.name;
+    const t2 = m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || "").slice(0, 10);
+    try {
+      const pct = await getCS2WinPercentages(t1, t2, date);
+      if (pct) {
+        m.odds1 = pct.odds1;
+        m.odds2 = pct.odds2;
+      }
+    } catch (e) {
+      console.log(`[oddspapi] ${t1} vs ${t2} → ERREUR:`, e.message);
+    }
+    await sleep(900);
+  });
+}
 
 // Filet de sécurité simple : un match encore "running" depuis plus de 6h
 // (large marge pour un Bo5 CS2) est presque certainement bloqué côté statut
@@ -157,7 +181,9 @@ router.get("/api/cs2-live", async (req, res) => {
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
-    res.json(visible.map(attachTeamRegions));
+    const withRegions = visible.map(attachTeamRegions);
+    await attachOddsPercentages(withRegions);
+    res.json(withRegions);
   } catch (e) {
     console.error("cs2-live error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs CS2 en direct." });
@@ -403,18 +429,5 @@ const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 setInterval(() => {
   refreshCS2Results(true).catch((e) => console.error("[cs2 background refresh]", e.message));
 }, CS2_BACKGROUND_REFRESH_INTERVAL_MS);
-
-// Route de diagnostic PONCTUELLE (à retirer une fois la structure réelle
-// des réponses OddsPapi connue) : renvoie un échantillon brut des tournois
-// et matchs CS2, pour construire la vraie logique de correspondance avec
-// PandaScore sur des données réelles plutôt que devinées depuis la doc.
-router.get("/admin/test-oddspapi-cs2", async (req, res) => {
-  try {
-    const sample = await diagnosticSample();
-    res.json(sample);
-  } catch (e) {
-    res.status(500).json({ erreur: e.message });
-  }
-});
 
 export default router;
