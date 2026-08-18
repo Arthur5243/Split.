@@ -36,6 +36,7 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
+import { diagnosticSample } from "./cs2-oddspapi-scores.js";
 
 const router = express.Router();
 
@@ -402,5 +403,18 @@ const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 setInterval(() => {
   refreshCS2Results(true).catch((e) => console.error("[cs2 background refresh]", e.message));
 }, CS2_BACKGROUND_REFRESH_INTERVAL_MS);
+
+// Route de diagnostic PONCTUELLE (à retirer une fois la structure réelle
+// des réponses OddsPapi connue) : renvoie un échantillon brut des tournois
+// et matchs CS2, pour construire la vraie logique de correspondance avec
+// PandaScore sur des données réelles plutôt que devinées depuis la doc.
+router.get("/admin/test-oddspapi-cs2", async (req, res) => {
+  try {
+    const sample = await diagnosticSample();
+    res.json(sample);
+  } catch (e) {
+    res.status(500).json({ erreur: e.message });
+  }
+});
 
 export default router;
