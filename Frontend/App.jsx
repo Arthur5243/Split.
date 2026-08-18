@@ -109,7 +109,7 @@ const STR = {
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Prochains matchs · tous circuits",
-    cs2CalendarModalTitle: "Calendrier CS2 2026", cs2CalendarEmpty: "Aucun stage Kickoff/Playoffs en cours dans les matchs suivis actuellement.",
+    cs2CalendarModalTitle: "Programme CS2 · Kickoff & Playoffs", cs2CalendarEmpty: "Aucun stage Kickoff/Playoffs en cours dans les matchs suivis actuellement.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
@@ -151,7 +151,7 @@ const STR = {
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Upcoming matches · all circuits",
-    cs2CalendarModalTitle: "CS2 2026 Calendar", cs2CalendarEmpty: "No Kickoff/Playoffs stage among the currently tracked matches.",
+    cs2CalendarModalTitle: "CS2 Program · Kickoff & Playoffs", cs2CalendarEmpty: "No Kickoff/Playoffs stage among the currently tracked matches.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
@@ -193,7 +193,7 @@ const STR = {
     classementLabel: "Clasificación", seeAll: "Ver todo", classementEmptyHome: "0 pronosticadores clasificados por ahora. ¡Sé el primero!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Próximos partidos · todos los circuitos",
-    cs2CalendarModalTitle: "Calendario CS2 2026", cs2CalendarEmpty: "Ninguna fase Kickoff/Playoffs entre los partidos seguidos actualmente.",
+    cs2CalendarModalTitle: "Programa CS2 · Kickoff y Playoffs", cs2CalendarEmpty: "Ninguna fase Kickoff/Playoffs entre los partidos seguidos actualmente.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
@@ -233,7 +233,7 @@ const STR = {
     classementLabel: "Classifica", seeAll: "Vedi tutto", classementEmptyHome: "0 pronosticatori in classifica per ora. Sii il primo!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Prossimi match · tutti i circuiti",
-    cs2CalendarModalTitle: "Calendario CS2 2026", cs2CalendarEmpty: "Nessuna fase Kickoff/Playoffs tra i match attualmente seguiti.",
+    cs2CalendarModalTitle: "Programma CS2 · Kickoff e Playoffs", cs2CalendarEmpty: "Nessuna fase Kickoff/Playoffs tra i match attualmente seguiti.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
@@ -273,7 +273,7 @@ const STR = {
     classementLabel: "ランキング", seeAll: "すべて見る", classementEmptyHome: "現在ランキング登録者は0人です。最初の1人になろう!",
     calendarLabel: "カレンダー", calendarCardTitle: "VCT 2026 カレンダー", calendarCardSub: "Kickoff・Masters・Playoffs・Champions",
     cs2CalendarCardTitle: "CS2カレンダー", cs2CalendarCardSub: "今後の試合・全大会",
-    cs2CalendarModalTitle: "CS2 2026 カレンダー", cs2CalendarEmpty: "現在追跡中の試合にKickoff/Playoffsステージはありません。",
+    cs2CalendarModalTitle: "CS2プログラム・Kickoff & Playoffs", cs2CalendarEmpty: "現在追跡中の試合にKickoff/Playoffsステージはありません。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
@@ -313,7 +313,7 @@ const STR = {
     classementLabel: "Rangliste", seeAll: "Alle anzeigen", classementEmptyHome: "Bisher 0 platzierte Tipper. Sei der Erste!",
     calendarLabel: "Kalender", calendarCardTitle: "VCT-2026-Kalender", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "CS2-Kalender", cs2CalendarCardSub: "Kommende Spiele · alle Circuits",
-    cs2CalendarModalTitle: "CS2-Kalender 2026", cs2CalendarEmpty: "Keine Kickoff-/Playoffs-Phase unter den aktuell verfolgten Spielen.",
+    cs2CalendarModalTitle: "CS2-Programm · Kickoff & Playoffs", cs2CalendarEmpty: "Keine Kickoff-/Playoffs-Phase unter den aktuell verfolgten Spielen.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
@@ -353,7 +353,7 @@ const STR = {
     classementLabel: "排行榜", seeAll: "查看全部", classementEmptyHome: "目前还没有上榜用户，快来当第一人!",
     calendarLabel: "赛程日历", calendarCardTitle: "VCT 2026赛程日历", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "CS2赛程", cs2CalendarCardSub: "即将进行的比赛 · 全部赛事",
-    cs2CalendarModalTitle: "CS2 2026赛程日历", cs2CalendarEmpty: "当前追踪的比赛中没有Kickoff/Playoffs阶段。",
+    cs2CalendarModalTitle: "CS2赛程安排 · Kickoff与Playoffs", cs2CalendarEmpty: "当前追踪的比赛中没有Kickoff/Playoffs阶段。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
@@ -466,78 +466,6 @@ const TIMELINE_I18N = {
       { region: "EMEA", text: "8月20日–31日" }, { region: "AMERICAS", text: "8月27日–9月5日" },
       { region: "PACIFIC", text: "8月27日–9月6日" }, { region: "CN", text: "Stage 2将于8月23日结束" } ] },
     { key: "champions", title: "Champions", start: "2026-09-24", end: "2026-10-18", range: "2026年9月24日–10月18日·中国上海" },
-  ],
-};
-
-// Calendrier CS2, sur le même principe que TIMELINE_I18N (VCT) : 3 stages
-// communs (pas de séparation par région, cf. cs2CircuitStagesDesc), puis
-// un unique bloc Playoffs (au lieu d'un par ligue/tournoi comme avant) avec
-// le détail par région (Europe/Americas/Asia, voir REGIONS_CS2), et enfin
-// Champions. Le statut (Terminé/Bientôt/En cours) est calculé dynamiquement
-// via computeStageStatus, exactement comme pour la timeline VCT.
-const CS2_TIMELINE_I18N = {
-  fr: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "12 janv. – 1er févr. 2026" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "16 mars – 5 avr. 2026" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "18 mai – 7 juin 2026" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "Fin août – mi-sept. 2026", big: true, detail: [
-      { region: "EUROPE", text: "24 août – 3 sept." }, { region: "AMERICAS", text: "29 août – 8 sept." },
-      { region: "ASIA", text: "3 – 13 sept." } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "5 – 22 nov. 2026 · Katowice, Pologne" },
-  ],
-  en: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "Jan 12 – Feb 1, 2026" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "Mar 16 – Apr 5, 2026" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "May 18 – Jun 7, 2026" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "Late August – mid-September 2026", big: true, detail: [
-      { region: "EUROPE", text: "Aug 24 – Sep 3" }, { region: "AMERICAS", text: "Aug 29 – Sep 8" },
-      { region: "ASIA", text: "Sep 3–13" } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "Nov 5–22, 2026 · Katowice, Poland" },
-  ],
-  es: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "12 ene. – 1 feb. 2026" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "16 mar. – 5 abr. 2026" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "18 may. – 7 jun. 2026" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "Finales de agosto – mediados de septiembre 2026", big: true, detail: [
-      { region: "EUROPE", text: "24 ago. – 3 sept." }, { region: "AMERICAS", text: "29 ago. – 8 sept." },
-      { region: "ASIA", text: "3–13 sept." } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "5–22 nov. 2026 · Katowice, Polonia" },
-  ],
-  it: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "12 gen – 1 feb 2026" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "16 mar – 5 apr 2026" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "18 mag – 7 giu 2026" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "Fine agosto – metà settembre 2026", big: true, detail: [
-      { region: "EUROPE", text: "24 ago – 3 set" }, { region: "AMERICAS", text: "29 ago – 8 set" },
-      { region: "ASIA", text: "3–13 set" } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "5–22 nov 2026 · Katowice, Polonia" },
-  ],
-  de: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "12. Jan. – 1. Feb. 2026" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "16. März – 5. Apr. 2026" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "18. Mai – 7. Juni 2026" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "Ende August – Mitte September 2026", big: true, detail: [
-      { region: "EUROPE", text: "24. Aug. – 3. Sept." }, { region: "AMERICAS", text: "29. Aug. – 8. Sept." },
-      { region: "ASIA", text: "3.–13. Sept." } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "5.–22. Nov. 2026 · Katowice, Polen" },
-  ],
-  ja: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "2026年1月12日~2月1日" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "2026年3月16日~4月5日" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "2026年5月18日~6月7日" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "2026年8月下旬~9月中旬", big: true, detail: [
-      { region: "EUROPE", text: "8月24日~9月3日" }, { region: "AMERICAS", text: "8月29日~9月8日" },
-      { region: "ASIA", text: "9月3日~13日" } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "2026年11月5日~22日・ポーランド・カトヴィツェ" },
-  ],
-  cn: [
-    { key: "stage1", title: "Stage 1", start: "2026-01-12", end: "2026-02-01", range: "2026年1月12日–2月1日" },
-    { key: "stage2", title: "Stage 2", start: "2026-03-16", end: "2026-04-05", range: "2026年3月16日–4月5日" },
-    { key: "stage3", title: "Stage 3", start: "2026-05-18", end: "2026-06-07", range: "2026年5月18日–6月7日" },
-    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-24", end: "2026-09-13", range: "2026年8月下旬–9月中旬", big: true, detail: [
-      { region: "EUROPE", text: "8月24日–9月3日" }, { region: "AMERICAS", text: "8月29日–9月8日" },
-      { region: "ASIA", text: "9月3日–13日" } ] },
-    { key: "champions", title: "Champions", start: "2026-11-05", end: "2026-11-22", range: "2026年11月5日–22日·波兰卡托维兹" },
   ],
 };
 
@@ -2065,7 +1993,16 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
     return [...seen.values()];
   }
 
-  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...live, ...upcoming]);
+  // Filet de sécurité : un match qui a déjà un vrai score par map enregistré
+  // (donc déjà dans resultsReady) ne doit plus JAMAIS pouvoir réapparaître
+  // dans "à venir" — même si live/upcoming le renvoient par erreur (données
+  // PandaScore en retard, requête trop lente coupée en cours de route...).
+  // Une fois le score reçu, il reste acquis pour de bon.
+  const resolvedIds = new Set(resultsReady.filter(hasRealMapScore).map((m) => String(m.id)));
+  const liveSafe = live.filter((m) => !resolvedIds.has(String(m.id)));
+  const upcomingSafe = upcoming.filter((m) => !resolvedIds.has(String(m.id)));
+
+  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...liveSafe, ...upcomingSafe]);
 
   // Filtre par ÉQUIPE, pas par match : si toutes les régions sont
   // sélectionnées (par défaut), on montre tout, y compris les stages
@@ -2404,69 +2341,64 @@ function CalendarModal({ onClose, T, lang }) {
   );
 }
 
-// Calendrier CS2 : même apparence que le calendrier VCT (CalendarModal) —
-// timeline verticale à points reliés, badge de statut Terminé/Bientôt/En
-// cours calculé dynamiquement, et détail par région dépliable. Les Playoffs
-// n'apparaissent qu'une seule fois (plutôt qu'un bloc par ligue/tournoi
-// comme avant), avec le détail Europe/Americas/Asia — voir REGIONS_CS2.
-function Cs2CalendarModal({ onClose, T, lang }) {
-  const [expanded, setExpanded] = useState({});
-  const timeline = CS2_TIMELINE_I18N[lang] || CS2_TIMELINE_I18N.fr;
-  const todayISO = getTodayISO();
+// Programme CS2 (Kickoff/Playoffs) : contrairement au calendrier VCT, pas de
+// dates saisies à la main — CS2 n'a pas UN circuit mondial unique avec un
+// calendrier partagé (chaque tournoi a ses propres stages). On dérive donc
+// directement le statut de chaque stage à partir des vrais matchs CS2 déjà
+// chargés (upcoming/live/results) : regroupés par ligue+stage, "Terminé" si
+// tous les matchs connus de ce groupe sont finis, "En cours" si l'un
+// tourne, sinon "Bientôt".
+function Cs2CalendarModal({ onClose, T, upcoming, live, results }) {
+  const all = [...upcoming, ...live, ...results];
+  const groups = new Map();
+  for (const m of all) {
+    if (!/kickoff|playoffs?/i.test(m.tournamentName || "")) continue;
+    const key = (m.league || "CS2") + " — " + m.tournamentName;
+    const g = groups.get(key) || { league: m.league || "CS2", stage: m.tournamentName, matches: [] };
+    g.matches.push(m);
+    groups.set(key, g);
+  }
+  const items = [...groups.values()].map((g) => {
+    const allFinished = g.matches.every((m) => m.status === "finished");
+    const anyLive = g.matches.some((m) => m.status === "running");
+    const status = allFinished ? "done" : anyLive ? "live" : "soon";
+    return { ...g, status, count: g.matches.length };
+  });
+
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#fff", maxHeight: "80%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
-          <button onClick={onClose}><X size={20} color="#999" /></button>
+          <h2 className="font-black" style={{ fontSize: "17px", color: "#111" }}>{T.cs2CalendarModalTitle}</h2>
+          <button onClick={onClose}><X size={20} color="#666" /></button>
         </div>
         <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
-          {timeline.map((item, idx) => {
-            const status = computeStageStatus(item, todayISO); // "done" | "live" | "soon"
-            const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : CS2_ACCENT;
-            const statusLabel = status === "done" ? T.calendarDone : status === "live" ? T.calendarLive : T.calendarSoon;
+          {items.length === 0 && (
+            <p style={{ color: "#999", fontSize: "12px", paddingTop: "8px" }}>{T.cs2CalendarEmpty}</p>
+          )}
+          {items.map((it, i) => {
+            const statusColor = it.status === "done" ? "#999" : it.status === "live" ? "#ff3b3b" : "#3B82F6";
+            const statusLabel = it.status === "done" ? T.calendarDone : it.status === "live" ? T.calendarLive : T.calendarSoon;
             return (
-            <div key={item.key} className="flex gap-3 pb-5">
-              <div className="flex flex-col items-center">
-                <div className="rounded-full" style={{ width: 10, height: 10, background: status === "done" ? "#444" : statusColor, marginTop: 4 }} />
-                {idx < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
-              </div>
-              <div className="flex-1 pb-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-white" style={{ fontSize: item.big ? "22px" : "14px" }}>{item.title}</span>
-                  <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
-                    {statusLabel}
-                  </span>
+              <div key={i} className="flex items-center justify-between rounded-2xl px-4 py-3 mb-2" style={{ background: "#f5f5f5" }}>
+                <div>
+                  <div style={{ color: "#111", fontSize: "13px", fontWeight: 800 }}>{it.stage}</div>
+                  <div style={{ color: "#777", fontSize: "11px" }}>{it.league}</div>
                 </div>
-                {item.big && (
-                  <div className="flex gap-1 mt-1.5 mb-1">
-                    {REGIONS_CS2.map((r) => <span key={r.key} style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />)}
-                  </div>
-                )}
-                <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{item.range}</p>
-                {item.detail && (
-                  <>
-                    <button onClick={() => setExpanded((p) => ({ ...p, [item.key]: !p[item.key] }))} className="flex items-center gap-1 mt-2" style={{ color: CS2_ACCENT, fontSize: "11px", fontWeight: 700 }}>
-                      {expanded[item.key] ? T.calendarHideDetail : T.calendarShowDetail}
-                      <ChevronDown size={12} style={{ transform: expanded[item.key] ? "rotate(180deg)" : "rotate(0deg)" }} />
-                    </button>
-                    {expanded[item.key] && (
-                      <div className="mt-2 flex flex-col gap-1.5">
-                        {item.detail.map((d) => {
-                          const reg = REGIONS_CS2.find((r) => r.key === d.region);
-                          return (
-                            <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
-                              <span style={{ color: reg ? reg.accent : "#fff", fontSize: "11px", fontWeight: 700 }}>{reg ? regionLabelCS2(reg.key, T) : d.region}</span>
-                              <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
+                <span
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 700,
+                    color: statusColor,
+                    border: "1px solid " + statusColor + "55",
+                    borderRadius: "9999px",
+                    padding: "2px 8px",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {statusLabel}
+                </span>
               </div>
-            </div>
             );
           })}
         </div>
@@ -3036,7 +2968,9 @@ export default function ClutchApp() {
           <Cs2CalendarModal
             onClose={() => setShowCs2Calendar(false)}
             T={T}
-            lang={currentLang}
+            upcoming={cs2UpcomingMatches}
+            live={cs2LiveMatches}
+            results={cs2ResultsMatches}
           />
         )}
       </div>
