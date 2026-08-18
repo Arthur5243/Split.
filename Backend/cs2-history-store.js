@@ -139,6 +139,8 @@ function storeFinishedMatches(matches) {
 }
 
 function saveMapScores(id, mapScores) {
+  const row = getMapScoresRowStmt.get(String(id));
+  if (row && row.map_scores != null && row.map_scores !== "null") return;
   saveMapScoresStmt.run({ id: String(id), mapScores: JSON.stringify(mapScores), attempts: 0, nextRetryAt: null });
 }
 

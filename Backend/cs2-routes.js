@@ -27,6 +27,7 @@ import {
   mapWithConcurrency,
   sleep,
   classifyTeamRegion,
+  getMapScoresForMatch,
   CS2_SLUG,
   PANDASCORE_API_KEY,
 } from "./cs2-scores.js";
@@ -240,13 +241,16 @@ function toHistoryRow(m) {
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
+    if (Array.isArray(m.map_scores) && m.map_scores.length > 0) continue;
     const state = getMapScoresState(m.id);
     if (state === undefined || state.value === undefined) {
       const dueNow = !state || !state.nextRetryAt || new Date(state.nextRetryAt).getTime() <= Date.now();
       if (dueNow) stillUnknown.push(m);
       continue;
     }
-    m.map_scores = state.value;
+    if (state.value != null) {
+      m.map_scores = state.value;
+    }
   }
   return stillUnknown;
 }
@@ -279,44 +283,58 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   });
 }
 
-// Liquipedia est l'UNIQUE source du score par map (cf liquipedia-scores.js)
-// — odds-api.io et le repli PandaScore /csgo/games/{id} ont été retirés :
-// PandaScore ne sert plus que pour le score de série (2-0, 2-1, etc., déjà
-// fourni directement par son endpoint /matches, sans appel supplémentaire).
+// Score par map : Liquipedia en priorité, PandaScore /csgo/games/{id} en
+// fallback (PandaScore fournit les round scores pour CS2, contrairement à
+// Valorant). Un score déjà posé en base ne peut JAMAIS être écrasé.
 async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
+
+    const existingState = getMapScoresState(m.id);
+    if (existingState && existingState.value != null && existingState.value !== null) {
+      m.map_scores = existingState.value;
+      return;
+    }
+
     let mapScores = null;
     const date = (m.begin_at || "").slice(0, 10);
     const tournamentName = m.league?.name || m.serie?.full_name || "";
+    let source = null;
 
     try {
       mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, tournamentName, date);
+      if (mapScores) source = "liquipedia";
     } catch (e) {
       console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
-    // DIAGNOSTIC TEMPORAIRE (à retirer une fois le score par map CS2
-    // confirmé fonctionnel en prod) : trace chaque match traité ici, avec
-    // le score de série (X-Y, ex: 2-1) pour pouvoir lister les matchs sans
-    // score par map à implémenter à la main en attendant.
+
+    if (!mapScores) {
+      try {
+        mapScores = await getMapScoresForMatch(m, t1.id, t2.id);
+        if (mapScores) source = "pandascore";
+      } catch (e) {
+        console.log(`[cs2 map_scores] pandascore ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
+    }
+
     const seriesResults = m.results || [];
     const seriesR1 = seriesResults.find((r) => r.team_id === t1.id);
     const seriesR2 = seriesResults.find((r) => r.team_id === t2.id);
     const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${tournamentName}") — ` +
-        `résultat=${mapScores ? JSON.stringify(mapScores) : "aucun (Liquipedia n'a rien trouvé)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia ni PandaScore)"}`
     );
 
-    m.map_scores = mapScores;
     if (mapScores) {
+      m.map_scores = mapScores;
       saveMapScores(m.id, mapScores);
       enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
     } else {
       saveMapScoresFailure(m.id);
     }
-    await sleep(600); // pause entre chaque match traité, par courtoisie envers HLTV/PandaScore
+    await sleep(600);
 }
 
 function toLiveHistoryShape(row) {
