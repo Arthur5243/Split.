@@ -191,6 +191,9 @@ function scheduleOddsRefresh(matches) {
       const pct = await getCS2WinPercentages(t1, t2, date);
       if (pct) {
         oddsCache.set(String(m.id), { odds1: pct.odds1, odds2: pct.odds2, time: Date.now() });
+        console.log(`[oddspapi] ${t1} vs ${t2} (${date}) → ${pct.odds1}%/${pct.odds2}%`);
+      } else {
+        console.log(`[oddspapi] ${t1} vs ${t2} (${date}) → aucun fixture/cote correspondant trouvé`);
       }
     } catch (e) {
       console.log(`[oddspapi] ${t1} vs ${t2} → ERREUR:`, e.message);
