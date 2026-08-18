@@ -2630,20 +2630,30 @@ export default function ClutchApp() {
 
     async function loadCS2() {
       try {
-        const [up, li, pa] = await Promise.all([
+        const [up, li, pa, history] = await Promise.all([
           fetchJson("/api/cs2-upcoming"),
           fetchJson("/api/cs2-live"),
           fetchJson("/api/cs2-results"),
+          // Historique profond CS2 (data/matches-cs2.json côté backend, même
+          // principe que /api/match-history pour Valorant) — sans ça, le
+          // calcul de cotes n'avait que l'historique accumulé organiquement
+          // depuis qu'on travaille sur ce projet, bien trop mince pour des
+          // winrates fiables. Jamais bloquant : liste vide tant que le
+          // backfill n'a pas été fait côté backend.
+          fetchJson("/api/cs2-match-history").catch(() => null),
         ]);
         if (cancelled) return;
         const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
-        setCs2UpcomingMatches(attachComputedOdds(upT, paT, tierWeightCS2));
-        setCs2LiveMatches(attachComputedOdds(liT, paT, tierWeightCS2));
+        const historyT = Array.isArray(history) ? history.map(transformMatchCS2) : [];
+        // Même règle que Valorant : on prend la source la plus riche.
+        const finishedMatchesCS2 = historyT.length > paT.length ? historyT : paT;
+        setCs2UpcomingMatches(attachComputedOdds(upT, finishedMatchesCS2, tierWeightCS2));
+        setCs2LiveMatches(attachComputedOdds(liT, finishedMatchesCS2, tierWeightCS2));
         setCs2ResultsMatches(
           paT.map((m) => {
-            const historyWithoutSelf = paT.filter((h) => String(h.id) !== String(m.id));
+            const historyWithoutSelf = finishedMatchesCS2.filter((h) => String(h.id) !== String(m.id));
             const { odds1, odds2, cote1, cote2 } = computeMatchOdds(m, historyWithoutSelf, tierWeightCS2);
             return { ...m, odds1, odds2, cote1, cote2 };
           })
