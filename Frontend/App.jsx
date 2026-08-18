@@ -2450,8 +2450,10 @@ function ScrollToTopButton({ visible, onClick }) {
 
 export default function ClutchApp() {
   const [activeTab, setActiveTab] = useState("home");
-  const [selectedRegions, setSelectedRegions] = useState(["EMEA"]);
-  const [preAllRegions, setPreAllRegions] = useState(["EMEA"]);
+  // Toutes les régions sélectionnées par défaut au chargement (même logique
+  // que CS2 ci-dessous) — pas de raison de partir filtré sur EMEA seul.
+  const [selectedRegions, setSelectedRegions] = useState(REGIONS.map((r) => r.key));
+  const [preAllRegions, setPreAllRegions] = useState(REGIONS.map((r) => r.key));
   // Sélection région CS2 : état séparé de Valorant (valeurs différentes —
   // EUROPE/AMERICAS/ASIA), mais même mécanique de toggle (cf toggleRegionCS2
   // plus bas). Toutes sélectionnées par défaut : contrairement à VCT, les
