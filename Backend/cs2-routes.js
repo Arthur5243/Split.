@@ -5,11 +5,10 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient de Liquipedia en priorité (cf
- *      liquipedia-scores.js), avec un fallback sur la saisie manuelle
- *      (data/cs2-manual-map-scores.json) pour les tournois C-tier non
- *      couverts par Liquipedia. PandaScore ne sert que pour le score de
- *      série (2-0, 2-1, etc.).
+ *   1. Le score par map suit une cascade de sources :
+ *      Liquipedia (priorité) → bo3.gg API (fallback C-tier) →
+ *      saisie manuelle (data/cs2-manual-map-scores.json, dernier recours).
+ *      PandaScore ne sert que pour le score de série (2-0, 2-1, etc.).
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -39,6 +38,7 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
+import { getMapScoresFromBo3gg } from "./bo3gg-scores.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ADMIN_KEY = process.env.ADMIN_KEY;
@@ -324,8 +324,7 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   });
 }
 
-// Score par map : Liquipedia en priorité, saisie manuelle (cs2-manual-map-scores.json)
-// en fallback pour les tournois C-tier hors couverture Liquipedia.
+// Score par map : Liquipedia → bo3.gg → saisie manuelle.
 // Un score déjà posé en base ne peut JAMAIS être écrasé.
 async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
@@ -352,6 +351,15 @@ async function processOneMatch(m, data) {
     }
 
     if (!mapScores) {
+      try {
+        mapScores = await getMapScoresFromBo3gg(t1.name, t2.name, date);
+        if (mapScores) source = "bo3gg";
+      } catch (e) {
+        console.log(`[cs2 map_scores] bo3.gg ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
+    }
+
+    if (!mapScores) {
       const manual = findCS2ManualMapScores(t1.name, t2.name, date);
       if (manual) {
         mapScores = manual;
@@ -366,7 +374,7 @@ async function processOneMatch(m, data) {
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia ni saisie manuelle)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
     );
 
     if (mapScores) {
