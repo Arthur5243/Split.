@@ -920,7 +920,7 @@ const CS2_TEAM_ALIASES = {
   "dendele cs": "dendele cs",
   "noir verse": "noir verse",
   "vitality academy": "vitality academy",
-  "spirit academy green": "spirit academy green",
+  "spirit academy green": "spirit academy",
   "team secret": "secret",
   "younglings": "younglings",
   "mai tai": "mai tai",
@@ -1127,7 +1127,14 @@ function computeMatchOddsElo(match, finishedMatches, eloData) {
   const n2 = eloData.matchCounts.get(t2) ?? 0;
 
   if (n1 < MIN_RATED_MATCHES || n2 < MIN_RATED_MATCHES) {
-    return { odds1: null, odds2: null, cote1: null, cote2: null, insufficientData: true };
+    if (n1 === 0 && n2 === 0) {
+      return { odds1: 50, odds2: 50, cote1: 2.0, cote2: 2.0, insufficientData: false };
+    }
+    if (n1 === 0 || n2 === 0) {
+      const known = n1 > 0 ? 1 : 2;
+      return { odds1: known === 1 ? 55 : 45, odds2: known === 1 ? 45 : 55, cote1: known === 1 ? 1.82 : 2.22, cote2: known === 1 ? 2.22 : 1.82, insufficientData: false };
+    }
+    return { odds1: 50, odds2: 50, cote1: 2.0, cote2: 2.0, insufficientData: false };
   }
 
   const r1 = eloData.ratings.get(t1) ?? ELO_DEFAULT;
