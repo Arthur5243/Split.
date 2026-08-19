@@ -6,8 +6,10 @@
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
  *   1. Le score par map suit une cascade de sources :
- *      Liquipedia (priorité) → bo3.gg API (fallback C-tier) →
+ *      Liquipedia (priorité) → bo3.gg API (fallback automatique) →
  *      saisie manuelle (data/cs2-manual-map-scores.json, dernier recours).
+ *      Si une source renvoie un résultat partiel (moins de maps que le score
+ *      de série attendu), la source suivante est aussi consultée.
  *      PandaScore ne sert que pour le score de série (2-0, 2-1, etc.).
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
@@ -85,6 +87,20 @@ function findCS2ManualMapScores(team1Name, team2Name, dateStr) {
     }
   }
   return null;
+}
+
+function getExpectedMapCount(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return 0;
+  const results = m.results || [];
+  const r1 = results.find((r) => r.team_id === t1.id);
+  const r2 = results.find((r) => r.team_id === t2.id);
+  let expected = (r1?.score || 0) + (r2?.score || 0);
+  if (Array.isArray(m.games)) {
+    expected -= m.games.filter((g) => g.forfeit).length;
+  }
+  return Math.max(expected, 0);
 }
 
 const router = express.Router();
@@ -282,7 +298,11 @@ function toHistoryRow(m) {
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
-    if (Array.isArray(m.map_scores) && m.map_scores.length > 0) continue;
+    if (Array.isArray(m.map_scores) && m.map_scores.length > 0) {
+      const expected = getExpectedMapCount(m);
+      if (expected > 0 && m.map_scores.length < expected) stillUnknown.push(m);
+      continue;
+    }
     const state = getMapScoresState(m.id);
     if (state === undefined || state.value === undefined) {
       const dueNow = !state || !state.nextRetryAt || new Date(state.nextRetryAt).getTime() <= Date.now();
@@ -291,6 +311,8 @@ function applyStoredMapScores(finished) {
     }
     if (state.value != null) {
       m.map_scores = state.value;
+      const expected = getExpectedMapCount(m);
+      if (expected > 0 && state.value.length < expected) stillUnknown.push(m);
     }
   }
   return stillUnknown;
@@ -325,16 +347,20 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
 }
 
 // Score par map : Liquipedia → bo3.gg → saisie manuelle.
-// Un score déjà posé en base ne peut JAMAIS être écrasé.
+// Si une source renvoie un résultat partiel (moins de maps que le score de
+// série attendu), les sources suivantes sont aussi consultées. Un résultat
+// complet ne peut JAMAIS être écrasé, mais un partiel peut être AMÉLIORÉ.
 async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
 
+    const expectedMaps = getExpectedMapCount(m);
+
     const existingState = getMapScoresState(m.id);
     if (existingState && existingState.value != null && existingState.value !== null) {
       m.map_scores = existingState.value;
-      return;
+      if (!expectedMaps || existingState.value.length >= expectedMaps) return;
     }
 
     let mapScores = null;
@@ -350,18 +376,21 @@ async function processOneMatch(m, data) {
       console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
 
-    if (!mapScores) {
+    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
       try {
-        mapScores = await getMapScoresFromBo3gg(t1.name, t2.name, date);
-        if (mapScores) source = "bo3gg";
+        const bo3ggScores = await getMapScoresFromBo3gg(t1.name, t2.name, date);
+        if (bo3ggScores && (!mapScores || bo3ggScores.length > mapScores.length)) {
+          mapScores = bo3ggScores;
+          source = "bo3gg";
+        }
       } catch (e) {
         console.log(`[cs2 map_scores] bo3.gg ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
       }
     }
 
-    if (!mapScores) {
+    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
       const manual = findCS2ManualMapScores(t1.name, t2.name, date);
-      if (manual) {
+      if (manual && (!mapScores || manual.length > mapScores.length)) {
         mapScores = manual;
         source = "manual";
       }

@@ -150,7 +150,12 @@ function storeFinishedMatches(matches) {
 
 function saveMapScores(id, mapScores) {
   const row = getMapScoresRowStmt.get(String(id));
-  if (row && row.map_scores != null && row.map_scores !== "null") return;
+  if (row && row.map_scores != null && row.map_scores !== "null") {
+    try {
+      const existing = JSON.parse(row.map_scores);
+      if (Array.isArray(existing) && existing.length >= mapScores.length) return;
+    } catch (e) { return; }
+  }
   saveMapScoresStmt.run({ id: String(id), mapScores: JSON.stringify(mapScores), attempts: 0, nextRetryAt: null });
 }
 
