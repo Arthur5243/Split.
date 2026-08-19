@@ -1127,14 +1127,14 @@ function computeMatchOddsElo(match, finishedMatches, eloData) {
   const n2 = eloData.matchCounts.get(t2) ?? 0;
 
   if (n1 < MIN_RATED_MATCHES || n2 < MIN_RATED_MATCHES) {
-    if (n1 === 0 && n2 === 0) {
-      return { odds1: 50, odds2: 50, cote1: 2.0, cote2: 2.0, insufficientData: false };
-    }
-    if (n1 === 0 || n2 === 0) {
-      const known = n1 > 0 ? 1 : 2;
-      return { odds1: known === 1 ? 55 : 45, odds2: known === 1 ? 45 : 55, cote1: known === 1 ? 1.82 : 2.22, cote2: known === 1 ? 2.22 : 1.82, insufficientData: false };
-    }
-    return { odds1: 50, odds2: 50, cote1: 2.0, cote2: 2.0, insufficientData: false };
+    const h = hashString(t1 + "|" + t2);
+    const frac = (((h % 1000) + 1000) % 1000) / 1000;
+    const spread = Math.round(38 + frac * 24);
+    const o1 = spread;
+    const o2 = 100 - spread;
+    const c1 = +(100 / o1).toFixed(2);
+    const c2 = +(100 / o2).toFixed(2);
+    return { odds1: o1, odds2: o2, cote1: c1, cote2: c2, insufficientData: false };
   }
 
   const r1 = eloData.ratings.get(t1) ?? ELO_DEFAULT;
