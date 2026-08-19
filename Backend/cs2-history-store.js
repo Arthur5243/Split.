@@ -86,6 +86,13 @@ function setCachedWikitext(pageTitle, wikitext) {
   setWikitextCacheStmt.run({ pageTitle, wikitext, fetchedAt: Date.now() });
 }
 
+const invalidateWikitextStmt = db.prepare(
+  `DELETE FROM wikitext_cache WHERE page_title = ?`
+);
+function invalidateCachedWikitext(pageTitle) {
+  invalidateWikitextStmt.run(pageTitle);
+}
+
 const upsertStmt = db.prepare(`
   INSERT OR IGNORE INTO matches
     (id, team1, team2, team1_name, team2_name, score1, score2, status, team1_region, team2_region, league, phase, day, time, raw_json)
@@ -102,16 +109,17 @@ const getMapScoresRowStmt = db.prepare(
   `SELECT map_scores, map_scores_attempts, map_scores_next_retry_at FROM matches WHERE id = ?`
 );
 
-// Paliers de retentative si aucune source (Liquipedia/odds-api.io/
-// PandaScore) n'a encore le score par map. Espacés de plus en plus, jusqu'à
-// abandon définitif après le dernier palier.
+// Paliers de retentative si Liquipedia n'a pas encore le score par map.
+// Espacés de plus en plus, puis plafonnés à 2h — plus jamais d'abandon
+// définitif (l'ancien système écrivait "null" après le 7e essai et le
+// match était perdu pour toujours sauf reset manuel).
 const RETRY_DELAYS_MS = [
   1 * 60 * 1000, // 1er échec -> 1 min
   2 * 60 * 1000, // 2e -> 2 min
   4 * 60 * 1000, // 3e -> 4 min
   5 * 60 * 1000, // 4e -> 5 min
   30 * 60 * 1000, // 5e -> 30 min
-  2 * 60 * 60 * 1000, // 6e -> 2h, puis abandon définitif
+  2 * 60 * 60 * 1000, // 6e+ -> 2h (plafonné, jamais d'abandon)
 ];
 
 function storeFinishedMatches(matches) {
@@ -148,18 +156,14 @@ function saveMapScores(id, mapScores) {
 
 function saveMapScoresFailure(id) {
   const row = getMapScoresRowStmt.get(String(id));
-  // Verrou définitif : si ce match a déjà un VRAI score enregistré (pas
-  // juste "null" = abandon), on ne touche plus jamais à cette ligne, quoi
-  // qu'il arrive. Protège contre un appel erroné qui écraserait un score
-  // déjà trouvé avec succès.
   if (row && row.map_scores != null && row.map_scores !== "null") return;
   const attempts = ((row && row.map_scores_attempts) || 0) + 1;
-  const gaveUp = attempts > RETRY_DELAYS_MS.length;
+  const delayIdx = Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1);
   saveMapScoresStmt.run({
     id: String(id),
-    mapScores: gaveUp ? JSON.stringify(null) : null,
+    mapScores: null,
     attempts,
-    nextRetryAt: gaveUp ? null : new Date(Date.now() + RETRY_DELAYS_MS[attempts - 1]).toISOString(),
+    nextRetryAt: new Date(Date.now() + RETRY_DELAYS_MS[delayIdx]).toISOString(),
   });
 }
 
@@ -237,4 +241,5 @@ export {
   resetAbandonedMapScores,
   getCachedWikitext,
   setCachedWikitext,
+  invalidateCachedWikitext,
 };

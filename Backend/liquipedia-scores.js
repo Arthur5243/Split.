@@ -37,7 +37,7 @@
  * inventé. L'appelant (cs2-routes.js) retombe alors sur ses autres replis.
  */
 
-import { getCachedWikitext, setCachedWikitext } from "./cs2-history-store.js";
+import { getCachedWikitext, setCachedWikitext, invalidateCachedWikitext } from "./cs2-history-store.js";
 
 const LIQUIPEDIA_BASE = "https://liquipedia.net/counterstrike/api.php";
 // Liquipedia bloque les User-Agent génériques ; celui-ci identifie le
@@ -94,9 +94,11 @@ async function searchTournamentPages(query) {
 // et forçait à re-télécharger chaque page de tournoi à 31s pièce (throttle
 // action=parse) — le principal goulot qui empêchait les scores de se poser.
 
-async function getWikitext(pageTitle) {
-  const cached = getCachedWikitext(pageTitle);
-  if (cached !== undefined) return cached;
+async function getWikitext(pageTitle, { forceRefresh = false } = {}) {
+  if (!forceRefresh) {
+    const cached = getCachedWikitext(pageTitle);
+    if (cached !== undefined) return cached;
+  }
 
   const json = await liquipediaFetch({ action: "parse", page: pageTitle, prop: "wikitext" }, { isParse: true });
   const text = json?.parse?.wikitext?.["*"];
@@ -252,14 +254,69 @@ const SLUG_ALIASES = {
   gl: "gamerlegion",
   tl: "team liquid",
   vit: "vitality",
+  "team vitality": "vitality",
   faze: "faze clan",
   mongolz: "the mongolz",
+  themongolz: "the mongolz",
   pain: "pain gaming",
   "bc.game": "bc.game esports",
+  bcgame: "bc.game esports",
   fut: "fut esports",
   nip: "ninjas in pyjamas",
   "passion ua": "passion ua",
   b8: "b8",
+  "b8 esports": "b8",
+  g2: "g2 esports",
+  spirit: "team spirit",
+  "spirit academy": "team spirit academy",
+  "spirit academy green": "spirit academy",
+  falcons: "team falcons",
+  "3dmax": "team 3dmax",
+  furia: "furia esports",
+  aurora: "aurora gaming",
+  imperial: "imperial esports",
+  lynnvision: "lynn vision gaming",
+  "lynn vision": "lynn vision gaming",
+  wildcard: "wildcard gaming",
+  "9z": "9z team",
+  nemiga: "nemiga gaming",
+  betboom: "betboom team",
+  nrg: "nrg esports",
+  "the huns": "the huns esports",
+  "fire flux": "fire flux esports",
+  sangal: "sangal esports",
+  nouns: "nouns esports",
+  sharks: "sharks esports",
+  flamengo: "flamengo esports",
+  bleed: "bleed esports",
+  talon: "talon esports",
+  revenant: "revenant esports",
+  permitta: "permitta esports",
+  favbet: "favbet team",
+  w7m: "w7m esports",
+  rebels: "rebels gaming",
+  complexity: "complexity gaming",
+  col: "complexity gaming",
+  kru: "kr. esports",
+  parivision: "parivision",
+  "inner circle": "inner circle esports",
+  insiders: "insiders esport",
+  misa: "misa esports",
+  "ex-mana": "ex-mana esports",
+  lph: "lph gaming",
+  trafficpills: "trafficpills esports",
+  secret: "team secret",
+  entropy: "entropy gaming",
+  saw: "saw",
+  "saw youngsters": "saw youngsters",
+  fnatic: "fnatic",
+  mouz: "mouz",
+  ence: "ence",
+  astralis: "astralis",
+  heroic: "heroic",
+  m80: "m80",
+  legacy: "legacy",
+  mibr: "mibr",
 };
 
 function similar(a, b) {
@@ -396,6 +453,7 @@ async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, 
   }
 
   let fetchedCount = 0;
+  const pagesToInvalidate = [];
   for (const pageTitle of pageTitles) {
     if (fetchedCount >= MAX_PAGES_FETCHED_PER_MATCH) {
       console.log(
@@ -411,18 +469,30 @@ async function getMapScoresFromLiquipedia(team1Name, team2Name, tournamentName, 
       console.log(`[liquipedia] wikitext(${pageTitle}) → ERREUR:`, e.message);
       continue;
     }
-    // Ne compte dans le plafond que les pages RÉELLEMENT téléchargées (une
-    // page déjà en cache est quasi-gratuite, inutile de la compter).
     if (!wasCached) fetchedCount++;
     if (!wikitext) continue;
 
     const { maps, matchCount } = findMatchInWikitext(wikitext, team1Name, team2Name, dateStr);
     if (maps) return maps;
+
+    // La page existe et contient des matchs, mais pas celui qu'on cherche.
+    // Si c'était une version cachée, les éditeurs Liquipedia ont peut-être
+    // ajouté les scores depuis → on invalide le cache pour forcer un vrai
+    // re-fetch à la prochaine tentative.
+    if (wasCached && matchCount > 0) {
+      pagesToInvalidate.push(pageTitle);
+    }
+
     if (matchCount === 0) {
       console.log(`[liquipedia] "${pageTitle}" → page sans {{Match}} exploitable (probablement une page d'index), candidat suivant`);
       continue;
     }
     console.log(`[liquipedia] "${pageTitle}" → ${matchCount} matchs sur la page mais aucun ne correspond à ${team1Name} vs ${team2Name}`);
+  }
+
+  for (const pt of pagesToInvalidate) {
+    invalidateCachedWikitext(pt);
+    console.log(`[liquipedia] cache invalidé pour "${pt}" (match non trouvé, sera re-téléchargée au prochain cycle)`);
   }
 
   return null;
