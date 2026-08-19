@@ -69,6 +69,37 @@
         { "map": "Mirage", "score1": 13, "score2": 11 },
         { "map": "Dust2", "score1": 13, "score2": 11 }
       ]
+    },
+    "1639465": {
+      "_comment": "The Last Resort vs OG — ESL Challenger League Cup 4, 19 août 2026 (source: bo3.gg)",
+      "maps": [
+        { "map": "Nuke", "score1": 10, "score2": 13 },
+        { "map": "Dust2", "score1": 2, "score2": 13 }
+      ]
+    },
+    "1639467": {
+      "_comment": "Esport Academy Copenhagen vs Color — ESL Challenger League Cup 4, 19 août 2026 (source: bo3.gg)",
+      "maps": [
+        { "map": "Ancient", "score1": 13, "score2": 9 },
+        { "map": "Mirage", "score1": 10, "score2": 13 },
+        { "map": "Anubis", "score1": 8, "score2": 13 }
+      ]
+    },
+    "1640168": {
+      "_comment": "IMHOWeRGOAT vs Aritmije — CCT Europe Contenders #8, 19 août 2026 (source: bo3.gg) — map 1 forfeit",
+      "maps": [
+        { "map": "Inferno", "score1": 0, "score2": 1 },
+        { "map": "Mirage", "score1": 13, "score2": 8 },
+        { "map": "Anubis", "score1": 16, "score2": 12 }
+      ]
+    },
+    "1634745": {
+      "_comment": "SAW Youngsters vs ex-MANA eSports — CCT Europe Challengers Series 5, 19 août 2026 (source: bo3.gg) — CORRIGE les scores Liquipedia qui matchaient le mauvais match",
+      "maps": [
+        { "map": "Mirage", "score1": 13, "score2": 9 },
+        { "map": "Dust2", "score1": 7, "score2": 13 },
+        { "map": "Anubis", "score1": 13, "score2": 10 }
+      ]
     }
   },
 
