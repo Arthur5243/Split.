@@ -865,8 +865,52 @@ function matchSortKey(m) {
   return (m.day || "") + (m.time || "");
 }
 
+const CS2_TEAM_ALIASES = {
+  "team liquid": "liquid",
+  "team vitality": "vitality",
+  "team spirit": "spirit",
+  "team spirit academy": "spirit academy",
+  "team falcons": "falcons",
+  "team 3dmax": "3dmax",
+  "faze clan": "faze",
+  "g2 esports": "g2",
+  "furia esports": "furia",
+  "aurora gaming": "aurora",
+  "b8 esports": "b8",
+  "the mongolz": "the mongolz",
+  "pain gaming": "pain",
+  "imperial esports": "imperial",
+  "lynn vision gaming": "lynn vision",
+  "wildcard gaming": "wildcard",
+  "9z team": "9z",
+  "nemiga gaming": "nemiga",
+  "betboom team": "betboom",
+  "nrg esports": "nrg",
+  "the huns esports": "the huns",
+  "fire flux esports": "fire flux",
+  "sangal esports": "sangal",
+  "nouns esports": "nouns",
+  "sharks esports": "sharks",
+  "flamengo esports": "flamengo",
+  "bleed esports": "bleed",
+  "talon esports": "talon",
+  "revenant esports": "revenant",
+  "permitta esports": "permitta",
+  "favbet team": "favbet",
+  "w7m esports": "w7m",
+  "rebels gaming": "rebels",
+  "fc famalicao esports": "fc famalicao",
+  "sinners esports": "sinners esports",
+  "complexity gaming": "complexity",
+  "kr. esports": "kru",
+  "parivision": "parivision",
+  "thunderdownunder": "thunder downunder",
+  "bcgame": "bc.game",
+};
+
 function normTeamName(name) {
-  return (name || "").trim().toLowerCase();
+  const key = (name || "").trim().toLowerCase();
+  return CS2_TEAM_ALIASES[key] || key;
 }
 
 // Résultat d'une équipe sur UN match terminé : "W", "L", ou null si non exploitable.
