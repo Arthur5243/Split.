@@ -917,6 +917,14 @@ const CS2_TEAM_ALIASES = {
   "inox division": "inox division",
   "lph gaming": "lph",
   "trafficpills esports": "trafficpills",
+  "dendele cs": "dendele cs",
+  "noir verse": "noir verse",
+  "vitality academy": "vitality academy",
+  "spirit academy green": "spirit academy green",
+  "team secret": "secret",
+  "younglings": "younglings",
+  "mai tai": "mai tai",
+  "entropy gaming": "entropy",
 };
 
 function normTeamName(name) {
