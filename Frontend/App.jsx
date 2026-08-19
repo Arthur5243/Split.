@@ -909,6 +909,14 @@ const CS2_TEAM_ALIASES = {
   "bcgame": "bc.game",
   "inner circle esports": "inner circle",
   "insiders esport": "insiders",
+  "misa esports": "misa",
+  "ex-mana esports": "ex-mana",
+  "ex-sashi academy": "ex-sashi academy",
+  "saw youngsters": "saw youngsters",
+  "bushido wildcats": "bushido wildcats",
+  "inox division": "inox division",
+  "lph gaming": "lph",
+  "trafficpills esports": "trafficpills",
 };
 
 function normTeamName(name) {
