@@ -5,11 +5,11 @@
  * séquentielle + retry 429, cache mémoire, accumulation SQLite pour ne
  * jamais perdre un résultat déjà vu), adaptée à deux différences propres à
  * CS2 :
- *   1. Le score par map vient UNIQUEMENT de Liquipedia (cf
- *      liquipedia-scores.js) — odds-api.io et le repli PandaScore
- *      (/csgo/games/{id}) ont été retirés du circuit. PandaScore ne sert
- *      plus que pour le score de série (2-0, 2-1, etc.), déjà fourni
- *      directement par son endpoint /matches sans appel supplémentaire.
+ *   1. Le score par map vient de Liquipedia en priorité (cf
+ *      liquipedia-scores.js), avec un fallback sur la saisie manuelle
+ *      (data/cs2-manual-map-scores.json) pour les tournois C-tier non
+ *      couverts par Liquipedia. PandaScore ne sert que pour le score de
+ *      série (2-0, 2-1, etc.).
  *   2. La "région" est un attribut d'ÉQUIPE (Europe/Americas/Asia, via le
  *      pays), pas un attribut de match/ligue : un match n'est jamais exclu
  *      de la réponse pour une histoire de région (cf énoncé Régions →
@@ -43,6 +43,49 @@ import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ADMIN_KEY = process.env.ADMIN_KEY;
 const CS2_MATCHES_PATH = path.join(__dirname, "data", "matches-cs2.json");
+const CS2_MANUAL_SCORES_PATH = path.join(__dirname, "data", "cs2-manual-map-scores.json");
+
+const cs2ManualScores = (() => {
+  try {
+    const raw = JSON.parse(fs.readFileSync(CS2_MANUAL_SCORES_PATH, "utf-8"));
+    if (!Array.isArray(raw)) return [];
+    console.log(`[cs2] ${raw.length} entrée(s) chargée(s) depuis cs2-manual-map-scores.json`);
+    return raw;
+  } catch (e) {
+    if (e.code !== "ENOENT") console.warn("[cs2] erreur lecture cs2-manual-map-scores.json:", e.message);
+    return [];
+  }
+})();
+
+function normalizeTeamName(s) {
+  return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+}
+
+function teamNamesMatch(a, b) {
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  const stripSuffix = (s) => s.replace(/\s*(esports?|gaming|team|club)\s*$/i, "").trim();
+  return stripSuffix(a) === stripSuffix(b);
+}
+
+function findCS2ManualMapScores(team1Name, team2Name, dateStr) {
+  if (cs2ManualScores.length === 0) return null;
+  const n1 = normalizeTeamName(team1Name);
+  const n2 = normalizeTeamName(team2Name);
+  for (const entry of cs2ManualScores) {
+    const d = dateStr && entry.date ? Math.abs(new Date(dateStr) - new Date(entry.date)) / 86400000 : 0;
+    if (d > 1) continue;
+    const en1 = normalizeTeamName(entry.team1);
+    const en2 = normalizeTeamName(entry.team2);
+    if (teamNamesMatch(en1, n1) && teamNamesMatch(en2, n2)) {
+      return entry.maps.map((m) => ({ map: m.map, score1: m.score1, score2: m.score2 }));
+    }
+    if (teamNamesMatch(en1, n2) && teamNamesMatch(en2, n1)) {
+      return entry.maps.map((m) => ({ map: m.map, score1: m.score2, score2: m.score1 }));
+    }
+  }
+  return null;
+}
 
 const router = express.Router();
 
@@ -281,9 +324,9 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   });
 }
 
-// Score par map : Liquipedia en priorité, PandaScore /csgo/games/{id} en
-// fallback (PandaScore fournit les round scores pour CS2, contrairement à
-// Valorant). Un score déjà posé en base ne peut JAMAIS être écrasé.
+// Score par map : Liquipedia en priorité, saisie manuelle (cs2-manual-map-scores.json)
+// en fallback pour les tournois C-tier hors couverture Liquipedia.
+// Un score déjà posé en base ne peut JAMAIS être écrasé.
 async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
@@ -308,6 +351,14 @@ async function processOneMatch(m, data) {
       console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
 
+    if (!mapScores) {
+      const manual = findCS2ManualMapScores(t1.name, t2.name, date);
+      if (manual) {
+        mapScores = manual;
+        source = "manual";
+      }
+    }
+
     const seriesResults = m.results || [];
     const seriesR1 = seriesResults.find((r) => r.team_id === t1.id);
     const seriesR2 = seriesResults.find((r) => r.team_id === t2.id);
@@ -315,7 +366,7 @@ async function processOneMatch(m, data) {
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (Liquipedia n'a rien trouvé)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia ni saisie manuelle)"}`
     );
 
     if (mapScores) {

@@ -1,0 +1,33 @@
+[
+  {
+    "date": "2026-08-19",
+    "team1": "Inner Circle Prospect",
+    "team2": "Vitality Academy",
+    "score": "0-2",
+    "maps": [
+      { "map": "Mirage", "score1": 10, "score2": 13 },
+      { "map": "Ancient", "score1": 5, "score2": 13 }
+    ]
+  },
+  {
+    "date": "2026-08-18",
+    "team1": "Inner Circle Prospect",
+    "team2": "INOX Division",
+    "score": "0-2",
+    "maps": [
+      { "map": "Ancient", "score1": 17, "score2": 19 },
+      { "map": "Nuke", "score1": 9, "score2": 13 }
+    ]
+  },
+  {
+    "date": "2026-08-18",
+    "team1": "Bushido Wildcats",
+    "team2": "Misa Esports",
+    "score": "2-1",
+    "maps": [
+      { "map": "Nuke", "score1": 9, "score2": 13 },
+      { "map": "Anubis", "score1": 13, "score2": 7 },
+      { "map": "Dust II", "score1": 1, "score2": 0 }
+    ]
+  }
+]
