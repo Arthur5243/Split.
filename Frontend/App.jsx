@@ -1063,6 +1063,10 @@ function computeMatchOddsElo(match, finishedMatches, eloData) {
   const n1 = eloData.matchCounts.get(t1) ?? 0;
   const n2 = eloData.matchCounts.get(t2) ?? 0;
 
+  if (n1 < MIN_RATED_MATCHES || n2 < MIN_RATED_MATCHES) {
+    return { odds1: null, odds2: null, cote1: null, cote2: null, insufficientData: true };
+  }
+
   const r1 = eloData.ratings.get(t1) ?? ELO_DEFAULT;
   const r2 = eloData.ratings.get(t2) ?? ELO_DEFAULT;
   let p1 = 1 / (1 + Math.pow(10, (r2 - r1) / 400));
