@@ -297,6 +297,39 @@ function resetAbandonedMapScores() {
   return result.changes;
 }
 
+// Remet à zéro les map_scores dont le décompte de maps gagnées ne colle
+// pas au score de série (score1/score2 en base). Cause : vlr.gg renvoyait
+// team1/team2 dans un ordre différent de PandaScore, et le code ne swappait
+// pas — le frontend rejetait ces scores via isMapScoresConsistent. Maintenant
+// corrigé dans vlr-scores.js, mais les valeurs déjà stockées sont fausses.
+function resetInconsistentMapScores() {
+  const rows = db
+    .prepare(
+      `SELECT id, score1, score2, map_scores FROM matches
+       WHERE map_scores IS NOT NULL AND map_scores != 'null' AND score1 IS NOT NULL AND score2 IS NOT NULL`
+    )
+    .all();
+  let count = 0;
+  const resetStmt = db.prepare(
+    `UPDATE matches SET map_scores = NULL, map_scores_attempts = 0, map_scores_next_retry_at = NULL WHERE id = ?`
+  );
+  for (const row of rows) {
+    let maps;
+    try { maps = JSON.parse(row.map_scores); } catch { continue; }
+    if (!Array.isArray(maps) || maps.length === 0) continue;
+    let w1 = 0, w2 = 0;
+    for (const m of maps) {
+      if (m.score1 > m.score2) w1++;
+      else if (m.score2 > m.score1) w2++;
+    }
+    if (w1 !== row.score1 || w2 !== row.score2) {
+      resetStmt.run(row.id);
+      count++;
+    }
+  }
+  return count;
+}
+
 export {
   storeFinishedMatches,
   getFullHistory,
@@ -307,4 +340,5 @@ export {
   saveMapScoresFailure,
   getMapScoresState,
   resetAbandonedMapScores,
+  resetInconsistentMapScores,
 };

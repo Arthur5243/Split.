@@ -16,6 +16,7 @@ import {
   saveMapScoresFailure,
   getMapScoresState,
   resetAbandonedMapScores,
+  resetInconsistentMapScores,
 } from "./match-history-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1240,5 +1241,13 @@ app.listen(PORT, () => {
     }
   } catch (e) {
     console.error("[startup] échec de la réinitialisation des matchs abandonnés:", e.message);
+  }
+  try {
+    const fixedCount = resetInconsistentMapScores();
+    if (fixedCount > 0) {
+      console.log(`[startup] ${fixedCount} match(s) Valorant map_scores incohérents (ordre vlr.gg inversé) remis en jeu.`);
+    }
+  } catch (e) {
+    console.error("[startup] échec du nettoyage des map_scores incohérents:", e.message);
   }
 });

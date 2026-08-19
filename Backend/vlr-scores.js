@@ -479,17 +479,31 @@ async function getMapScores(team1Name, team2Name, dateStr) {
     // Les maps sont dans data.segments[0].maps, pas data.maps directement.
     const segment = (json && json.data && json.data.segments && json.data.segments[0]) || null;
     const maps = (segment && segment.maps) || [];
+
+    // vlr.gg peut lister les équipes dans un ordre DIFFÉRENT de PandaScore
+    // dans les détails d'un match (ex: teams[0]=TS, teams[1]=ONG alors que
+    // PandaScore a ONG en opponents[0]). score.team1/team2 dans chaque map
+    // correspond à teams[0]/teams[1] du segment, PAS à l'ordre PandaScore.
+    // Sans correction, isMapScoresConsistent côté frontend rejette le score
+    // car les wins par map ne collent pas au score de série.
+    const vlrTeams = (segment && segment.teams) || [];
+    const swapScores = (() => {
+      if (vlrTeams.length < 2) return false;
+      const vlrT1 = matchSideCandidates(vlrTeams[0]);
+      const psT2 = buildNameCandidates(team2Name);
+      if (hasOverlap(vlrT1, psT2)) {
+        console.log(`[vlr-scores] ${team1Name} vs ${team2Name} → ordre vlr.gg inversé (vlr team1="${vlrTeams[0].name}"), swap des scores`);
+        return true;
+      }
+      return false;
+    })();
+
     const result = maps
-      // score.team1 / score.team2 sont déjà des nombres (ex: 13, 4), pas des
-      // objets avec un champ .total.
       .filter((m) => m.score && Number.isFinite(m.score.team1) && Number.isFinite(m.score.team2))
       .map((m) => ({
-        // vlrggapi colle parfois un badge "PICK"/"BAN" directement au nom de
-        // la map sans espace (ex: "BreezePICK") — on le retire. Aucune map
-        // Valorant ne se termine par ces mots, donc pas de faux positif.
         map: (m.map_name || "").replace(/\s*(PICK|BAN)\s*$/i, "").trim(),
-        score1: m.score.team1,
-        score2: m.score.team2,
+        score1: swapScores ? m.score.team2 : m.score.team1,
+        score2: swapScores ? m.score.team1 : m.score.team2,
       }));
     let finalResult = result.length > 0 ? result : null;
     if (finalResult && !isPlausibleMapSequence(finalResult)) {
