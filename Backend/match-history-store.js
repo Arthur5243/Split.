@@ -102,9 +102,8 @@ const getMapScoresRowStmt = db.prepare(
 // à vlr.gg de publier le report pour les matchs tout juste terminés (le cas
 // RRQ vs SPE : requête faite trop tôt -> null -> on retente plus tard au
 // lieu d'enregistrer ce null pour de bon).
-// Après le dernier palier, on abandonne définitivement pour ce match-là.
-// Élargi (plus de paliers, jusqu'à 4h) : vlr.gg supporte largement ce
-// volume de requêtes, pas besoin d'abandonner aussi vite qu'avant.
+// Backoff plafonné : plus jamais d'abandon définitif. Après le dernier
+// palier, on continue à retenter toutes les 4h indéfiniment.
 const RETRY_DELAYS_MS = [
   1 * 60 * 1000, // 1er échec -> retente dans 1 min
   2 * 60 * 1000, // 2e -> 2 min
@@ -112,7 +111,7 @@ const RETRY_DELAYS_MS = [
   15 * 60 * 1000, // 4e -> 15 min
   45 * 60 * 1000, // 5e -> 45 min
   2 * 60 * 60 * 1000, // 6e -> 2h
-  4 * 60 * 60 * 1000, // 7e -> 4h, puis abandon définitif
+  4 * 60 * 60 * 1000, // 7e+ -> 4h (plafonné, jamais d'abandon)
 ];
 
 /**
@@ -183,20 +182,14 @@ function saveMapScores(id, mapScores) {
  */
 function saveMapScoresFailure(id) {
   const row = getMapScoresRowStmt.get(String(id));
-  // Verrou définitif : si ce match a déjà un VRAI score enregistré (pas
-  // juste "null" = abandon), on ne touche plus jamais à cette ligne, quoi
-  // qu'il arrive. Protège contre un appel erroné qui écraserait un score
-  // déjà trouvé avec succès.
   if (row && row.map_scores != null && row.map_scores !== "null") return;
   const attempts = ((row && row.map_scores_attempts) || 0) + 1;
-  const gaveUp = attempts > RETRY_DELAYS_MS.length;
+  const delayIdx = Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1);
   saveMapScoresStmt.run({
     id: String(id),
-    // Tant qu'on retente encore : on laisse `map_scores` à NULL en base (pas
-    // de JSON écrit) pour bien le distinguer d'un abandon définitif.
-    mapScores: gaveUp ? JSON.stringify(null) : null,
+    mapScores: null,
     attempts,
-    nextRetryAt: gaveUp ? null : new Date(Date.now() + RETRY_DELAYS_MS[attempts - 1]).toISOString(),
+    nextRetryAt: new Date(Date.now() + RETRY_DELAYS_MS[delayIdx]).toISOString(),
   });
 }
 

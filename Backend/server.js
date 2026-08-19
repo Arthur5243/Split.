@@ -1229,26 +1229,16 @@ app.get("/api/map-scores", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
-  // Remise à zéro des matchs marqués "abandon définitif" — désormais
-  // CONDITIONNÉE à la variable d'env RESET_ABANDONED_MAP_SCORES=1, au lieu
-  // de se déclencher à CHAQUE démarrage.
-  //
-  // Pourquoi ce changement : le serveur redémarre à chaque déploiement.
-  // Quand ce reset tournait à chaque boot, il remettait toute la file de
-  // matchs échoués en jeu à chaque push — et comme on pousse souvent, la
-  // file n'avait jamais le temps de se vider avant le redémarrage suivant,
-  // donc les scores ne se posaient jamais. On ne veut ce reset que
-  // ponctuellement (après avoir élargi RETRY_DELAYS_MS ou changé une source
-  // de scores), pas en boucle.
-  //
-  // Pour l'utiliser une fois : mettre RESET_ABANDONED_MAP_SCORES=1 sur
-  // Railway, laisser redémarrer, puis retirer la variable.
-  if (process.env.RESET_ABANDONED_MAP_SCORES === "1") {
-    try {
-      const resetCount = resetAbandonedMapScores();
-      console.log(`[startup] RESET_ABANDONED_MAP_SCORES=1 → ${resetCount} match(s) Valorant "abandon définitif" remis en jeu. Pense à retirer la variable d'env.`);
-    } catch (e) {
-      console.error("[startup] échec de la réinitialisation des matchs abandonnés:", e.message);
+  // Reset automatique des matchs Valorant "abandon définitif" à chaque
+  // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
+  // définitif (backoff plafonné à 4h), ce reset ne sert que pour les anciens
+  // matchs déjà marqués "null" en base.
+  try {
+    const resetCount = resetAbandonedMapScores();
+    if (resetCount > 0) {
+      console.log(`[startup] ${resetCount} match(s) Valorant "abandon définitif" remis en jeu automatiquement.`);
     }
+  } catch (e) {
+    console.error("[startup] échec de la réinitialisation des matchs abandonnés:", e.message);
   }
 });
