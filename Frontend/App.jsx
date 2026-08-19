@@ -878,6 +878,7 @@ const CS2_TEAM_ALIASES = {
   "aurora gaming": "aurora",
   "b8 esports": "b8",
   "the mongolz": "the mongolz",
+  "themongolz": "the mongolz",
   "pain gaming": "pain",
   "imperial esports": "imperial",
   "lynn vision gaming": "lynn vision",
@@ -906,6 +907,8 @@ const CS2_TEAM_ALIASES = {
   "parivision": "parivision",
   "thunderdownunder": "thunder downunder",
   "bcgame": "bc.game",
+  "inner circle esports": "inner circle",
+  "insiders esport": "insiders",
 };
 
 function normTeamName(name) {
