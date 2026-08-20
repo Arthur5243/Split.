@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   AlertCircle,
-  Settings,
   Mail,
   Lock,
   X,
@@ -21,6 +20,8 @@ import {
   Camera,
   Plus,
   ArrowLeft,
+  Bell,
+  Sparkles,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -183,10 +184,9 @@ const STR = {
     friendNoRequests: "Aucune demande en attente.", friendNotFound: "Joueur introuvable.",
     friendAccept: "Accepter", friendRefuse: "Refuser",
     profileBlock: "Bloquer",
-    settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "Autres notifications",
-    settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
-    settingsNotifMatchStart: "Un match commence", settingsNotifMatchEnd: "Un match est terminé",
+    settingsTitle: "Réglages", settingsNotifGames: "Notifications par jeu",
+    settingsNotifRegions: "Régions", settingsNotifStages: "Événements",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
@@ -242,10 +242,9 @@ const STR = {
     friendNoRequests: "No pending requests.", friendNotFound: "Player not found.",
     friendAccept: "Accept", friendRefuse: "Decline",
     profileBlock: "Block",
-    settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "Other notifications",
-    settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
-    settingsNotifMatchStart: "A match starts", settingsNotifMatchEnd: "A match has ended",
+    settingsTitle: "Settings", settingsNotifGames: "Notifications by game",
+    settingsNotifRegions: "Regions", settingsNotifStages: "Events",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
@@ -299,10 +298,9 @@ const STR = {
     friendNoRequests: "Sin solicitudes pendientes.", friendNotFound: "Jugador no encontrado.",
     friendAccept: "Aceptar", friendRefuse: "Rechazar",
     profileBlock: "Bloquear",
-    settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "Otras notificaciones",
-    settingsNotifEvents: "Próximos eventos", settingsNotifBets: "Pronósticos acertados",
-    settingsNotifMatchStart: "Un partido empieza", settingsNotifMatchEnd: "Un partido ha terminado",
+    settingsTitle: "Ajustes", settingsNotifGames: "Notificaciones por juego",
+    settingsNotifRegions: "Regiones", settingsNotifStages: "Eventos",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "Equipo favorito", settingsFavTeamNone: "Ningún equipo seleccionado", settingsAccount: "Cuenta",
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
@@ -356,10 +354,9 @@ const STR = {
     friendNoRequests: "Nessuna richiesta in sospeso.", friendNotFound: "Giocatore non trovato.",
     friendAccept: "Accetta", friendRefuse: "Rifiuta",
     profileBlock: "Blocca",
-    settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "Altre notifiche",
-    settingsNotifEvents: "Prossimi eventi", settingsNotifBets: "Pronostici vincenti",
-    settingsNotifMatchStart: "Una partita inizia", settingsNotifMatchEnd: "Una partita è finita",
+    settingsTitle: "Impostazioni", settingsNotifGames: "Notifiche per gioco",
+    settingsNotifRegions: "Regioni", settingsNotifStages: "Eventi",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "Squadra preferita", settingsFavTeamNone: "Nessuna squadra selezionata", settingsAccount: "Account",
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
@@ -413,10 +410,9 @@ const STR = {
     friendNoRequests: "保留中の申請はありません。", friendNotFound: "プレイヤーが見つかりません。",
     friendAccept: "承認", friendRefuse: "拒否",
     profileBlock: "ブロック",
-    settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "その他の通知",
-    settingsNotifEvents: "今後のイベント", settingsNotifBets: "的中した予想",
-    settingsNotifMatchStart: "試合開始", settingsNotifMatchEnd: "試合終了",
+    settingsTitle: "設定", settingsNotifGames: "ゲーム別通知",
+    settingsNotifRegions: "地域", settingsNotifStages: "イベント",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "お気に入りチーム", settingsFavTeamNone: "チーム未選択", settingsAccount: "アカウント",
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
@@ -470,10 +466,9 @@ const STR = {
     friendNoRequests: "Keine ausstehenden Anfragen.", friendNotFound: "Spieler nicht gefunden.",
     friendAccept: "Annehmen", friendRefuse: "Ablehnen",
     profileBlock: "Blockieren",
-    settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "Weitere Benachrichtigungen",
-    settingsNotifEvents: "Bevorstehende Events", settingsNotifBets: "Erfolgreiche Tipps",
-    settingsNotifMatchStart: "Ein Match beginnt", settingsNotifMatchEnd: "Ein Match ist beendet",
+    settingsTitle: "Einstellungen", settingsNotifGames: "Benachrichtigungen nach Spiel",
+    settingsNotifRegions: "Regionen", settingsNotifStages: "Events",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "Lieblingsteam", settingsFavTeamNone: "Kein Team ausgewählt", settingsAccount: "Konto",
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
@@ -527,10 +522,9 @@ const STR = {
     friendNoRequests: "暂无好友请求。", friendNotFound: "未找到该玩家。",
     friendAccept: "接受", friendRefuse: "拒绝",
     profileBlock: "屏蔽",
-    settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
-    settingsNotifOtherTitle: "其他通知",
-    settingsNotifEvents: "即将开始的活动", settingsNotifBets: "命中的竞猜",
-    settingsNotifMatchStart: "比赛开始", settingsNotifMatchEnd: "比赛结束",
+    settingsTitle: "设置", settingsNotifGames: "按游戏通知",
+    settingsNotifRegions: "地区", settingsNotifStages: "赛事",
+    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
     settingsFavTeam: "喜爱的战队", settingsFavTeamNone: "未选择战队", settingsAccount: "账户",
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
@@ -2811,15 +2805,49 @@ function LanguageMenu({ current, onSelect, onClose }) {
   );
 }
 
-function SettingsModal({ onClose, notifyRegions, setNotifyRegions, favoriteTeam, setFavoriteTeam, otherNotifs, setOtherNotifs, teams, T }) {
+function SettingsModal({ onClose, notifEnabled, setNotifEnabled, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T }) {
   const allTeams = teams || [];
 
-  const otherItems = [
-    { key: "events", label: T.settingsNotifEvents },
-    { key: "bets", label: T.settingsNotifBets },
-    { key: "matchStart", label: T.settingsNotifMatchStart },
-    { key: "matchEnd", label: T.settingsNotifMatchEnd },
+  const GAMES = [
+    { key: "valorant", label: "Valorant", img: NAV_VALORANT_IMG, accent: "#FF4655",
+      regions: REGIONS.map((r) => ({ key: r.key, label: regionLabel(r.key, T), accent: r.accent })),
+      stages: [
+        { key: "kickoff", label: T.settingsStageKickoff },
+        { key: "masters", label: T.settingsStageMasters },
+        { key: "playoffs", label: T.settingsStagePlayoffs },
+        { key: "champions", label: T.settingsStageChampions },
+        { key: "playins", label: T.settingsStagePlayIns },
+      ] },
+    { key: "cs2", label: "CS2", img: NAV_CSGO_IMG, accent: "#F5A623",
+      regions: REGIONS_CS2.map((r) => ({ key: r.key, label: regionLabelCS2(r.key, T), accent: r.accent })),
+      stages: [
+        { key: "stages", label: T.settingsStageStages },
+        { key: "playoffs", label: T.settingsStagePlayoffs },
+        { key: "masters", label: T.settingsStageMasters },
+        { key: "champions", label: T.settingsStageChampions },
+      ] },
+    { key: "rl", label: "Rocket League", img: NAV_RL_IMG, accent: "#4A90D9",
+      regions: [
+        { key: "EUROPE", label: "Europe", accent: "#4A90D9" },
+        { key: "AMERICAS", label: "Americas", accent: "#FF5A1F" },
+        { key: "OCEANIA", label: "Oceania", accent: "#1DE9D8" },
+      ],
+      stages: [
+        { key: "stages", label: T.settingsStageStages },
+        { key: "playoffs", label: T.settingsStagePlayoffs },
+        { key: "champions", label: T.settingsStageChampions },
+      ] },
   ];
+
+  function toggleGame(gKey) {
+    setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], on: !p[gKey].on } }));
+  }
+  function toggleRegion(gKey, rKey) {
+    setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], regions: { ...p[gKey].regions, [rKey]: !p[gKey].regions[rKey] } } }));
+  }
+  function toggleStage(gKey, sKey) {
+    setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], stages: { ...p[gKey].stages, [sKey]: !p[gKey].stages[sKey] } } }));
+  }
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
@@ -2829,31 +2857,46 @@ function SettingsModal({ onClose, notifyRegions, setNotifyRegions, favoriteTeam,
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
         <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1 }}>
-          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2 mt-1">{T.settingsNotifTitle}</p>
-          <div className="flex flex-col gap-2 mb-5">
-            {REGIONS.map((r) => (
-              <button key={r.key} onClick={() => setNotifyRegions((p) => ({ ...p, [r.key]: !p[r.key] }))} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "#181818" }}>
-                <span className="flex items-center gap-2">
-                  <span style={{ width: 8, height: 8, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
-                  <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{T.settingsNotifPrefix}{regionLabel(r.key, T)}</span>
-                </span>
-                <span className="rounded-full" style={{ width: 38, height: 22, background: notifyRegions[r.key] ? r.accent : "#2a2a2a", position: "relative" }}>
-                  <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: notifyRegions[r.key] ? 18 : 2, transition: "left 0.2s" }} />
-                </span>
-              </button>
-            ))}
-          </div>
 
-          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsNotifOtherTitle}</p>
-          <div className="flex flex-col gap-2 mb-5">
-            {otherItems.map((it) => (
-              <button key={it.key} onClick={() => setOtherNotifs((p) => ({ ...p, [it.key]: !p[it.key] }))} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: "#181818" }}>
-                <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>{it.label}</span>
-                <span className="rounded-full" style={{ width: 38, height: 22, background: otherNotifs[it.key] ? "#CCF71D" : "#2a2a2a", position: "relative" }}>
-                  <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: otherNotifs[it.key] ? 18 : 2, transition: "left 0.2s" }} />
-                </span>
-              </button>
-            ))}
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-3 mt-1">{T.settingsNotifGames}</p>
+          <div className="flex flex-col gap-3 mb-5">
+            {GAMES.map((g) => {
+              const gState = notifGames[g.key] || { on: false, regions: {}, stages: {} };
+              return (
+                <div key={g.key} className="rounded-2xl overflow-hidden" style={{ background: "#181818", border: gState.on ? `1px solid ${g.accent}33` : "1px solid #262626" }}>
+                  <button onClick={() => toggleGame(g.key)} className="flex items-center justify-between w-full px-3 py-3">
+                    <span className="flex items-center gap-2.5">
+                      <img src={g.img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+                      <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>{g.label}</span>
+                    </span>
+                    <span className="rounded-full" style={{ width: 38, height: 22, background: gState.on ? g.accent : "#2a2a2a", position: "relative", transition: "background 0.2s" }}>
+                      <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: gState.on ? 18 : 2, transition: "left 0.2s" }} />
+                    </span>
+                  </button>
+                  {gState.on && (
+                    <div className="px-3 pb-3" style={{ borderTop: "1px solid #262626" }}>
+                      <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 10, marginBottom: 6 }}>{T.settingsNotifRegions}</p>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {g.regions.map((r) => (
+                          <button key={r.key} onClick={() => toggleRegion(g.key, r.key)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: gState.regions[r.key] ? `${r.accent}22` : "#222", border: gState.regions[r.key] ? `1px solid ${r.accent}` : "1px solid #333" }}>
+                            <span style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
+                            <span style={{ color: gState.regions[r.key] ? r.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{r.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsNotifStages}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {g.stages.map((s) => (
+                          <button key={s.key} onClick={() => toggleStage(g.key, s.key)} className="rounded-lg px-2.5 py-1.5" style={{ background: gState.stages[s.key] ? `${g.accent}22` : "#222", border: gState.stages[s.key] ? `1px solid ${g.accent}` : "1px solid #333" }}>
+                            <span style={{ color: gState.stages[s.key] ? g.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{s.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsFavTeam}</p>
@@ -3113,7 +3156,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
   );
 }
 
-function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
+function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, notifEnabled, onToggleNotif }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
     <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#0a0a0a", borderBottom: "1px solid " + (isLight ? "#ddd" : "#1a1a1a") }}>
@@ -3123,8 +3166,19 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
       <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
-      <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
-        <Settings size={16} color={isLight ? "#444" : "#ccc"} />
+      <button onClick={onOpenSettings} className="rounded-full p-1.5 relative" style={{ background: isLight ? "#fff" : "#181818" }}>
+        {notifEnabled ? (
+          <>
+            <Bell size={16} color="#CCF71D" />
+            <Sparkles size={10} color="#CCF71D" className="absolute" style={{ top: 2, right: 2 }} />
+          </>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? "#999" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            <line x1="4" y1="2" x2="20" y2="20" stroke={isLight ? "#aaa" : "#555"} strokeWidth="2.5" />
+          </svg>
+        )}
       </button>
     </div>
   );
@@ -3209,8 +3263,12 @@ export default function ClutchApp() {
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [currentLang, setCurrentLang] = useState("fr");
-  const [notifyRegions, setNotifyRegions] = useState({ EMEA: true, PACIFIC: true, AMERICAS: true, CN: true });
-  const [otherNotifs, setOtherNotifs] = useState({ events: true, bets: true, matchStart: true, matchEnd: false });
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifGames, setNotifGames] = useState({
+    valorant: { on: false, regions: {}, stages: {} },
+    cs2: { on: false, regions: {}, stages: {} },
+    rl: { on: false, regions: {}, stages: {} },
+  });
   const [favoriteTeam, setFavoriteTeam] = useState("");
   const [profile, setProfile] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_profile")); } catch { return null; }
@@ -3718,7 +3776,7 @@ export default function ClutchApp() {
   return (
     <div className="flex items-center justify-center p-4" style={{ background: "#000", minHeight: "700px" }}>
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
-        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
+        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} notifEnabled={notifEnabled} onToggleNotif={() => setNotifEnabled((p) => !p)} />
 
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
           {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} />}
@@ -3788,12 +3846,12 @@ export default function ClutchApp() {
         {showSettings && (
           <SettingsModal
             onClose={() => setShowSettings(false)}
-            notifyRegions={notifyRegions}
-            setNotifyRegions={setNotifyRegions}
+            notifEnabled={notifEnabled}
+            setNotifEnabled={setNotifEnabled}
+            notifGames={notifGames}
+            setNotifGames={setNotifGames}
             favoriteTeam={favoriteTeam}
             setFavoriteTeam={setFavoriteTeam}
-            otherNotifs={otherNotifs}
-            setOtherNotifs={setOtherNotifs}
             teams={allTeams}
             T={T}
           />
