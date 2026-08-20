@@ -1,5 +1,32 @@
 [
   {
+    "date": "2026-08-19",
+    "region": "China",
+    "team1": "TYLOO",
+    "team2": "JD Gaming",
+    "score": "1-2",
+    "maps": [
+      {
+        "map": "Breeze",
+        "score1": 7,
+        "score2": 13,
+        "pick": null
+      },
+      {
+        "map": "Summit",
+        "score1": 13,
+        "score2": 10,
+        "pick": null
+      },
+      {
+        "map": "Ascent",
+        "score1": 9,
+        "score2": 13,
+        "pick": null
+      }
+    ]
+  },
+  {
     "date": "2026-08-16",
     "region": "Americas",
     "team1": "FURIA",
