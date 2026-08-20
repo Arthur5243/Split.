@@ -1992,7 +1992,7 @@ function NewsCarousel({ T }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [img2Loaded, setImg2Loaded] = useState(false);
   const dragStartX = useRef(null);
-  const slideCount = 2;
+  const slideCount = 3;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -2034,7 +2034,7 @@ function NewsCarousel({ T }) {
             decoding="async"
             onLoad={() => setImgLoaded(true)}
             className="absolute inset-0"
-            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.35s ease" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.35s ease" }}
           />
           <div
             className="absolute inset-0"
@@ -2081,8 +2081,12 @@ function NewsCarousel({ T }) {
         </>
       )}
 
+      {activeSlide === 2 && (
+        <div className="absolute inset-0" style={{ background: "#141414" }} />
+      )}
+
       <div className="absolute flex items-center gap-1.5" style={{ bottom: "10px", left: "50%", transform: "translateX(-50%)" }}>
-        {[0, 1].map((i) => (
+        {[0, 1, 2].map((i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
