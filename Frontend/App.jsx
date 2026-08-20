@@ -2486,6 +2486,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
 }
 
 function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T }) {
+  const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatar, setAvatar] = useState(profile?.avatar || null);
   const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
@@ -2495,7 +2496,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
   const fileRef = useRef(null);
 
   const bioOk = bio.trim() === "" || validateBio(bio);
-  const canSave = avatar && bioOk;
+  const canSave = avatar && pseudo.trim().length >= 2 && bioOk;
 
   function handleBioChange(e) {
     const v = e.target.value;
@@ -2511,7 +2512,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
 
   function handleSave() {
     if (!canSave) return;
-    onSave({ bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
+    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
   }
 
   return (
@@ -2534,6 +2535,10 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
               )}
             </button>
             <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
+            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
           </div>
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
@@ -2744,37 +2749,40 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         })}
       </div>
 
-      {profile ? (
-        <div className="rounded-2xl px-4 py-4 mb-4" style={{ background: "#141414", border: "1px solid #262626" }}>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 48, height: 48, background: "#1a1a1a", border: "2px solid #CCF71D", flexShrink: 0 }}>
+      <div className="flex flex-col gap-2">
+        {profile && score > 0 && (
+          <button onClick={() => setProfileView(true)} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "#141414", border: "1px solid #262626", textAlign: "left" }}>
+            <span className="font-black shrink-0" style={{ color: "#CCF71D", fontSize: "16px", width: 24, textAlign: "center" }}>1</span>
+            <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 40, height: 40, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
               {profile.avatar ? (
                 <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <User size={22} color="#555" />
+                <User size={18} color="#555" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              {profile.bio && <p style={{ color: "#999", fontSize: "12px" }} className="truncate">{profile.bio}</p>}
-            </div>
+            <span className="font-bold text-white flex-1 truncate" style={{ fontSize: "14px" }}>{profile.pseudo || T.profilePseudo}</span>
             <div className="text-right shrink-0">
-              <span style={{ color: "#CCF71D", fontSize: "22px", fontWeight: 900 }}>{score}</span>
-              <p style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>pts</p>
+              <span style={{ color: "#CCF71D", fontSize: "18px", fontWeight: 900 }}>{score}</span>
+              <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
-          <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
-            <User size={26} color="#444" />
-          </div>
-          <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
-          <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "260px" }} className="mt-2">{T.profileCreateSub}</p>
-          <button onClick={onOpenProfile} className="rounded-xl font-bold px-6 py-2.5 mt-4" style={{ background: "#CCF71D", color: "#000", fontSize: "13px" }}>
-            {T.profileCreate}
           </button>
-        </div>
-      )}
+        )}
+        {!profile && (
+          <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
+            <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
+              <User size={26} color="#444" />
+            </div>
+            <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
+            <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "260px" }} className="mt-2">{T.profileCreateSub}</p>
+            <button onClick={onOpenProfile} className="rounded-xl font-bold px-6 py-2.5 mt-4" style={{ background: "#CCF71D", color: "#000", fontSize: "13px" }}>
+              {T.profileCreate}
+            </button>
+          </div>
+        )}
+        {profile && score === 0 && (
+          <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
+        )}
+      </div>
     </div>
   );
 }
