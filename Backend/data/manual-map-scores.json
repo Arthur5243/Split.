@@ -1,5 +1,29 @@
 [
   {
+    "date": "2026-08-20",
+    "region": "China",
+    "team1": "Nova Esports",
+    "team2": "XLG Gaming",
+    "score": "2-1",
+    "maps": [
+      { "map": "Split", "score1": 6, "score2": 13, "pick": null },
+      { "map": "Lotus", "score1": 13, "score2": 5, "pick": null },
+      { "map": "Breeze", "score1": 13, "score2": 3, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-19",
+    "region": "China",
+    "team1": "Bilibili Gaming",
+    "team2": "XLG Gaming",
+    "score": "2-1",
+    "maps": [
+      { "map": "Lotus", "score1": 13, "score2": 11, "pick": null },
+      { "map": "Split", "score1": 8, "score2": 13, "pick": null },
+      { "map": "Haven", "score1": 13, "score2": 5, "pick": null }
+    ]
+  },
+  {
     "date": "2026-08-19",
     "region": "China",
     "team1": "TYLOO",
