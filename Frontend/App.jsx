@@ -3311,6 +3311,24 @@ export default function ClutchApp() {
     applySettlement(newlySettled, pointsToAdd, "cs2");
   }, [cs2ResultsMatches]);
 
+  useEffect(() => {
+    if (!resultsMatches.length && !cs2ResultsMatches.length) return;
+    const perGame = { valo: 0, cs2: 0, rl: 0 };
+    for (const id of settledMatchIds) {
+      const pred = predictions[id];
+      if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
+      const vm = resultsMatches.find((m) => String(m.id) === id);
+      const cm = cs2ResultsMatches.find((m) => String(m.id) === id);
+      const match = vm || cm;
+      if (!match || match.status !== "finished" || match.score1 == null || match.score2 == null) continue;
+      const pts = calcMatchPoints(match, pred);
+      if (vm) perGame.valo += pts;
+      else if (cm) perGame.cs2 += pts;
+    }
+    setPointsPerGame(perGame);
+    localStorage.setItem("split_points_per_game", JSON.stringify(perGame));
+  }, [resultsMatches, cs2ResultsMatches, settledMatchIds]);
+
   function toggleExpand(matchId) {
     setPredictions((prev) => ({
       ...prev,
