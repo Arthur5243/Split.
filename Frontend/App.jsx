@@ -2399,7 +2399,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
             <Search size={14} color="#666" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." autoFocus style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", outline: "none", flex: 1 }} />
           </div>
-          <div style={{ maxHeight: "140px", overflowY: "auto" }}>
+          <div className="dark-scroll" style={{ maxHeight: "140px", overflowY: "auto" }}>
             <button onClick={() => { onChange(""); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: "#666", fontSize: "12px" }}>—</button>
             {filtered.map((t) => (
               <button key={t} onClick={() => { onChange(t); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: t === value ? "#CCF71D" : "#ccc", fontSize: "12px", background: t === value ? "#222" : "transparent" }}>
@@ -2451,7 +2451,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
             <X size={18} color="#888" />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 pb-6 flex flex-col gap-4">
+        <div className="overflow-y-auto dark-scroll px-5 pb-6 flex flex-col gap-4">
           <div className="flex flex-col items-center">
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "flex-start" }}>{T.profileAvatar}</label>
             <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1a1a1a", border: "2px solid #2a2a2a" }}>
@@ -3444,6 +3444,10 @@ export default function ClutchApp() {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .dark-scroll::-webkit-scrollbar { width: 4px; }
+        .dark-scroll::-webkit-scrollbar-track { background: transparent; }
+        .dark-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .dark-scroll { scrollbar-width: thin; scrollbar-color: #333 transparent; }
         @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
       `}</style>
     </div>
