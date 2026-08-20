@@ -2935,36 +2935,45 @@ function CalendarModal({ onClose, T, lang }) {
   );
 }
 
-function Cs2CalendarModal({ onClose, T, upcoming, live, results }) {
+const CS2_CAL_HIDDEN = ["epl", "ecl", "csa", "blast open", "european pro league", "esl challenger league", "cct south america"];
+function fmtCalDate(iso, lang) {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  const loc = lang === "ja" ? "ja-JP" : lang === "zh" ? "zh-CN" : lang === "de" ? "de-DE" : lang === "it" ? "it-IT" : lang === "es" ? "es-ES" : lang === "en" ? "en-GB" : "fr-FR";
+  const day = d.getDate();
+  const month = new Intl.DateTimeFormat(loc, { month: "short" }).format(d).replace(".", "");
+  const year = String(d.getFullYear()).slice(2);
+  return day + " " + month + " " + year;
+}
+
+function Cs2CalendarModal({ onClose, T, upcoming, live, results, lang }) {
   const [expanded, setExpanded] = useState({});
   const all = [...upcoming, ...live, ...results];
   const groups = new Map();
   for (const m of all) {
     const leagueKey = m.league || "CS2";
+    if (CS2_CAL_HIDDEN.some((h) => leagueKey.toLowerCase().includes(h))) continue;
     const stageKey = m.tournamentName || m.phase || "—";
     const key = leagueKey + " — " + stageKey;
-    const g = groups.get(key) || { league: leagueKey, stage: stageKey, matches: [], regions: new Set() };
+    const g = groups.get(key) || { league: leagueKey, stage: stageKey, matches: [], regions: new Set(), minDate: null };
     g.matches.push(m);
+    if (m.day && (!g.minDate || m.day < g.minDate)) g.minDate = m.day;
     if (m.team1Region) g.regions.add(m.team1Region);
     if (m.team2Region) g.regions.add(m.team2Region);
     groups.set(key, g);
   }
-  const leagueGroups = new Map();
+  const items = [];
   for (const g of groups.values()) {
     const allFinished = g.matches.every((m) => m.status === "finished");
     const anyLive = g.matches.some((m) => m.status === "running");
     const status = allFinished ? "done" : anyLive ? "live" : "soon";
     const dates = g.matches.map((m) => m.day).filter(Boolean).sort();
-    const range = dates.length ? dates[0] + " → " + dates[dates.length - 1] : "";
-    const item = { ...g, status, count: g.matches.length, range, regions: [...g.regions] };
-    const lg = leagueGroups.get(g.league) || { league: g.league, stages: [] };
-    lg.stages.push(item);
-    leagueGroups.set(g.league, lg);
+    const rangeStart = dates.length ? fmtCalDate(dates[0], lang) : "";
+    const rangeEnd = dates.length ? fmtCalDate(dates[dates.length - 1], lang) : "";
+    const range = rangeStart && rangeEnd ? (rangeStart === rangeEnd ? rangeStart : rangeStart + " → " + rangeEnd) : "";
+    items.push({ ...g, status, count: g.matches.length, range, regions: [...g.regions], sortDate: g.minDate || "9999" });
   }
-  const leagues = [...leagueGroups.values()];
-  leagues.sort((a, b) => b.stages.reduce((s, st) => s + st.count, 0) - a.stages.reduce((s, st) => s + st.count, 0));
-
-  const REGION_COLORS = { EUROPE: "#3B82F6", AMERICAS: "#ef4444", ASIA: "#f59e0b" };
+  items.sort((a, b) => a.sortDate.localeCompare(b.sortDate));
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
@@ -2974,63 +2983,35 @@ function Cs2CalendarModal({ onClose, T, upcoming, live, results }) {
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
         <div className="overflow-y-auto dark-scroll px-5 pb-5" style={{ flex: 1 }}>
-          {leagues.length === 0 && (
+          {items.length === 0 && (
             <p style={{ color: "#999", fontSize: "12px", paddingTop: "8px" }}>{T.cs2CalendarEmpty}</p>
           )}
-          {leagues.map((lg) => (
-            <div key={lg.league} className="mb-5">
-              <p className="font-black text-white mb-2" style={{ fontSize: "16px" }}>{lg.league}</p>
-              {lg.stages.map((st, idx) => {
-                const statusColor = st.status === "done" ? "#666" : st.status === "live" ? "#ff3b3b" : "#CCF71D";
-                const statusLabel = st.status === "done" ? T.calendarDone : st.status === "live" ? T.calendarLive : T.calendarSoon;
-                const ek = lg.league + st.stage;
-                return (
-                  <div key={idx} className="flex gap-3 pb-4">
-                    <div className="flex flex-col items-center">
-                      <div className="rounded-full" style={{ width: 10, height: 10, background: st.status === "done" ? "#444" : statusColor, marginTop: 4 }} />
-                      {idx < lg.stages.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+          {items.map((st, idx) => {
+            const statusColor = st.status === "done" ? "#666" : st.status === "live" ? "#ff3b3b" : "#CCF71D";
+            const statusLabel = st.status === "done" ? T.calendarDone : st.status === "live" ? T.calendarLive : T.calendarSoon;
+            const ek = st.league + st.stage;
+            return (
+              <div key={idx} className="flex gap-3 pb-4">
+                <div className="flex flex-col items-center">
+                  <div className="rounded-full" style={{ width: 10, height: 10, background: st.status === "done" ? "#444" : statusColor, marginTop: 4 }} />
+                  {idx < items.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+                </div>
+                <div className="flex-1 pb-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-black text-white" style={{ fontSize: "14px" }}>{st.stage}</span>
+                      <p style={{ color: "#888", fontSize: "11px", marginTop: 1 }}>{st.league}</p>
                     </div>
-                    <div className="flex-1 pb-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-white" style={{ fontSize: "14px" }}>{st.stage}</span>
-                        <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
-                          {statusLabel}
-                        </span>
-                      </div>
-                      {st.regions.length > 0 && (
-                        <div className="flex gap-1 mt-1.5 mb-1">
-                          {st.regions.map((r) => <span key={r} style={{ width: 6, height: 6, borderRadius: 9999, background: REGION_COLORS[r] || "#888", display: "inline-block" }} />)}
-                        </div>
-                      )}
-                      {st.range && <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{st.range}</p>}
-                      <button onClick={() => setExpanded((p) => ({ ...p, [ek]: !p[ek] }))} className="flex items-center gap-1 mt-2" style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>
-                        {expanded[ek] ? T.calendarHideDetail : T.calendarShowDetail}
-                        <ChevronDown size={12} style={{ transform: expanded[ek] ? "rotate(180deg)" : "rotate(0deg)" }} />
-                      </button>
-                      {expanded[ek] && (
-                        <div className="mt-2 flex flex-col gap-1.5">
-                          {st.regions.length > 0 ? st.regions.map((r) => {
-                            const count = st.matches.filter((m) => m.team1Region === r || m.team2Region === r).length;
-                            return (
-                              <div key={r} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
-                                <span style={{ color: REGION_COLORS[r] || "#fff", fontSize: "11px", fontWeight: 700 }}>{r}</span>
-                                <span style={{ color: "#999", fontSize: "11px" }}>{count} matchs</span>
-                              </div>
-                            );
-                          }) : (
-                            <div className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
-                              <span style={{ color: "#ccc", fontSize: "11px", fontWeight: 700 }}>{st.count} matchs</span>
-                              <span style={{ color: "#666", fontSize: "11px" }}>{st.matches.filter((m) => m.status === "finished").length} {T.calendarDone.toLowerCase()}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                      {statusLabel}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                  {st.range && <p style={{ color: "#666", fontSize: "12px" }} className="mt-1">{st.range}</p>}
+                  <p style={{ color: "#555", fontSize: "11px", marginTop: 4 }}>{st.count} matchs{st.status === "done" ? "" : " · " + st.matches.filter((m) => m.status === "finished").length + " " + T.calendarDone.toLowerCase()}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -3737,6 +3718,7 @@ export default function ClutchApp() {
           <Cs2CalendarModal
             onClose={() => setShowCs2Calendar(false)}
             T={T}
+            lang={lang}
             upcoming={cs2UpcomingMatches}
             live={cs2LiveMatches}
             results={cs2ResultsMatches}
