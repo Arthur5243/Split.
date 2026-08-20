@@ -84,6 +84,18 @@ const LOGOS = {
   "EX-S": "/logos/exs.png",
   MELL: "/logos/mell.png",
   NORD: "/logos/nord.jpg",
+  PAIN: "/logos/pain.png",
+  ZETA: "/logos/zeta.png",
+  TL: "/logos/tl.png",
+  KC: "/logos/kc.png",
+  MIBR: "/logos/mibr.png",
+  EG: "/logos/eg.png",
+  ONG: "/logos/ong.png",
+  BST: "/logos/bst.png",
+  G2: "/logos/g2.png",
+  PRX: "/logos/prx.png",
+  JL: "/logos/jl.png",
+  TH: "/logos/th.png",
 };
 
 // Langues disponibles dans le sélecteur
