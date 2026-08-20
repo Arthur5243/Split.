@@ -75,15 +75,16 @@ const LOGOS = {
   KBG: "/logos/kbg.png",
   ENCE: "/logos/ence.webp",
   FORZ: "/logos/forz.webp",
-  NOIR: "/logos/noir.webp",
+  NOIR: "/logos/noir.png",
   FORT: "/logos/fort.webp",
   YL: "/logos/yl.webp",
+  BANG: "/logos/bang.png",
+  ENVY: "/logos/envy.png",
+  "EX-M": "/logos/mana.png",
+  "EX-S": "/logos/exs.png",
+  MELL: "/logos/mell.png",
+  NORD: "/logos/nord.jpg",
 };
-
-// Équipes dont le logo est mal classé "sombre" par useIsDarkLogo (donc
-// transformé à tort en blanc uni / halo) alors qu'il est en réalité coloré :
-// on force l'affichage en couleurs d'origine, jamais d'inversion, pour ces codes.
-const FORCE_NATURAL_COLOR = new Set(["FUT", "EDG", "W7M", "XE", "DRX", "AT"]);
 
 // Langues disponibles dans le sélecteur
 const LANGS = [
@@ -1319,12 +1320,8 @@ function computeGameOverrunWinner(games, team1Name, team2Name) {
   return winner0 === 1 ? team1Name : team2Name;
 }
 
-// Détecte si un logo est majoritairement noir/foncé (donc invisible sur fond
-// sombre) en échantillonnant ses pixels via un canvas. Si oui -> on le force
-// en blanc (contraste). Sinon -> on garde ses couleurs d'origine intactes.
 function TeamLogo({ code, apiLogo, accent, tbd }) {
   const src = LOGOS[code] || apiLogo || null;
-  const keepColors = FORCE_NATURAL_COLOR.has(code);
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
@@ -1334,7 +1331,7 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
         <img
           src={src}
           alt={code}
-          style={{ width: "70%", height: "70%", objectFit: "contain", filter: keepColors ? "none" : "brightness(0) invert(1)" }}
+          style={{ width: "70%", height: "70%", objectFit: "contain" }}
         />
       ) : (
         code

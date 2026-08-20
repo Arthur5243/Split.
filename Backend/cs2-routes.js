@@ -201,21 +201,12 @@ function attachTeamRegions(m) {
 // tournoi global n'est pas noté S/A/B) — le nom du stage vient de
 // `m.tournament.name` côté PandaScore (ex: "Playoffs", "Kickoff").
 const NOTABLE_TIERS = ["s", "a", "b"];
-const KEY_STAGE_PATTERN = /kickoff|playoffs?/i;
-// Les qualifications fermées ("Closed Qualifier") héritent souvent le tier
-// du tournoi principal côté PandaScore (ex: "NODWIN Clutch Series 11 Closed
-// Qualifier" hérite du tier de "NODWIN Clutch Series 11") sans avoir la même
-// couverture sur Liquipedia — équipes trop obscures, jamais documentées.
-// Constaté sur plusieurs matchs bloqués : CCT.../Closed Qualifier, NODWIN
-// Clutch.../Closed Qualifier, Exort Fiesta.../Closed Qualifier. On les
-// exclut explicitement, même si leur tier passerait le filtre ci-dessous.
 const EXCLUDED_STAGE_PATTERN = /closed qualifier/i;
 function isNotableTier(m) {
   const name = m.tournament?.name || "";
   if (EXCLUDED_STAGE_PATTERN.test(name)) return false;
   const tier = (m.tournament?.tier || "").toLowerCase();
-  if (NOTABLE_TIERS.includes(tier)) return true;
-  return KEY_STAGE_PATTERN.test(name);
+  return NOTABLE_TIERS.includes(tier);
 }
 
 router.get("/api/cs2-upcoming", async (req, res) => {
