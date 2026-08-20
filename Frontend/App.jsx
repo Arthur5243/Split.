@@ -25,7 +25,7 @@ import {
 
 const SPLIT_LOGO = "/split-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
-const NEWS_EWC_IMAGE = "/Cs2(2).png";
+const NEWS_EWC_IMAGE = "/news-ewc.png";
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
 // Valorant / CS2 / Rocket League — fichiers fournis par l'utilisateur.
@@ -2062,22 +2062,21 @@ function NewsCarousel({ T }) {
             decoding="async"
             onLoad={() => setImg2Loaded(true)}
             className="absolute inset-0"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: img2Loaded ? 1 : 0, transition: "opacity 0.35s ease" }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center", opacity: img2Loaded ? 1 : 0, transition: "opacity 0.35s ease" }}
           />
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.85) 65%, #000 90%)" }}
+            style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }}
           />
           <span
             className="absolute rounded-full"
-            style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.25)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}
+            style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}
           >
             {T.news2Badge}
           </span>
-          <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "55%", textAlign: "right" }}>
-            <p style={{ color: "#ffaa00", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 1px 8px rgba(0,0,0,0.6)" }}>{T.news2Title}</p>
-            <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35 }}>{T.news2Sub}</p>
+          <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+            <p style={{ color: "#ffaa00", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
+            <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news2Sub}</p>
           </div>
         </>
       )}
