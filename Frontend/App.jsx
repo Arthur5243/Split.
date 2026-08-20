@@ -178,7 +178,7 @@ const STR = {
     friendTabAdd: "Ajouter", friendTabRequests: "Demandes",
     friendSearchPlaceholder: "Pseudo du joueur...", friendSend: "Envoyer",
     friendSent: "Envoyée !", friendCooldown: "Attends 20 min",
-    friendNoRequests: "Aucune demande en attente.",
+    friendNoRequests: "Aucune demande en attente.", friendNotFound: "Joueur introuvable.",
     friendAccept: "Accepter", friendRefuse: "Refuser",
     profileBlock: "Bloquer",
     settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
@@ -236,7 +236,7 @@ const STR = {
     friendTabAdd: "Add", friendTabRequests: "Requests",
     friendSearchPlaceholder: "Player username...", friendSend: "Send",
     friendSent: "Sent!", friendCooldown: "Wait 20 min",
-    friendNoRequests: "No pending requests.",
+    friendNoRequests: "No pending requests.", friendNotFound: "Player not found.",
     friendAccept: "Accept", friendRefuse: "Decline",
     profileBlock: "Block",
     settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
@@ -292,7 +292,7 @@ const STR = {
     friendTabAdd: "Añadir", friendTabRequests: "Solicitudes",
     friendSearchPlaceholder: "Pseudo del jugador...", friendSend: "Enviar",
     friendSent: "¡Enviada!", friendCooldown: "Espera 20 min",
-    friendNoRequests: "Sin solicitudes pendientes.",
+    friendNoRequests: "Sin solicitudes pendientes.", friendNotFound: "Jugador no encontrado.",
     friendAccept: "Aceptar", friendRefuse: "Rechazar",
     profileBlock: "Bloquear",
     settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
@@ -348,7 +348,7 @@ const STR = {
     friendTabAdd: "Aggiungi", friendTabRequests: "Richieste",
     friendSearchPlaceholder: "Nickname del giocatore...", friendSend: "Invia",
     friendSent: "Inviata!", friendCooldown: "Aspetta 20 min",
-    friendNoRequests: "Nessuna richiesta in sospeso.",
+    friendNoRequests: "Nessuna richiesta in sospeso.", friendNotFound: "Giocatore non trovato.",
     friendAccept: "Accetta", friendRefuse: "Rifiuta",
     profileBlock: "Blocca",
     settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
@@ -404,7 +404,7 @@ const STR = {
     friendTabAdd: "追加", friendTabRequests: "申請",
     friendSearchPlaceholder: "プレイヤー名...", friendSend: "送信",
     friendSent: "送信済み!", friendCooldown: "20分待ってね",
-    friendNoRequests: "保留中の申請はありません。",
+    friendNoRequests: "保留中の申請はありません。", friendNotFound: "プレイヤーが見つかりません。",
     friendAccept: "承認", friendRefuse: "拒否",
     profileBlock: "ブロック",
     settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
@@ -460,7 +460,7 @@ const STR = {
     friendTabAdd: "Hinzufügen", friendTabRequests: "Anfragen",
     friendSearchPlaceholder: "Spieler-Nickname...", friendSend: "Senden",
     friendSent: "Gesendet!", friendCooldown: "Warte 20 Min",
-    friendNoRequests: "Keine ausstehenden Anfragen.",
+    friendNoRequests: "Keine ausstehenden Anfragen.", friendNotFound: "Spieler nicht gefunden.",
     friendAccept: "Annehmen", friendRefuse: "Ablehnen",
     profileBlock: "Blockieren",
     settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
@@ -516,7 +516,7 @@ const STR = {
     friendTabAdd: "添加", friendTabRequests: "请求",
     friendSearchPlaceholder: "玩家昵称...", friendSend: "发送",
     friendSent: "已发送!", friendCooldown: "等待20分钟",
-    friendNoRequests: "暂无好友请求。",
+    friendNoRequests: "暂无好友请求。", friendNotFound: "未找到该玩家。",
     friendAccept: "接受", friendRefuse: "拒绝",
     profileBlock: "屏蔽",
     settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
@@ -2560,14 +2560,15 @@ function FriendModal({ onClose, T }) {
   const [pseudo, setPseudo] = useState("");
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [requests] = useState([]);
 
   function handleSend() {
     if (!pseudo.trim() || cooldown) return;
-    setSent(true);
+    setNotFound(true);
     setCooldown(true);
     setTimeout(() => setCooldown(false), 20 * 60 * 1000);
-    setTimeout(() => setSent(false), 2000);
+    setTimeout(() => setNotFound(false), 3000);
     setPseudo("");
   }
 
@@ -2575,7 +2576,7 @@ function FriendModal({ onClose, T }) {
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "70%" }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "80%", minHeight: "50%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileAddFriend}</h2>
           <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
@@ -2586,16 +2587,19 @@ function FriendModal({ onClose, T }) {
           <button onClick={() => setTab("add")} style={tabStyle(tab === "add")}>{T.friendTabAdd}</button>
           <button onClick={() => setTab("requests")} style={tabStyle(tab === "requests")}>{T.friendTabRequests}</button>
         </div>
-        <div className="px-5 py-4">
+        <div className="px-5 py-4 flex-1">
           {tab === "add" && (
-            <div className="flex gap-2">
-              <div className="flex items-center gap-2 flex-1 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                <Search size={14} color="#666" />
-                <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
+            <div>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-2 flex-1 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                  <Search size={14} color="#666" />
+                  <input value={pseudo} onChange={(e) => { setPseudo(e.target.value); setNotFound(false); }} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
+                </div>
+                <button onClick={handleSend} disabled={!pseudo.trim() || cooldown} className="rounded-xl px-4 font-bold shrink-0" style={{ background: sent ? "#2ecc71" : cooldown ? "#333" : "#CCF71D", color: sent ? "#fff" : cooldown ? "#666" : "#000", fontSize: "12px" }}>
+                  {sent ? T.friendSent : cooldown ? T.friendCooldown : T.friendSend}
+                </button>
               </div>
-              <button onClick={handleSend} disabled={!pseudo.trim() || cooldown} className="rounded-xl px-4 font-bold shrink-0" style={{ background: sent ? "#2ecc71" : cooldown ? "#333" : "#CCF71D", color: sent ? "#fff" : cooldown ? "#666" : "#000", fontSize: "12px" }}>
-                {sent ? T.friendSent : cooldown ? T.friendCooldown : T.friendSend}
-              </button>
+              {notFound && <p style={{ color: "#ff4444", fontSize: "12px", marginTop: 8 }}>{T.friendNotFound}</p>}
             </div>
           )}
           {tab === "requests" && (
@@ -2931,66 +2935,102 @@ function CalendarModal({ onClose, T, lang }) {
   );
 }
 
-// Programme CS2 (Kickoff/Playoffs) : contrairement au calendrier VCT, pas de
-// dates saisies à la main — CS2 n'a pas UN circuit mondial unique avec un
-// calendrier partagé (chaque tournoi a ses propres stages). On dérive donc
-// directement le statut de chaque stage à partir des vrais matchs CS2 déjà
-// chargés (upcoming/live/results) : regroupés par ligue+stage, "Terminé" si
-// tous les matchs connus de ce groupe sont finis, "En cours" si l'un
-// tourne, sinon "Bientôt".
 function Cs2CalendarModal({ onClose, T, upcoming, live, results }) {
+  const [expanded, setExpanded] = useState({});
   const all = [...upcoming, ...live, ...results];
   const groups = new Map();
   for (const m of all) {
-    if (!/kickoff|playoffs?/i.test(m.tournamentName || "")) continue;
-    const key = (m.league || "CS2") + " — " + m.tournamentName;
-    const g = groups.get(key) || { league: m.league || "CS2", stage: m.tournamentName, matches: [] };
+    const leagueKey = m.league || "CS2";
+    const stageKey = m.tournamentName || m.phase || "—";
+    const key = leagueKey + " — " + stageKey;
+    const g = groups.get(key) || { league: leagueKey, stage: stageKey, matches: [], regions: new Set() };
     g.matches.push(m);
+    if (m.team1Region) g.regions.add(m.team1Region);
+    if (m.team2Region) g.regions.add(m.team2Region);
     groups.set(key, g);
   }
-  const items = [...groups.values()].map((g) => {
+  const leagueGroups = new Map();
+  for (const g of groups.values()) {
     const allFinished = g.matches.every((m) => m.status === "finished");
     const anyLive = g.matches.some((m) => m.status === "running");
     const status = allFinished ? "done" : anyLive ? "live" : "soon";
-    return { ...g, status, count: g.matches.length };
-  });
+    const dates = g.matches.map((m) => m.day).filter(Boolean).sort();
+    const range = dates.length ? dates[0] + " → " + dates[dates.length - 1] : "";
+    const item = { ...g, status, count: g.matches.length, range, regions: [...g.regions] };
+    const lg = leagueGroups.get(g.league) || { league: g.league, stages: [] };
+    lg.stages.push(item);
+    leagueGroups.set(g.league, lg);
+  }
+  const leagues = [...leagueGroups.values()];
+  leagues.sort((a, b) => b.stages.reduce((s, st) => s + st.count, 0) - a.stages.reduce((s, st) => s + st.count, 0));
+
+  const REGION_COLORS = { EUROPE: "#3B82F6", AMERICAS: "#ef4444", ASIA: "#f59e0b" };
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#fff", maxHeight: "80%" }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <h2 className="font-black" style={{ fontSize: "17px", color: "#111" }}>{T.cs2CalendarModalTitle}</h2>
-          <button onClick={onClose}><X size={20} color="#666" /></button>
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
+          <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
-          {items.length === 0 && (
+        <div className="overflow-y-auto dark-scroll px-5 pb-5" style={{ flex: 1 }}>
+          {leagues.length === 0 && (
             <p style={{ color: "#999", fontSize: "12px", paddingTop: "8px" }}>{T.cs2CalendarEmpty}</p>
           )}
-          {items.map((it, i) => {
-            const statusColor = it.status === "done" ? "#999" : it.status === "live" ? "#ff3b3b" : "#3B82F6";
-            const statusLabel = it.status === "done" ? T.calendarDone : it.status === "live" ? T.calendarLive : T.calendarSoon;
-            return (
-              <div key={i} className="flex items-center justify-between rounded-2xl px-4 py-3 mb-2" style={{ background: "#f5f5f5" }}>
-                <div>
-                  <div style={{ color: "#111", fontSize: "13px", fontWeight: 800 }}>{it.stage}</div>
-                  <div style={{ color: "#777", fontSize: "11px" }}>{it.league}</div>
-                </div>
-                <span
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 700,
-                    color: statusColor,
-                    border: "1px solid " + statusColor + "55",
-                    borderRadius: "9999px",
-                    padding: "2px 8px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {statusLabel}
-                </span>
-              </div>
-            );
-          })}
+          {leagues.map((lg) => (
+            <div key={lg.league} className="mb-5">
+              <p className="font-black text-white mb-2" style={{ fontSize: "16px" }}>{lg.league}</p>
+              {lg.stages.map((st, idx) => {
+                const statusColor = st.status === "done" ? "#666" : st.status === "live" ? "#ff3b3b" : "#CCF71D";
+                const statusLabel = st.status === "done" ? T.calendarDone : st.status === "live" ? T.calendarLive : T.calendarSoon;
+                const ek = lg.league + st.stage;
+                return (
+                  <div key={idx} className="flex gap-3 pb-4">
+                    <div className="flex flex-col items-center">
+                      <div className="rounded-full" style={{ width: 10, height: 10, background: st.status === "done" ? "#444" : statusColor, marginTop: 4 }} />
+                      {idx < lg.stages.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+                    </div>
+                    <div className="flex-1 pb-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-white" style={{ fontSize: "14px" }}>{st.stage}</span>
+                        <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                      {st.regions.length > 0 && (
+                        <div className="flex gap-1 mt-1.5 mb-1">
+                          {st.regions.map((r) => <span key={r} style={{ width: 6, height: 6, borderRadius: 9999, background: REGION_COLORS[r] || "#888", display: "inline-block" }} />)}
+                        </div>
+                      )}
+                      {st.range && <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{st.range}</p>}
+                      <button onClick={() => setExpanded((p) => ({ ...p, [ek]: !p[ek] }))} className="flex items-center gap-1 mt-2" style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>
+                        {expanded[ek] ? T.calendarHideDetail : T.calendarShowDetail}
+                        <ChevronDown size={12} style={{ transform: expanded[ek] ? "rotate(180deg)" : "rotate(0deg)" }} />
+                      </button>
+                      {expanded[ek] && (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {st.regions.length > 0 ? st.regions.map((r) => {
+                            const count = st.matches.filter((m) => m.team1Region === r || m.team2Region === r).length;
+                            return (
+                              <div key={r} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                                <span style={{ color: REGION_COLORS[r] || "#fff", fontSize: "11px", fontWeight: 700 }}>{r}</span>
+                                <span style={{ color: "#999", fontSize: "11px" }}>{count} matchs</span>
+                              </div>
+                            );
+                          }) : (
+                            <div className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                              <span style={{ color: "#ccc", fontSize: "11px", fontWeight: 700 }}>{st.count} matchs</span>
+                              <span style={{ color: "#666", fontSize: "11px" }}>{st.matches.filter((m) => m.status === "finished").length} {T.calendarDone.toLowerCase()}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
