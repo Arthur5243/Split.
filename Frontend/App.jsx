@@ -2935,44 +2935,104 @@ function CalendarModal({ onClose, T, lang }) {
   );
 }
 
-const CS2_CAL_HIDDEN = ["epl", "ecl", "csa", "blast open", "european pro league", "esl challenger league", "cct south america"];
-function fmtCalDate(iso, lang) {
-  if (!iso) return "";
-  const d = new Date(iso + "T00:00:00");
-  const loc = lang === "ja" ? "ja-JP" : lang === "zh" ? "zh-CN" : lang === "de" ? "de-DE" : lang === "it" ? "it-IT" : lang === "es" ? "es-ES" : lang === "en" ? "en-GB" : "fr-FR";
-  const day = d.getDate();
-  const month = new Intl.DateTimeFormat(loc, { month: "short" }).format(d).replace(".", "");
-  const year = String(d.getFullYear()).slice(2);
-  return day + " " + month + " " + year;
+const CS2_TIMELINE_I18N = {
+  fr: [
+    { key: "s1-quals", title: "Stage 1 — Qualifications", start: "2026-01-20", end: "2026-03-09", range: "Janvier – Mars 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 janv. – 9 mars" }, { region: "AMERICAS", text: "22 janv. – 8 mars" }, { region: "ASIA", text: "25 janv. – 2 mars" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "5 – 16 févr. 2026 · Pologne" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "20 mars – 6 avr. 2026 · Copenhague" },
+    { key: "s2-quals", title: "Stage 2 — Qualifications", start: "2026-04-20", end: "2026-06-15", range: "Avril – Juin 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 avr. – 15 juin" }, { region: "AMERICAS", text: "22 avr. – 14 juin" }, { region: "ASIA", text: "25 avr. – 8 juin" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "7 – 20 juil. 2026 · Allemagne" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "Août – Septembre 2026", big: true, detail: [
+      { region: "EUROPE", text: "10 – 24 août" }, { region: "AMERICAS", text: "17 – 31 août" }, { region: "ASIA", text: "24 août – 7 sept." } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "1 – 19 oct. 2026" },
+  ],
+  en: [
+    { key: "s1-quals", title: "Stage 1 — Qualifiers", start: "2026-01-20", end: "2026-03-09", range: "January – March 2026", big: true, detail: [
+      { region: "EUROPE", text: "Jan 20 – Mar 9" }, { region: "AMERICAS", text: "Jan 22 – Mar 8" }, { region: "ASIA", text: "Jan 25 – Mar 2" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "Feb 5–16, 2026 · Poland" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "Mar 20 – Apr 6, 2026 · Copenhagen" },
+    { key: "s2-quals", title: "Stage 2 — Qualifiers", start: "2026-04-20", end: "2026-06-15", range: "April – June 2026", big: true, detail: [
+      { region: "EUROPE", text: "Apr 20 – Jun 15" }, { region: "AMERICAS", text: "Apr 22 – Jun 14" }, { region: "ASIA", text: "Apr 25 – Jun 8" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "Jul 7–20, 2026 · Germany" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "August – September 2026", big: true, detail: [
+      { region: "EUROPE", text: "Aug 10–24" }, { region: "AMERICAS", text: "Aug 17–31" }, { region: "ASIA", text: "Aug 24 – Sep 7" } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "Oct 1–19, 2026" },
+  ],
+  es: [
+    { key: "s1-quals", title: "Stage 1 — Clasificación", start: "2026-01-20", end: "2026-03-09", range: "Enero – Marzo 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 ene. – 9 mar." }, { region: "AMERICAS", text: "22 ene. – 8 mar." }, { region: "ASIA", text: "25 ene. – 2 mar." } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "5 – 16 feb. 2026 · Polonia" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "20 mar. – 6 abr. 2026 · Copenhague" },
+    { key: "s2-quals", title: "Stage 2 — Clasificación", start: "2026-04-20", end: "2026-06-15", range: "Abril – Junio 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 abr. – 15 jun." }, { region: "AMERICAS", text: "22 abr. – 14 jun." }, { region: "ASIA", text: "25 abr. – 8 jun." } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "7 – 20 jul. 2026 · Alemania" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "Agosto – Septiembre 2026", big: true, detail: [
+      { region: "EUROPE", text: "10 – 24 ago." }, { region: "AMERICAS", text: "17 – 31 ago." }, { region: "ASIA", text: "24 ago. – 7 sept." } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "1 – 19 oct. 2026" },
+  ],
+  it: [
+    { key: "s1-quals", title: "Stage 1 — Qualificazioni", start: "2026-01-20", end: "2026-03-09", range: "Gennaio – Marzo 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 gen – 9 mar" }, { region: "AMERICAS", text: "22 gen – 8 mar" }, { region: "ASIA", text: "25 gen – 2 mar" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "5 – 16 feb 2026 · Polonia" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "20 mar – 6 apr 2026 · Copenaghen" },
+    { key: "s2-quals", title: "Stage 2 — Qualificazioni", start: "2026-04-20", end: "2026-06-15", range: "Aprile – Giugno 2026", big: true, detail: [
+      { region: "EUROPE", text: "20 apr – 15 giu" }, { region: "AMERICAS", text: "22 apr – 14 giu" }, { region: "ASIA", text: "25 apr – 8 giu" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "7 – 20 lug 2026 · Germania" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "Agosto – Settembre 2026", big: true, detail: [
+      { region: "EUROPE", text: "10 – 24 ago" }, { region: "AMERICAS", text: "17 – 31 ago" }, { region: "ASIA", text: "24 ago – 7 set" } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "1 – 19 ott 2026" },
+  ],
+  de: [
+    { key: "s1-quals", title: "Stage 1 — Qualifikation", start: "2026-01-20", end: "2026-03-09", range: "Januar – März 2026", big: true, detail: [
+      { region: "EUROPE", text: "20. Jan. – 9. März" }, { region: "AMERICAS", text: "22. Jan. – 8. März" }, { region: "ASIA", text: "25. Jan. – 2. März" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "5. – 16. Feb. 2026 · Polen" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "20. März – 6. Apr. 2026 · Kopenhagen" },
+    { key: "s2-quals", title: "Stage 2 — Qualifikation", start: "2026-04-20", end: "2026-06-15", range: "April – Juni 2026", big: true, detail: [
+      { region: "EUROPE", text: "20. Apr. – 15. Juni" }, { region: "AMERICAS", text: "22. Apr. – 14. Juni" }, { region: "ASIA", text: "25. Apr. – 8. Juni" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "7. – 20. Juli 2026 · Deutschland" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "August – September 2026", big: true, detail: [
+      { region: "EUROPE", text: "10. – 24. Aug." }, { region: "AMERICAS", text: "17. – 31. Aug." }, { region: "ASIA", text: "24. Aug. – 7. Sept." } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "1. – 19. Okt. 2026" },
+  ],
+  ja: [
+    { key: "s1-quals", title: "Stage 1 — 予選", start: "2026-01-20", end: "2026-03-09", range: "2026年1月~3月", big: true, detail: [
+      { region: "EUROPE", text: "1月20日~3月9日" }, { region: "AMERICAS", text: "1月22日~3月8日" }, { region: "ASIA", text: "1月25日~3月2日" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "2026年2月5日~16日・ポーランド" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "2026年3月20日~4月6日・コペンハーゲン" },
+    { key: "s2-quals", title: "Stage 2 — 予選", start: "2026-04-20", end: "2026-06-15", range: "2026年4月~6月", big: true, detail: [
+      { region: "EUROPE", text: "4月20日~6月15日" }, { region: "AMERICAS", text: "4月22日~6月14日" }, { region: "ASIA", text: "4月25日~6月8日" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "2026年7月7日~20日・ドイツ" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "2026年8月~9月", big: true, detail: [
+      { region: "EUROPE", text: "8月10日~24日" }, { region: "AMERICAS", text: "8月17日~31日" }, { region: "ASIA", text: "8月24日~9月7日" } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "2026年10月1日~19日" },
+  ],
+  cn: [
+    { key: "s1-quals", title: "Stage 1 — 资格赛", start: "2026-01-20", end: "2026-03-09", range: "2026年1月–3月", big: true, detail: [
+      { region: "EUROPE", text: "1月20日–3月9日" }, { region: "AMERICAS", text: "1月22日–3月8日" }, { region: "ASIA", text: "1月25日–3月2日" } ] },
+    { key: "iem-katowice", title: "IEM Katowice", start: "2026-02-05", end: "2026-02-16", range: "2026年2月5日–16日·波兰" },
+    { key: "major-1", title: "PGL Major", start: "2026-03-20", end: "2026-04-06", range: "2026年3月20日–4月6日·哥本哈根" },
+    { key: "s2-quals", title: "Stage 2 — 资格赛", start: "2026-04-20", end: "2026-06-15", range: "2026年4月–6月", big: true, detail: [
+      { region: "EUROPE", text: "4月20日–6月15日" }, { region: "AMERICAS", text: "4月22日–6月14日" }, { region: "ASIA", text: "4月25日–6月8日" } ] },
+    { key: "iem-cologne", title: "IEM Cologne", start: "2026-07-07", end: "2026-07-20", range: "2026年7月7日–20日·德国" },
+    { key: "playoffs", title: "PLAYOFFS", start: "2026-08-10", end: "2026-09-07", range: "2026年8月–9月", big: true, detail: [
+      { region: "EUROPE", text: "8月10日–24日" }, { region: "AMERICAS", text: "8月17日–31日" }, { region: "ASIA", text: "8月24日–9月7日" } ] },
+    { key: "major-2", title: "Major Champions", start: "2026-10-01", end: "2026-10-19", range: "2026年10月1日–19日" },
+  ],
+};
+
+function cs2RegionLabel(key, T) {
+  if (key === "EUROPE") return T.cs2RegionEurope || "Europe";
+  if (key === "AMERICAS") return T.cs2RegionAmericas || "Americas";
+  if (key === "ASIA") return T.cs2RegionAsia || "Asia";
+  return key;
 }
 
-function Cs2CalendarModal({ onClose, T, upcoming, live, results, lang }) {
-  const all = [...upcoming, ...live, ...results];
-  const groups = new Map();
-  for (const m of all) {
-    const leagueKey = m.league || "CS2";
-    if (CS2_CAL_HIDDEN.some((h) => leagueKey.toLowerCase().includes(h))) continue;
-    const stageKey = m.tournamentName || m.phase || "—";
-    const key = leagueKey + " — " + stageKey;
-    const g = groups.get(key) || { league: leagueKey, stage: stageKey, matches: [], regions: new Set(), minDate: null };
-    g.matches.push(m);
-    if (m.day && (!g.minDate || m.day < g.minDate)) g.minDate = m.day;
-    if (m.team1Region) g.regions.add(m.team1Region);
-    if (m.team2Region) g.regions.add(m.team2Region);
-    groups.set(key, g);
-  }
-  const items = [];
-  for (const g of groups.values()) {
-    const allFinished = g.matches.every((m) => m.status === "finished");
-    const anyLive = g.matches.some((m) => m.status === "running");
-    const status = allFinished ? "done" : anyLive ? "live" : "soon";
-    const dates = g.matches.map((m) => m.day).filter(Boolean).sort();
-    const rangeStart = dates.length ? fmtCalDate(dates[0], lang) : "";
-    const rangeEnd = dates.length ? fmtCalDate(dates[dates.length - 1], lang) : "";
-    const range = rangeStart && rangeEnd ? (rangeStart === rangeEnd ? rangeStart : rangeStart + " → " + rangeEnd) : "";
-    items.push({ ...g, status, count: g.matches.length, range, regions: [...g.regions], sortDate: g.minDate || "9999" });
-  }
-  items.sort((a, b) => a.sortDate.localeCompare(b.sortDate));
+function Cs2CalendarModal({ onClose, T, lang }) {
+  const [expanded, setExpanded] = useState({});
+  const timeline = CS2_TIMELINE_I18N[lang] || CS2_TIMELINE_I18N.fr;
+  const todayISO = getTodayISO();
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
@@ -2981,32 +3041,51 @@ function Cs2CalendarModal({ onClose, T, upcoming, live, results, lang }) {
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto dark-scroll px-5 pb-5" style={{ flex: 1 }}>
-          {items.length === 0 && (
-            <p style={{ color: "#999", fontSize: "12px", paddingTop: "8px" }}>{T.cs2CalendarEmpty}</p>
-          )}
-          {items.map((st, idx) => {
-            const statusColor = st.status === "done" ? "#666" : st.status === "live" ? "#ff3b3b" : "#CCF71D";
-            const statusLabel = st.status === "done" ? T.calendarDone : st.status === "live" ? T.calendarLive : T.calendarSoon;
-            const ek = st.league + st.stage;
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
+          {timeline.map((item, idx) => {
+            const status = computeStageStatus(item, todayISO);
+            const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
+            const statusLabel = status === "done" ? T.calendarDone : status === "live" ? T.calendarLive : T.calendarSoon;
             return (
-              <div key={idx} className="flex gap-3 pb-4">
+              <div key={item.key} className="flex gap-3 pb-5">
                 <div className="flex flex-col items-center">
-                  <div className="rounded-full" style={{ width: 10, height: 10, background: st.status === "done" ? "#444" : statusColor, marginTop: 4 }} />
-                  {idx < items.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+                  <div className="rounded-full" style={{ width: 10, height: 10, background: status === "done" ? "#444" : statusColor, marginTop: 4 }} />
+                  {idx < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
                 </div>
                 <div className="flex-1 pb-1">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-black text-white" style={{ fontSize: "14px" }}>{st.stage}</span>
-                      <p style={{ color: "#888", fontSize: "11px", marginTop: 1 }}>{st.league}</p>
-                    </div>
+                    <span className="font-black text-white" style={{ fontSize: item.big ? "22px" : "14px" }}>{item.title}</span>
                     <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
                       {statusLabel}
                     </span>
                   </div>
-                  {st.range && <p style={{ color: "#666", fontSize: "12px" }} className="mt-1">{st.range}</p>}
-                  <p style={{ color: "#555", fontSize: "11px", marginTop: 4 }}>{st.count} matchs{st.status === "done" ? "" : " · " + st.matches.filter((m) => m.status === "finished").length + " " + T.calendarDone.toLowerCase()}</p>
+                  {item.big && (
+                    <div className="flex gap-1 mt-1.5 mb-1">
+                      {REGIONS_CS2.map((r) => <span key={r.key} style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />)}
+                    </div>
+                  )}
+                  <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{item.range}</p>
+                  {item.detail && (
+                    <>
+                      <button onClick={() => setExpanded((p) => ({ ...p, [item.key]: !p[item.key] }))} className="flex items-center gap-1 mt-2" style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>
+                        {expanded[item.key] ? T.calendarHideDetail : T.calendarShowDetail}
+                        <ChevronDown size={12} style={{ transform: expanded[item.key] ? "rotate(180deg)" : "rotate(0deg)" }} />
+                      </button>
+                      {expanded[item.key] && (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {item.detail.map((d) => {
+                            const reg = REGIONS_CS2.find((r) => r.key === d.region);
+                            return (
+                              <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                                <span style={{ color: reg ? reg.accent : "#fff", fontSize: "11px", fontWeight: 700 }}>{cs2RegionLabel(d.region, T)}</span>
+                                <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -3718,9 +3797,6 @@ export default function ClutchApp() {
             onClose={() => setShowCs2Calendar(false)}
             T={T}
             lang={currentLang}
-            upcoming={cs2UpcomingMatches}
-            live={cs2LiveMatches}
-            results={cs2ResultsMatches}
           />
         )}
       </div>
