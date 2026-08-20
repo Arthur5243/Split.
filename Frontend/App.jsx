@@ -2893,12 +2893,12 @@ function CalendarModal({ onClose, T, lang }) {
               </div>
               <div className="flex-1 pb-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-black text-white" style={{ fontSize: item.big ? "22px" : "14px" }}>{item.title}</span>
+                  <span className="font-black text-white" style={{ fontSize: status === "live" ? "22px" : "14px" }}>{item.title}</span>
                   <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
                     {statusLabel}
                   </span>
                 </div>
-                {item.big && (
+                {status === "live" && (
                   <div className="flex gap-1 mt-1.5 mb-1">
                     {REGIONS.map((r) => <span key={r.key} style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />)}
                   </div>
@@ -3054,12 +3054,12 @@ function Cs2CalendarModal({ onClose, T, lang }) {
                 </div>
                 <div className="flex-1 pb-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-black text-white" style={{ fontSize: item.big ? "22px" : "14px" }}>{item.title}</span>
+                    <span className="font-black text-white" style={{ fontSize: status === "live" ? "22px" : "14px" }}>{item.title}</span>
                     <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
                       {statusLabel}
                     </span>
                   </div>
-                  {item.big && (
+                  {status === "live" && (
                     <div className="flex gap-1 mt-1.5 mb-1">
                       {REGIONS_CS2.map((r) => <span key={r.key} style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />)}
                     </div>
