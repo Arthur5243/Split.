@@ -15,6 +15,8 @@ import {
   Target,
   ChevronUp,
   Play,
+  User,
+  Edit3,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -62,6 +64,8 @@ const REGION_YOUTUBE_LIVE = {
 
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
+const AVATAR_OPTIONS = ["\u{1F60E}","\u{1F525}","\u{26A1}","\u{1F3AE}","\u{1F3C6}","\u{1F48E}","\u{1F985}","\u{1F409}","\u{1F981}","\u{1F43A}","\u{1F3AF}","\u{1F480}","\u{1F451}","\u{1F31F}","\u{1F916}","\u{1F3AD}"];
+const SCORE_CATS = ["tout","valo","cs2","rl","valo_cs2","valo_rl","cs2_rl"];
 
 // Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
 // utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
@@ -156,6 +160,12 @@ const STR = {
     classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
     classementEmptySub: "Personne n'a encore fait de pronostic. Sois le premier à grimper au classement !",
     catFilterLabel: "Catégories",
+    profileTitle: "Mon profil", profilePseudo: "Pseudo", profileBio: "Bio", profileAvatar: "Avatar",
+    profileFavValo: "Equipe favorite Valorant", profileFavCs2: "Equipe favorite CS2", profileFavRl: "Equipe favorite RL",
+    profileSave: "Enregistrer", profileEdit: "Modifier", profileCreate: "Crée ton profil",
+    profileCreateSub: "Choisis un pseudo, un avatar et tes équipes favorites pour apparaître au classement.",
+    scoreTout: "TOUT", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Autres notifications",
     settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
@@ -198,6 +208,12 @@ const STR = {
     classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
     classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
     catFilterLabel: "Categories",
+    profileTitle: "My profile", profilePseudo: "Username", profileBio: "Bio", profileAvatar: "Avatar",
+    profileFavValo: "Favorite Valorant team", profileFavCs2: "Favorite CS2 team", profileFavRl: "Favorite RL team",
+    profileSave: "Save", profileEdit: "Edit", profileCreate: "Create your profile",
+    profileCreateSub: "Pick a username, an avatar and your favorite teams to appear in the standings.",
+    scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Other notifications",
     settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
@@ -238,6 +254,12 @@ const STR = {
     classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
     catFilterLabel: "Categorías",
+    profileTitle: "Mi perfil", profilePseudo: "Apodo", profileBio: "Bio", profileAvatar: "Avatar",
+    profileFavValo: "Equipo favorito Valorant", profileFavCs2: "Equipo favorito CS2", profileFavRl: "Equipo favorito RL",
+    profileSave: "Guardar", profileEdit: "Editar", profileCreate: "Crea tu perfil",
+    profileCreateSub: "Elige un apodo, un avatar y tus equipos favoritos para aparecer en la clasificación.",
+    scoreTout: "TODO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Otras notificaciones",
     settingsNotifEvents: "Próximos eventos", settingsNotifBets: "Pronósticos acertados",
@@ -278,6 +300,12 @@ const STR = {
     classementTitle: "Classifica", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
     catFilterLabel: "Categorie",
+    profileTitle: "Il mio profilo", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
+    profileFavValo: "Squadra preferita Valorant", profileFavCs2: "Squadra preferita CS2", profileFavRl: "Squadra preferita RL",
+    profileSave: "Salva", profileEdit: "Modifica", profileCreate: "Crea il tuo profilo",
+    profileCreateSub: "Scegli un nickname, un avatar e le tue squadre preferite per apparire in classifica.",
+    scoreTout: "TUTTO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Altre notifiche",
     settingsNotifEvents: "Prossimi eventi", settingsNotifBets: "Pronostici vincenti",
@@ -318,6 +346,12 @@ const STR = {
     classementTitle: "ランキング", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
     catFilterLabel: "カテゴリー",
+    profileTitle: "マイプロフィール", profilePseudo: "ニックネーム", profileBio: "自己紹介", profileAvatar: "アバター",
+    profileFavValo: "推しチーム Valorant", profileFavCs2: "推しチーム CS2", profileFavRl: "推しチーム RL",
+    profileSave: "保存", profileEdit: "編集", profileCreate: "プロフィールを作成",
+    profileCreateSub: "ニックネーム、アバター、推しチームを選んでランキングに参加しよう。",
+    scoreTout: "全体", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "その他の通知",
     settingsNotifEvents: "今後のイベント", settingsNotifBets: "的中した予想",
@@ -358,6 +392,12 @@ const STR = {
     classementTitle: "Rangliste", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
     catFilterLabel: "Kategorien",
+    profileTitle: "Mein Profil", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
+    profileFavValo: "Lieblingsteam Valorant", profileFavCs2: "Lieblingsteam CS2", profileFavRl: "Lieblingsteam RL",
+    profileSave: "Speichern", profileEdit: "Bearbeiten", profileCreate: "Erstelle dein Profil",
+    profileCreateSub: "Wähle einen Nickname, ein Avatar und deine Lieblingsteams, um in der Rangliste zu erscheinen.",
+    scoreTout: "ALLES", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Weitere Benachrichtigungen",
     settingsNotifEvents: "Bevorstehende Events", settingsNotifBets: "Erfolgreiche Tipps",
@@ -398,6 +438,12 @@ const STR = {
     classementTitle: "排行榜", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
     catFilterLabel: "分类",
+    profileTitle: "我的资料", profilePseudo: "昵称", profileBio: "简介", profileAvatar: "头像",
+    profileFavValo: "最爱Valorant战队", profileFavCs2: "最爱CS2战队", profileFavRl: "最爱RL战队",
+    profileSave: "保存", profileEdit: "编辑", profileCreate: "创建你的资料",
+    profileCreateSub: "选择昵称、头像和最爱的战队，即可出现在排行榜中。",
+    scoreTout: "全部", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
+    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
     settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "其他通知",
     settingsNotifEvents: "即将开始的活动", settingsNotifBets: "命中的竞猜",
@@ -2297,52 +2343,157 @@ function PlaceholderTab({ label, img, T }) {
   );
 }
 
-function ClassementTab({ T, selectedCats, toggleCat, userPoints }) {
-  const allSelected = selectedCats.length === CATS.length;
+function getScoreForCat(cat, pointsPerGame, userPoints) {
+  if (cat === "tout") return userPoints;
+  if (cat === "valo") return pointsPerGame.valo || 0;
+  if (cat === "cs2") return pointsPerGame.cs2 || 0;
+  if (cat === "rl") return pointsPerGame.rl || 0;
+  if (cat === "valo_cs2") return (pointsPerGame.valo || 0) + (pointsPerGame.cs2 || 0);
+  if (cat === "valo_rl") return (pointsPerGame.valo || 0) + (pointsPerGame.rl || 0);
+  if (cat === "cs2_rl") return (pointsPerGame.cs2 || 0) + (pointsPerGame.rl || 0);
+  return userPoints;
+}
+
+const SCORE_CAT_KEYS = {
+  tout: "scoreTout", valo: "scoreValo", cs2: "scoreCs2", rl: "scoreRl",
+  valo_cs2: "scoreValoCs2", valo_rl: "scoreValoRl", cs2_rl: "scoreCs2Rl",
+};
+
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T }) {
+  const [pseudo, setPseudo] = useState(profile?.pseudo || "");
+  const [bio, setBio] = useState(profile?.bio || "");
+  const [avatar, setAvatar] = useState(profile?.avatar || AVATAR_OPTIONS[0]);
+  const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
+  const [favCs2, setFavCs2] = useState(profile?.favTeams?.cs2 || "");
+  const [favRl, setFavRl] = useState(profile?.favTeams?.rl || "");
+
+  const canSave = pseudo.trim().length >= 2;
+
+  function handleSave() {
+    if (!canSave) return;
+    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
+  }
+
+  const inputStyle = { background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" };
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileTitle}</h2>
+          <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
+            <X size={18} color="#888" />
+          </button>
+        </div>
+        <div className="overflow-y-auto px-5 pb-6 flex flex-col gap-4">
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileAvatar}</label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {AVATAR_OPTIONS.map((em) => (
+                <button key={em} onClick={() => setAvatar(em)} className="rounded-full flex items-center justify-center" style={{ width: 42, height: 42, fontSize: "20px", background: avatar === em ? "#CCF71D" : "#1a1a1a", border: avatar === em ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
+                  {em}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
+            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={inputStyle} className="mt-1" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
+            <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} rows={2} placeholder="..." style={{ ...inputStyle, resize: "none" }} className="mt-1" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavValo}</label>
+            <select value={favValo} onChange={(e) => setFavValo(e.target.value)} style={inputStyle} className="mt-1">
+              <option value="">—</option>
+              {valoTeams.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavCs2}</label>
+            <select value={favCs2} onChange={(e) => setFavCs2(e.target.value)} style={inputStyle} className="mt-1">
+              <option value="">—</option>
+              {cs2Teams.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavRl}</label>
+            <input value={favRl} onChange={(e) => setFavRl(e.target.value)} maxLength={30} placeholder="ex: Vitality" style={inputStyle} className="mt-1" />
+          </div>
+          <button onClick={handleSave} disabled={!canSave} className="rounded-xl font-bold w-full py-3 mt-2" style={{ background: canSave ? "#CCF71D" : "#333", color: canSave ? "#000" : "#666", fontSize: "14px" }}>
+            {T.profileSave}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClassementTab({ T, scoreCat, setScoreCat, userPoints, pointsPerGame, profile, onOpenProfile }) {
+  const score = getScoreForCat(scoreCat, pointsPerGame, userPoints);
   return (
     <div className="px-4 pt-6 pb-6">
       <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
       <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
-      <div className="rounded-2xl px-4 py-3 mb-4 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
-        <div>
-          <p style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{T.myPoints}</p>
-          <p style={{ color: "#777", fontSize: "10.5px" }}>{T.myPointsSub}</p>
-        </div>
-        <span style={{ color: "#CCF71D", fontSize: "20px", fontWeight: 900 }}>{userPoints} pts</span>
-      </div>
-
-      <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-2">{T.catFilterLabel}</p>
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
-        <button
-          onClick={() => toggleCat("ALL")}
-          className="shrink-0 rounded-full transition-all"
-          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#fff" : "#161616", color: allSelected ? "#000" : "#888", border: allSelected ? "none" : "1px solid #2a2a2a" }}
-        >
-          {T.regionAll}
-        </button>
-        {CATS.map((c) => {
-          const active = selectedCats.includes(c);
+        {SCORE_CATS.map((c) => {
+          const active = scoreCat === c;
           return (
             <button
               key={c}
-              onClick={() => toggleCat(c)}
+              onClick={() => setScoreCat(c)}
               className="shrink-0 rounded-full transition-all"
               style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
             >
-              {catLabel(c, T)}
+              {T[SCORE_CAT_KEYS[c]] || c}
             </button>
           );
         })}
       </div>
 
-      <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "360px" }}>
-        <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
-          <Trophy size={26} color="#444" />
+      {profile ? (
+        <div className="rounded-2xl px-4 py-4 mb-4" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div className="flex items-center gap-3">
+            <div className="rounded-full flex items-center justify-center" style={{ width: 48, height: 48, fontSize: "24px", background: "#1a1a1a", border: "2px solid #CCF71D" }}>
+              {profile.avatar}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-black text-white truncate" style={{ fontSize: "15px" }}>{profile.pseudo}</p>
+                <button onClick={onOpenProfile} className="shrink-0">
+                  <Edit3 size={13} color="#666" />
+                </button>
+              </div>
+              {profile.bio && <p style={{ color: "#777", fontSize: "11px" }} className="truncate">{profile.bio}</p>}
+            </div>
+            <div className="text-right shrink-0">
+              <span style={{ color: "#CCF71D", fontSize: "22px", fontWeight: 900 }}>{score}</span>
+              <p style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>pts</p>
+            </div>
+          </div>
+          {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {profile.favTeams.valo && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>VALO: {profile.favTeams.valo}</span>}
+              {profile.favTeams.cs2 && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>CS2: {profile.favTeams.cs2}</span>}
+              {profile.favTeams.rl && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>RL: {profile.favTeams.rl}</span>}
+            </div>
+          )}
         </div>
-        <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.classementEmptyTitle}</p>
-        <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "240px" }} className="mt-2">{T.classementEmptySub}</p>
-      </div>
+      ) : (
+        <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
+          <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
+            <User size={26} color="#444" />
+          </div>
+          <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
+          <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "260px" }} className="mt-2">{T.profileCreateSub}</p>
+          <button onClick={onOpenProfile} className="rounded-xl font-bold px-6 py-2.5 mt-4" style={{ background: "#CCF71D", color: "#000", fontSize: "13px" }}>
+            {T.profileCreate}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2668,6 +2819,14 @@ export default function ClutchApp() {
   const [notifyRegions, setNotifyRegions] = useState({ EMEA: true, PACIFIC: true, AMERICAS: true, CN: true });
   const [otherNotifs, setOtherNotifs] = useState({ events: true, bets: true, matchStart: true, matchEnd: false });
   const [favoriteTeam, setFavoriteTeam] = useState("");
+  const [profile, setProfile] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_profile")); } catch { return null; }
+  });
+  const [pointsPerGame, setPointsPerGame] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
+  });
+  const [showProfile, setShowProfile] = useState(false);
+  const [scoreCat, setScoreCat] = useState("tout");
 
   const scrollRef = useRef(null);
   const lastScrollTopRef = useRef(0);
@@ -2878,6 +3037,16 @@ export default function ClutchApp() {
     return set.sort();
   }, [upcomingMatches, liveMatches, resultsMatches]);
 
+  const cs2AllTeams = React.useMemo(() => {
+    const set = [];
+    [...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches].forEach((m) => {
+      [m.team1, m.team2].forEach((t) => {
+        if (t && t !== "TBD" && set.indexOf(t) === -1) set.push(t);
+      });
+    });
+    return set.sort();
+  }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
+
   // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
   // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
   // quand PandaScore renvoie image_url: null pour un match "juste terminé"
@@ -3030,7 +3199,7 @@ export default function ClutchApp() {
     return { newlySettled, pointsToAdd };
   }
 
-  function applySettlement(newlySettled, pointsToAdd) {
+  function applySettlement(newlySettled, pointsToAdd, game) {
     if (newlySettled.length === 0) return;
     setSettledMatchIds((prev) => {
       const next = new Set(prev);
@@ -3044,6 +3213,13 @@ export default function ClutchApp() {
         localStorage.setItem("split_points_total", String(next));
         return next;
       });
+      if (game) {
+        setPointsPerGame((prev) => {
+          const next = { ...prev, [game]: (prev[game] || 0) + pointsToAdd };
+          localStorage.setItem("split_points_per_game", JSON.stringify(next));
+          return next;
+        });
+      }
     }
   }
 
@@ -3053,15 +3229,13 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!resultsMatches.length) return;
     const { newlySettled, pointsToAdd } = computeSettlement(resultsMatches, Date.now());
-    applySettlement(newlySettled, pointsToAdd);
+    applySettlement(newlySettled, pointsToAdd, "valo");
   }, [resultsMatches]);
 
-  // Même règlement, même portefeuille de points, pour les pronostics CS2
-  // (cf /api/cs2-results, repollé toutes les 60s comme côté Valorant).
   useEffect(() => {
     if (!cs2ResultsMatches.length) return;
     const { newlySettled, pointsToAdd } = computeSettlement(cs2ResultsMatches, Date.now());
-    applySettlement(newlySettled, pointsToAdd);
+    applySettlement(newlySettled, pointsToAdd, "cs2");
   }, [cs2ResultsMatches]);
 
   function toggleExpand(matchId) {
@@ -3134,7 +3308,7 @@ export default function ClutchApp() {
             />
           )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
-          {activeTab === "classement" && <ClassementTab T={T} selectedCats={selectedCats} toggleCat={toggleCat} userPoints={userPoints} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCat={scoreCat} setScoreCat={setScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} />}
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
@@ -3169,6 +3343,16 @@ export default function ClutchApp() {
             otherNotifs={otherNotifs}
             setOtherNotifs={setOtherNotifs}
             teams={allTeams}
+            T={T}
+          />
+        )}
+        {showProfile && (
+          <ProfileSetupModal
+            onClose={() => setShowProfile(false)}
+            onSave={(p) => { setProfile(p); localStorage.setItem("split_profile", JSON.stringify(p)); setShowProfile(false); }}
+            profile={profile}
+            valoTeams={allTeams}
+            cs2Teams={cs2AllTeams}
             T={T}
           />
         )}
