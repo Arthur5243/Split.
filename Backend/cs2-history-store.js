@@ -148,9 +148,9 @@ function storeFinishedMatches(matches) {
   insertMany(matches);
 }
 
-function saveMapScores(id, mapScores) {
+function saveMapScores(id, mapScores, { force = false } = {}) {
   const row = getMapScoresRowStmt.get(String(id));
-  if (row && row.map_scores != null && row.map_scores !== "null") {
+  if (!force && row && row.map_scores != null && row.map_scores !== "null") {
     try {
       const existing = JSON.parse(row.map_scores);
       if (Array.isArray(existing) && existing.length >= mapScores.length) return;

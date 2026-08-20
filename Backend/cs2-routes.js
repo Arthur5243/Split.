@@ -103,6 +103,28 @@ function getExpectedMapCount(m) {
   return Math.max(expected, 0);
 }
 
+function getSeriesScores(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return [null, null];
+  const results = m.results || [];
+  return [
+    results.find((r) => r.team_id === t1.id)?.score ?? null,
+    results.find((r) => r.team_id === t2.id)?.score ?? null,
+  ];
+}
+
+function isMapScoresConsistent(mapScores, score1, score2) {
+  if (!Array.isArray(mapScores) || mapScores.length === 0) return false;
+  if (score1 == null || score2 == null) return true;
+  let wins1 = 0, wins2 = 0;
+  for (const ms of mapScores) {
+    if (ms.score1 > ms.score2) wins1++;
+    else if (ms.score2 > ms.score1) wins2++;
+  }
+  return wins1 === score1 && wins2 === score2;
+}
+
 const router = express.Router();
 
 // Reset automatique des matchs CS2 "abandon définitif" à chaque démarrage.
@@ -300,7 +322,10 @@ function applyStoredMapScores(finished) {
   for (const m of finished) {
     if (Array.isArray(m.map_scores) && m.map_scores.length > 0) {
       const expected = getExpectedMapCount(m);
-      if (expected > 0 && m.map_scores.length < expected) stillUnknown.push(m);
+      const [s1, s2] = getSeriesScores(m);
+      if ((expected > 0 && m.map_scores.length < expected) || !isMapScoresConsistent(m.map_scores, s1, s2)) {
+        stillUnknown.push(m);
+      }
       continue;
     }
     const state = getMapScoresState(m.id);
@@ -312,7 +337,10 @@ function applyStoredMapScores(finished) {
     if (state.value != null) {
       m.map_scores = state.value;
       const expected = getExpectedMapCount(m);
-      if (expected > 0 && state.value.length < expected) stillUnknown.push(m);
+      const [s1, s2] = getSeriesScores(m);
+      if ((expected > 0 && state.value.length < expected) || !isMapScoresConsistent(state.value, s1, s2)) {
+        stillUnknown.push(m);
+      }
     }
   }
   return stillUnknown;
@@ -347,20 +375,31 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
 }
 
 // Score par map : Liquipedia → bo3.gg → saisie manuelle.
-// Si une source renvoie un résultat partiel (moins de maps que le score de
-// série attendu), les sources suivantes sont aussi consultées. Un résultat
-// complet ne peut JAMAIS être écrasé, mais un partiel peut être AMÉLIORÉ.
+// Chaque source est VALIDÉE : si les gagnants des maps ne correspondent pas
+// au score de la série (ex: Liquipedia renvoie 3 maps gagnées par team2 pour
+// un match 2-1), les scores sont rejetés et la source suivante est essayée.
+// Un résultat incohérent en DB peut être écrasé par un résultat cohérent.
 async function processOneMatch(m, data) {
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
     if (!t1 || !t2) return;
 
     const expectedMaps = getExpectedMapCount(m);
+    const [s1, s2] = getSeriesScores(m);
 
     const existingState = getMapScoresState(m.id);
+    let storedInconsistent = false;
     if (existingState && existingState.value != null && existingState.value !== null) {
-      m.map_scores = existingState.value;
-      if (!expectedMaps || existingState.value.length >= expectedMaps) return;
+      const storedOk = isMapScoresConsistent(existingState.value, s1, s2);
+      if (storedOk && (!expectedMaps || existingState.value.length >= expectedMaps)) {
+        m.map_scores = existingState.value;
+        return;
+      }
+      if (storedOk) {
+        m.map_scores = existingState.value;
+      } else {
+        storedInconsistent = true;
+      }
     }
 
     let mapScores = null;
@@ -371,7 +410,14 @@ async function processOneMatch(m, data) {
 
     try {
       mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName);
-      if (mapScores) source = "liquipedia";
+      if (mapScores) {
+        if (isMapScoresConsistent(mapScores, s1, s2)) {
+          source = "liquipedia";
+        } else {
+          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — Liquipedia incohérent (gagnants maps ≠ série), rejeté`);
+          mapScores = null;
+        }
+      }
     } catch (e) {
       console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
     }
@@ -380,8 +426,12 @@ async function processOneMatch(m, data) {
       try {
         const bo3ggScores = await getMapScoresFromBo3gg(t1.name, t2.name, date);
         if (bo3ggScores && (!mapScores || bo3ggScores.length > mapScores.length)) {
-          mapScores = bo3ggScores;
-          source = "bo3gg";
+          if (isMapScoresConsistent(bo3ggScores, s1, s2)) {
+            mapScores = bo3ggScores;
+            source = "bo3gg";
+          } else {
+            console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — bo3.gg incohérent (gagnants maps ≠ série), rejeté`);
+          }
         }
       } catch (e) {
         console.log(`[cs2 map_scores] bo3.gg ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
@@ -396,10 +446,7 @@ async function processOneMatch(m, data) {
       }
     }
 
-    const seriesResults = m.results || [];
-    const seriesR1 = seriesResults.find((r) => r.team_id === t1.id);
-    const seriesR2 = seriesResults.find((r) => r.team_id === t2.id);
-    const seriesScore = `${seriesR1 ? seriesR1.score : "?"}-${seriesR2 ? seriesR2.score : "?"}`;
+    const seriesScore = `${s1 ?? "?"}-${s2 ?? "?"}`;
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
@@ -408,7 +455,7 @@ async function processOneMatch(m, data) {
 
     if (mapScores) {
       m.map_scores = mapScores;
-      saveMapScores(m.id, mapScores);
+      saveMapScores(m.id, mapScores, { force: storedInconsistent });
       enrichedResultsCache = { data: buildMergedResults(data), time: Date.now() };
     } else {
       saveMapScoresFailure(m.id);
