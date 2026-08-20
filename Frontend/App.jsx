@@ -96,6 +96,7 @@ const LOGOS = {
   PR: "/logos/pr.png",
   JL: "/logos/jl.png",
   TH: "/logos/th.png",
+  B8: "/logos/b8.png",
 };
 
 // Langues disponibles dans le sélecteur
