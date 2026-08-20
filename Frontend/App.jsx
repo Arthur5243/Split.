@@ -20,8 +20,6 @@ import {
   Camera,
   Plus,
   ArrowLeft,
-  Bell,
-  Sparkles,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -1554,7 +1552,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -1710,7 +1708,23 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         ) : finished ? (
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
-          <span style={{ color: "#8a8a8a", fontSize: "11px" }}>{match.time}</span>
+          <button onClick={(e) => { e.stopPropagation(); onToggleNotif && onToggleNotif(match.id, notifActive); }} style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
+            {notifActive ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="1" y1="4" x2="3" y2="2" stroke="#CCF71D" strokeWidth="1.5" opacity="0.7" />
+                <line x1="21" y1="2" x2="23" y2="4" stroke="#CCF71D" strokeWidth="1.5" opacity="0.7" />
+                <line x1="12" y1="1" x2="12" y2="3" stroke="#CCF71D" strokeWidth="1.5" opacity="0.7" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="4" y1="2" x2="20" y2="20" stroke="#666" strokeWidth="2.5" />
+              </svg>
+            )}
+          </button>
         )}
       </div>
 
@@ -2113,7 +2127,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif }) {
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
   const glowAccent = single ? single.accent : "#ffffff";
   const allSelected = selectedRegions.length === REGIONS.length;
@@ -2223,7 +2237,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} />
             </React.Fragment>
           );
         })}
@@ -2254,7 +2268,7 @@ function regionCodeCS2(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif }) {
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -2395,6 +2409,8 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 team2RegionColor={m.team2Region ? regionAccentCS2(m.team2Region) : null}
                 team1RegionCode={m.team1Region ? regionCodeCS2(m.team1Region) : null}
                 team2RegionCode={m.team2Region ? regionCodeCS2(m.team2Region) : null}
+                notifActive={isMatchNotifOn(m.id, m.region)}
+                onToggleNotif={toggleMatchNotif}
               />
             </React.Fragment>
           );
@@ -2805,7 +2821,7 @@ function LanguageMenu({ current, onSelect, onClose }) {
   );
 }
 
-function SettingsModal({ onClose, notifEnabled, setNotifEnabled, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T }) {
+function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T }) {
   const allTeams = teams || [];
 
   const GAMES = [
@@ -3156,7 +3172,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
   );
 }
 
-function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, notifEnabled, onToggleNotif }) {
+function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
     <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#0a0a0a", borderBottom: "1px solid " + (isLight ? "#ddd" : "#1a1a1a") }}>
@@ -3166,19 +3182,10 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, notifEnab
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
       <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
-      <button onClick={onOpenSettings} className="rounded-full p-1.5 relative" style={{ background: isLight ? "#fff" : "#181818" }}>
-        {notifEnabled ? (
-          <>
-            <Bell size={16} color="#CCF71D" />
-            <Sparkles size={10} color="#CCF71D" className="absolute" style={{ top: 2, right: 2 }} />
-          </>
-        ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? "#999" : "#666"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            <line x1="4" y1="2" x2="20" y2="20" stroke={isLight ? "#aaa" : "#555"} strokeWidth="2.5" />
-          </svg>
-        )}
+      <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? "#444" : "#ccc"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
       </button>
     </div>
   );
@@ -3263,12 +3270,12 @@ export default function ClutchApp() {
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [currentLang, setCurrentLang] = useState("fr");
-  const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifGames, setNotifGames] = useState({
     valorant: { on: false, regions: {}, stages: {} },
     cs2: { on: false, regions: {}, stages: {} },
     rl: { on: false, regions: {}, stages: {} },
   });
+  const [matchNotifOverrides, setMatchNotifOverrides] = useState({});
   const [favoriteTeam, setFavoriteTeam] = useState("");
   const [profile, setProfile] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_profile")); } catch { return null; }
@@ -3326,6 +3333,17 @@ export default function ClutchApp() {
 
   const T = STR[currentLang] || STR.fr;
   const isLight = activeTab === "rocketleague";
+
+  function isMatchNotifOn(matchId, gameKey, matchRegion) {
+    if (matchNotifOverrides[matchId] != null) return matchNotifOverrides[matchId];
+    const g = notifGames[gameKey];
+    if (!g || !g.on) return false;
+    if (!matchRegion) return true;
+    return !!g.regions[matchRegion];
+  }
+  function toggleMatchNotif(matchId, currentlyActive) {
+    setMatchNotifOverrides((p) => ({ ...p, [matchId]: !currentlyActive }));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -3776,7 +3794,7 @@ export default function ClutchApp() {
   return (
     <div className="flex items-center justify-center p-4" style={{ background: "#000", minHeight: "700px" }}>
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
-        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} notifEnabled={notifEnabled} onToggleNotif={() => setNotifEnabled((p) => !p)} />
+        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
           {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} />}
@@ -3797,6 +3815,8 @@ export default function ClutchApp() {
               results={resultsMatches}
               teamLogoCache={teamLogoCache}
               loading={dataLoading}
+              isMatchNotifOn={(id, region) => isMatchNotifOn(id, "valorant", region)}
+              toggleMatchNotif={toggleMatchNotif}
             />
           )}
           {activeTab === "csgo" && (
@@ -3816,6 +3836,8 @@ export default function ClutchApp() {
               results={cs2ResultsMatches}
               teamLogoCache={cs2TeamLogoCache}
               loading={cs2DataLoading}
+              isMatchNotifOn={(id, region) => isMatchNotifOn(id, "cs2", region)}
+              toggleMatchNotif={toggleMatchNotif}
             />
           )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
@@ -3846,8 +3868,6 @@ export default function ClutchApp() {
         {showSettings && (
           <SettingsModal
             onClose={() => setShowSettings(false)}
-            notifEnabled={notifEnabled}
-            setNotifEnabled={setNotifEnabled}
             notifGames={notifGames}
             setNotifGames={setNotifGames}
             favoriteTeam={favoriteTeam}
