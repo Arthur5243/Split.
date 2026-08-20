@@ -93,7 +93,7 @@ const LOGOS = {
   ONG: "/logos/ong.png",
   BST: "/logos/bst.png",
   G2: "/logos/g2.png",
-  PRX: "/logos/prx.png",
+  PR: "/logos/pr.png",
   JL: "/logos/jl.png",
   TH: "/logos/th.png",
 };
