@@ -104,7 +104,7 @@ const LOCALE_MAP = {
 
 const STR = {
   fr: {
-    navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Classement",
+    navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
     newsLabel: "News", newsBadge: "Annonce", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -146,7 +146,7 @@ const STR = {
     yourBet: "Ton pari", replay: "Replay",
   },
   en: {
-    navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Standings",
+    navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
     newsLabel: "News", newsBadge: "Announcement", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -188,7 +188,7 @@ const STR = {
     yourBet: "Your bet", replay: "Replay",
   },
   es: {
-    navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Clasificación",
+    navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Clasificación",
     newsLabel: "News", newsBadge: "Anuncio", newsTitle: "3 MASTERS EN 2027", newsSub: "Un tercer torneo Masters se añadiría al calendario de la próxima temporada.",
     classementLabel: "Clasificación", seeAll: "Ver todo", classementEmptyHome: "0 pronosticadores clasificados por ahora. ¡Sé el primero!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -228,7 +228,7 @@ const STR = {
     yourBet: "Tu pronóstico", replay: "Replay",
   },
   it: {
-    navHome: "Home", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Classifica",
+    navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classifica",
     newsLabel: "News", newsBadge: "Annuncio", newsTitle: "3 MASTERS NEL 2027", newsSub: "Un terzo torneo Masters si aggiungerebbe al calendario della prossima stagione.",
     classementLabel: "Classifica", seeAll: "Vedi tutto", classementEmptyHome: "0 pronosticatori in classifica per ora. Sii il primo!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -268,7 +268,7 @@ const STR = {
     yourBet: "Il tuo pronostico", replay: "Replay",
   },
   ja: {
-    navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "ランキング",
+    navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "ランキング",
     newsLabel: "ニュース", newsBadge: "お知らせ", newsTitle: "2027年に3つ目のマスターズ", newsSub: "来シーズン、3つ目のマスターズ大会が開催される見込みです。",
     classementLabel: "ランキング", seeAll: "すべて見る", classementEmptyHome: "現在ランキング登録者は0人です。最初の1人になろう!",
     calendarLabel: "カレンダー", calendarCardTitle: "VCT 2026 カレンダー", calendarCardSub: "Kickoff・Masters・Playoffs・Champions",
@@ -308,7 +308,7 @@ const STR = {
     yourBet: "あなたの予想", replay: "リプレイ",
   },
   de: {
-    navHome: "Start", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "Rangliste",
+    navHome: "Start", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Rangliste",
     newsLabel: "News", newsBadge: "Ankündigung", newsTitle: "3 MASTERS IN 2027", newsSub: "Ein drittes Masters-Turnier soll im Kalender der nächsten Saison hinzukommen.",
     classementLabel: "Rangliste", seeAll: "Alle anzeigen", classementEmptyHome: "Bisher 0 platzierte Tipper. Sei der Erste!",
     calendarLabel: "Kalender", calendarCardTitle: "VCT-2026-Kalender", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -348,7 +348,7 @@ const STR = {
     yourBet: "Dein Tipp", replay: "Replay",
   },
   cn: {
-    navHome: "首页", navValorant: "Valorant", navCsgo: "CS:GO", navRl: "RL", navClassement: "排行榜",
+    navHome: "首页", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "排行榜",
     newsLabel: "资讯", newsBadge: "公告", newsTitle: "2027年将迎来第三场大师赛", newsSub: "下赛季日程中可能新增第三场大师赛(Masters)。",
     classementLabel: "排行榜", seeAll: "查看全部", classementEmptyHome: "目前还没有上榜用户，快来当第一人!",
     calendarLabel: "赛程日历", calendarCardTitle: "VCT 2026赛程日历", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -3107,9 +3107,9 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 34 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 34 },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 24 },
     { key: "classement", label: T.navClassement, Icon: Trophy },
   ];
 
@@ -3170,11 +3170,13 @@ export default function ClutchApp() {
             const labelColor = active ? "#fff" : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => setActiveTab(item.key)} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
-                {item.img ? (
-                  <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 20) + "px", height: (item.imgSize || 20) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
-                ) : (
-                  <item.Icon size={20} color={labelColor} strokeWidth={2.2} />
-                )}
+                <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {item.img ? (
+                    <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
+                  ) : (
+                    <item.Icon size={24} color={labelColor} strokeWidth={2.2} />
+                  )}
+                </div>
                 <span style={{ color: labelColor, fontSize: "10px", fontWeight: active ? 700 : 500 }}>{item.label}</span>
               </button>
             );
