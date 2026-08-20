@@ -27,10 +27,11 @@ function isFullyUnknown(m) {
   return !t1 && !t2;
 }
 
-const NOTABLE_TIERS = ["s", "a", "b"];
+const EXCLUDED_TIERS = ["d"];
 function isNotableTier(m) {
   const tier = (m.tournament?.tier || "").toLowerCase();
-  return NOTABLE_TIERS.includes(tier);
+  if (!tier) return true;
+  return !EXCLUDED_TIERS.includes(tier);
 }
 
 const OCEANIA_CODES = new Set(["AU", "NZ"]);
