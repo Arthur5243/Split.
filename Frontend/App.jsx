@@ -1989,8 +1989,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [img2Loaded, setImg2Loaded] = useState(false);
   const dragStartX = useRef(null);
   const slideCount = 3;
 
@@ -2020,30 +2018,15 @@ function NewsCarousel({ T }) {
   return (
     <div
       className="relative rounded-2xl overflow-hidden mb-6"
-      style={{ height: "150px", background: "#141414", touchAction: "pan-y" }}
+      style={{ height: "150px", background: "#000", touchAction: "pan-y" }}
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
       {activeSlide === 0 && (
         <>
-          <img
-            src={NEWS_IMAGE}
-            alt=""
-            draggable="false"
-            loading="eager"
-            decoding="async"
-            onLoad={() => setImgLoaded(true)}
-            className="absolute inset-0"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.35s ease" }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000000 100%)" }}
-          />
-          <span
-            className="absolute rounded-full"
-            style={{ top: "10px", left: "10px", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}
-          >
+          <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000 100%)" }} />
+          <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
             {T.newsBadge}
           </span>
           <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
@@ -2054,24 +2037,9 @@ function NewsCarousel({ T }) {
       )}
       {activeSlide === 1 && (
         <>
-          <img
-            src={NEWS_EWC_IMAGE}
-            alt=""
-            draggable="false"
-            loading="eager"
-            decoding="async"
-            onLoad={() => setImg2Loaded(true)}
-            className="absolute inset-0"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center", opacity: img2Loaded ? 1 : 0, transition: "opacity 0.35s ease" }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }}
-          />
-          <span
-            className="absolute rounded-full"
-            style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}
-          >
+          <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_EWC_IMAGE})`, backgroundSize: "cover", backgroundPosition: "left center" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }} />
+          <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
             {T.news2Badge}
           </span>
           <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
