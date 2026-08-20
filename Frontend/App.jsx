@@ -2947,7 +2947,6 @@ function fmtCalDate(iso, lang) {
 }
 
 function Cs2CalendarModal({ onClose, T, upcoming, live, results, lang }) {
-  const [expanded, setExpanded] = useState({});
   const all = [...upcoming, ...live, ...results];
   const groups = new Map();
   for (const m of all) {
@@ -3718,7 +3717,7 @@ export default function ClutchApp() {
           <Cs2CalendarModal
             onClose={() => setShowCs2Calendar(false)}
             T={T}
-            lang={lang}
+            lang={currentLang}
             upcoming={cs2UpcomingMatches}
             live={cs2LiveMatches}
             results={cs2ResultsMatches}
