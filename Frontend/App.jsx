@@ -73,6 +73,11 @@ const LOGOS = {
   FUT: "/logos/fut.png",
   AT: "/logos/at.png",
   KBG: "/logos/kbg.png",
+  ENCE: "/logos/ence.webp",
+  FORZ: "/logos/forz.webp",
+  NOIR: "/logos/noir.webp",
+  FORT: "/logos/fort.webp",
+  YL: "/logos/yl.webp",
 };
 
 // Équipes dont le logo est mal classé "sombre" par useIsDarkLogo (donc
@@ -569,6 +574,8 @@ const TEAM_CODE_OVERRIDES = {
   WOLV: "WE",
   WOLVES: "WE",
   NV: "ENVY",
+  "FORZE.R": "FORZ",
+  "EX-MANA": "EX-M",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
@@ -1315,55 +1322,9 @@ function computeGameOverrunWinner(games, team1Name, team2Name) {
 // Détecte si un logo est majoritairement noir/foncé (donc invisible sur fond
 // sombre) en échantillonnant ses pixels via un canvas. Si oui -> on le force
 // en blanc (contraste). Sinon -> on garde ses couleurs d'origine intactes.
-function useIsDarkLogo(src) {
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    if (!src) {
-      setIsDark(false);
-      return;
-    }
-    let cancelled = false;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const size = 24;
-        const canvas = document.createElement("canvas");
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, size, size);
-        const data = ctx.getImageData(0, 0, size, size).data;
-        let sum = 0;
-        let count = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          const alpha = data[i + 3];
-          if (alpha < 40) continue; // pixel quasi transparent, ignoré
-          const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          sum += lum;
-          count++;
-        }
-        if (!cancelled) setIsDark(count > 0 && sum / count < 60);
-      } catch (e) {
-        // Canvas "tainted" (CORS) ou autre erreur -> on ne force rien, logo intact.
-        if (!cancelled) setIsDark(false);
-      }
-    };
-    img.onerror = () => {
-      if (!cancelled) setIsDark(false);
-    };
-    img.src = src;
-    return () => {
-      cancelled = true;
-    };
-  }, [src]);
-  return isDark;
-}
-
 function TeamLogo({ code, apiLogo, accent, tbd }) {
   const src = LOGOS[code] || apiLogo || null;
-  const detectedDark = useIsDarkLogo(src);
-  const isDarkLogo = FORCE_NATURAL_COLOR.has(code) ? false : detectedDark;
+  const keepColors = FORCE_NATURAL_COLOR.has(code);
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
@@ -1373,7 +1334,7 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
         <img
           src={src}
           alt={code}
-          style={{ width: "70%", height: "70%", objectFit: "contain", filter: isDarkLogo ? "brightness(0) invert(1)" : "none" }}
+          style={{ width: "70%", height: "70%", objectFit: "contain", filter: keepColors ? "none" : "brightness(0) invert(1)" }}
         />
       ) : (
         code
