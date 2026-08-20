@@ -17,6 +17,8 @@ import {
   Play,
   User,
   Edit3,
+  Search,
+  Camera,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -64,8 +66,9 @@ const REGION_YOUTUBE_LIVE = {
 
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
-const AVATAR_OPTIONS = ["\u{1F60E}","\u{1F525}","\u{26A1}","\u{1F3AE}","\u{1F3C6}","\u{1F48E}","\u{1F985}","\u{1F409}","\u{1F981}","\u{1F43A}","\u{1F3AF}","\u{1F480}","\u{1F451}","\u{1F31F}","\u{1F916}","\u{1F3AD}"];
-const SCORE_CATS = ["tout","valo","cs2","rl","valo_cs2","valo_rl","cs2_rl"];
+const SCORE_CATS = ["tout","valo","cs2","rl"];
+const BIO_BLOCKED_WORDS = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier"];
+const BIO_LINK_RE = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|discord\.|twitch\.|twitter\.|instagram\./i;
 
 // Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
 // utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
@@ -165,7 +168,7 @@ const STR = {
     profileSave: "Enregistrer", profileEdit: "Modifier", profileCreate: "Crée ton profil",
     profileCreateSub: "Choisis un pseudo, un avatar et tes équipes favorites pour apparaître au classement.",
     scoreTout: "TOUT", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "Pas de liens, insultes ou gros mots.",
     settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Autres notifications",
     settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
@@ -213,7 +216,7 @@ const STR = {
     profileSave: "Save", profileEdit: "Edit", profileCreate: "Create your profile",
     profileCreateSub: "Pick a username, an avatar and your favorite teams to appear in the standings.",
     scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "No links, insults or profanity.",
     settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Other notifications",
     settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
@@ -259,7 +262,7 @@ const STR = {
     profileSave: "Guardar", profileEdit: "Editar", profileCreate: "Crea tu perfil",
     profileCreateSub: "Elige un apodo, un avatar y tus equipos favoritos para aparecer en la clasificación.",
     scoreTout: "TODO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "Sin enlaces, insultos ni palabrotas.",
     settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Otras notificaciones",
     settingsNotifEvents: "Próximos eventos", settingsNotifBets: "Pronósticos acertados",
@@ -305,7 +308,7 @@ const STR = {
     profileSave: "Salva", profileEdit: "Modifica", profileCreate: "Crea il tuo profilo",
     profileCreateSub: "Scegli un nickname, un avatar e le tue squadre preferite per apparire in classifica.",
     scoreTout: "TUTTO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "Niente link, insulti o parolacce.",
     settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Altre notifiche",
     settingsNotifEvents: "Prossimi eventi", settingsNotifBets: "Pronostici vincenti",
@@ -351,7 +354,7 @@ const STR = {
     profileSave: "保存", profileEdit: "編集", profileCreate: "プロフィールを作成",
     profileCreateSub: "ニックネーム、アバター、推しチームを選んでランキングに参加しよう。",
     scoreTout: "全体", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "リンク・暴言・悪口は禁止です。",
     settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "その他の通知",
     settingsNotifEvents: "今後のイベント", settingsNotifBets: "的中した予想",
@@ -397,7 +400,7 @@ const STR = {
     profileSave: "Speichern", profileEdit: "Bearbeiten", profileCreate: "Erstelle dein Profil",
     profileCreateSub: "Wähle einen Nickname, ein Avatar und deine Lieblingsteams, um in der Rangliste zu erscheinen.",
     scoreTout: "ALLES", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "Keine Links, Beleidigungen oder Schimpfwörter.",
     settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Weitere Benachrichtigungen",
     settingsNotifEvents: "Bevorstehende Events", settingsNotifBets: "Erfolgreiche Tipps",
@@ -443,7 +446,7 @@ const STR = {
     profileSave: "保存", profileEdit: "编辑", profileCreate: "创建你的资料",
     profileCreateSub: "选择昵称、头像和最爱的战队，即可出现在排行榜中。",
     scoreTout: "全部", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    scoreValoCs2: "VALO + CS2", scoreValoRl: "VALO + RL", scoreCs2Rl: "CS2 + RL",
+    bioError: "链接、侮辱或脏话禁止使用。",
     settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "其他通知",
     settingsNotifEvents: "即将开始的活动", settingsNotifBets: "命中的竞猜",
@@ -2343,38 +2346,101 @@ function PlaceholderTab({ label, img, T }) {
   );
 }
 
-function getScoreForCat(cat, pointsPerGame, userPoints) {
-  if (cat === "tout") return userPoints;
-  if (cat === "valo") return pointsPerGame.valo || 0;
-  if (cat === "cs2") return pointsPerGame.cs2 || 0;
-  if (cat === "rl") return pointsPerGame.rl || 0;
-  if (cat === "valo_cs2") return (pointsPerGame.valo || 0) + (pointsPerGame.cs2 || 0);
-  if (cat === "valo_rl") return (pointsPerGame.valo || 0) + (pointsPerGame.rl || 0);
-  if (cat === "cs2_rl") return (pointsPerGame.cs2 || 0) + (pointsPerGame.rl || 0);
-  return userPoints;
+function getScoreForCats(cats, pointsPerGame, userPoints) {
+  if (cats.includes("tout")) return userPoints;
+  let total = 0;
+  if (cats.includes("valo")) total += pointsPerGame.valo || 0;
+  if (cats.includes("cs2")) total += pointsPerGame.cs2 || 0;
+  if (cats.includes("rl")) total += pointsPerGame.rl || 0;
+  return total;
 }
 
 const SCORE_CAT_KEYS = {
   tout: "scoreTout", valo: "scoreValo", cs2: "scoreCs2", rl: "scoreRl",
-  valo_cs2: "scoreValoCs2", valo_rl: "scoreValoRl", cs2_rl: "scoreCs2Rl",
 };
 
+function validateBio(text) {
+  if (BIO_LINK_RE.test(text)) return false;
+  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return !BIO_BLOCKED_WORDS.some((w) => lower.includes(w));
+}
+
+function resizeImage(file, maxSize, cb) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function TeamSearchSelect({ value, onChange, teams, label, T }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const filtered = teams.filter((t) => t.toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div>
+      <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
+      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: value ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
+        <span className="truncate">{value || "—"}</span>
+        <ChevronDown size={14} color="#666" />
+      </button>
+      {open && (
+        <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #2a2a2a" }}>
+            <Search size={14} color="#666" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." autoFocus style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", outline: "none", flex: 1 }} />
+          </div>
+          <div style={{ maxHeight: "140px", overflowY: "auto" }}>
+            <button onClick={() => { onChange(""); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: "#666", fontSize: "12px" }}>—</button>
+            {filtered.map((t) => (
+              <button key={t} onClick={() => { onChange(t); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: t === value ? "#CCF71D" : "#ccc", fontSize: "12px", background: t === value ? "#222" : "transparent" }}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T }) {
-  const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
-  const [avatar, setAvatar] = useState(profile?.avatar || AVATAR_OPTIONS[0]);
+  const [avatar, setAvatar] = useState(profile?.avatar || null);
   const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
   const [favCs2, setFavCs2] = useState(profile?.favTeams?.cs2 || "");
   const [favRl, setFavRl] = useState(profile?.favTeams?.rl || "");
+  const [bioError, setBioError] = useState(false);
+  const fileRef = useRef(null);
 
-  const canSave = pseudo.trim().length >= 2;
+  const bioOk = bio.trim() === "" || validateBio(bio);
+  const canSave = avatar && bioOk;
+
+  function handleBioChange(e) {
+    const v = e.target.value;
+    setBio(v);
+    setBioError(v.trim() !== "" && !validateBio(v));
+  }
+
+  function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    resizeImage(file, 128, (dataUrl) => setAvatar(dataUrl));
+  }
 
   function handleSave() {
     if (!canSave) return;
-    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
+    onSave({ bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
   }
-
-  const inputStyle = { background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" };
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
@@ -2386,41 +2452,27 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
           </button>
         </div>
         <div className="overflow-y-auto px-5 pb-6 flex flex-col gap-4">
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileAvatar}</label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {AVATAR_OPTIONS.map((em) => (
-                <button key={em} onClick={() => setAvatar(em)} className="rounded-full flex items-center justify-center" style={{ width: 42, height: 42, fontSize: "20px", background: avatar === em ? "#CCF71D" : "#1a1a1a", border: avatar === em ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
-                  {em}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
-            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={inputStyle} className="mt-1" />
+          <div className="flex flex-col items-center">
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "flex-start" }}>{T.profileAvatar}</label>
+            <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1a1a1a", border: "2px solid #2a2a2a" }}>
+              {avatar ? (
+                <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <Camera size={28} color="#555" />
+              )}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
           </div>
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} rows={2} placeholder="..." style={{ ...inputStyle, resize: "none" }} className="mt-1" />
+            <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#1a1a1a", border: bioError ? "1px solid #e74c3c" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none", resize: "none" }} className="mt-1" />
+            {bioError && <p style={{ color: "#e74c3c", fontSize: "10px", marginTop: "4px" }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
           </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavValo}</label>
-            <select value={favValo} onChange={(e) => setFavValo(e.target.value)} style={inputStyle} className="mt-1">
-              <option value="">—</option>
-              {valoTeams.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavCs2}</label>
-            <select value={favCs2} onChange={(e) => setFavCs2(e.target.value)} style={inputStyle} className="mt-1">
-              <option value="">—</option>
-              {cs2Teams.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
+          <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
+          <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavRl}</label>
-            <input value={favRl} onChange={(e) => setFavRl(e.target.value)} maxLength={30} placeholder="ex: Vitality" style={inputStyle} className="mt-1" />
+            <input value={favRl} onChange={(e) => setFavRl(e.target.value)} maxLength={30} placeholder="ex: Vitality" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
           </div>
           <button onClick={handleSave} disabled={!canSave} className="rounded-xl font-bold w-full py-3 mt-2" style={{ background: canSave ? "#CCF71D" : "#333", color: canSave ? "#000" : "#666", fontSize: "14px" }}>
             {T.profileSave}
@@ -2431,20 +2483,29 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
   );
 }
 
-function ClassementTab({ T, scoreCat, setScoreCat, userPoints, pointsPerGame, profile, onOpenProfile }) {
-  const score = getScoreForCat(scoreCat, pointsPerGame, userPoints);
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile }) {
+  const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   return (
     <div className="px-4 pt-6 pb-6">
-      <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
+        <button onClick={onOpenProfile} className="rounded-full p-2" style={{ background: "#181818" }}>
+          {profile?.avatar ? (
+            <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
+          ) : (
+            <User size={18} color="#ccc" />
+          )}
+        </button>
+      </div>
       <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
         {SCORE_CATS.map((c) => {
-          const active = scoreCat === c;
+          const active = scoreCats.includes(c);
           return (
             <button
               key={c}
-              onClick={() => setScoreCat(c)}
+              onClick={() => toggleScoreCat(c)}
               className="shrink-0 rounded-full transition-all"
               style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
             >
@@ -2457,17 +2518,15 @@ function ClassementTab({ T, scoreCat, setScoreCat, userPoints, pointsPerGame, pr
       {profile ? (
         <div className="rounded-2xl px-4 py-4 mb-4" style={{ background: "#141414", border: "1px solid #262626" }}>
           <div className="flex items-center gap-3">
-            <div className="rounded-full flex items-center justify-center" style={{ width: 48, height: 48, fontSize: "24px", background: "#1a1a1a", border: "2px solid #CCF71D" }}>
-              {profile.avatar}
+            <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 48, height: 48, background: "#1a1a1a", border: "2px solid #CCF71D", flexShrink: 0 }}>
+              {profile.avatar ? (
+                <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <User size={22} color="#555" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="font-black text-white truncate" style={{ fontSize: "15px" }}>{profile.pseudo}</p>
-                <button onClick={onOpenProfile} className="shrink-0">
-                  <Edit3 size={13} color="#666" />
-                </button>
-              </div>
-              {profile.bio && <p style={{ color: "#777", fontSize: "11px" }} className="truncate">{profile.bio}</p>}
+              {profile.bio && <p style={{ color: "#999", fontSize: "12px" }} className="truncate">{profile.bio}</p>}
             </div>
             <div className="text-right shrink-0">
               <span style={{ color: "#CCF71D", fontSize: "22px", fontWeight: 900 }}>{score}</span>
@@ -2826,7 +2885,7 @@ export default function ClutchApp() {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
   const [showProfile, setShowProfile] = useState(false);
-  const [scoreCat, setScoreCat] = useState("tout");
+  const [scoreCats, setScoreCats] = useState(["tout"]);
 
   const scrollRef = useRef(null);
   const lastScrollTopRef = useRef(0);
@@ -3140,6 +3199,20 @@ export default function ClutchApp() {
     }
   }
 
+  function toggleScoreCat(key) {
+    if (key === "tout") {
+      setScoreCats(["tout"]);
+    } else {
+      setScoreCats((prev) => {
+        const without = prev.filter((k) => k !== "tout");
+        const has = without.includes(key);
+        const next = has ? without.filter((k) => k !== key) : [...without, key];
+        if (next.length === 0 || next.length === 3) return ["tout"];
+        return next;
+      });
+    }
+  }
+
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
@@ -3308,7 +3381,7 @@ export default function ClutchApp() {
             />
           )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCat={scoreCat} setScoreCat={setScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} />}
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
