@@ -175,6 +175,12 @@ const STR = {
     profileModify: "Modifier le profil", profileHistory: "Historique :",
     profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
     profileVoir: "voir", profileAddFriend: "Ajouter un ami",
+    friendTabAdd: "Ajouter", friendTabRequests: "Demandes",
+    friendSearchPlaceholder: "Pseudo du joueur...", friendSend: "Envoyer",
+    friendSent: "Envoyée !", friendCooldown: "Attends 20 min",
+    friendNoRequests: "Aucune demande en attente.",
+    friendAccept: "Accepter", friendRefuse: "Refuser",
+    profileBlock: "Bloquer",
     settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Autres notifications",
     settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
@@ -227,6 +233,12 @@ const STR = {
     profileModify: "Edit profile", profileHistory: "History:",
     profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
     profileVoir: "view", profileAddFriend: "Add friend",
+    friendTabAdd: "Add", friendTabRequests: "Requests",
+    friendSearchPlaceholder: "Player username...", friendSend: "Send",
+    friendSent: "Sent!", friendCooldown: "Wait 20 min",
+    friendNoRequests: "No pending requests.",
+    friendAccept: "Accept", friendRefuse: "Decline",
+    profileBlock: "Block",
     settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Other notifications",
     settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
@@ -277,6 +289,12 @@ const STR = {
     profileModify: "Editar perfil", profileHistory: "Historial:",
     profileExact: "Exacto", profileBon: "Correcto", profileParie: "Apostado",
     profileVoir: "ver", profileAddFriend: "Añadir amigo",
+    friendTabAdd: "Añadir", friendTabRequests: "Solicitudes",
+    friendSearchPlaceholder: "Pseudo del jugador...", friendSend: "Enviar",
+    friendSent: "¡Enviada!", friendCooldown: "Espera 20 min",
+    friendNoRequests: "Sin solicitudes pendientes.",
+    friendAccept: "Aceptar", friendRefuse: "Rechazar",
+    profileBlock: "Bloquear",
     settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Otras notificaciones",
     settingsNotifEvents: "Próximos eventos", settingsNotifBets: "Pronósticos acertados",
@@ -327,6 +345,12 @@ const STR = {
     profileModify: "Modifica profilo", profileHistory: "Storico:",
     profileExact: "Esatto", profileBon: "Giusto", profileParie: "Scommesso",
     profileVoir: "vedi", profileAddFriend: "Aggiungi amico",
+    friendTabAdd: "Aggiungi", friendTabRequests: "Richieste",
+    friendSearchPlaceholder: "Nickname del giocatore...", friendSend: "Invia",
+    friendSent: "Inviata!", friendCooldown: "Aspetta 20 min",
+    friendNoRequests: "Nessuna richiesta in sospeso.",
+    friendAccept: "Accetta", friendRefuse: "Rifiuta",
+    profileBlock: "Blocca",
     settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Altre notifiche",
     settingsNotifEvents: "Prossimi eventi", settingsNotifBets: "Pronostici vincenti",
@@ -377,6 +401,12 @@ const STR = {
     profileModify: "プロフィール編集", profileHistory: "履歴：",
     profileExact: "完全一致", profileBon: "的中", profileParie: "予想数",
     profileVoir: "見る", profileAddFriend: "フレンド追加",
+    friendTabAdd: "追加", friendTabRequests: "申請",
+    friendSearchPlaceholder: "プレイヤー名...", friendSend: "送信",
+    friendSent: "送信済み!", friendCooldown: "20分待ってね",
+    friendNoRequests: "保留中の申請はありません。",
+    friendAccept: "承認", friendRefuse: "拒否",
+    profileBlock: "ブロック",
     settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "その他の通知",
     settingsNotifEvents: "今後のイベント", settingsNotifBets: "的中した予想",
@@ -427,6 +457,12 @@ const STR = {
     profileModify: "Profil bearbeiten", profileHistory: "Verlauf:",
     profileExact: "Exakt", profileBon: "Richtig", profileParie: "Gewettet",
     profileVoir: "ansehen", profileAddFriend: "Freund hinzufügen",
+    friendTabAdd: "Hinzufügen", friendTabRequests: "Anfragen",
+    friendSearchPlaceholder: "Spieler-Nickname...", friendSend: "Senden",
+    friendSent: "Gesendet!", friendCooldown: "Warte 20 Min",
+    friendNoRequests: "Keine ausstehenden Anfragen.",
+    friendAccept: "Annehmen", friendRefuse: "Ablehnen",
+    profileBlock: "Blockieren",
     settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Weitere Benachrichtigungen",
     settingsNotifEvents: "Bevorstehende Events", settingsNotifBets: "Erfolgreiche Tipps",
@@ -477,6 +513,12 @@ const STR = {
     profileModify: "编辑资料", profileHistory: "历史记录：",
     profileExact: "精准", profileBon: "正确", profileParie: "已竞猜",
     profileVoir: "查看", profileAddFriend: "添加好友",
+    friendTabAdd: "添加", friendTabRequests: "请求",
+    friendSearchPlaceholder: "玩家昵称...", friendSend: "发送",
+    friendSent: "已发送!", friendCooldown: "等待20分钟",
+    friendNoRequests: "暂无好友请求。",
+    friendAccept: "接受", friendRefuse: "拒绝",
+    profileBlock: "屏蔽",
     settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "其他通知",
     settingsNotifEvents: "即将开始的活动", settingsNotifBets: "命中的竞猜",
@@ -2513,7 +2555,70 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch }) {
+function FriendModal({ onClose, T }) {
+  const [tab, setTab] = useState("add");
+  const [pseudo, setPseudo] = useState("");
+  const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
+  const [requests] = useState([]);
+
+  function handleSend() {
+    if (!pseudo.trim() || cooldown) return;
+    setSent(true);
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 20 * 60 * 1000);
+    setTimeout(() => setSent(false), 2000);
+    setPseudo("");
+  }
+
+  const tabStyle = (active) => ({ padding: "8px 0", fontSize: "13px", fontWeight: 700, color: active ? "#fff" : "#666", borderBottom: active ? "2px solid #CCF71D" : "2px solid transparent", flex: 1, textAlign: "center", background: "none" });
+
+  return (
+    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "70%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-2">
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileAddFriend}</h2>
+          <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
+            <X size={18} color="#888" />
+          </button>
+        </div>
+        <div className="flex px-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
+          <button onClick={() => setTab("add")} style={tabStyle(tab === "add")}>{T.friendTabAdd}</button>
+          <button onClick={() => setTab("requests")} style={tabStyle(tab === "requests")}>{T.friendTabRequests}</button>
+        </div>
+        <div className="px-5 py-4">
+          {tab === "add" && (
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-1 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                <Search size={14} color="#666" />
+                <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
+              </div>
+              <button onClick={handleSend} disabled={!pseudo.trim() || cooldown} className="rounded-xl px-4 font-bold shrink-0" style={{ background: sent ? "#2ecc71" : cooldown ? "#333" : "#CCF71D", color: sent ? "#fff" : cooldown ? "#666" : "#000", fontSize: "12px" }}>
+                {sent ? T.friendSent : cooldown ? T.friendCooldown : T.friendSend}
+              </button>
+            </div>
+          )}
+          {tab === "requests" && (
+            <div>
+              {requests.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>{T.friendNoRequests}</p>}
+              {requests.map((r, i) => (
+                <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid #1e1e1e" }}>
+                  <span style={{ color: "#ccc", fontSize: "13px" }}>{r.pseudo}</span>
+                  <div className="flex gap-2">
+                    <button className="rounded-lg px-3 py-1 font-bold" style={{ background: "#CCF71D", color: "#000", fontSize: "11px" }}>{T.friendAccept}</button>
+                    <button className="rounded-lg px-3 py-1 font-bold" style={{ background: "#222", color: "#888", fontSize: "11px" }}>{T.friendRefuse}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
 
   if (profileView && profile) {
@@ -2527,7 +2632,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </button>
             <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
           </div>
-          <button className="rounded-full p-2" style={{ background: "#181818" }}>
+          <button onClick={() => setShowFriendModal(true)} className="rounded-full p-2" style={{ background: "#181818" }}>
             <Plus size={18} color="#ccc" />
           </button>
         </div>
@@ -2599,6 +2704,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
           ))}
         </div>
+
+        {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} />}
       </div>
     );
   }
@@ -2997,6 +3104,7 @@ export default function ClutchApp() {
   });
   const [showProfile, setShowProfile] = useState(false);
   const [profileView, setProfileView] = useState(false);
+  const [showFriendModal, setShowFriendModal] = useState(false);
   const [scoreCats, setScoreCats] = useState(["tout"]);
 
   const scrollRef = useRef(null);
@@ -3238,7 +3346,7 @@ export default function ClutchApp() {
       const isCorrect = predictedAWins === actualAWins;
       if (isCorrect) bon++;
       if (isCorrect && predA === match.score1 && predB === match.score2) exact++;
-      history.push({ id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day });
+      if (pts > 0) history.push({ id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day });
     }
     history.sort((a, b) => (b.day || "").localeCompare(a.day || ""));
     return { exact, bon, parie, history };
@@ -3537,10 +3645,9 @@ export default function ClutchApp() {
             />
           )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
         </div>
 
-        <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
 
         <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
           {navItems.map((item) => {
