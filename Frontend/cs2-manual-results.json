@@ -100,6 +100,22 @@
         { "map": "Dust2", "score1": 7, "score2": 13 },
         { "map": "Anubis", "score1": 13, "score2": 10 }
       ]
+    },
+    "1624400": {
+      "_comment": "GamerLegion vs MOUZ — Esports World Cup 2026 Playoffs, 19 août 2026 (source: bo3.gg) — CORRIGE Liquipedia (maps/scores du mauvais match)",
+      "maps": [
+        { "map": "Mirage", "score1": 11, "score2": 13 },
+        { "map": "Ancient", "score1": 22, "score2": 19 },
+        { "map": "Nuke", "score1": 11, "score2": 13 }
+      ]
+    },
+    "1640171": {
+      "_comment": "Insiders Esport vs EmberKoca — CCT Europe Contenders #8, 19 août 2026 (source: bo3.gg) — map 2 forfeit, Liquipedia avait les mauvais scores",
+      "maps": [
+        { "map": "Cache", "score1": 7, "score2": 13 },
+        { "map": "Ancient", "score1": 1, "score2": 0 },
+        { "map": "Dust2", "score1": 9, "score2": 13 }
+      ]
     }
   },
 
