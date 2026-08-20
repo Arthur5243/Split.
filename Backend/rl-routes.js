@@ -12,6 +12,7 @@ import express from "express";
 import {
   pandaFetch,
   cachedFetch,
+  mapWithConcurrency,
   sleep,
   classifyTeamRegion,
   PANDASCORE_API_KEY,
@@ -59,7 +60,24 @@ function attachTeamRegions(m) {
   return m;
 }
 
-function getGameScoresFromPanda(m) {
+async function fetchRlGameScore(gameId, team1Id, team2Id) {
+  let game;
+  try {
+    game = await pandaFetch("/" + RL_SLUG + "/games/" + gameId);
+  } catch (e) {
+    return null;
+  }
+  if (!game || game.finished !== true) return null;
+
+  const teams = Array.isArray(game.teams) ? game.teams : [];
+  const r1 = teams.find((t) => t && String(t.team_id) === String(team1Id));
+  const r2 = teams.find((t) => t && String(t.team_id) === String(team2Id));
+  if (!r1 || !r2 || r1.score == null || r2.score == null) return null;
+
+  return { score1: r1.score, score2: r2.score };
+}
+
+async function getGameScoresForMatch(m) {
   const t1 = m.opponents?.[0]?.opponent;
   const t2 = m.opponents?.[1]?.opponent;
   if (!t1 || !t2) return null;
@@ -69,18 +87,15 @@ function getGameScoresFromPanda(m) {
     .sort((a, b) => (a.position || 0) - (b.position || 0));
   if (played.length === 0) return null;
 
-  const scores = [];
-  for (const g of played) {
-    const results = Array.isArray(g.teams) ? g.teams : [];
-    const r1 = results.find((r) => r && String(r.team_id) === String(t1.id));
-    const r2 = results.find((r) => r && String(r.team_id) === String(t2.id));
-    if (!r1 || !r2 || r1.score == null || r2.score == null) continue;
-    scores.push({
-      game: "Game " + (scores.length + 1),
-      score1: r1.score,
-      score2: r2.score,
-    });
-  }
+  const results = new Array(played.length).fill(null);
+  await mapWithConcurrency(played, 3, async (g) => {
+    const idx = played.indexOf(g);
+    results[idx] = await fetchRlGameScore(g.id, t1.id, t2.id);
+  });
+
+  const scores = results
+    .filter((r) => r !== null)
+    .map((r, i) => ({ game: "Game " + (i + 1), score1: r.score1, score2: r.score2 }));
   return scores.length > 0 ? scores : null;
 }
 
@@ -147,10 +162,9 @@ router.get("/api/rl-results", async (req, res) => {
   try {
     const data = await cachedFetch("rl-results", "/" + RL_SLUG + "/matches/past?per_page=50");
     const visible = (data || []).filter((m) => !isFullyUnknown(m) && isNotableTier(m));
-    const enriched = visible.map((m) => {
-      attachTeamRegions(m);
-      m.game_scores = getGameScoresFromPanda(m);
-      return m;
+    const enriched = visible.map((m) => attachTeamRegions(m));
+    await mapWithConcurrency(enriched, 3, async (m) => {
+      m.game_scores = await getGameScoresForMatch(m);
     });
     res.json(enriched);
   } catch (e) {
