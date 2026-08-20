@@ -19,6 +19,8 @@ import {
   Edit3,
   Search,
   Camera,
+  Plus,
+  ArrowLeft,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -169,6 +171,10 @@ const STR = {
     profileCreateSub: "Choisis un pseudo, un avatar et tes équipes favorites pour apparaître au classement.",
     scoreTout: "TOUT", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Pas de liens, insultes ou gros mots.",
+    profileAmis: "Amis", profileTop: "Top", profilePoint: "Point",
+    profileModify: "Modifier le profil", profileHistory: "Historique :",
+    profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
+    profileVoir: "voir", profileAddFriend: "Ajouter un ami",
     settingsTitle: "Réglages", settingsNotifTitle: "Notifications par ligue", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Autres notifications",
     settingsNotifEvents: "Événements à venir", settingsNotifBets: "Pronostics réussis",
@@ -217,6 +223,10 @@ const STR = {
     profileCreateSub: "Pick a username, an avatar and your favorite teams to appear in the standings.",
     scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "No links, insults or profanity.",
+    profileAmis: "Friends", profileTop: "Top", profilePoint: "Point",
+    profileModify: "Edit profile", profileHistory: "History:",
+    profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
+    profileVoir: "view", profileAddFriend: "Add friend",
     settingsTitle: "Settings", settingsNotifTitle: "Notifications by league", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Other notifications",
     settingsNotifEvents: "Upcoming events", settingsNotifBets: "Successful predictions",
@@ -263,6 +273,10 @@ const STR = {
     profileCreateSub: "Elige un apodo, un avatar y tus equipos favoritos para aparecer en la clasificación.",
     scoreTout: "TODO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Sin enlaces, insultos ni palabrotas.",
+    profileAmis: "Amigos", profileTop: "Top", profilePoint: "Punto",
+    profileModify: "Editar perfil", profileHistory: "Historial:",
+    profileExact: "Exacto", profileBon: "Correcto", profileParie: "Apostado",
+    profileVoir: "ver", profileAddFriend: "Añadir amigo",
     settingsTitle: "Ajustes", settingsNotifTitle: "Notificaciones por liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Otras notificaciones",
     settingsNotifEvents: "Próximos eventos", settingsNotifBets: "Pronósticos acertados",
@@ -309,6 +323,10 @@ const STR = {
     profileCreateSub: "Scegli un nickname, un avatar e le tue squadre preferite per apparire in classifica.",
     scoreTout: "TUTTO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Niente link, insulti o parolacce.",
+    profileAmis: "Amici", profileTop: "Top", profilePoint: "Punto",
+    profileModify: "Modifica profilo", profileHistory: "Storico:",
+    profileExact: "Esatto", profileBon: "Giusto", profileParie: "Scommesso",
+    profileVoir: "vedi", profileAddFriend: "Aggiungi amico",
     settingsTitle: "Impostazioni", settingsNotifTitle: "Notifiche per lega", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Altre notifiche",
     settingsNotifEvents: "Prossimi eventi", settingsNotifBets: "Pronostici vincenti",
@@ -355,6 +373,10 @@ const STR = {
     profileCreateSub: "ニックネーム、アバター、推しチームを選んでランキングに参加しよう。",
     scoreTout: "全体", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "リンク・暴言・悪口は禁止です。",
+    profileAmis: "フレンド", profileTop: "Top", profilePoint: "ポイント",
+    profileModify: "プロフィール編集", profileHistory: "履歴：",
+    profileExact: "完全一致", profileBon: "的中", profileParie: "予想数",
+    profileVoir: "見る", profileAddFriend: "フレンド追加",
     settingsTitle: "設定", settingsNotifTitle: "リーグ別通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "その他の通知",
     settingsNotifEvents: "今後のイベント", settingsNotifBets: "的中した予想",
@@ -401,6 +423,10 @@ const STR = {
     profileCreateSub: "Wähle einen Nickname, ein Avatar und deine Lieblingsteams, um in der Rangliste zu erscheinen.",
     scoreTout: "ALLES", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Keine Links, Beleidigungen oder Schimpfwörter.",
+    profileAmis: "Freunde", profileTop: "Top", profilePoint: "Punkt",
+    profileModify: "Profil bearbeiten", profileHistory: "Verlauf:",
+    profileExact: "Exakt", profileBon: "Richtig", profileParie: "Gewettet",
+    profileVoir: "ansehen", profileAddFriend: "Freund hinzufügen",
     settingsTitle: "Einstellungen", settingsNotifTitle: "Benachrichtigungen je Liga", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "Weitere Benachrichtigungen",
     settingsNotifEvents: "Bevorstehende Events", settingsNotifBets: "Erfolgreiche Tipps",
@@ -447,6 +473,10 @@ const STR = {
     profileCreateSub: "选择昵称、头像和最爱的战队，即可出现在排行榜中。",
     scoreTout: "全部", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "链接、侮辱或脏话禁止使用。",
+    profileAmis: "好友", profileTop: "排名", profilePoint: "积分",
+    profileModify: "编辑资料", profileHistory: "历史记录：",
+    profileExact: "精准", profileBon: "正确", profileParie: "已竞猜",
+    profileVoir: "查看", profileAddFriend: "添加好友",
     settingsTitle: "设置", settingsNotifTitle: "各赛区通知", settingsNotifPrefix: "Valorant ",
     settingsNotifOtherTitle: "其他通知",
     settingsNotifEvents: "即将开始的活动", settingsNotifBets: "命中的竞猜",
@@ -2483,13 +2513,101 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
+
+  if (profileView && profile) {
+    const { exact, bon, parie, history } = profileStats;
+    return (
+      <div className="px-4 pt-6 pb-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setProfileView(false)} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+              <ArrowLeft size={18} color="#ccc" />
+            </button>
+            <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
+          </div>
+          <button className="rounded-full p-2" style={{ background: "#181818" }}>
+            <Plus size={18} color="#ccc" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4 mb-4">
+          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1a1a1a", border: "2px solid #333", flexShrink: 0 }}>
+            {profile.avatar ? (
+              <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <User size={32} color="#555" />
+            )}
+          </div>
+          <div className="flex-1 flex justify-around text-center">
+            <div>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>0</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.profileAmis}</p>
+            </div>
+            <div>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>—</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.profileTop}</p>
+            </div>
+            <div>
+              <p className="font-black" style={{ fontSize: "18px", color: "#CCF71D" }}>{userPoints}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.profilePoint}</p>
+            </div>
+          </div>
+        </div>
+
+        {profile.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{profile.bio}</p>}
+
+        <button onClick={onEditProfile} className="w-full rounded-xl py-2.5 mb-4 font-bold" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ccc", fontSize: "13px" }}>
+          {T.profileModify}
+        </button>
+
+        {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
+          <div className="flex gap-2 mb-5 flex-wrap">
+            {profile.favTeams.valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>Valo : {profile.favTeams.valo}</span>}
+            {profile.favTeams.cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>Cs2 : {profile.favTeams.cs2}</span>}
+            {profile.favTeams.rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>RL : {profile.favTeams.rl}</span>}
+          </div>
+        )}
+
+        <div className="rounded-2xl px-4 py-3 mb-5 flex justify-around text-center" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div>
+            <p className="font-black text-white" style={{ fontSize: "18px" }}>{exact}</p>
+            <p style={{ color: "#888", fontSize: "10px" }}>{T.profileExact}</p>
+          </div>
+          <div>
+            <p className="font-black text-white" style={{ fontSize: "18px" }}>{bon}</p>
+            <p style={{ color: "#888", fontSize: "10px" }}>{T.profileBon}</p>
+          </div>
+          <div>
+            <p className="font-black text-white" style={{ fontSize: "18px" }}>{parie}</p>
+            <p style={{ color: "#888", fontSize: "10px" }}>{T.profileParie}</p>
+          </div>
+        </div>
+
+        <p className="font-bold text-white mb-3" style={{ fontSize: "14px" }}>{T.profileHistory}</p>
+        <div className="flex flex-col gap-2">
+          {history.length === 0 && <p style={{ color: "#555", fontSize: "12px" }}>—</p>}
+          {history.map((h) => (
+            <div key={h.id} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "#141414", border: "1px solid #1e1e1e" }}>
+              <span className="rounded px-2 py-0.5 font-bold shrink-0" style={{ fontSize: "10px", textTransform: "uppercase", background: h.game === "valo" ? "#1a1a2e" : "#1e1e1a", color: h.game === "valo" ? "#ff4655" : "#f0a500", border: "1px solid " + (h.game === "valo" ? "#2a2a3e" : "#2e2e2a") }}>
+                {h.game === "valo" ? "Valo" : "Cs2"}
+              </span>
+              <span className="font-bold shrink-0" style={{ color: h.pts > 0 ? "#CCF71D" : "#666", fontSize: "13px", minWidth: "45px" }}>+{h.pts}</span>
+              <span className="flex-1 truncate" style={{ color: "#aaa", fontSize: "12px" }}>{h.team1} vs {h.team2}</span>
+              <button onClick={() => onViewMatch(h.id, h.game)} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>{T.profileVoir}</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 pt-6 pb-6">
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
-        <button onClick={onOpenProfile} className="rounded-full p-2" style={{ background: "#181818" }}>
+        <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
           {profile?.avatar ? (
             <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
           ) : (
@@ -2533,13 +2651,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <p style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>pts</p>
             </div>
           </div>
-          {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {profile.favTeams.valo && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>VALO: {profile.favTeams.valo}</span>}
-              {profile.favTeams.cs2 && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>CS2: {profile.favTeams.cs2}</span>}
-              {profile.favTeams.rl && <span className="rounded-full px-2.5 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "10px" }}>RL: {profile.favTeams.rl}</span>}
-            </div>
-          )}
         </div>
       ) : (
         <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
@@ -2803,7 +2914,7 @@ function ScrollToTopButton({ visible, onClick }) {
       className="absolute rounded-full flex items-center justify-center"
       style={{
         right: "16px",
-        bottom: "84px",
+        bottom: "130px",
         width: "40px",
         height: "40px",
         background: "#CCF71D",
@@ -2885,6 +2996,7 @@ export default function ClutchApp() {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
   const [showProfile, setShowProfile] = useState(false);
+  const [profileView, setProfileView] = useState(false);
   const [scoreCats, setScoreCats] = useState(["tout"]);
 
   const scrollRef = useRef(null);
@@ -3105,6 +3217,32 @@ export default function ClutchApp() {
     });
     return set.sort();
   }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
+
+  const profileStats = React.useMemo(() => {
+    let exact = 0, bon = 0, parie = 0;
+    const history = [];
+    for (const id of settledMatchIds) {
+      const pred = predictions[id];
+      if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
+      const vm = resultsMatches.find((m) => String(m.id) === id);
+      const cm = cs2ResultsMatches.find((m) => String(m.id) === id);
+      const match = vm || cm;
+      if (!match || match.status !== "finished" || match.score1 == null || match.score2 == null) continue;
+      parie++;
+      const predA = parseInt(pred.seriesA, 10);
+      const predB = parseInt(pred.seriesB, 10);
+      const predictedAWins = predA > predB;
+      const actualAWins = match.score1 > match.score2;
+      const pts = calcMatchPoints(match, pred);
+      const game = vm ? "valo" : "cs2";
+      const isCorrect = predictedAWins === actualAWins;
+      if (isCorrect) bon++;
+      if (isCorrect && predA === match.score1 && predB === match.score2) exact++;
+      history.push({ id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day });
+    }
+    history.sort((a, b) => (b.day || "").localeCompare(a.day || ""));
+    return { exact, bon, parie, history };
+  }, [settledMatchIds, predictions, resultsMatches, cs2ResultsMatches]);
 
   // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
   // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
@@ -3399,7 +3537,7 @@ export default function ClutchApp() {
             />
           )}
           {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} />}
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
