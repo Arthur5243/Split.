@@ -183,8 +183,7 @@ const STR = {
     friendAccept: "Accepter", friendRefuse: "Refuser",
     profileBlock: "Bloquer",
     settingsTitle: "Réglages", settingsNotifGames: "Notifications par jeu",
-    settingsNotifRegions: "Régions", settingsNotifStages: "Événements",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "Régions",
     settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
@@ -241,8 +240,7 @@ const STR = {
     friendAccept: "Accept", friendRefuse: "Decline",
     profileBlock: "Block",
     settingsTitle: "Settings", settingsNotifGames: "Notifications by game",
-    settingsNotifRegions: "Regions", settingsNotifStages: "Events",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "Regions",
     settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
@@ -297,8 +295,7 @@ const STR = {
     friendAccept: "Aceptar", friendRefuse: "Rechazar",
     profileBlock: "Bloquear",
     settingsTitle: "Ajustes", settingsNotifGames: "Notificaciones por juego",
-    settingsNotifRegions: "Regiones", settingsNotifStages: "Eventos",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "Regiones",
     settingsFavTeam: "Equipo favorito", settingsFavTeamNone: "Ningún equipo seleccionado", settingsAccount: "Cuenta",
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
@@ -353,8 +350,7 @@ const STR = {
     friendAccept: "Accetta", friendRefuse: "Rifiuta",
     profileBlock: "Blocca",
     settingsTitle: "Impostazioni", settingsNotifGames: "Notifiche per gioco",
-    settingsNotifRegions: "Regioni", settingsNotifStages: "Eventi",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "Regioni",
     settingsFavTeam: "Squadra preferita", settingsFavTeamNone: "Nessuna squadra selezionata", settingsAccount: "Account",
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
@@ -409,8 +405,7 @@ const STR = {
     friendAccept: "承認", friendRefuse: "拒否",
     profileBlock: "ブロック",
     settingsTitle: "設定", settingsNotifGames: "ゲーム別通知",
-    settingsNotifRegions: "地域", settingsNotifStages: "イベント",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "地域",
     settingsFavTeam: "お気に入りチーム", settingsFavTeamNone: "チーム未選択", settingsAccount: "アカウント",
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
@@ -465,8 +460,7 @@ const STR = {
     friendAccept: "Annehmen", friendRefuse: "Ablehnen",
     profileBlock: "Blockieren",
     settingsTitle: "Einstellungen", settingsNotifGames: "Benachrichtigungen nach Spiel",
-    settingsNotifRegions: "Regionen", settingsNotifStages: "Events",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "Regionen",
     settingsFavTeam: "Lieblingsteam", settingsFavTeamNone: "Kein Team ausgewählt", settingsAccount: "Konto",
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
@@ -521,8 +515,7 @@ const STR = {
     friendAccept: "接受", friendRefuse: "拒绝",
     profileBlock: "屏蔽",
     settingsTitle: "设置", settingsNotifGames: "按游戏通知",
-    settingsNotifRegions: "地区", settingsNotifStages: "赛事",
-    settingsStageKickoff: "Kickoff", settingsStageMasters: "Masters", settingsStagePlayoffs: "Playoffs", settingsStageChampions: "Champions", settingsStagePlayIns: "Play-ins", settingsStageStages: "Stages",
+    settingsNotifRegions: "地区",
     settingsFavTeam: "喜爱的战队", settingsFavTeamNone: "未选择战队", settingsAccount: "账户",
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
@@ -2826,32 +2819,14 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
 
   const GAMES = [
     { key: "valorant", label: "Valorant", img: NAV_VALORANT_IMG, accent: "#FF4655",
-      regions: REGIONS.map((r) => ({ key: r.key, label: regionLabel(r.key, T), accent: r.accent })),
-      stages: [
-        { key: "kickoff", label: T.settingsStageKickoff },
-        { key: "masters", label: T.settingsStageMasters },
-        { key: "playoffs", label: T.settingsStagePlayoffs },
-        { key: "champions", label: T.settingsStageChampions },
-        { key: "playins", label: T.settingsStagePlayIns },
-      ] },
+      regions: REGIONS.map((r) => ({ key: r.key, label: regionLabel(r.key, T), accent: r.accent })) },
     { key: "cs2", label: "CS2", img: NAV_CSGO_IMG, accent: "#F5A623",
-      regions: REGIONS_CS2.map((r) => ({ key: r.key, label: regionLabelCS2(r.key, T), accent: r.accent })),
-      stages: [
-        { key: "stages", label: T.settingsStageStages },
-        { key: "playoffs", label: T.settingsStagePlayoffs },
-        { key: "masters", label: T.settingsStageMasters },
-        { key: "champions", label: T.settingsStageChampions },
-      ] },
+      regions: REGIONS_CS2.map((r) => ({ key: r.key, label: regionLabelCS2(r.key, T), accent: r.accent })) },
     { key: "rl", label: "Rocket League", img: NAV_RL_IMG, accent: "#4A90D9",
       regions: [
         { key: "EUROPE", label: "Europe", accent: "#4A90D9" },
         { key: "AMERICAS", label: "Americas", accent: "#FF5A1F" },
         { key: "OCEANIA", label: "Oceania", accent: "#1DE9D8" },
-      ],
-      stages: [
-        { key: "stages", label: T.settingsStageStages },
-        { key: "playoffs", label: T.settingsStagePlayoffs },
-        { key: "champions", label: T.settingsStageChampions },
       ] },
   ];
 
@@ -2860,9 +2835,6 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   }
   function toggleRegion(gKey, rKey) {
     setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], regions: { ...p[gKey].regions, [rKey]: !p[gKey].regions[rKey] } } }));
-  }
-  function toggleStage(gKey, sKey) {
-    setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], stages: { ...p[gKey].stages, [sKey]: !p[gKey].stages[sKey] } } }));
   }
 
   return (
@@ -2892,19 +2864,11 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                   {gState.on && (
                     <div className="px-3 pb-3" style={{ borderTop: "1px solid #262626" }}>
                       <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 10, marginBottom: 6 }}>{T.settingsNotifRegions}</p>
-                      <div className="flex flex-wrap gap-2 mb-3">
+                      <div className="flex flex-wrap gap-2">
                         {g.regions.map((r) => (
                           <button key={r.key} onClick={() => toggleRegion(g.key, r.key)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: gState.regions[r.key] ? `${r.accent}22` : "#222", border: gState.regions[r.key] ? `1px solid ${r.accent}` : "1px solid #333" }}>
                             <span style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
                             <span style={{ color: gState.regions[r.key] ? r.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{r.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                      <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsNotifStages}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {g.stages.map((s) => (
-                          <button key={s.key} onClick={() => toggleStage(g.key, s.key)} className="rounded-lg px-2.5 py-1.5" style={{ background: gState.stages[s.key] ? `${g.accent}22` : "#222", border: gState.stages[s.key] ? `1px solid ${g.accent}` : "1px solid #333" }}>
-                            <span style={{ color: gState.stages[s.key] ? g.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{s.label}</span>
                           </button>
                         ))}
                       </div>
