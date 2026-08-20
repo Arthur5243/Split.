@@ -146,6 +146,8 @@ const STR = {
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "Résultats RLCS · toutes les régions",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
@@ -203,6 +205,8 @@ const STR = {
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS results · all regions",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
@@ -260,6 +264,8 @@ const STR = {
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "Resultados RLCS · todas las regiones",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceanía",
     cs2CircuitToggleShow: "Ver el circuito CS2", cs2CircuitToggleHide: "Ocultar el circuito",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Inspirado en el sistema regional de Valorant, pero sin ligas cerradas: los equipos progresan por clasificación, no por franquicia.",
     cs2CircuitRegions: "Regiones", cs2CircuitRegionsDesc: "3 grandes regiones: Europe, Americas, Asia.",
@@ -315,6 +321,8 @@ const STR = {
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "Risultati RLCS · tutte le regioni",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "Vedi il circuito CS2", cs2CircuitToggleHide: "Nascondi il circuito",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Ispirato al sistema regionale di Valorant, ma senza leghe chiuse: le squadre avanzano tramite il ranking, non per franchising.",
     cs2CircuitRegions: "Regioni", cs2CircuitRegionsDesc: "3 grandi regioni seguite: Europe, Americas, Asia.",
@@ -370,6 +378,8 @@ const STR = {
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS結果・全リージョン",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "CS2サーキットを見る", cs2CircuitToggleHide: "サーキットを隠す",
     cs2CircuitTitle: "CS2サーキット", cs2CircuitIntro: "Valorantの地域制度を参考にしつつ、クローズドリーグはなし：チームはフランチャイズではなくランキングで昇格します。",
     cs2CircuitRegions: "地域", cs2CircuitRegionsDesc: "追跡する3大地域：Europe、Americas、Asia。",
@@ -425,6 +435,8 @@ const STR = {
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS-Ergebnisse · alle Regionen",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Ozeanien",
     cs2CircuitToggleShow: "CS2-Circuit anzeigen", cs2CircuitToggleHide: "Circuit ausblenden",
     cs2CircuitTitle: "CS2-Circuit", cs2CircuitIntro: "Inspiriert vom Valorant-Regionalsystem, aber ohne geschlossene Ligen: Teams steigen über das Ranking auf, nicht über ein Franchise.",
     cs2CircuitRegions: "Regionen", cs2CircuitRegionsDesc: "3 große Regionen im Blick: Europe, Americas, Asia.",
@@ -480,6 +492,8 @@ const STR = {
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
+    rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS赛果 · 所有赛区",
+    rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "大洋洲",
     cs2CircuitToggleShow: "查看CS2赛事体系", cs2CircuitToggleHide: "隐藏赛事体系",
     cs2CircuitTitle: "CS2赛事体系", cs2CircuitIntro: "灵感来自Valorant的分区制度，但没有封闭联赛：战队凭积分晋级，而非特许经营。",
     cs2CircuitRegions: "赛区", cs2CircuitRegionsDesc: "追踪三大赛区：Europe、Americas、Asia。",
@@ -895,6 +909,39 @@ function transformMatchCS2(m) {
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
     // d'équivalent pour CS2 (pas de diffuseur officiel par région).
+    streamUrl: m.stream_url || null,
+  };
+}
+
+function transformMatchRL(m) {
+  const opponents = m.opponents || [];
+  const t1 = opponents[0] && opponents[0].opponent;
+  const t2 = opponents[1] && opponents[1].opponent;
+  const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
+  const d = beginRaw ? new Date(beginRaw) : null;
+  const results = m.results || [];
+  const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
+  const score2 = t2 ? (results.find((r) => r.team_id === t2.id) || {}).score : undefined;
+  return {
+    id: "rl-" + m.id,
+    day: d ? isoDate(d) : null,
+    time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    beginAt: beginRaw || null,
+    league: (m.league && m.league.name) || "RLCS",
+    phase: (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "",
+    team1: teamCode(t1),
+    team2: teamCode(t2),
+    team1Name: t1 ? t1.name : null,
+    team2Name: t2 ? t2.name : null,
+    team1Logo: t1 ? t1.image_url : null,
+    team2Logo: t2 ? t2.image_url : null,
+    team1Region: m.team1_region || null,
+    team2Region: m.team2_region || null,
+    status: m.status || "not_started",
+    score1,
+    score2,
+    tier: m.tier || (m.league && m.league.name) || null,
+    map_scores: m.game_scores ? m.game_scores.map((g) => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
     streamUrl: m.stream_url || null,
   };
 }
@@ -1854,7 +1901,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
-                            Map {i + 1}
+                            {String(match.id).startsWith("rl-") ? "Game" : "Map"} {i + 1}
                           </span>
                           {g.map && (
                             <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
@@ -2261,6 +2308,32 @@ function regionCodeCS2(key) {
   return "";
 }
 
+const RL_ACCENT = "#4A90D9";
+
+const REGIONS_RL = [
+  { key: "EUROPE", accent: "#4A90D9" },
+  { key: "AMERICAS", accent: "#FF5A1F" },
+  { key: "OCEANIA", accent: "#1DE9D8" },
+];
+
+function regionLabelRL(key, T) {
+  if (key === "EUROPE") return T.rlRegionEurope;
+  if (key === "AMERICAS") return T.rlRegionAmericas;
+  if (key === "OCEANIA") return T.rlRegionOceania;
+  return key;
+}
+
+function regionAccentRL(key) {
+  return (REGIONS_RL.find((r) => r.key === key) || {}).accent || RL_ACCENT;
+}
+
+function regionCodeRL(key) {
+  if (key === "EUROPE") return "EU";
+  if (key === "AMERICAS") return "AM";
+  if (key === "OCEANIA") return "OC";
+  return "";
+}
+
 function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif }) {
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
@@ -2403,6 +2476,115 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 team1RegionCode={m.team1Region ? regionCodeCS2(m.team1Region) : null}
                 team2RegionCode={m.team2Region ? regionCodeCS2(m.team2Region) : null}
                 notifActive={isMatchNotifOn(m.id, m.region)}
+                onToggleNotif={toggleMatchNotif}
+              />
+            </React.Fragment>
+          );
+        })}
+        {combined.length === 0 && (
+          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
+            {loading ? "…" : "—"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif }) {
+  const allSelected = selectedRegions.length === REGIONS_RL.length;
+  const showFinished = selectedStatuses[0] === "finished";
+
+  const source = showFinished ? results : [...live, ...upcoming];
+
+  const combined = source
+    .filter((m) => allSelected || (m.team1Region && selectedRegions.includes(m.team1Region)) || (m.team2Region && selectedRegions.includes(m.team2Region)))
+    .sort((a, b) => {
+      const ka = (a.day || "") + (a.time || "");
+      const kb = (b.day || "") + (b.time || "");
+      if (showFinished) return kb.localeCompare(ka);
+      function categoryRank(m) {
+        if (m.status === "running") return 0;
+        return 1;
+      }
+      const ra = categoryRank(a);
+      const rb = categoryRank(b);
+      if (ra !== rb) return ra - rb;
+      return ka.localeCompare(kb);
+    });
+
+  let lastDay = null;
+
+  return (
+    <div className="relative">
+      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + RL_ACCENT + "22, transparent 70%)" }} />
+      <div className="relative px-4 pt-4 pb-2">
+        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.rlTitle}</h1>
+        <p style={{ color: "#888", fontSize: "12px" }}>{T.rlSubtitle}</p>
+      </div>
+
+      <div className="flex gap-2 px-4 pt-1">
+        {["upcoming", "finished"].map((s) => {
+          const active = selectedStatuses.includes(s);
+          return (
+            <button
+              key={s}
+              onClick={() => toggleStatus(s)}
+              className="rounded-full"
+              style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
+            >
+              {s === "upcoming" ? T.statusUpcoming : T.calendarDone}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 relative">
+        <button
+          onClick={() => toggleRegion("ALL")}
+          className="shrink-0 rounded-full transition-all"
+          style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: allSelected ? "#fff" : "#161616", color: allSelected ? "#000" : "#888", border: allSelected ? "none" : "1px solid #2a2a2a" }}
+        >
+          {T.regionAll}
+        </button>
+        {REGIONS_RL.map((r) => {
+          const active = selectedRegions.includes(r.key);
+          return (
+            <button
+              key={r.key}
+              onClick={() => toggleRegion(r.key)}
+              className="shrink-0 rounded-full transition-all"
+              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? r.accent : "#161616", color: active ? "#000" : "#888", border: active ? "none" : "1px solid #2a2a2a" }}
+            >
+              {regionLabelRL(r.key, T)}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="px-4 pb-6 relative">
+        {combined.map((m) => {
+          const showDay = m.day !== lastDay;
+          lastDay = m.day;
+          return (
+            <React.Fragment key={m.id}>
+              {showDay && (
+                <div className="pt-3 pb-2" style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {dayLabel(m.day, lang, T)}
+                </div>
+              )}
+              <MatchCard
+                match={m}
+                accent={RL_ACCENT}
+                T={T}
+                lang={lang}
+                streamUrl={m.streamUrl}
+                useRegionStreamFallback={false}
+                team1RegionColor={m.team1Region ? regionAccentRL(m.team1Region) : null}
+                team2RegionColor={m.team2Region ? regionAccentRL(m.team2Region) : null}
+                team1RegionCode={m.team1Region ? regionCodeRL(m.team1Region) : null}
+                team2RegionCode={m.team2Region ? regionCodeRL(m.team2Region) : null}
+                notifActive={isMatchNotifOn(m.id, m.team1Region || m.team2Region)}
                 onToggleNotif={toggleMatchNotif}
               />
             </React.Fragment>
@@ -2823,11 +3005,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
     { key: "cs2", label: "CS2", img: NAV_CSGO_IMG, accent: "#F5A623",
       regions: REGIONS_CS2.map((r) => ({ key: r.key, label: regionLabelCS2(r.key, T), accent: r.accent })) },
     { key: "rl", label: "Rocket League", img: NAV_RL_IMG, accent: "#4A90D9",
-      regions: [
-        { key: "EUROPE", label: "Europe", accent: "#4A90D9" },
-        { key: "AMERICAS", label: "Americas", accent: "#FF5A1F" },
-        { key: "OCEANIA", label: "Oceania", accent: "#1DE9D8" },
-      ] },
+      regions: REGIONS_RL.map((r) => ({ key: r.key, label: regionLabelRL(r.key, T), accent: r.accent })) },
   ];
 
   function toggleGame(gKey) {
@@ -3191,6 +3369,8 @@ export default function ClutchApp() {
   // stages CS2 mélangent les régions, donc pas de raison de partir filtré.
   const [selectedRegionsCS2, setSelectedRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
   const [preAllRegionsCS2, setPreAllRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
+  const [selectedRegionsRL, setSelectedRegionsRL] = useState(REGIONS_RL.map((r) => r.key));
+  const [preAllRegionsRL, setPreAllRegionsRL] = useState(REGIONS_RL.map((r) => r.key));
   const [selectedStatuses, setSelectedStatuses] = useState(["upcoming"]);
   const [selectedCats, setSelectedCats] = useState(["VALORANT"]);
   const [preAllCats, setPreAllCats] = useState(["VALORANT"]);
@@ -3295,8 +3475,13 @@ export default function ClutchApp() {
   const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
   const [cs2DataLoading, setCs2DataLoading] = useState(true);
 
+  const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
+  const [rlLiveMatches, setRlLiveMatches] = useState([]);
+  const [rlResultsMatches, setRlResultsMatches] = useState([]);
+  const [rlDataLoading, setRlDataLoading] = useState(true);
+
   const T = STR[currentLang] || STR.fr;
-  const isLight = activeTab === "rocketleague";
+  const isLight = false;
 
   function isMatchNotifOn(matchId, gameKey, matchRegion) {
     if (matchNotifOverrides[matchId] != null) return matchNotifOverrides[matchId];
@@ -3462,6 +3647,47 @@ export default function ClutchApp() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchJson(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+    async function loadRL() {
+      try {
+        const [up, li, pa] = await Promise.all([
+          fetchJson("/api/rl-upcoming"),
+          fetchJson("/api/rl-live"),
+          fetchJson("/api/rl-results"),
+        ]);
+        if (cancelled) return;
+        const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
+        const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
+        const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
+        const now = Date.now();
+        const seenIds = new Set();
+        const upFuture = upT.filter((m) => {
+          if (seenIds.has(m.id)) return false;
+          seenIds.add(m.id);
+          if (!m.beginAt) return true;
+          const t = new Date(m.beginAt).getTime();
+          return Number.isNaN(t) || t > now;
+        });
+        setRlUpcomingMatches(upFuture);
+        setRlLiveMatches(liT);
+        setRlResultsMatches(paT);
+      } catch (e) {
+        // API indisponible
+      } finally {
+        if (!cancelled) setRlDataLoading(false);
+      }
+    }
+    loadRL();
+    const interval = setInterval(loadRL, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
   const allTeams = React.useMemo(() => {
     const set = [];
     [...upcomingMatches, ...liveMatches, ...resultsMatches].forEach((m) => {
@@ -3576,8 +3802,28 @@ export default function ClutchApp() {
     }
   }
 
+  function toggleRegionRL(key) {
+    const allKeys = REGIONS_RL.map((r) => r.key);
+    if (key === "ALL") {
+      const isAllSelected = selectedRegionsRL.length === allKeys.length;
+      if (isAllSelected) {
+        setSelectedRegionsRL(preAllRegionsRL.length ? preAllRegionsRL : [allKeys[0]]);
+      } else {
+        setPreAllRegionsRL(selectedRegionsRL);
+        setSelectedRegionsRL(allKeys);
+      }
+    } else {
+      setSelectedRegionsRL((prev) => {
+        if (prev.includes(key)) {
+          if (prev.length === 1) return prev;
+          return prev.filter((k) => k !== key);
+        }
+        return [...prev, key];
+      });
+    }
+  }
+
   function toggleStatus(key) {
-    // Sélection exclusive : un seul des deux boutons actif à la fois.
     setSelectedStatuses([key]);
   }
 
@@ -3804,7 +4050,22 @@ export default function ClutchApp() {
               toggleMatchNotif={toggleMatchNotif}
             />
           )}
-          {activeTab === "rocketleague" && <PlaceholderTab label="Rocket League" img={NAV_RL_IMG} T={T} />}
+          {activeTab === "rocketleague" && (
+            <RlTab
+              selectedRegions={selectedRegionsRL}
+              toggleRegion={toggleRegionRL}
+              selectedStatuses={selectedStatuses}
+              toggleStatus={toggleStatus}
+              T={T}
+              lang={currentLang}
+              upcoming={rlUpcomingMatches}
+              live={rlLiveMatches}
+              results={rlResultsMatches}
+              loading={rlDataLoading}
+              isMatchNotifOn={(id, region) => isMatchNotifOn(id, "rl", region)}
+              toggleMatchNotif={toggleMatchNotif}
+            />
+          )}
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
         </div>
 

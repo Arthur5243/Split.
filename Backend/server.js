@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import oddsRouter from "./odds.js";
 import cs2Router from "./cs2-routes.js";
+import rlRouter from "./rl-routes.js";
 import { getMapScores, findTeamId, findMatchId, findManualMapScores, getUpcomingMatchesForTeam } from "./vlr-scores.js";
 import {
   storeFinishedMatches,
@@ -29,6 +30,7 @@ app.use(oddsRouter);
 // backend PandaScore, route dédiée dans cs2-routes.js (voir ce fichier pour
 // le détail — score par map directement via PandaScore, région par équipe).
 app.use(cs2Router);
+app.use(rlRouter);
 
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
