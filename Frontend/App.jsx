@@ -97,6 +97,9 @@ const LOGOS = {
   JL: "/logos/jl.png",
   TH: "/logos/th.png",
   B8: "/logos/b8.png",
+  VARR: "/logos/varr.png",
+  ICE: "/logos/ice.png",
+  VIT: "/logos/vit.png",
 };
 
 // Langues disponibles dans le sélecteur
@@ -590,6 +593,7 @@ const TEAM_CODE_OVERRIDES = {
   NV: "ENVY",
   "FORZE.R": "FORZ",
   "EX-MANA": "EX-M",
+  VITA: "VIT",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
