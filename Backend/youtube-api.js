@@ -69,8 +69,6 @@ async function searchVideo(query, publishedAfter, publishedBefore, eventType) {
   const channelIds = [...new Set(items.map((i) => i.snippet.channelId))];
   const subs = await getChannelSubscriberCounts(channelIds);
 
-  let best = null;
-  let bestSubs = 0;
   for (const item of items) {
     const chSubs = subs[item.snippet.channelId] || 0;
     if (chSubs >= MIN_SUBSCRIBERS) {
@@ -81,21 +79,9 @@ async function searchVideo(query, publishedAfter, publishedBefore, eventType) {
         subscribers: chSubs,
       };
     }
-    if (chSubs > bestSubs) {
-      bestSubs = chSubs;
-      best = item;
-    }
   }
 
-  if (best) {
-    console.log("[youtube] no channel >= " + MIN_SUBSCRIBERS + " subs for: " + query + " (best: " + bestSubs + ")");
-    return {
-      url: "https://www.youtube.com/watch?v=" + best.id.videoId,
-      title: best.snippet.title,
-      channel: best.snippet.channelTitle,
-      subscribers: bestSubs,
-    };
-  }
+  console.log("[youtube] no channel >= " + MIN_SUBSCRIBERS + " subs for: " + query + " → skipped");
   return null;
 }
 
@@ -129,9 +115,10 @@ router.get("/api/youtube-replay", async (req, res) => {
     }
 
     const queries = [
+      team1 + " vs " + team2 + " " + (game || "") + " full game",
       team1 + " vs " + team2 + " " + (game || ""),
       team1 + " vs " + team2 + " " + (game || "") + " replay",
-      team1 + " " + team2 + " " + (game || ""),
+      team1 + " " + team2 + " " + (game || "") + " full game",
     ];
     let result = null;
     for (const q of queries) {
