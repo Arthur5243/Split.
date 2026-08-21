@@ -2038,7 +2038,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const dragStartX = useRef(null);
-  const slideCount = 3;
+  const slideCount = 2;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -2097,12 +2097,8 @@ function NewsCarousel({ T }) {
         </>
       )}
 
-      {activeSlide === 2 && (
-        <div className="absolute inset-0" style={{ background: "#141414" }} />
-      )}
-
       <div className="absolute flex items-center gap-1.5" style={{ bottom: "10px", left: "50%", transform: "translateX(-50%)" }}>
-        {[0, 1, 2].map((i) => (
+        {[0, 1].map((i) => (
           <button
             key={i}
             onClick={() => goTo(i)}

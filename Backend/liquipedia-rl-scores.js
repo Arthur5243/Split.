@@ -152,7 +152,8 @@ function parseMatchBlock(block) {
     const mapBlockMatch = /\{\{Map[\s\S]*\}\}/.exec(mapParam);
     if (!mapBlockMatch) continue;
     const mapBlock = mapBlockMatch[0];
-    if (getParam(mapBlock, "finished") !== "true") continue;
+    const mapFinished = getParam(mapBlock, "finished");
+    if (mapFinished && mapFinished !== "true") continue;
     const score1 = parseInt(getParam(mapBlock, "score1"), 10);
     const score2 = parseInt(getParam(mapBlock, "score2"), 10);
     if (Number.isNaN(score1) || Number.isNaN(score2)) continue;
@@ -210,8 +211,11 @@ const SLUG_ALIASES = {
 function slugMatchesName(slug, name) {
   if (!slug || !name) return false;
   if (similar(slug, name)) return true;
-  const alias = SLUG_ALIASES[slug.toLowerCase()];
-  return alias ? similar(alias, name) : false;
+  const aliasSlug = SLUG_ALIASES[slug.toLowerCase()];
+  if (aliasSlug && similar(aliasSlug, name)) return true;
+  const aliasName = SLUG_ALIASES[name.toLowerCase()];
+  if (aliasName && similar(aliasName, slug)) return true;
+  return false;
 }
 
 function findMatchInWikitext(wikitext, team1Name, team2Name, dateStr) {
