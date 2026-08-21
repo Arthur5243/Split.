@@ -13,7 +13,8 @@ import {
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
-import { searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited } from "./liquipedia-rl-scores.js";
+// Liquipedia RL désactivé temporairement (rate limit 429)
+// import { searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited } from "./liquipedia-rl-scores.js";
 
 const RL_SLUG = "rl";
 
@@ -145,73 +146,8 @@ router.get("/api/rl-results", async (req, res) => {
     const visible = (data || []).filter((m) => !isFullyUnknown(m) && isNotableTier(m));
     const enriched = visible.map((m) => attachTeamRegions(m));
 
-    const byLeague = new Map();
     for (const m of enriched) {
-      const key = m.league?.slug || m.league?.name || "unknown";
-      if (!byLeague.has(key)) byLeague.set(key, []);
-      byLeague.get(key).push(m);
-    }
-
-    const skipLiquipedia = isRateLimited();
-    if (skipLiquipedia) console.log("[rl-results] Liquipedia rate-limited, using PandaScore fallback");
-
-    for (const [, matches] of byLeague) {
-      let wikitexts = [];
-
-      if (!skipLiquipedia) {
-        const sample = matches[0];
-        const leagueName = sample.league?.name || "";
-        const tournamentName = sample.tournament?.name || "";
-        const year = sample.begin_at ? sample.begin_at.slice(0, 4) : "";
-
-        const rawQueries = [
-          `${leagueName} ${year} ${tournamentName}`.trim(),
-          `${leagueName} ${year}`.trim(),
-          leagueName,
-        ];
-        const queries = [...new Set(rawQueries)].filter((q) => q && q.length > 2 && !/^\d{4}$/.test(q));
-
-        const seen = new Set();
-        const pageQueue = [];
-        for (const q of queries) {
-          if (pageQueue.length >= 5 || isRateLimited()) break;
-          try {
-            const pages = await searchTournamentPages(q);
-            for (const p of pages) {
-              if (!seen.has(p)) { seen.add(p); pageQueue.push(p); }
-            }
-          } catch (e) {
-            console.log(`[rl-results] search("${q}") error:`, e.message);
-          }
-        }
-
-        for (const page of pageQueue.slice(0, 3)) {
-          if (isRateLimited()) break;
-          try {
-            const wt = await getWikitext(page);
-            if (wt) wikitexts.push({ title: page, text: wt });
-          } catch (e) {
-            console.log(`[rl-results] wikitext("${page}") error:`, e.message);
-          }
-        }
-      }
-
-      for (const m of matches) {
-        const t1 = m.opponents?.[0]?.opponent;
-        const t2 = m.opponents?.[1]?.opponent;
-        if (!t1 || !t2) { m.game_scores = null; continue; }
-        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
-        let found = null;
-        for (const { title, text } of wikitexts) {
-          const { games } = findMatchInWikitext(text, t1.name, t2.name, dateStr);
-          if (games) {
-            console.log(`[rl-results] ${t1.name} vs ${t2.name} → found in "${title}" (${games.length} games)`);
-            found = games;
-            break;
-          }
-        }
-        m.game_scores = found || buildFallbackGameScores(m);
-      }
+      m.game_scores = buildFallbackGameScores(m);
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };
