@@ -13,7 +13,7 @@ import {
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
-import { searchTournamentPages, getWikitext, findMatchInWikitext } from "./liquipedia-rl-scores.js";
+import { searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited } from "./liquipedia-rl-scores.js";
 
 const RL_SLUG = "rl";
 
@@ -152,41 +152,47 @@ router.get("/api/rl-results", async (req, res) => {
       byLeague.get(key).push(m);
     }
 
+    const skipLiquipedia = isRateLimited();
+    if (skipLiquipedia) console.log("[rl-results] Liquipedia rate-limited, using PandaScore fallback");
+
     for (const [, matches] of byLeague) {
-      const sample = matches[0];
-      const leagueName = sample.league?.name || "";
-      const tournamentName = sample.tournament?.name || "";
-      const serieName = sample.serie?.full_name || "";
-      const year = sample.begin_at ? sample.begin_at.slice(0, 4) : "";
+      let wikitexts = [];
 
-      const rawQueries = [
-        `${leagueName} ${year} ${tournamentName}`.trim(),
-        `${leagueName} ${year}`.trim(),
-        leagueName,
-      ];
-      const queries = [...new Set(rawQueries)].filter((q) => q && q.length > 2 && !/^\d{4}$/.test(q));
+      if (!skipLiquipedia) {
+        const sample = matches[0];
+        const leagueName = sample.league?.name || "";
+        const tournamentName = sample.tournament?.name || "";
+        const year = sample.begin_at ? sample.begin_at.slice(0, 4) : "";
 
-      const seen = new Set();
-      const pageQueue = [];
-      for (const q of queries) {
-        if (pageQueue.length >= 5) break;
-        try {
-          const pages = await searchTournamentPages(q);
-          for (const p of pages) {
-            if (!seen.has(p)) { seen.add(p); pageQueue.push(p); }
+        const rawQueries = [
+          `${leagueName} ${year} ${tournamentName}`.trim(),
+          `${leagueName} ${year}`.trim(),
+          leagueName,
+        ];
+        const queries = [...new Set(rawQueries)].filter((q) => q && q.length > 2 && !/^\d{4}$/.test(q));
+
+        const seen = new Set();
+        const pageQueue = [];
+        for (const q of queries) {
+          if (pageQueue.length >= 5 || isRateLimited()) break;
+          try {
+            const pages = await searchTournamentPages(q);
+            for (const p of pages) {
+              if (!seen.has(p)) { seen.add(p); pageQueue.push(p); }
+            }
+          } catch (e) {
+            console.log(`[rl-results] search("${q}") error:`, e.message);
           }
-        } catch (e) {
-          console.log(`[rl-results] search("${q}") error:`, e.message);
         }
-      }
 
-      const wikitexts = [];
-      for (const page of pageQueue.slice(0, 3)) {
-        try {
-          const wt = await getWikitext(page);
-          if (wt) wikitexts.push({ title: page, text: wt });
-        } catch (e) {
-          console.log(`[rl-results] wikitext("${page}") error:`, e.message);
+        for (const page of pageQueue.slice(0, 3)) {
+          if (isRateLimited()) break;
+          try {
+            const wt = await getWikitext(page);
+            if (wt) wikitexts.push({ title: page, text: wt });
+          } catch (e) {
+            console.log(`[rl-results] wikitext("${page}") error:`, e.message);
+          }
         }
       }
 

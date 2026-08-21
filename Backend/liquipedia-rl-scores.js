@@ -35,11 +35,23 @@ async function throttleParse() {
   lastGeneralCallAt = Date.now();
 }
 
+let rateLimitedUntil = 0;
+const RATE_LIMIT_COOLDOWN_MS = 10 * 60 * 1000;
+
+function isRateLimited() {
+  return Date.now() < rateLimitedUntil;
+}
+
 async function liquipediaFetch(params, { isParse = false } = {}) {
+  if (isRateLimited()) throw new Error("liquipedia-rl rate-limited (cooldown)");
   if (isParse) await throttleParse();
   else await throttleGeneral();
   const url = LIQUIPEDIA_BASE + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
   const res = await fetch(url, { headers: { "User-Agent": LIQUIPEDIA_USER_AGENT } });
+  if (res.status === 429) {
+    rateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
+    throw new Error("liquipedia-rl HTTP 429 — cooldown 10min");
+  }
   if (!res.ok) throw new Error("liquipedia-rl HTTP " + res.status);
   return res.json();
 }
@@ -328,4 +340,4 @@ async function getGameScoresFromLiquipedia(team1Name, team2Name, tournamentName,
   return null;
 }
 
-export { getGameScoresFromLiquipedia, searchTournamentPages, getWikitext, findMatchInWikitext };
+export { getGameScoresFromLiquipedia, searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited };
