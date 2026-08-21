@@ -121,6 +121,7 @@ router.get("/api/rl-live", async (req, res) => {
 // --- /api/rl-results ---
 let rlResultsCache = { data: null, at: 0 };
 const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
+let enrichmentRunning = false;
 
 function buildFallbackGameScores(m) {
   const t1 = m.opponents?.[0]?.opponent;
@@ -151,7 +152,14 @@ function buildSerieQuery(m) {
 async function enrichWithLiquipedia(matches) {
   if (isRateLimited()) {
     console.log("[rl-liquipedia] rate-limited, skipping enrichment");
-    return;
+    return false;
+  }
+
+  await sleep(10000);
+
+  if (isRateLimited()) {
+    console.log("[rl-liquipedia] rate-limited after delay, skipping");
+    return false;
   }
 
   const groups = new Map();
@@ -161,6 +169,7 @@ async function enrichWithLiquipedia(matches) {
     groups.get(serieId).matches.push(m);
   }
 
+  let enriched = false;
   for (const [serieId, group] of groups) {
     if (!group.query || isRateLimited()) continue;
 
@@ -189,7 +198,7 @@ async function enrichWithLiquipedia(matches) {
       if (!wikitext) continue;
 
       for (const m of group.matches) {
-        if (m.game_scores) continue;
+        if (m._liquipediaScores) continue;
         const t1 = m.opponents?.[0]?.opponent?.name;
         const t2 = m.opponents?.[1]?.opponent?.name;
         if (!t1 || !t2) continue;
@@ -198,11 +207,30 @@ async function enrichWithLiquipedia(matches) {
         const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
         if (games && games.length > 0) {
           m.game_scores = games;
+          m._liquipediaScores = true;
+          enriched = true;
           console.log(`[rl-liquipedia] ${t1} vs ${t2} → ${games.length} games from "${pageTitle}"`);
         }
       }
     }
   }
+  return enriched;
+}
+
+function runBackgroundEnrichment(matches) {
+  if (enrichmentRunning) return;
+  enrichmentRunning = true;
+  enrichWithLiquipedia(matches)
+    .then((didEnrich) => {
+      if (didEnrich) {
+        rlResultsCache = { data: matches, at: Date.now() };
+        console.log("[rl-liquipedia] background enrichment done, cache updated");
+      } else {
+        console.log("[rl-liquipedia] background enrichment: no new scores found");
+      }
+    })
+    .catch((e) => console.log("[rl-liquipedia] background enrichment error:", e.message))
+    .finally(() => { enrichmentRunning = false; });
 }
 
 router.get("/api/rl-results", async (req, res) => {
@@ -216,23 +244,13 @@ router.get("/api/rl-results", async (req, res) => {
     const enriched = visible.map((m) => attachTeamRegions(m));
 
     for (const m of enriched) {
-      m.game_scores = null;
-    }
-
-    try {
-      await enrichWithLiquipedia(enriched);
-    } catch (e) {
-      console.log("[rl-liquipedia] enrichment error:", e.message);
-    }
-
-    for (const m of enriched) {
-      if (!m.game_scores) {
-        m.game_scores = buildFallbackGameScores(m);
-      }
+      m.game_scores = buildFallbackGameScores(m);
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };
     res.json(enriched);
+
+    runBackgroundEnrichment(enriched);
   } catch (e) {
     console.error("rl-results error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les résultats RL." });

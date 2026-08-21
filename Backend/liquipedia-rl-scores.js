@@ -36,7 +36,7 @@ async function throttleParse() {
 }
 
 let rateLimitedUntil = 0;
-const RATE_LIMIT_COOLDOWN_MS = 10 * 60 * 1000;
+const RATE_LIMIT_COOLDOWN_MS = 2 * 60 * 1000;
 
 function isRateLimited() {
   return Date.now() < rateLimitedUntil;
