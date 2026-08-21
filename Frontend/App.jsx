@@ -1700,11 +1700,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     if (replayLoading) return;
     setReplayLoading(true);
     try {
-      const url = await fetchYouTubeReplay(match.team1Name, match.team2Name, match.day, gameLabel, match.league);
+      const url = await fetchYouTubeReplay(match.team1, match.team2, match.day, gameLabel, match.league);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
-      else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1Name + " VS " + match.team2Name + " replay " + gameLabel + " video"), "_blank", "noopener,noreferrer");
+      else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport"), "_blank", "noopener,noreferrer");
     } catch {
-      window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1Name + " VS " + match.team2Name + " replay " + gameLabel + " video"), "_blank", "noopener,noreferrer");
+      window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport"), "_blank", "noopener,noreferrer");
     } finally { setReplayLoading(false); }
   };
 

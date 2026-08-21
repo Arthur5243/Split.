@@ -152,11 +152,13 @@ router.get("/api/youtube-replay", async (req, res) => {
     }
 
     if (!result) {
+      const g = (game || "").toLowerCase();
+      const esport = g.includes("valorant") ? "esport" : "";
       const queries = [
+        team1 + " vs " + team2 + " replay " + (game || "") + " " + esport,
         team1 + " vs " + team2 + " " + (game || "") + " full game",
-        team1 + " vs " + team2 + " " + (game || ""),
-        team1 + " vs " + team2 + " " + (game || "") + " replay",
-        team1 + " " + team2 + " " + (game || "") + " full game",
+        team1 + " vs " + team2 + " " + (game || "") + " " + esport,
+        team1 + " " + team2 + " " + (game || "") + " full game " + esport,
       ];
       for (const q of queries) {
         result = await searchVideo(q, after, before);
