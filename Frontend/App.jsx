@@ -66,14 +66,6 @@ const REGION_YOUTUBE_LIVE = {
   CN: "https://www.youtube.com/@VALORANTEsportsCN/live",
 };
 
-const MOIS_FR = ["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"];
-function buildReplaySearchUrl(team1Name, team2Name, beginAt, gameName) {
-  if (!team1Name || !team2Name || !beginAt) return null;
-  const d = new Date(beginAt);
-  if (isNaN(d)) return null;
-  const q = team1Name + " VS " + team2Name + " " + d.getDate() + " " + MOIS_FR[d.getMonth()] + " replay " + gameName + " video";
-  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
-}
 function daysAgoText(beginAt) {
   if (!beginAt) return null;
   const d = new Date(beginAt);
@@ -82,6 +74,31 @@ function daysAgoText(beginAt) {
   if (diff === 0) return "Regarder le replay d'aujourd'hui";
   if (diff === 1) return "Regarder le replay d'hier";
   return "Regarder le replay d'il y a " + diff + " jour" + (diff > 1 ? "s" : "");
+}
+const _ytCache = new Map();
+async function fetchYouTubeReplay(team1, team2, date, game) {
+  const key = [team1, team2, date, game].join("|");
+  if (_ytCache.has(key)) return _ytCache.get(key);
+  try {
+    const p = new URLSearchParams({ team1, team2, date: date || "", game: game || "" });
+    const res = await fetch(API_BASE + "/api/youtube-replay?" + p);
+    const data = await res.json();
+    const url = data.url || null;
+    _ytCache.set(key, url);
+    return url;
+  } catch { return null; }
+}
+async function fetchYouTubeLive(team1, team2, game) {
+  const key = "live|" + [team1, team2, game].join("|");
+  if (_ytCache.has(key)) return _ytCache.get(key);
+  try {
+    const p = new URLSearchParams({ team1, team2, game: game || "" });
+    const res = await fetch(API_BASE + "/api/youtube-live?" + p);
+    const data = await res.json();
+    const url = data.url || null;
+    _ytCache.set(key, url);
+    return url;
+  } catch { return null; }
 }
 
 // Catégories de jeux affichées dans le classement
@@ -1667,21 +1684,34 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [showStreamPicker, setShowStreamPicker] = useState(false);
 
   const gameType = String(match.id).startsWith("rl-") ? "rl" : String(match.id).startsWith("cs2-") ? "cs2" : "valo";
-  const computedReplayUrl = (() => {
-    if (!finished || !match.team1Name || !match.team2Name) return null;
-    if (gameType === "rl") return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "ROCKET LEAGUE");
-    if (gameType === "valo") return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "VALORANT");
-    if (gameType === "cs2") {
-      const su = match.streamUrl || streamUrl || "";
-      const kickMatch = su.match(/kick\.com\/([^/?#]+)/);
-      if (kickMatch) return "https://kick.com/" + kickMatch[1] + "/videos";
-      return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "COUNTER STRIKE 2");
-    }
-    return null;
+  const gameLabel = gameType === "rl" ? "rocket league" : gameType === "cs2" ? "counter strike 2" : "valorant";
+  const cs2KickUrl = (() => {
+    if (gameType !== "cs2" || !finished) return null;
+    const su = match.streamUrl || streamUrl || "";
+    const m2 = su.match(/kick\.com\/([^/?#]+)/);
+    return m2 ? "https://kick.com/" + m2[1] + "/videos" : null;
   })();
-  const effectiveReplayUrl = computedReplayUrl || replayUrlProp || (useRegionStreamFallback ? REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA : null);
-  const replayDaysText = daysAgoText(match.beginAt);
+  const hasReplay = finished && match.team1Name && match.team2Name;
+  const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
+  const [replayLoading, setReplayLoading] = useState(false);
+
+  const openReplayYT = async () => {
+    if (replayLoading) return;
+    setReplayLoading(true);
+    try {
+      const url = await fetchYouTubeReplay(match.team1Name, match.team2Name, match.day, gameLabel);
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1Name + " VS " + match.team2Name + " replay " + gameLabel + " video"), "_blank", "noopener,noreferrer");
+    } catch {
+      window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1Name + " VS " + match.team2Name + " replay " + gameLabel + " video"), "_blank", "noopener,noreferrer");
+    } finally { setReplayLoading(false); }
+  };
+
+  const openLiveYT = async () => {
+    const url = await fetchYouTubeLive(match.team1Name, match.team2Name, gameLabel);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   // Détail des points gagnés sur ce match précis, uniquement si un pari a été
   // fait et le match est terminé (même règle que le règlement global des
@@ -1772,10 +1802,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               )}
             </div>
           ) : (
-            <span className="flex items-center gap-1.5" style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}>
+            <button
+              onClick={openLiveYT}
+              className="flex items-center gap-1.5"
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+            >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
-            </span>
+            </button>
           )
         ) : finished ? (
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
@@ -1958,33 +1992,45 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               </div>
 
               <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f", position: "relative" }}>
-                {effectiveReplayUrl ? (
-                  <div style={{ position: "relative" }}>
+                {hasReplay ? (
+                  cs2KickUrl ? (
+                    <div style={{ position: "relative" }}>
+                      <button
+                        onClick={() => setShowReplayPopup((v) => !v)}
+                        className="flex items-center gap-1.5"
+                        style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                      >
+                        <Play size={12} />
+                        {T.replay}
+                      </button>
+                      {showReplayPopup && (
+                        <>
+                          <div onClick={() => setShowReplayPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+                          <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: "10px", padding: "12px 16px", minWidth: "220px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                            {replayDaysText && <p style={{ color: "#ccc", fontSize: "12px", fontWeight: 600, marginBottom: "10px" }}>{replayDaysText}</p>}
+                            <button
+                              onClick={() => { window.open(cs2KickUrl, "_blank", "noopener,noreferrer"); setShowReplayPopup(false); }}
+                              className="flex items-center gap-2 w-full"
+                              style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: accent + "22", border: "1px solid " + accent + "44", borderRadius: "8px", padding: "8px 12px" }}
+                            >
+                              <Play size={14} fill={accent} color={accent} />
+                              <span style={{ color: accent }}>Voir sur Kick</span>
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => setShowReplayPopup((v) => !v)}
+                      onClick={openReplayYT}
+                      disabled={replayLoading}
                       className="flex items-center gap-1.5"
-                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", opacity: replayLoading ? 0.5 : 1 }}
                     >
                       <Play size={12} />
-                      {T.replay}
+                      {replayLoading ? "..." : T.replay}
                     </button>
-                    {showReplayPopup && (
-                      <>
-                        <div onClick={() => setShowReplayPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
-                        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: "10px", padding: "12px 16px", minWidth: "220px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                          {replayDaysText && <p style={{ color: "#ccc", fontSize: "12px", fontWeight: 600, marginBottom: "10px" }}>{replayDaysText}</p>}
-                          <button
-                            onClick={() => { window.open(effectiveReplayUrl, "_blank", "noopener,noreferrer"); setShowReplayPopup(false); }}
-                            className="flex items-center gap-2 w-full"
-                            style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: accent + "22", border: "1px solid " + accent + "44", borderRadius: "8px", padding: "8px 12px" }}
-                          >
-                            <Play size={14} fill={accent} color={accent} />
-                            <span style={{ color: accent }}>{gameType === "cs2" && effectiveReplayUrl.includes("kick.com") ? "Voir sur Kick" : "Chercher sur YouTube"}</span>
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  )
                 ) : (
                   <span />
                 )}
