@@ -55,7 +55,8 @@ router.get("/api/youtube-replay", async (req, res) => {
 
     const cacheKey = [team1, team2, date, game].join("|").toLowerCase();
     const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.at < CACHE_TTL) {
+    const ttl = cached && cached.data.url ? CACHE_TTL : 10 * 60 * 1000;
+    if (cached && Date.now() - cached.at < ttl) {
       return res.json(cached.data);
     }
 
