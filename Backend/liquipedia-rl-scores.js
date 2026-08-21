@@ -328,4 +328,4 @@ async function getGameScoresFromLiquipedia(team1Name, team2Name, tournamentName,
   return null;
 }
 
-export { getGameScoresFromLiquipedia };
+export { getGameScoresFromLiquipedia, searchTournamentPages, getWikitext, findMatchInWikitext };

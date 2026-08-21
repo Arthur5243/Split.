@@ -13,7 +13,7 @@ import {
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
-import { getGameScoresFromLiquipedia } from "./liquipedia-rl-scores.js";
+import { searchTournamentPages, getWikitext, findMatchInWikitext } from "./liquipedia-rl-scores.js";
 
 const RL_SLUG = "rl";
 
@@ -116,25 +116,81 @@ router.get("/api/rl-live", async (req, res) => {
 });
 
 // --- /api/rl-results ---
+let rlResultsCache = { data: null, at: 0 };
+const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
+
 router.get("/api/rl-results", async (req, res) => {
   try {
+    if (rlResultsCache.data && Date.now() - rlResultsCache.at < RL_RESULTS_CACHE_TTL) {
+      return res.json(rlResultsCache.data);
+    }
+
     const data = await cachedFetch("rl-results", "/" + RL_SLUG + "/matches/past?per_page=50");
     const visible = (data || []).filter((m) => !isFullyUnknown(m) && isNotableTier(m));
     const enriched = visible.map((m) => attachTeamRegions(m));
+
+    const byLeague = new Map();
     for (const m of enriched) {
-      const t1 = m.opponents?.[0]?.opponent;
-      const t2 = m.opponents?.[1]?.opponent;
-      if (!t1 || !t2) { m.game_scores = null; continue; }
-      const tournamentName = m.league?.name || "";
-      const serieName = m.serie?.full_name || m.tournament?.name || "";
-      const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
-      try {
-        m.game_scores = await getGameScoresFromLiquipedia(t1.name, t2.name, tournamentName, dateStr, serieName);
-      } catch (e) {
-        console.log(`[rl-results] liquipedia error for ${t1.name} vs ${t2.name}:`, e.message);
-        m.game_scores = null;
+      const key = m.league?.slug || m.league?.name || "unknown";
+      if (!byLeague.has(key)) byLeague.set(key, []);
+      byLeague.get(key).push(m);
+    }
+
+    for (const [, matches] of byLeague) {
+      const sample = matches[0];
+      const serieName = sample.serie?.full_name || sample.tournament?.name || "";
+      const leagueName = sample.league?.name || "";
+      const year = sample.begin_at ? sample.begin_at.slice(0, 4) : "";
+
+      const queries = [
+        `${serieName} ${year}`.trim(),
+        `${leagueName} ${year}`.trim(),
+        leagueName,
+      ].filter((q) => q && q.length > 2);
+
+      const seen = new Set();
+      const pageQueue = [];
+      for (const q of queries) {
+        if (pageQueue.length >= 5) break;
+        try {
+          const pages = await searchTournamentPages(q);
+          for (const p of pages) {
+            if (!seen.has(p)) { seen.add(p); pageQueue.push(p); }
+          }
+        } catch (e) {
+          console.log(`[rl-results] search("${q}") error:`, e.message);
+        }
+      }
+
+      const wikitexts = [];
+      for (const page of pageQueue.slice(0, 3)) {
+        try {
+          const wt = await getWikitext(page);
+          if (wt) wikitexts.push({ title: page, text: wt });
+        } catch (e) {
+          console.log(`[rl-results] wikitext("${page}") error:`, e.message);
+        }
+      }
+
+      for (const m of matches) {
+        const t1 = m.opponents?.[0]?.opponent;
+        const t2 = m.opponents?.[1]?.opponent;
+        if (!t1 || !t2) { m.game_scores = null; continue; }
+        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
+        let found = null;
+        for (const { title, text } of wikitexts) {
+          const { games } = findMatchInWikitext(text, t1.name, t2.name, dateStr);
+          if (games) {
+            console.log(`[rl-results] ${t1.name} vs ${t2.name} → found in "${title}" (${games.length} games)`);
+            found = games;
+            break;
+          }
+        }
+        m.game_scores = found;
       }
     }
+
+    rlResultsCache = { data: enriched, at: Date.now() };
     res.json(enriched);
   } catch (e) {
     console.error("rl-results error:", e.message);
