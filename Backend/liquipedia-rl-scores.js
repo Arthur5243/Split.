@@ -55,10 +55,23 @@ async function liquipediaFetch(params, { isParse = false } = {}) {
   return res.json();
 }
 
+const searchCache = new Map();
+const SEARCH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function getCachedSearch(query) {
+  const cached = searchCache.get(query);
+  if (cached && Date.now() - cached.at < SEARCH_CACHE_TTL_MS) return cached.titles;
+  return null;
+}
+
 async function searchTournamentPages(query) {
+  const cached = getCachedSearch(query);
+  if (cached) return cached;
   const json = await liquipediaFetch({ action: "query", list: "search", srsearch: query, srlimit: "3" });
   const results = json?.query?.search || [];
-  return results.map((r) => r.title);
+  const titles = results.map((r) => r.title);
+  searchCache.set(query, { titles, at: Date.now() });
+  return titles;
 }
 
 const wikitextCache = new Map();
@@ -339,4 +352,4 @@ async function getGameScoresFromLiquipedia(team1Name, team2Name, tournamentName,
   return null;
 }
 
-export { getGameScoresFromLiquipedia, searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited };
+export { getGameScoresFromLiquipedia, searchTournamentPages, getCachedSearch, getWikitext, getCachedWikitext, findMatchInWikitext, isRateLimited };

@@ -13,7 +13,9 @@ import {
 } from "./cs2-scores.js";
 import {
   searchTournamentPages,
+  getCachedSearch,
   getWikitext,
+  getCachedWikitext,
   findMatchInWikitext,
   isRateLimited,
 } from "./liquipedia-rl-scores.js";
@@ -149,9 +151,51 @@ function buildSerieQuery(m) {
   return q.trim() || null;
 }
 
+function enrichFromCache(matches, groups) {
+  let found = false;
+  for (const [, group] of groups) {
+    if (!group.query) continue;
+    const cachedTitles = getCachedSearch(group.query);
+    if (!cachedTitles) continue;
+    const validPages = cachedTitles.filter(
+      (t) => !/((^|\/)([a-e]|s)-tier tournaments|qualifier tournaments|tier tournaments)/i.test(t)
+    );
+    for (const pageTitle of validPages.slice(0, 2)) {
+      const wikitext = getCachedWikitext(pageTitle);
+      if (!wikitext) continue;
+      for (const m of group.matches) {
+        if (m._liquipediaScores) continue;
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        if (!t1 || !t2) continue;
+        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
+        const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
+        if (games && games.length > 0) {
+          m.game_scores = games;
+          m._liquipediaScores = true;
+          found = true;
+        }
+      }
+    }
+  }
+  return found;
+}
+
 async function enrichWithLiquipedia(matches) {
+  const groups = new Map();
+  for (const m of matches) {
+    const serieId = m.serie?.id || m.league?.id || "unknown";
+    if (!groups.has(serieId)) groups.set(serieId, { matches: [], query: buildSerieQuery(m) });
+    groups.get(serieId).matches.push(m);
+  }
+
+  if (enrichFromCache(matches, groups)) {
+    console.log("[rl-liquipedia] enriched from cache (no API calls)");
+    return true;
+  }
+
   if (isRateLimited()) {
-    console.log("[rl-liquipedia] rate-limited, skipping enrichment");
+    console.log("[rl-liquipedia] rate-limited, skipping API enrichment");
     return false;
   }
 
@@ -162,15 +206,8 @@ async function enrichWithLiquipedia(matches) {
     return false;
   }
 
-  const groups = new Map();
-  for (const m of matches) {
-    const serieId = m.serie?.id || m.league?.id || "unknown";
-    if (!groups.has(serieId)) groups.set(serieId, { matches: [], query: buildSerieQuery(m) });
-    groups.get(serieId).matches.push(m);
-  }
-
   let enriched = false;
-  for (const [serieId, group] of groups) {
+  for (const [, group] of groups) {
     if (!group.query || isRateLimited()) continue;
 
     let pageTitles;
@@ -203,7 +240,6 @@ async function enrichWithLiquipedia(matches) {
         const t2 = m.opponents?.[1]?.opponent?.name;
         if (!t1 || !t2) continue;
         const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
-
         const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
         if (games && games.length > 0) {
           m.game_scores = games;
@@ -247,10 +283,22 @@ router.get("/api/rl-results", async (req, res) => {
       m.game_scores = buildFallbackGameScores(m);
     }
 
+    const groups = new Map();
+    for (const m of enriched) {
+      const serieId = m.serie?.id || m.league?.id || "unknown";
+      if (!groups.has(serieId)) groups.set(serieId, { matches: [], query: buildSerieQuery(m) });
+      groups.get(serieId).matches.push(m);
+    }
+    if (enrichFromCache(enriched, groups)) {
+      console.log("[rl-liquipedia] sync enrichment from cache succeeded");
+    }
+
     rlResultsCache = { data: enriched, at: Date.now() };
     res.json(enriched);
 
-    runBackgroundEnrichment(enriched);
+    if (!enriched.some((m) => m._liquipediaScores)) {
+      runBackgroundEnrichment(enriched);
+    }
   } catch (e) {
     console.error("rl-results error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les résultats RL." });
