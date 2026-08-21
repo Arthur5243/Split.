@@ -1,19 +1,22 @@
 /**
  * Endpoints Rocket League : /api/rl-upcoming, /api/rl-live, /api/rl-results.
- * PandaScore pour tout : matchs, scores de série, et scores par game (buts)
- * via /rl/games/{id}. Slug : "rl".
+ * PandaScore pour les matchs + scores de série.
+ * Liquipedia pour les vrais scores par game (buts).
+ * Slug PandaScore : "rl".
  */
 
 import express from "express";
 import {
-  pandaFetch,
   cachedFetch,
-  mapWithConcurrency,
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
-// Liquipedia RL désactivé temporairement (rate limit 429)
-// import { searchTournamentPages, getWikitext, findMatchInWikitext, isRateLimited } from "./liquipedia-rl-scores.js";
+import {
+  searchTournamentPages,
+  getWikitext,
+  findMatchInWikitext,
+  isRateLimited,
+} from "./liquipedia-rl-scores.js";
 
 const RL_SLUG = "rl";
 
@@ -119,24 +122,7 @@ router.get("/api/rl-live", async (req, res) => {
 let rlResultsCache = { data: null, at: 0 };
 const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
 
-async function fetchRlGameScore(gameId, team1Id, team2Id) {
-  let game;
-  try {
-    game = await pandaFetch("/" + RL_SLUG + "/games/" + gameId);
-  } catch (e) {
-    return null;
-  }
-  if (!game || game.finished !== true) return null;
-
-  const teams = Array.isArray(game.teams) ? game.teams : [];
-  const r1 = teams.find((t) => t && String(t.team_id) === String(team1Id));
-  const r2 = teams.find((t) => t && String(t.team_id) === String(team2Id));
-  if (!r1 || !r2 || r1.score == null || r2.score == null) return null;
-
-  return { score1: r1.score, score2: r2.score };
-}
-
-async function getGameScoresForMatch(m) {
+function buildFallbackGameScores(m) {
   const t1 = m.opponents?.[0]?.opponent;
   const t2 = m.opponents?.[1]?.opponent;
   if (!t1 || !t2) return null;
@@ -145,17 +131,78 @@ async function getGameScoresForMatch(m) {
     .filter((g) => g && g.status === "finished" && g.winner)
     .sort((a, b) => (a.position || 0) - (b.position || 0));
   if (played.length === 0) return null;
+  return played.map((g, i) => ({
+    game: "Game " + (i + 1),
+    score1: String(g.winner.id) === String(t1.id) ? 1 : 0,
+    score2: String(g.winner.id) === String(t2.id) ? 1 : 0,
+  }));
+}
 
-  const results = new Array(played.length).fill(null);
-  await mapWithConcurrency(played, 3, async (g) => {
-    const idx = played.indexOf(g);
-    results[idx] = await fetchRlGameScore(g.id, t1.id, t2.id);
-  });
+function buildSerieQuery(m) {
+  const league = m.league?.name || "";
+  const serie = m.serie?.full_name || m.serie?.name || "";
+  const year = m.begin_at ? m.begin_at.slice(0, 4) : "";
+  const parts = [league, serie].filter((n) => n && !/^\d{4}$/.test(n.trim()));
+  if (parts.length === 0) return null;
+  const q = parts.join(" ") + (year && !parts.some((p) => p.includes(year)) ? " " + year : "");
+  return q.trim() || null;
+}
 
-  const scores = results
-    .filter((r) => r !== null)
-    .map((r, i) => ({ game: "Game " + (i + 1), score1: r.score1, score2: r.score2 }));
-  return scores.length > 0 ? scores : null;
+async function enrichWithLiquipedia(matches) {
+  if (isRateLimited()) {
+    console.log("[rl-liquipedia] rate-limited, skipping enrichment");
+    return;
+  }
+
+  const groups = new Map();
+  for (const m of matches) {
+    const serieId = m.serie?.id || m.league?.id || "unknown";
+    if (!groups.has(serieId)) groups.set(serieId, { matches: [], query: buildSerieQuery(m) });
+    groups.get(serieId).matches.push(m);
+  }
+
+  for (const [serieId, group] of groups) {
+    if (!group.query || isRateLimited()) continue;
+
+    let pageTitles;
+    try {
+      pageTitles = await searchTournamentPages(group.query);
+    } catch (e) {
+      console.log(`[rl-liquipedia] search("${group.query}") error:`, e.message);
+      continue;
+    }
+
+    const validPages = (pageTitles || []).filter(
+      (t) => !/((^|\/)([a-e]|s)-tier tournaments|qualifier tournaments|tier tournaments)/i.test(t)
+    );
+    if (validPages.length === 0) continue;
+
+    for (const pageTitle of validPages.slice(0, 2)) {
+      if (isRateLimited()) break;
+      let wikitext;
+      try {
+        wikitext = await getWikitext(pageTitle);
+      } catch (e) {
+        console.log(`[rl-liquipedia] wikitext("${pageTitle}") error:`, e.message);
+        continue;
+      }
+      if (!wikitext) continue;
+
+      for (const m of group.matches) {
+        if (m.game_scores) continue;
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        if (!t1 || !t2) continue;
+        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
+
+        const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
+        if (games && games.length > 0) {
+          m.game_scores = games;
+          console.log(`[rl-liquipedia] ${t1} vs ${t2} → ${games.length} games from "${pageTitle}"`);
+        }
+      }
+    }
+  }
 }
 
 router.get("/api/rl-results", async (req, res) => {
@@ -168,9 +215,21 @@ router.get("/api/rl-results", async (req, res) => {
     const visible = (data || []).filter((m) => !isFullyUnknown(m) && isNotableTier(m));
     const enriched = visible.map((m) => attachTeamRegions(m));
 
-    await mapWithConcurrency(enriched, 3, async (m) => {
-      m.game_scores = await getGameScoresForMatch(m);
-    });
+    for (const m of enriched) {
+      m.game_scores = null;
+    }
+
+    try {
+      await enrichWithLiquipedia(enriched);
+    } catch (e) {
+      console.log("[rl-liquipedia] enrichment error:", e.message);
+    }
+
+    for (const m of enriched) {
+      if (!m.game_scores) {
+        m.game_scores = buildFallbackGameScores(m);
+      }
+    }
 
     rlResultsCache = { data: enriched, at: Date.now() };
     res.json(enriched);
