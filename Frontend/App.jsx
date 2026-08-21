@@ -76,11 +76,11 @@ function daysAgoText(beginAt) {
   return "Regarder le replay d'il y a " + diff + " jour" + (diff > 1 ? "s" : "");
 }
 const _ytCache = new Map();
-async function fetchYouTubeReplay(team1, team2, date, game) {
-  const key = [team1, team2, date, game].join("|");
+async function fetchYouTubeReplay(team1, team2, date, game, league) {
+  const key = [team1, team2, date, game, league].join("|");
   if (_ytCache.has(key)) return _ytCache.get(key);
   try {
-    const p = new URLSearchParams({ team1, team2, date: date || "", game: game || "" });
+    const p = new URLSearchParams({ team1, team2, date: date || "", game: game || "", league: league || "" });
     const res = await fetch(API_BASE + "/api/youtube-replay?" + p);
     const data = await res.json();
     const url = data.url || null;
@@ -1700,7 +1700,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     if (replayLoading) return;
     setReplayLoading(true);
     try {
-      const url = await fetchYouTubeReplay(match.team1Name, match.team2Name, match.day, gameLabel);
+      const url = await fetchYouTubeReplay(match.team1Name, match.team2Name, match.day, gameLabel, match.league);
       if (url) window.open(url, "_blank", "noopener,noreferrer");
       else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1Name + " VS " + match.team2Name + " replay " + gameLabel + " video"), "_blank", "noopener,noreferrer");
     } catch {
