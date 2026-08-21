@@ -1,7 +1,9 @@
 import express from "express";
 
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
-const YOUTUBE_BASE = "https://www.googleapis.com/youtube/v3/search";
+const YOUTUBE_SEARCH = "https://www.googleapis.com/youtube/v3/search";
+const YOUTUBE_CHANNELS = "https://www.googleapis.com/youtube/v3/channels";
+const MIN_SUBSCRIBERS = 40000;
 
 const cache = new Map();
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -13,32 +15,88 @@ function cleanCache() {
   }
 }
 
+async function getChannelSubscriberCounts(channelIds) {
+  if (!channelIds.length) return {};
+  const params = new URLSearchParams({
+    part: "statistics",
+    id: channelIds.join(","),
+    key: YOUTUBE_API_KEY,
+  });
+  try {
+    const res = await fetch(YOUTUBE_CHANNELS + "?" + params);
+    if (!res.ok) return {};
+    const data = await res.json();
+    const map = {};
+    for (const ch of data.items || []) {
+      map[ch.id] = parseInt(ch.statistics.subscriberCount || "0", 10);
+    }
+    return map;
+  } catch { return {}; }
+}
+
 async function searchVideo(query, publishedAfter, publishedBefore, eventType) {
   if (!YOUTUBE_API_KEY) return null;
+  const isLive = eventType === "live";
   const params = new URLSearchParams({
     part: "snippet",
     q: query,
     type: "video",
-    maxResults: "1",
+    maxResults: isLive ? "1" : "5",
     order: "relevance",
     key: YOUTUBE_API_KEY,
   });
   if (publishedAfter) params.set("publishedAfter", publishedAfter);
   if (publishedBefore) params.set("publishedBefore", publishedBefore);
   if (eventType) params.set("eventType", eventType);
-  const res = await fetch(YOUTUBE_BASE + "?" + params);
+  const res = await fetch(YOUTUBE_SEARCH + "?" + params);
   if (!res.ok) {
     console.log("[youtube] HTTP " + res.status + " for query: " + query);
     return null;
   }
   const data = await res.json();
-  const item = data.items && data.items[0];
-  if (!item) return null;
-  return {
-    url: "https://www.youtube.com/watch?v=" + item.id.videoId,
-    title: item.snippet.title,
-    channel: item.snippet.channelTitle,
-  };
+  const items = data.items || [];
+  if (items.length === 0) return null;
+
+  if (isLive) {
+    const item = items[0];
+    return {
+      url: "https://www.youtube.com/watch?v=" + item.id.videoId,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+    };
+  }
+
+  const channelIds = [...new Set(items.map((i) => i.snippet.channelId))];
+  const subs = await getChannelSubscriberCounts(channelIds);
+
+  let best = null;
+  let bestSubs = 0;
+  for (const item of items) {
+    const chSubs = subs[item.snippet.channelId] || 0;
+    if (chSubs >= MIN_SUBSCRIBERS) {
+      return {
+        url: "https://www.youtube.com/watch?v=" + item.id.videoId,
+        title: item.snippet.title,
+        channel: item.snippet.channelTitle,
+        subscribers: chSubs,
+      };
+    }
+    if (chSubs > bestSubs) {
+      bestSubs = chSubs;
+      best = item;
+    }
+  }
+
+  if (best) {
+    console.log("[youtube] no channel >= " + MIN_SUBSCRIBERS + " subs for: " + query + " (best: " + bestSubs + ")");
+    return {
+      url: "https://www.youtube.com/watch?v=" + best.id.videoId,
+      title: best.snippet.title,
+      channel: best.snippet.channelTitle,
+      subscribers: bestSubs,
+    };
+  }
+  return null;
 }
 
 const router = express.Router();

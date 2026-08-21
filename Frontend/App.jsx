@@ -2139,7 +2139,7 @@ function NewsCarousel({ T }) {
   useEffect(() => {
     const id = setInterval(() => {
       setActiveSlide((p) => (p + 1) % slideCount);
-    }, 15000);
+    }, 6000);
     return () => clearInterval(id);
   }, []);
 
@@ -2166,32 +2166,28 @@ function NewsCarousel({ T }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      {activeSlide === 0 && (
-        <>
-          <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000 100%)" }} />
-          <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            {T.newsBadge}
-          </span>
-          <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-            <p style={{ color: "#fff", fontSize: "17px", fontWeight: 900, lineHeight: 1.1 }}>{T.newsTitle}</p>
-            <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
-          </div>
-        </>
-      )}
-      {activeSlide === 1 && (
-        <>
-          <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_EWC_IMAGE})`, backgroundSize: "cover", backgroundPosition: "left center" }} />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }} />
-          <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            {T.news2Badge}
-          </span>
-          <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-            <p style={{ color: "#ffaa00", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
-            <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news2Sub}</p>
-          </div>
-        </>
-      )}
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
+        <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000 100%)" }} />
+        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          {T.newsBadge}
+        </span>
+        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+          <p style={{ color: "#fff", fontSize: "17px", fontWeight: 900, lineHeight: 1.1 }}>{T.newsTitle}</p>
+          <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
+        </div>
+      </div>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
+        <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_EWC_IMAGE})`, backgroundSize: "cover", backgroundPosition: "left center" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }} />
+        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          {T.news2Badge}
+        </span>
+        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+          <p style={{ color: "#ffaa00", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news2Sub}</p>
+        </div>
+      </div>
 
       <div className="absolute flex items-center gap-1.5" style={{ bottom: "10px", left: "50%", transform: "translateX(-50%)" }}>
         {[0, 1].map((i) => (
