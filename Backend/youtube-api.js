@@ -59,18 +59,26 @@ router.get("/api/youtube-replay", async (req, res) => {
       return res.json(cached.data);
     }
 
-    const query = team1 + " VS " + team2 + " " + (game || "") + " replay";
     let after = null;
     let before = null;
     if (date) {
       const d = new Date(date);
       if (!isNaN(d)) {
         after = new Date(d.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
-        before = new Date(d.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        before = new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
       }
     }
 
-    const result = await searchVideo(query, after, before);
+    const queries = [
+      team1 + " vs " + team2 + " " + (game || ""),
+      team1 + " vs " + team2 + " " + (game || "") + " replay",
+      team1 + " " + team2 + " " + (game || ""),
+    ];
+    let result = null;
+    for (const q of queries) {
+      result = await searchVideo(q, after, before);
+      if (result) break;
+    }
     const payload = result ? { url: result.url, title: result.title, channel: result.channel } : { url: null };
     cache.set(cacheKey, { data: payload, at: Date.now() });
     if (cache.size > 500) cleanCache();
