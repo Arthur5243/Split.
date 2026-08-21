@@ -2487,7 +2487,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -2572,8 +2572,10 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
               <MatchCard
                 match={m}
                 accent={RL_ACCENT}
+                onToggleExpand={toggleExpand}
                 T={T}
                 lang={lang}
+                teamLogoCache={teamLogoCache}
                 streamUrl={m.streamUrl}
                 useRegionStreamFallback={false}
                 team1RegionColor={m.team1Region ? regionAccentRL(m.team1Region) : null}
@@ -4060,6 +4062,8 @@ export default function ClutchApp() {
               loading={rlDataLoading}
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "rl", region)}
               toggleMatchNotif={toggleMatchNotif}
+              toggleExpand={toggleExpand}
+              teamLogoCache={teamLogoCache}
             />
           )}
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}

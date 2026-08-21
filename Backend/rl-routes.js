@@ -119,6 +119,22 @@ router.get("/api/rl-live", async (req, res) => {
 let rlResultsCache = { data: null, at: 0 };
 const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
 
+function buildFallbackGameScores(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return null;
+  const games = Array.isArray(m.games) ? m.games : [];
+  const played = games
+    .filter((g) => g && g.status === "finished" && g.winner)
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
+  if (played.length === 0) return null;
+  return played.map((g, i) => ({
+    game: "Game " + (i + 1),
+    score1: String(g.winner.id) === String(t1.id) ? 1 : 0,
+    score2: String(g.winner.id) === String(t2.id) ? 1 : 0,
+  }));
+}
+
 router.get("/api/rl-results", async (req, res) => {
   try {
     if (rlResultsCache.data && Date.now() - rlResultsCache.at < RL_RESULTS_CACHE_TTL) {
@@ -138,15 +154,17 @@ router.get("/api/rl-results", async (req, res) => {
 
     for (const [, matches] of byLeague) {
       const sample = matches[0];
-      const serieName = sample.serie?.full_name || sample.tournament?.name || "";
       const leagueName = sample.league?.name || "";
+      const tournamentName = sample.tournament?.name || "";
+      const serieName = sample.serie?.full_name || "";
       const year = sample.begin_at ? sample.begin_at.slice(0, 4) : "";
 
-      const queries = [
-        `${serieName} ${year}`.trim(),
+      const rawQueries = [
+        `${leagueName} ${year} ${tournamentName}`.trim(),
         `${leagueName} ${year}`.trim(),
         leagueName,
-      ].filter((q) => q && q.length > 2);
+      ];
+      const queries = [...new Set(rawQueries)].filter((q) => q && q.length > 2 && !/^\d{4}$/.test(q));
 
       const seen = new Set();
       const pageQueue = [];
@@ -186,7 +204,7 @@ router.get("/api/rl-results", async (req, res) => {
             break;
           }
         }
-        m.game_scores = found;
+        m.game_scores = found || buildFallbackGameScores(m);
       }
     }
 
