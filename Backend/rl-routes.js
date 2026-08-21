@@ -155,7 +155,7 @@ async function enrichWithLiquipedia(matches) {
     return false;
   }
 
-  await sleep(10000);
+  await sleep(5000);
 
   if (isRateLimited()) {
     console.log("[rl-liquipedia] rate-limited after delay, skipping");

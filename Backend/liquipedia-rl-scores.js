@@ -19,27 +19,26 @@ const LIQUIPEDIA_USER_AGENT = "SplitApp/1.0 (https://github.com/Arthur5243/Split
 const GENERAL_THROTTLE_MS = 2100;
 const PARSE_THROTTLE_MS = 31000;
 
-let lastGeneralCallAt = 0;
-let lastParseCallAt = 0;
+if (!globalThis.__liquipediaThrottle) {
+  globalThis.__liquipediaThrottle = { lastGeneral: 0, lastParse: 0, rateLimitedUntil: 0 };
+}
+const _lqt = globalThis.__liquipediaThrottle;
 
 async function throttleGeneral() {
-  const wait = lastGeneralCallAt + GENERAL_THROTTLE_MS - Date.now();
+  const wait = _lqt.lastGeneral + GENERAL_THROTTLE_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  lastGeneralCallAt = Date.now();
+  _lqt.lastGeneral = Date.now();
 }
 
 async function throttleParse() {
-  const wait = lastParseCallAt + PARSE_THROTTLE_MS - Date.now();
+  const wait = _lqt.lastParse + PARSE_THROTTLE_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-  lastParseCallAt = Date.now();
-  lastGeneralCallAt = Date.now();
+  _lqt.lastParse = Date.now();
+  _lqt.lastGeneral = Date.now();
 }
 
-let rateLimitedUntil = 0;
-const RATE_LIMIT_COOLDOWN_MS = 2 * 60 * 1000;
-
 function isRateLimited() {
-  return Date.now() < rateLimitedUntil;
+  return Date.now() < _lqt.rateLimitedUntil;
 }
 
 async function liquipediaFetch(params, { isParse = false } = {}) {
@@ -49,8 +48,8 @@ async function liquipediaFetch(params, { isParse = false } = {}) {
   const url = LIQUIPEDIA_BASE + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
   const res = await fetch(url, { headers: { "User-Agent": LIQUIPEDIA_USER_AGENT } });
   if (res.status === 429) {
-    rateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
-    throw new Error("liquipedia-rl HTTP 429 — cooldown 10min");
+    _lqt.rateLimitedUntil = Date.now() + 2 * 60 * 1000;
+    throw new Error("liquipedia-rl HTTP 429 — cooldown 2min");
   }
   if (!res.ok) throw new Error("liquipedia-rl HTTP " + res.status);
   return res.json();
