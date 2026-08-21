@@ -141,6 +141,21 @@ function buildFallbackGameScores(m) {
   }));
 }
 
+const KNOWN_LIQUIPEDIA_PAGES = {
+  "rl-esports-world-cup-2026": "Esports_World_Cup/2026",
+  "rl-esports-world-cup-2025": "Esports_World_Cup/2025",
+  "rl-rlcs-2026": "Rocket_League_Championship_Series/2026",
+};
+
+function getKnownPageTitle(m) {
+  const serieSlug = m.serie?.slug || "";
+  if (KNOWN_LIQUIPEDIA_PAGES[serieSlug]) return KNOWN_LIQUIPEDIA_PAGES[serieSlug];
+  for (const [key, page] of Object.entries(KNOWN_LIQUIPEDIA_PAGES)) {
+    if (serieSlug.includes(key)) return page;
+  }
+  return null;
+}
+
 function buildSerieQuery(m) {
   const league = m.league?.name || "";
   const serie = m.serie?.full_name || m.serie?.name || "";
@@ -185,7 +200,9 @@ async function enrichWithLiquipedia(matches) {
   const groups = new Map();
   for (const m of matches) {
     const serieId = m.serie?.id || m.league?.id || "unknown";
-    if (!groups.has(serieId)) groups.set(serieId, { matches: [], query: buildSerieQuery(m) });
+    if (!groups.has(serieId)) {
+      groups.set(serieId, { matches: [], query: buildSerieQuery(m), knownPage: getKnownPageTitle(m) });
+    }
     groups.get(serieId).matches.push(m);
   }
 
@@ -207,7 +224,39 @@ async function enrichWithLiquipedia(matches) {
   }
 
   let enriched = false;
+
+  function parseMatchesFromWikitext(wikitext, pageTitle, groupMatches) {
+    for (const m of groupMatches) {
+      if (m._liquipediaScores) continue;
+      const t1 = m.opponents?.[0]?.opponent?.name;
+      const t2 = m.opponents?.[1]?.opponent?.name;
+      if (!t1 || !t2) continue;
+      const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
+      const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
+      if (games && games.length > 0) {
+        m.game_scores = games;
+        m._liquipediaScores = true;
+        enriched = true;
+        console.log(`[rl-liquipedia] ${t1} vs ${t2} → ${games.length} games from "${pageTitle}"`);
+      }
+    }
+  }
+
   for (const [, group] of groups) {
+    if (isRateLimited()) break;
+
+    if (group.knownPage) {
+      try {
+        const wikitext = await getWikitext(group.knownPage);
+        if (wikitext) {
+          parseMatchesFromWikitext(wikitext, group.knownPage, group.matches);
+          continue;
+        }
+      } catch (e) {
+        console.log(`[rl-liquipedia] known page "${group.knownPage}" error:`, e.message);
+      }
+    }
+
     if (!group.query || isRateLimited()) continue;
 
     let pageTitles;
@@ -221,7 +270,6 @@ async function enrichWithLiquipedia(matches) {
     const validPages = (pageTitles || []).filter(
       (t) => !/((^|\/)([a-e]|s)-tier tournaments|qualifier tournaments|tier tournaments)/i.test(t)
     );
-    if (validPages.length === 0) continue;
 
     for (const pageTitle of validPages.slice(0, 2)) {
       if (isRateLimited()) break;
@@ -233,21 +281,7 @@ async function enrichWithLiquipedia(matches) {
         continue;
       }
       if (!wikitext) continue;
-
-      for (const m of group.matches) {
-        if (m._liquipediaScores) continue;
-        const t1 = m.opponents?.[0]?.opponent?.name;
-        const t2 = m.opponents?.[1]?.opponent?.name;
-        if (!t1 || !t2) continue;
-        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
-        const { games } = findMatchInWikitext(wikitext, t1, t2, dateStr);
-        if (games && games.length > 0) {
-          m.game_scores = games;
-          m._liquipediaScores = true;
-          enriched = true;
-          console.log(`[rl-liquipedia] ${t1} vs ${t2} → ${games.length} games from "${pageTitle}"`);
-        }
-      }
+      parseMatchesFromWikitext(wikitext, pageTitle, group.matches);
     }
   }
   return enriched;

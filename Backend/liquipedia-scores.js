@@ -72,7 +72,7 @@ async function liquipediaFetch(params, { isParse = false } = {}) {
   const url = LIQUIPEDIA_BASE + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
   const res = await fetch(url, { headers: { "User-Agent": LIQUIPEDIA_USER_AGENT } });
   if (res.status === 429) {
-    _lqt.rateLimitedUntil = Date.now() + 2 * 60 * 1000;
+    _lqt.rateLimitedUntil = Date.now() + 30 * 60 * 1000;
     throw new Error("liquipedia HTTP 429");
   }
   if (!res.ok) throw new Error("liquipedia HTTP " + res.status);
