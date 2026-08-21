@@ -39,7 +39,7 @@ function normalizeTeamName(name) {
 }
 
 const TEAM_ALIASES = {
-  "nipesar": "ninjasinpyjamas",
+  "nipestar": "ninjasinpyjamas",
   "nip": "ninjasinpyjamas",
   "vit": "teamvitality",
   "vitality": "teamvitality",
@@ -218,7 +218,11 @@ router.get("/api/rl-results", async (req, res) => {
       const t2 = m.opponents?.[1]?.opponent?.name;
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
-      m.game_scores = findManualGameScores(t1, t2, dateStr) || buildFallbackGameScores(m);
+      const manual = findManualGameScores(t1, t2, dateStr);
+      if (!manual && t1 && t2) {
+        console.log(`[rl] no manual scores for "${t1}" vs "${t2}" (${dateStr}) → fallback`);
+      }
+      m.game_scores = manual || buildFallbackGameScores(m);
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };

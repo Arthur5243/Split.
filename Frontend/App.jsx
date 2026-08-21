@@ -66,6 +66,24 @@ const REGION_YOUTUBE_LIVE = {
   CN: "https://www.youtube.com/@VALORANTEsportsCN/live",
 };
 
+const MOIS_FR = ["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"];
+function buildReplaySearchUrl(team1Name, team2Name, beginAt, gameName) {
+  if (!team1Name || !team2Name || !beginAt) return null;
+  const d = new Date(beginAt);
+  if (isNaN(d)) return null;
+  const q = team1Name + " VS " + team2Name + " " + d.getDate() + " " + MOIS_FR[d.getMonth()] + " replay " + gameName + " video";
+  return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+}
+function daysAgoText(beginAt) {
+  if (!beginAt) return null;
+  const d = new Date(beginAt);
+  if (isNaN(d)) return null;
+  const diff = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+  if (diff === 0) return "Regarder le replay d'aujourd'hui";
+  if (diff === 1) return "Regarder le replay d'hier";
+  return "Regarder le replay d'il y a " + diff + " jour" + (diff > 1 ? "s" : "");
+}
+
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
 const SCORE_CATS = ["tout","valo","cs2","rl"];
@@ -779,6 +797,7 @@ function transformMatch(m) {
     id: "ps-" + m.id,
     day: d ? isoDate(d) : null,
     time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    beginAt: beginRaw || null,
     league: (m.league && m.league.name) || "VCT",
     phase: (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "",
     // Nom du tournoi tel quel (distinct de `phase`, qui peut déjà être le nom
@@ -1647,9 +1666,22 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // d'ouvrir Twitch directement.
   const [showStreamPicker, setShowStreamPicker] = useState(false);
 
-  // Lien replay : priorité à l'override explicite (`replayUrlProp`, ex. flux
-  // officiel PandaScore côté CS2), sinon repli région (Valorant uniquement).
-  const effectiveReplayUrl = replayUrlProp || (useRegionStreamFallback ? REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA : null);
+  const gameType = String(match.id).startsWith("rl-") ? "rl" : String(match.id).startsWith("cs2-") ? "cs2" : "valo";
+  const computedReplayUrl = (() => {
+    if (!finished || !match.team1Name || !match.team2Name) return null;
+    if (gameType === "rl") return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "ROCKET LEAGUE");
+    if (gameType === "valo") return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "VALORANT");
+    if (gameType === "cs2") {
+      const su = match.streamUrl || streamUrl || "";
+      const kickMatch = su.match(/kick\.com\/([^/?#]+)/);
+      if (kickMatch) return "https://kick.com/" + kickMatch[1] + "/videos";
+      return buildReplaySearchUrl(match.team1Name, match.team2Name, match.beginAt, "COUNTER STRIKE 2");
+    }
+    return null;
+  })();
+  const effectiveReplayUrl = computedReplayUrl || replayUrlProp || (useRegionStreamFallback ? REGION_YOUTUBE[match.region] || REGION_YOUTUBE.EMEA : null);
+  const replayDaysText = daysAgoText(match.beginAt);
+  const [showReplayPopup, setShowReplayPopup] = useState(false);
 
   // Détail des points gagnés sur ce match précis, uniquement si un pari a été
   // fait et le match est terminé (même règle que le règlement global des
@@ -1925,16 +1957,34 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 })()}
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f" }}>
+              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f", position: "relative" }}>
                 {effectiveReplayUrl ? (
-                  <button
-                    onClick={() => window.open(effectiveReplayUrl, "_blank", "noopener,noreferrer")}
-                    className="flex items-center gap-1.5"
-                    style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
-                  >
-                    <Play size={12} />
-                    {T.replay}
-                  </button>
+                  <div style={{ position: "relative" }}>
+                    <button
+                      onClick={() => setShowReplayPopup((v) => !v)}
+                      className="flex items-center gap-1.5"
+                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                    >
+                      <Play size={12} />
+                      {T.replay}
+                    </button>
+                    {showReplayPopup && (
+                      <>
+                        <div onClick={() => setShowReplayPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+                        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: "10px", padding: "12px 16px", minWidth: "220px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                          {replayDaysText && <p style={{ color: "#ccc", fontSize: "12px", fontWeight: 600, marginBottom: "10px" }}>{replayDaysText}</p>}
+                          <button
+                            onClick={() => { window.open(effectiveReplayUrl, "_blank", "noopener,noreferrer"); setShowReplayPopup(false); }}
+                            className="flex items-center gap-2 w-full"
+                            style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: accent + "22", border: "1px solid " + accent + "44", borderRadius: "8px", padding: "8px 12px" }}
+                          >
+                            <Play size={14} fill={accent} color={accent} />
+                            <span style={{ color: accent }}>{gameType === "cs2" && effectiveReplayUrl.includes("kick.com") ? "Voir sur Kick" : "Chercher sur YouTube"}</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 ) : (
                   <span />
                 )}
