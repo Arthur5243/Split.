@@ -2138,9 +2138,15 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
+  const [ready, setReady] = useState(false);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
   const slideCount = 2;
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -2180,7 +2186,7 @@ function NewsCarousel({ T }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -2191,7 +2197,7 @@ function NewsCarousel({ T }) {
           <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
         </div>
       </div>
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_EWC_IMAGE})`, backgroundSize: "cover", backgroundPosition: "left center" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.7) 55%, rgba(0,0,0,0.95) 75%, #000 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
