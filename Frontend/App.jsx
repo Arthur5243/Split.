@@ -1187,6 +1187,8 @@ const CS2_TEAM_ALIASES = {
   "cloud esport": "cloud esport",
   "ninjas in pyjamas": "nip",
   "ninjas in pyjamas / estar": "nip",
+  "nip.estar": "nip",
+  "mibr.los": "mibr los",
   "team envy": "envy",
   "optic gaming": "envy",
   "oxygen esports": "oxygen",
