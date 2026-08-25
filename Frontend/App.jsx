@@ -1186,7 +1186,8 @@ const CS2_TEAM_ALIASES = {
   "manchester city esports": "manchester city",
   "twisted minds": "twisted minds",
   "cloud esport": "cloud esport",
-  "ninjas in pyjamas / estar": "nip estar",
+  "ninjas in pyjamas": "nip",
+  "ninjas in pyjamas / estar": "nip",
 };
 
 function normTeamName(name) {
