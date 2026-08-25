@@ -31,7 +31,7 @@ import {
 const SPLIT_LOGO = "/split-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
 const NEWS_EWC_IMAGE = "/news-ewc.png";
-const REWARDS_BANNER = "/rewards-banner.png";
+const REWARDS_BANNER = "/rewards-banner.jpg";
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
 // Valorant / CS2 / Rocket League — fichiers fournis par l'utilisateur.
