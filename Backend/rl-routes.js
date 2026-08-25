@@ -6,7 +6,7 @@
  */
 
 import express from "express";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import {
@@ -230,6 +230,51 @@ router.get("/api/rl-results", async (req, res) => {
   } catch (e) {
     console.error("rl-results error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les résultats RL." });
+  }
+});
+
+// --- /api/rl-match-history ---
+const RL_MATCHES_PATH = join(__dirname, "data", "matches-rl.json");
+
+function toPandaScoreShapeRL(m, index) {
+  const id1 = "rlh1_" + (m.match_id ?? index);
+  const id2 = "rlh2_" + (m.match_id ?? index);
+  const parts = (m.score || "").split("-").map((s) => parseInt(s.trim(), 10));
+  const hasScore = parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1]);
+
+  return {
+    id: m.pandascore_id || "rl_hist_" + m.match_id,
+    begin_at: m.date ? m.date + "T00:00:00Z" : null,
+    status: "finished",
+    tier: m.tier || null,
+    tournament: { name: m.tournament_name },
+    serie: { full_name: m.tournament_name, name: m.tournament_name },
+    league: { name: m.tournament_name || "RLCS" },
+    opponents: [
+      { opponent: { id: id1, name: m.team1, acronym: null, image_url: null } },
+      { opponent: { id: id2, name: m.team2, acronym: null, image_url: null } },
+    ],
+    results: hasScore
+      ? [
+          { team_id: id1, score: parts[0] },
+          { team_id: id2, score: parts[1] },
+        ]
+      : [],
+  };
+}
+
+router.get("/api/rl-match-history", (req, res) => {
+  try {
+    if (!existsSync(RL_MATCHES_PATH)) {
+      return res.json([]);
+    }
+    const raw = readFileSync(RL_MATCHES_PATH, "utf-8");
+    const matches = JSON.parse(raw);
+    const usable = matches.filter((m) => m.team1 && m.team2 && m.team1 !== "TBD" && m.team2 !== "TBD");
+    res.json(usable.map(toPandaScoreShapeRL));
+  } catch (e) {
+    console.error("rl-match-history error:", e.message);
+    res.status(500).json({ error: "Impossible de lire l'historique RL." });
   }
 });
 

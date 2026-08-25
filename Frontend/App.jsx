@@ -1090,6 +1090,18 @@ const CS2_DEFAULT_TIER_WEIGHT = 0.35;
 function tierWeightCS2(tierLabel) {
   return tierWeight(tierLabel, CS2_TIER_WEIGHTS, CS2_DEFAULT_TIER_WEIGHT);
 }
+
+const RL_TIER_WEIGHTS = [
+  { match: "rlcs", weight: 1 },
+  { match: "world championship", weight: 1 },
+  { match: "major", weight: 0.9 },
+  { match: "esports world cup", weight: 0.9 },
+  { match: "open", weight: 0.5 },
+];
+const RL_DEFAULT_TIER_WEIGHT = 0.5;
+function tierWeightRL(tierLabel) {
+  return tierWeight(tierLabel, RL_TIER_WEIGHTS, RL_DEFAULT_TIER_WEIGHT);
+}
 // Lissage bayésien : équivalent d'ajouter ODDS_PRIOR_WEIGHT matchs fictifs à 50/50.
 // Avec 2-3 matchs connus, le winrate reste prudent (proche de 50%) ; avec les
 // 15-20 matchs qu'une équipe VCT/VCL établie a dans l'historique, le winrate
@@ -1161,6 +1173,20 @@ const CS2_TEAM_ALIASES = {
   "younglings": "younglings",
   "mai tai": "mai tai",
   "entropy gaming": "entropy",
+  // RL aliases
+  "spacestation gaming": "ssg",
+  "karmine corp": "karmine corp",
+  "gentle mates": "gentle mates",
+  "shopify rebellion": "shopify rebellion",
+  "team solomid": "tsm",
+  "made in brazil": "mibr",
+  "mibr los": "mibr los",
+  "r8 esports": "r8",
+  "fut esports": "fut",
+  "manchester city esports": "manchester city",
+  "twisted minds": "twisted minds",
+  "cloud esport": "cloud esport",
+  "ninjas in pyjamas / estar": "nip estar",
 };
 
 function normTeamName(name) {
@@ -3892,27 +3918,50 @@ export default function ClutchApp() {
     }
     async function loadRL() {
       try {
-        const [up, li, pa] = await Promise.all([
+        const [up, li, pa, history] = await Promise.all([
           fetchJson("/api/rl-upcoming"),
           fetchJson("/api/rl-live"),
           fetchJson("/api/rl-results"),
+          fetchJson("/api/rl-match-history").catch(() => null),
         ]);
         if (cancelled) return;
         const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
+        const historyT = Array.isArray(history) ? history.map(transformMatchRL) : [];
+        const finishedMatchesRL = historyT.length > paT.length ? historyT : paT;
+
+        function dedupeByIdRL(list) {
+          const seen = new Set();
+          const out = [];
+          for (const m of list) {
+            const key = String(m.id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(m);
+          }
+          return out;
+        }
         const now = Date.now();
-        const seenIds = new Set();
-        const upFuture = upT.filter((m) => {
-          if (seenIds.has(m.id)) return false;
-          seenIds.add(m.id);
+        const upFuture = dedupeByIdRL(upT).filter((m) => {
           if (!m.beginAt) return true;
           const t = new Date(m.beginAt).getTime();
           return Number.isNaN(t) || t > now;
         });
-        setRlUpcomingMatches(upFuture);
-        setRlLiveMatches(liT);
-        setRlResultsMatches(paT);
+        const liDeduped = dedupeByIdRL(liT);
+
+        setRlUpcomingMatches(attachComputedOdds(upFuture, finishedMatchesRL, tierWeightRL));
+        setRlLiveMatches(attachComputedOdds(liDeduped, finishedMatchesRL, tierWeightRL));
+        setRlResultsMatches(
+          (() => {
+            const eloDataRLResults = computeEloRatings(finishedMatchesRL, tierWeightRL);
+            return paT.map((m) => {
+              const historyWithoutSelf = finishedMatchesRL.filter((h) => String(h.id) !== String(m.id));
+              const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
+              return { ...m, odds1, odds2, cote1, cote2, insufficientData };
+            });
+          })()
+        );
       } catch (e) {
         // API indisponible
       } finally {
