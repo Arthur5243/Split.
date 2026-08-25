@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
@@ -171,7 +171,7 @@ const LOCALE_MAP = {
 const STR = {
   fr: {
     navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
-    newsLabel: "News", newsBadge: "Annonce", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
     news2Badge: "CS2", news2Title: "2 MILLIONS $ EN JEU", news2Sub: "Finale Esports World Cup 2026 CS2 · 23 août · Paris 🇫🇷",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -230,7 +230,7 @@ const STR = {
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
-    newsLabel: "News", newsBadge: "Announcement", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
     news2Badge: "CS2", news2Title: "$2 MILLION ON THE LINE", news2Sub: "Esports World Cup 2026 CS2 Finals · Aug 23 · Paris 🇫🇷",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -289,7 +289,7 @@ const STR = {
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Clasificación",
-    newsLabel: "News", newsBadge: "Anuncio", newsTitle: "3 MASTERS EN 2027", newsSub: "Un tercer torneo Masters se añadiría al calendario de la próxima temporada.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS EN 2027", newsSub: "Un tercer torneo Masters se añadiría al calendario de la próxima temporada.",
     news2Badge: "CS2", news2Title: "2 MILLONES $ EN JUEGO", news2Sub: "Final Esports World Cup 2026 CS2 · 23 ago · París 🇫🇷",
     classementLabel: "Clasificación", seeAll: "Ver todo", classementEmptyHome: "0 pronosticadores clasificados por ahora. ¡Sé el primero!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -346,7 +346,7 @@ const STR = {
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classifica",
-    newsLabel: "News", newsBadge: "Annuncio", newsTitle: "3 MASTERS NEL 2027", newsSub: "Un terzo torneo Masters si aggiungerebbe al calendario della prossima stagione.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS NEL 2027", newsSub: "Un terzo torneo Masters si aggiungerebbe al calendario della prossima stagione.",
     news2Badge: "CS2", news2Title: "2 MILIONI $ IN PALIO", news2Sub: "Finale Esports World Cup 2026 CS2 · 23 ago · Parigi 🇫🇷",
     classementLabel: "Classifica", seeAll: "Vedi tutto", classementEmptyHome: "0 pronosticatori in classifica per ora. Sii il primo!",
     calendarLabel: "Calendario", calendarCardTitle: "Calendario VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -403,7 +403,7 @@ const STR = {
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "ランキング",
-    newsLabel: "ニュース", newsBadge: "お知らせ", newsTitle: "2027年に3つ目のマスターズ", newsSub: "来シーズン、3つ目のマスターズ大会が開催される見込みです。",
+    newsLabel: "ニュース", newsBadge: "Valorant", newsTitle: "2027年に3つ目のマスターズ", newsSub: "来シーズン、3つ目のマスターズ大会が開催される見込みです。",
     news2Badge: "CS2", news2Title: "賞金200万ドル", news2Sub: "Esports World Cup 2026 CS2決勝 · 8月23日 · パリ 🇫🇷",
     classementLabel: "ランキング", seeAll: "すべて見る", classementEmptyHome: "現在ランキング登録者は0人です。最初の1人になろう!",
     calendarLabel: "カレンダー", calendarCardTitle: "VCT 2026 カレンダー", calendarCardSub: "Kickoff・Masters・Playoffs・Champions",
@@ -460,7 +460,7 @@ const STR = {
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Rangliste",
-    newsLabel: "News", newsBadge: "Ankündigung", newsTitle: "3 MASTERS IN 2027", newsSub: "Ein drittes Masters-Turnier soll im Kalender der nächsten Saison hinzukommen.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS IN 2027", newsSub: "Ein drittes Masters-Turnier soll im Kalender der nächsten Saison hinzukommen.",
     news2Badge: "CS2", news2Title: "2 MIO. $ PREISGELD", news2Sub: "Esports World Cup 2026 CS2-Finale · 23. Aug. · Paris 🇫🇷",
     classementLabel: "Rangliste", seeAll: "Alle anzeigen", classementEmptyHome: "Bisher 0 platzierte Tipper. Sei der Erste!",
     calendarLabel: "Kalender", calendarCardTitle: "VCT-2026-Kalender", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -517,7 +517,7 @@ const STR = {
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "排行榜",
-    newsLabel: "资讯", newsBadge: "公告", newsTitle: "2027年将迎来第三场大师赛", newsSub: "下赛季日程中可能新增第三场大师赛(Masters)。",
+    newsLabel: "资讯", newsBadge: "Valorant", newsTitle: "2027年将迎来第三场大师赛", newsSub: "下赛季日程中可能新增第三场大师赛(Masters)。",
     news2Badge: "CS2", news2Title: "200万美元奖金", news2Sub: "2026电竞世界杯CS2总决赛 · 8月23日 · 巴黎 🇫🇷",
     classementLabel: "排行榜", seeAll: "查看全部", classementEmptyHome: "目前还没有上榜用户，快来当第一人!",
     calendarLabel: "赛程日历", calendarCardTitle: "VCT 2026赛程日历", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
@@ -2134,17 +2134,24 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const dragStartX = useRef(null);
+  const timerRef = useRef(null);
   const slideCount = 2;
 
-  useEffect(() => {
-    const id = setInterval(() => {
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
       setActiveSlide((p) => (p + 1) % slideCount);
     }, 6000);
-    return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    resetTimer();
+    return () => clearInterval(timerRef.current);
+  }, [resetTimer]);
 
   function goTo(i) {
     setActiveSlide(((i % slideCount) + slideCount) % slideCount);
+    resetTimer();
   }
 
   function onDown(e) {
@@ -2169,7 +2176,7 @@ function NewsCarousel({ T }) {
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: "opacity 0.6s ease", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 34%, rgba(0,0,0,0.62) 55%, rgba(0,0,0,0.97) 72%, #000 100%)" }} />
-        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,255,255,0.18)", color: "#fff", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
