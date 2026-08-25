@@ -3041,7 +3041,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
       <div className="relative rounded-xl overflow-hidden mb-4" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.3)" }}>
-        <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+        <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "102%", height: "102%", marginLeft: "-1%", marginTop: "-1%", objectFit: "cover", objectPosition: "left center" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.7) 100%)" }} />
         <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
           <Trophy size={16} color="#bf9b30" />
