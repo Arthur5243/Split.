@@ -20,6 +20,11 @@ import {
   Camera,
   Plus,
   ArrowLeft,
+  Bell,
+  CreditCard,
+  LogOut,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -223,6 +228,7 @@ const STR = {
     settingsNotifRegions: "Régions",
     settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
+    settingsPseudo: "Pseudo", settingsPlan: "Forfait", settingsPlanFree: "Gratuit", settingsPlanDesc: "Tu utilises le forfait gratuit.", settingsNotifications: "Notifications", settingsLogout: "Déconnexion", settingsForgotPwd: "Mot de passe oublié ?", settingsForgotSent: "Fonctionnalité bientôt disponible.", settingsChangePwd: "Modifier", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
@@ -282,6 +288,7 @@ const STR = {
     settingsNotifRegions: "Regions",
     settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
+    settingsPseudo: "Username", settingsPlan: "Plan", settingsPlanFree: "Free", settingsPlanDesc: "You're on the free plan.", settingsNotifications: "Notifications", settingsLogout: "Log out", settingsForgotPwd: "Forgot password?", settingsForgotSent: "Feature coming soon.", settingsChangePwd: "Change", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
@@ -339,6 +346,7 @@ const STR = {
     settingsNotifRegions: "Regiones",
     settingsFavTeam: "Equipo favorito", settingsFavTeamNone: "Ningún equipo seleccionado", settingsAccount: "Cuenta",
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
+    settingsPseudo: "Nombre de usuario", settingsPlan: "Plan", settingsPlanFree: "Gratis", settingsPlanDesc: "Estás en el plan gratuito.", settingsNotifications: "Notificaciones", settingsLogout: "Cerrar sesión", settingsForgotPwd: "¿Olvidaste tu contraseña?", settingsForgotSent: "Función próximamente.", settingsChangePwd: "Cambiar", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
     statusUpcoming: "Próximos partidos",
@@ -396,6 +404,7 @@ const STR = {
     settingsNotifRegions: "Regioni",
     settingsFavTeam: "Squadra preferita", settingsFavTeamNone: "Nessuna squadra selezionata", settingsAccount: "Account",
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
+    settingsPseudo: "Nome utente", settingsPlan: "Piano", settingsPlanFree: "Gratuito", settingsPlanDesc: "Stai usando il piano gratuito.", settingsNotifications: "Notifiche", settingsLogout: "Esci", settingsForgotPwd: "Password dimenticata?", settingsForgotSent: "Funzionalità in arrivo.", settingsChangePwd: "Modifica", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
     statusUpcoming: "Prossime partite",
@@ -453,6 +462,7 @@ const STR = {
     settingsNotifRegions: "地域",
     settingsFavTeam: "お気に入りチーム", settingsFavTeamNone: "チーム未選択", settingsAccount: "アカウント",
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
+    settingsPseudo: "ユーザー名", settingsPlan: "プラン", settingsPlanFree: "無料", settingsPlanDesc: "無料プランをご利用中です。", settingsNotifications: "通知", settingsLogout: "ログアウト", settingsForgotPwd: "パスワードをお忘れですか？", settingsForgotSent: "近日公開予定です。", settingsChangePwd: "変更", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
     statusUpcoming: "今後の試合",
@@ -510,6 +520,7 @@ const STR = {
     settingsNotifRegions: "Regionen",
     settingsFavTeam: "Lieblingsteam", settingsFavTeamNone: "Kein Team ausgewählt", settingsAccount: "Konto",
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
+    settingsPseudo: "Benutzername", settingsPlan: "Abo", settingsPlanFree: "Kostenlos", settingsPlanDesc: "Du nutzt das kostenlose Abo.", settingsNotifications: "Benachrichtigungen", settingsLogout: "Abmelden", settingsForgotPwd: "Passwort vergessen?", settingsForgotSent: "Funktion kommt bald.", settingsChangePwd: "Ändern", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
     statusUpcoming: "Bevorstehende Spiele",
@@ -567,6 +578,7 @@ const STR = {
     settingsNotifRegions: "地区",
     settingsFavTeam: "喜爱的战队", settingsFavTeamNone: "未选择战队", settingsAccount: "账户",
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
+    settingsPseudo: "用户名", settingsPlan: "套餐", settingsPlanFree: "免费", settingsPlanDesc: "你正在使用免费套餐。", settingsNotifications: "通知", settingsLogout: "退出登录", settingsForgotPwd: "忘记密码？", settingsForgotSent: "功能即将上线。", settingsChangePwd: "修改", settingsPwdPlaceholder: "••••••••",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
     statusUpcoming: "即将进行的比赛",
@@ -1694,18 +1706,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const hasReplay = finished && match.team1Name && match.team2Name;
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
-  const [replayLoading, setReplayLoading] = useState(false);
-
-  const openReplayYT = async () => {
-    if (replayLoading) return;
-    setReplayLoading(true);
-    try {
-      const url = await fetchYouTubeReplay(match.team1, match.team2, match.day, gameLabel, match.league);
-      if (url) window.open(url, "_blank", "noopener,noreferrer");
-      else window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport"), "_blank", "noopener,noreferrer");
-    } catch {
-      window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport"), "_blank", "noopener,noreferrer");
-    } finally { setReplayLoading(false); }
+  const openReplayYT = () => {
+    const cacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
+    const cached = _ytCache.get(cacheKey);
+    const searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
+    window.open(cached || searchUrl, "_blank", "noopener,noreferrer");
+    if (!cached) fetchYouTubeReplay(match.team1, match.team2, match.day, gameLabel, match.league);
   };
 
   const openLiveYT = async () => {
@@ -2023,12 +2029,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   ) : (
                     <button
                       onClick={openReplayYT}
-                      disabled={replayLoading}
                       className="flex items-center gap-1.5"
-                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", opacity: replayLoading ? 0.5 : 1 }}
+                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
                     >
                       <Play size={12} />
-                      {replayLoading ? "..." : T.replay}
+                      {T.replay}
                     </button>
                   )
                 ) : (
@@ -2140,13 +2145,15 @@ function NewsCarousel({ T }) {
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
-      setActiveSlide((p) => (p + 1) % slideCount);
+      if (!document.hidden) setActiveSlide((p) => (p + 1) % slideCount);
     }, 6000);
   }, []);
 
   useEffect(() => {
     resetTimer();
-    return () => clearInterval(timerRef.current);
+    const onVis = () => { if (!document.hidden) resetTimer(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(timerRef.current); document.removeEventListener("visibilitychange", onVis); };
   }, [resetTimer]);
 
   function goTo(i) {
@@ -3094,8 +3101,11 @@ function LanguageMenu({ current, onSelect, onClose }) {
   );
 }
 
-function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T }) {
+function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T, profile }) {
   const allTeams = teams || [];
+  const [activeSection, setActiveSection] = useState(null);
+  const [showPwd, setShowPwd] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState(false);
 
   const GAMES = [
     { key: "valorant", label: "Valorant", img: NAV_VALORANT_IMG, accent: "#FF4655",
@@ -3113,6 +3123,11 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
     setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], regions: { ...p[gKey].regions, [rKey]: !p[gKey].regions[rKey] } } }));
   }
 
+  const sectionStyle = { background: "#181818", borderRadius: "16px", overflow: "hidden" };
+  const rowStyle = { padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" };
+  const labelStyle = { color: "#fff", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "12px" };
+  const chevStyle = { color: "#555", transition: "transform 0.2s" };
+
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
@@ -3122,63 +3137,118 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
         </div>
         <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1 }}>
 
-          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-3 mt-1">{T.settingsNotifGames}</p>
-          <div className="flex flex-col gap-3 mb-5">
-            {GAMES.map((g) => {
-              const gState = notifGames[g.key] || { on: false, regions: {}, stages: {} };
-              return (
-                <div key={g.key} className="rounded-2xl overflow-hidden" style={{ background: "#181818", border: gState.on ? `1px solid ${g.accent}33` : "1px solid #262626" }}>
-                  <button onClick={() => toggleGame(g.key)} className="flex items-center justify-between w-full px-3 py-3">
-                    <span className="flex items-center gap-2.5">
-                      <img src={g.img} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-                      <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>{g.label}</span>
-                    </span>
-                    <span className="rounded-full" style={{ width: 38, height: 22, background: gState.on ? g.accent : "#2a2a2a", position: "relative", transition: "background 0.2s" }}>
-                      <span className="rounded-full" style={{ width: 18, height: 18, background: "#fff", position: "absolute", top: 2, left: gState.on ? 18 : 2, transition: "left 0.2s" }} />
-                    </span>
-                  </button>
-                  {gState.on && (
-                    <div className="px-3 pb-3" style={{ borderTop: "1px solid #262626" }}>
-                      <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 10, marginBottom: 6 }}>{T.settingsNotifRegions}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {g.regions.map((r) => (
-                          <button key={r.key} onClick={() => toggleRegion(g.key, r.key)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: gState.regions[r.key] ? `${r.accent}22` : "#222", border: gState.regions[r.key] ? `1px solid ${r.accent}` : "1px solid #333" }}>
-                            <span style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
-                            <span style={{ color: gState.regions[r.key] ? r.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{r.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          {/* COMPTE */}
+          <div style={sectionStyle} className="mb-3">
+            <button onClick={() => setActiveSection(activeSection === "account" ? null : "account")} style={rowStyle} className="w-full">
+              <span style={labelStyle}><User size={18} color="#CCF71D" />{T.settingsAccount}</span>
+              <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "account" ? "rotate(180deg)" : "rotate(0deg)" }} />
+            </button>
+            {activeSection === "account" && (
+              <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+                <div className="mt-3">
+                  <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsPseudo}</p>
+                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
+                    <User size={14} color="#666" />
+                    <input value={profile?.pseudo || ""} readOnly className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                  </div>
                 </div>
-              );
-            })}
+                <div className="mt-3">
+                  <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsEmail}</p>
+                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                    <Mail size={14} color="#555" />
+                    <input value="—" readOnly className="flex-1" style={{ background: "transparent", color: "#666", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsPassword}</p>
+                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
+                    <Lock size={14} color="#666" />
+                    <input type={showPwd ? "text" : "password"} value="password" readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                    <button onClick={() => setShowPwd(!showPwd)} style={{ padding: 4 }}>
+                      {showPwd ? <EyeOff size={16} color="#666" /> : <Eye size={16} color="#666" />}
+                    </button>
+                  </div>
+                  <button onClick={() => setForgotMsg(true)} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, marginTop: 8, background: "none", border: "none" }}>
+                    {T.settingsForgotPwd}
+                  </button>
+                  {forgotMsg && <p style={{ color: "#888", fontSize: "11px", marginTop: 4 }}>{T.settingsForgotSent}</p>}
+                </div>
+              </div>
+            )}
           </div>
 
-          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsFavTeam}</p>
-          <select value={favoriteTeam} onChange={(e) => setFavoriteTeam(e.target.value)} className="w-full rounded-xl mb-5" style={{ background: "#181818", color: "#fff", fontSize: "13px", padding: "10px 12px", border: "1px solid #2a2a2a" }}>
-            <option value="">{T.settingsFavTeamNone}</option>
-            {allTeams.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          {/* FORFAIT */}
+          <div style={sectionStyle} className="mb-3">
+            <button onClick={() => setActiveSection(activeSection === "plan" ? null : "plan")} style={rowStyle} className="w-full">
+              <span style={labelStyle}><CreditCard size={18} color="#CCF71D" />{T.settingsPlan}</span>
+              <div className="flex items-center gap-2">
+                <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700, background: "rgba(204,247,29,0.12)", padding: "3px 10px", borderRadius: 9999 }}>{T.settingsPlanFree}</span>
+                <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "plan" ? "rotate(180deg)" : "rotate(0deg)" }} />
+              </div>
+            </button>
+            {activeSection === "plan" && (
+              <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+                <p style={{ color: "#888", fontSize: "13px", marginTop: 12 }}>{T.settingsPlanDesc}</p>
+              </div>
+            )}
+          </div>
 
-          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }} className="mb-2">{T.settingsAccount}</p>
-          <button className="w-full flex items-center justify-center gap-2 rounded-xl mb-3" style={{ background: "#fff", color: "#111", padding: "11px", fontSize: "13px", fontWeight: 700 }}>
-            <Chrome size={16} />{T.settingsGoogle}
-          </button>
-          <div className="flex items-center gap-2 mb-3">
-            <div style={{ flex: 1, height: 1, background: "#262626" }} />
-            <span style={{ color: "#555", fontSize: "11px" }}>{T.settingsOr}</span>
-            <div style={{ flex: 1, height: 1, background: "#262626" }} />
+          {/* NOTIFICATIONS */}
+          <div style={sectionStyle} className="mb-3">
+            <button onClick={() => setActiveSection(activeSection === "notif" ? null : "notif")} style={rowStyle} className="w-full">
+              <span style={labelStyle}><Bell size={18} color="#CCF71D" />{T.settingsNotifications}</span>
+              <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "notif" ? "rotate(180deg)" : "rotate(0deg)" }} />
+            </button>
+            {activeSection === "notif" && (
+              <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+                <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 10, marginBottom: 8 }}>{T.settingsNotifGames}</p>
+                <div className="flex flex-col gap-3 mb-4">
+                  {GAMES.map((g) => {
+                    const gState = notifGames[g.key] || { on: false, regions: {}, stages: {} };
+                    return (
+                      <div key={g.key} className="rounded-xl overflow-hidden" style={{ background: "#222", border: gState.on ? `1px solid ${g.accent}33` : "1px solid #2a2a2a" }}>
+                        <button onClick={() => toggleGame(g.key)} className="flex items-center justify-between w-full px-3 py-2.5">
+                          <span className="flex items-center gap-2.5">
+                            <img src={g.img} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />
+                            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{g.label}</span>
+                          </span>
+                          <span className="rounded-full" style={{ width: 36, height: 20, background: gState.on ? g.accent : "#333", position: "relative", transition: "background 0.2s" }}>
+                            <span className="rounded-full" style={{ width: 16, height: 16, background: "#fff", position: "absolute", top: 2, left: gState.on ? 18 : 2, transition: "left 0.2s" }} />
+                          </span>
+                        </button>
+                        {gState.on && (
+                          <div className="px-3 pb-2.5" style={{ borderTop: "1px solid #2a2a2a" }}>
+                            <p style={{ color: "#555", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 8, marginBottom: 6 }}>{T.settingsNotifRegions}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {g.regions.map((r) => (
+                                <button key={r.key} onClick={() => toggleRegion(g.key, r.key)} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: gState.regions[r.key] ? `${r.accent}22` : "#2a2a2a", border: gState.regions[r.key] ? `1px solid ${r.accent}` : "1px solid #333" }}>
+                                  <span style={{ width: 6, height: 6, borderRadius: 9999, background: r.accent, display: "inline-block" }} />
+                                  <span style={{ color: gState.regions[r.key] ? r.accent : "#888", fontSize: "11px", fontWeight: 600 }}>{r.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsFavTeam}</p>
+                <select value={favoriteTeam} onChange={(e) => setFavoriteTeam(e.target.value)} className="w-full rounded-xl" style={{ background: "#222", color: "#fff", fontSize: "13px", padding: "10px 12px", border: "1px solid #2a2a2a" }}>
+                  <option value="">{T.settingsFavTeamNone}</option>
+                  {allTeams.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 rounded-xl mb-2 px-3" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-            <Mail size={14} color="#666" />
-            <input placeholder={T.settingsEmail} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+
+          {/* DÉCONNEXION */}
+          <div style={sectionStyle}>
+            <button style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
+              <span style={{ ...labelStyle, color: "#ff4655" }}><LogOut size={18} color="#ff4655" />{T.settingsLogout}</span>
+            </button>
           </div>
-          <div className="flex items-center gap-2 rounded-xl mb-3 px-3" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-            <Lock size={14} color="#666" />
-            <input type="password" placeholder={T.settingsPassword} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
-          </div>
-          <button className="w-full rounded-xl" style={{ background: "#CCF71D", color: "#000", padding: "11px", fontSize: "13px", fontWeight: 700 }}>{T.settingsLogin}</button>
+
         </div>
       </div>
     </div>
@@ -4200,6 +4270,7 @@ export default function ClutchApp() {
             setFavoriteTeam={setFavoriteTeam}
             teams={allTeams}
             T={T}
+            profile={profile}
           />
         )}
         {showProfile && (
