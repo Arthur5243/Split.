@@ -2768,7 +2768,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
-  const pageStyle = { minHeight: "100vh", background: "#0a0a0a" };
+  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.92)), url(/DRAK.png) center top / cover no-repeat fixed" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
