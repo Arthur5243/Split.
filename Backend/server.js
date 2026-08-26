@@ -1155,11 +1155,11 @@ app.get("/api/vlr-events", async (req, res) => {
       return res.json(vlrEventsCache.data);
     }
 
-    const [upcoming, ongoing] = await Promise.all([
+    const [upcoming, completed] = await Promise.all([
       fetchVlrEvents("upcoming"),
-      fetchVlrEvents("ongoing"),
+      fetchVlrEvents("completed"),
     ]);
-    const all = [...ongoing, ...upcoming];
+    const all = [...upcoming, ...completed];
     const seen = new Set();
     const events = all.filter((e) => {
       if (seen.has(e.event_id)) return false;
@@ -1167,7 +1167,7 @@ app.get("/api/vlr-events", async (req, res) => {
       return true;
     });
 
-    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour")) && !t.includes("game changers") && !t.includes("challengers");
+    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour") || t.includes("valorant champions") || t.includes("valorant masters")) && !t.includes("game changers") && !t.includes("challengers");
 
     const result = { kickoff: {}, stage: {}, masters: null, champions: null };
 
@@ -1182,7 +1182,7 @@ app.get("/api/vlr-events", async (req, res) => {
         continue;
       }
       if (t.includes("champions")) {
-        if (!result.champions || e.status === "ongoing") result.champions = info;
+        if (!result.champions || e.status === "upcoming") result.champions = info;
         continue;
       }
 
@@ -1216,7 +1216,7 @@ app.get("/api/vlr-history", async (req, res) => {
     }
 
     const completed = await fetchVlrEvents("completed");
-    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour")) && !t.includes("game changers") && !t.includes("challengers");
+    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour") || t.includes("valorant champions") || t.includes("valorant masters")) && !t.includes("game changers") && !t.includes("challengers");
 
     const history = { kickoff: [], stage: [], masters: [], champions: [] };
 
