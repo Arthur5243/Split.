@@ -1167,7 +1167,7 @@ app.get("/api/vlr-events", async (req, res) => {
       return true;
     });
 
-    const isVCT = (t) => t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
+    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour")) && !t.includes("game changers") && !t.includes("challengers");
 
     const result = { kickoff: {}, stage: {}, masters: null, champions: null };
 
@@ -1216,7 +1216,7 @@ app.get("/api/vlr-history", async (req, res) => {
     }
 
     const completed = await fetchVlrEvents("completed");
-    const isVCT = (t) => t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
+    const isVCT = (t) => (t.includes("vct") || t.includes("champions tour")) && !t.includes("game changers") && !t.includes("challengers");
 
     const history = { kickoff: [], stage: [], masters: [], champions: [] };
 
