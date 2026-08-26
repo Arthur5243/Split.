@@ -1292,21 +1292,26 @@ function splitPlayInsPlayoffs(bracketMatches) {
     byRound[m.round].push(m);
   }
 
-  let splitDate = null;
+  let latestEarlyEnd = 0;
+  let earliestLateStart = Infinity;
+  let foundSplit = false;
+
   for (const matches of Object.values(byRound)) {
     const dates = matches.map((m) => parseMatchDate(m.date)).filter((d) => d > 0).sort((a, b) => a - b);
     if (dates.length < 2) continue;
     for (let i = 1; i < dates.length; i++) {
       const gapDays = (dates[i] - dates[i - 1]) / 86400000;
       if (gapDays >= 7) {
-        const candidate = (dates[i - 1] + dates[i]) / 2;
-        if (!splitDate || candidate < splitDate) splitDate = candidate;
+        foundSplit = true;
+        if (dates[i - 1] > latestEarlyEnd) latestEarlyEnd = dates[i - 1];
+        if (dates[i] < earliestLateStart) earliestLateStart = dates[i];
         break;
       }
     }
   }
 
-  if (splitDate) {
+  if (foundSplit && latestEarlyEnd > 0 && earliestLateStart < Infinity) {
+    const splitDate = (latestEarlyEnd + earliestLateStart) / 2;
     const playIn = bracketMatches.filter((m) => {
       const d = parseMatchDate(m.date);
       return d > 0 && d < splitDate;
