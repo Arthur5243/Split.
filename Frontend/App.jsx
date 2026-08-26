@@ -2997,23 +2997,12 @@ function BracketPage({ vlrEvents, onBack, T }) {
 
     if (phase === "play_ins") {
       const bracket = currentData.play_ins?.bracket;
-      const groupData = currentData.group_stage;
-      const hasGroupStandings = groupData?.standings && Object.keys(groupData.standings).length > 0;
       const hasBracket = bracket && (bracket.upper?.length > 0 || bracket.lower?.length > 0);
-      return (
-        <>
-          {hasGroupStandings && (
-            <div style={{ padding: "0 16px 16px" }}>
-              <GroupStandings standings={groupData.standings} accent={accent} T={T} />
-            </div>
-          )}
-          {hasBracket ? dragContainer(<>
-            {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
-            {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
-          </>) : (
-            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
-          )}
-        </>
+      return hasBracket ? dragContainer(<>
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
+      </>) : (
+        <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
       );
     }
 
