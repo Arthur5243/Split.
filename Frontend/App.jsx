@@ -2333,32 +2333,32 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
   );
 }
 
-function BracketMatchCard({ match }) {
+function BracketMatchCard({ match, accent }) {
   const isCompleted = (match.status || "").toLowerCase() === "completed";
   const isLive = (match.status || "").toLowerCase().includes("live");
   return (
-    <div style={{ width: "100%", borderRadius: 6, border: isLive ? "1px solid #ff4655" : "1px solid #2a2a2a", overflow: "hidden", position: "relative" }}>
+    <div style={{ width: "100%", borderRadius: 8, overflow: "hidden", position: "relative", border: isLive ? "1.5px solid #ff4655" : "1px solid #2a2a2a" }}>
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", borderBottom: i === 0 ? "1px solid #222" : "none", background: won ? "#2e7d32" : "#1a1a1a", opacity: lost ? 0.4 : 1 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: won ? "#fff" : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderBottom: i === 0 ? "1px solid " + (won ? "rgba(0,0,0,0.15)" : "#222") : "none", background: won ? accent : "#1a1a1a", opacity: lost ? 0.35 : 1 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: won ? "#000" : "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
               {team.name || "TBD"}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: won ? "#fff" : "#555", minWidth: 14, textAlign: "right", marginLeft: 6 }}>
-              {team.score || "–"}
+            <span style={{ fontSize: 13, fontWeight: 700, color: won ? "#000" : "#555", minWidth: 16, textAlign: "right", marginLeft: 8 }}>
+              {team.score ?? "–"}
             </span>
           </div>
         );
       })}
-      {isLive && <div style={{ position: "absolute", top: 0, right: 0, background: "#ff4655", padding: "1px 5px", fontSize: 8, fontWeight: 700, color: "#fff", borderBottomLeftRadius: 4 }}>LIVE</div>}
+      {isLive && <div style={{ position: "absolute", top: 0, right: 0, background: "#ff4655", padding: "1px 6px", fontSize: 8, fontWeight: 700, color: "#fff", borderBottomLeftRadius: 5 }}>LIVE</div>}
     </div>
   );
 }
 
-function BracketTree({ rounds, label, labelColor }) {
-  const CARD_W = 170, CARD_H = 46, BASE_GAP = 12, COL_GAP = 32, LABEL_H = 20;
+function BracketTree({ rounds, accent, label, labelColor }) {
+  const CARD_W = 175, CARD_H = 50, BASE_GAP = 16, COL_GAP = 44, LABEL_H = 24, CR = 8;
   if (!rounds || rounds.length === 0) return null;
 
   const maxMatches = Math.max(...rounds.map((r) => r.matches.length));
@@ -2391,7 +2391,7 @@ function BracketTree({ rounds, label, labelColor }) {
   const totalW = rounds.length * CARD_W + (rounds.length - 1) * COL_GAP;
   const svgH = totalH + LABEL_H;
 
-  const lines = [];
+  const svgPaths = [];
   for (let ri = 1; ri < rounds.length; ri++) {
     const pCount = rounds[ri - 1].matches.length;
     const cCount = rounds[ri].matches.length;
@@ -2404,12 +2404,9 @@ function BracketTree({ rounds, label, labelColor }) {
         const tY = yPositions[ri - 1][ci * 2] + CARD_H / 2 + LABEL_H;
         const bY = yPositions[ri - 1][ci * 2 + 1] + CARD_H / 2 + LABEL_H;
         const mY = (tY + bY) / 2;
-        lines.push(
-          <line key={`${ri}${ci}a`} x1={x1} y1={tY} x2={xMid} y2={tY} stroke="#444" strokeWidth={1.5} />,
-          <line key={`${ri}${ci}b`} x1={x1} y1={bY} x2={xMid} y2={bY} stroke="#444" strokeWidth={1.5} />,
-          <line key={`${ri}${ci}c`} x1={xMid} y1={tY} x2={xMid} y2={bY} stroke="#444" strokeWidth={1.5} />,
-          <line key={`${ri}${ci}d`} x1={xMid} y1={mY} x2={x2} y2={mY} stroke="#444" strokeWidth={1.5} />
-        );
+        svgPaths.push(`M ${x1} ${tY} H ${xMid - CR} Q ${xMid} ${tY} ${xMid} ${tY + CR} V ${mY}`);
+        svgPaths.push(`M ${x1} ${bY} H ${xMid - CR} Q ${xMid} ${bY} ${xMid} ${bY - CR} V ${mY}`);
+        svgPaths.push(`M ${xMid} ${mY} H ${x2}`);
       }
     } else {
       const n = Math.min(pCount, cCount);
@@ -2417,31 +2414,30 @@ function BracketTree({ rounds, label, labelColor }) {
         const pY = yPositions[ri - 1][ci] + CARD_H / 2 + LABEL_H;
         const cY = yPositions[ri][ci] + CARD_H / 2 + LABEL_H;
         if (Math.abs(pY - cY) < 2) {
-          lines.push(<line key={`${ri}${ci}h`} x1={x1} y1={pY} x2={x2} y2={pY} stroke="#444" strokeWidth={1.5} />);
+          svgPaths.push(`M ${x1} ${pY} H ${x2}`);
         } else {
-          lines.push(
-            <line key={`${ri}${ci}a`} x1={x1} y1={pY} x2={xMid} y2={pY} stroke="#444" strokeWidth={1.5} />,
-            <line key={`${ri}${ci}b`} x1={xMid} y1={pY} x2={xMid} y2={cY} stroke="#444" strokeWidth={1.5} />,
-            <line key={`${ri}${ci}c`} x1={xMid} y1={cY} x2={x2} y2={cY} stroke="#444" strokeWidth={1.5} />
-          );
+          const dir = cY > pY ? 1 : -1;
+          svgPaths.push(`M ${x1} ${pY} H ${xMid - CR} Q ${xMid} ${pY} ${xMid} ${pY + dir * CR} V ${cY - dir * CR} Q ${xMid} ${cY} ${xMid + CR} ${cY} H ${x2}`);
         }
       }
     }
   }
 
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: labelColor, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, paddingLeft: 2 }}>{label}</div>
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: labelColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>{label}</div>
       <div style={{ position: "relative", width: totalW, height: svgH, minWidth: totalW }}>
-        <svg style={{ position: "absolute", left: 0, top: 0, width: totalW, height: svgH, pointerEvents: "none" }}>{lines}</svg>
+        <svg style={{ position: "absolute", inset: 0, width: totalW, height: svgH, pointerEvents: "none" }}>
+          {svgPaths.map((d, i) => <path key={i} d={d} fill="none" stroke="#333" strokeWidth={1.5} />)}
+        </svg>
         {rounds.map((round, ri) => (
           <React.Fragment key={round.name}>
-            <div style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W, textAlign: "center", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+            <div style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W, textAlign: "center", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
               {round.name}
             </div>
             {round.matches.map((m, mi) => (
               <div key={m.match_id} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
-                <BracketMatchCard match={m} />
+                <BracketMatchCard match={m} accent={accent} />
               </div>
             ))}
           </React.Fragment>
@@ -2466,41 +2462,46 @@ function BracketPage({ vlrEvents, onBack, T }) {
   const dragRef = React.useRef(null);
   const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
 
-  const onPointerDown = (e) => { dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
-  const onPointerMove = (e) => { if (!dragState.current.active) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
-  const onPointerUp = () => { dragState.current.active = false; };
+  const accent = region ? (REGIONS.find((r) => r.key === region) || {}).accent || "#C4F000" : "#C4F000";
 
-  const regionsForStage = React.useMemo(() => {
-    if (!stage || !vlrEvents) return [];
-    if (stage === "masters") return vlrEvents.masters ? [{ key: "INTL", label: "International", accent: "#FFD700" }] : [];
-    if (stage === "champions") return vlrEvents.champions ? [{ key: "INTL", label: "International", accent: "#ff4655" }] : [];
-    const src = vlrEvents[stage] || {};
-    return REGIONS.filter((r) => src[r.key]);
-  }, [stage, vlrEvents]);
+  const goBack = () => {
+    if (region) setRegion(null);
+    else if (stage) setStage(null);
+    else onBack();
+  };
 
-  const fetchBracket = React.useCallback(async (stageKey, regionKey) => {
+  const stageAvailable = (key) => {
+    if (!vlrEvents) return false;
+    if (key === "masters") return !!vlrEvents.masters;
+    if (key === "champions") return !!vlrEvents.champions;
+    return Object.keys(vlrEvents[key] || {}).length > 0;
+  };
+
+  const regionAvailable = (rKey) => {
+    if (!vlrEvents || !stage) return false;
+    if (stage === "masters") return !!vlrEvents.masters;
+    if (stage === "champions") return !!vlrEvents.champions;
+    return vlrEvents[stage] && !!vlrEvents[stage][rKey];
+  };
+
+  const selectRegion = async (rKey) => {
+    setRegion(rKey);
     let ev;
-    if (stageKey === "masters") ev = vlrEvents.masters;
-    else if (stageKey === "champions") ev = vlrEvents.champions;
-    else ev = vlrEvents[stageKey] && vlrEvents[stageKey][regionKey];
+    if (stage === "masters") ev = vlrEvents.masters;
+    else if (stage === "champions") ev = vlrEvents.champions;
+    else ev = vlrEvents[stage] && vlrEvents[stage][rKey];
     if (!ev) return;
-
-    const cacheKey = ev.event_id + ":" + stageKey;
+    const cacheKey = ev.event_id + ":" + stage;
     if (bracketData[cacheKey]) return;
-
     setLoading(true);
     try {
-      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id + "?stage=" + stageKey);
-      if (!res.ok) return;
-      const data = await res.json();
-      setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
+      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id + "?stage=" + stage);
+      if (res.ok) {
+        const data = await res.json();
+        setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
+      }
     } catch (e) { /* silencieux */ }
     finally { setLoading(false); }
-  }, [vlrEvents, bracketData]);
-
-  const selectRegion = (r) => {
-    setRegion(r);
-    fetchBracket(stage, r);
   };
 
   const currentData = React.useMemo(() => {
@@ -2513,47 +2514,69 @@ function BracketPage({ vlrEvents, onBack, T }) {
     return bracketData[ev.event_id + ":" + stage] || null;
   }, [stage, region, vlrEvents, bracketData]);
 
+  const onPointerDown = (e) => { if (!dragRef.current) return; dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
+  const onPointerMove = (e) => { if (!dragState.current.active || !dragRef.current) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
+  const onPointerUp = () => { dragState.current.active = false; };
+
+  const stageInfo = BRACKET_STAGES.find((s) => s.key === stage);
+  const regionInfo = region ? REGIONS.find((r) => r.key === region) : null;
+  let headerTitle = "Bracket VCT";
+  if (stage && !region) headerTitle = T[stageInfo?.labelKey] || stage;
+  if (stage && region) headerTitle = regionLabel(region, T) + " · " + (T[stageInfo?.labelKey] || stage);
+
+  if (!stage) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 16px 16px", borderBottom: "1px solid #1a1a1a" }}>
+          <button onClick={onBack} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>Bracket VCT</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+          {BRACKET_STAGES.map((s) => {
+            const avail = stageAvailable(s.key);
+            return (
+              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 14, padding: "32px 12px", cursor: avail ? "pointer" : "default", opacity: avail ? 1 : 0.3, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: s.color, letterSpacing: "0.03em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  if (!region) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 16px 16px", borderBottom: "1px solid #1a1a1a" }}>
+          <button onClick={goBack} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{headerTitle}</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+          {REGIONS.map((r) => {
+            const avail = regionAvailable(r.key);
+            return (
+              <button key={r.key} onClick={() => avail && selectRegion(r.key)} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 14, padding: "28px 12px", cursor: avail ? "pointer" : "default", opacity: avail ? 1 : 0.25, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 14, fontWeight: 800, color: r.accent, letterSpacing: "0.03em", textTransform: "uppercase" }}>{regionLabel(r.key, T)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const isPlayoffs = currentData && currentData.stage === "playoffs" && currentData.bracket;
   const isPlayIns = currentData && currentData.stage === "play_ins" && currentData.matches;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 16px 12px" }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer", padding: 0 }}>←</button>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Bracket VCT</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "18px 16px 16px", borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={goBack} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
+        <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{headerTitle}</span>
       </div>
 
-      <div style={{ display: "flex", gap: 8, padding: "0 16px 12px", flexWrap: "wrap" }}>
-        {BRACKET_STAGES.map((s) => (
-          <button
-            key={s.key}
-            onClick={() => { setStage(s.key); setRegion(null); }}
-            style={{ padding: "8px 16px", borderRadius: 8, border: stage === s.key ? "2px solid " + s.color : "1px solid #333", background: stage === s.key ? s.color + "18" : "#151515", color: stage === s.key ? s.color : "#888", fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}
-          >
-            {T[s.labelKey] || s.key}
-          </button>
-        ))}
-      </div>
-
-      {stage && regionsForStage.length > 0 && (
-        <div style={{ display: "flex", gap: 8, padding: "0 16px 12px", flexWrap: "wrap" }}>
-          {regionsForStage.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => selectRegion(r.key)}
-              style={{ padding: "6px 14px", borderRadius: 8, border: region === r.key ? "2px solid " + (r.accent || "#888") : "1px solid #333", background: region === r.key ? (r.accent || "#888") + "18" : "#151515", color: region === r.key ? (r.accent || "#fff") : "#666", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase" }}
-            >
-              {r.label || regionLabel(r.key, T)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {stage && regionsForStage.length === 0 && (
-        <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>{T.bracketNoEvent || "Aucun event disponible"}</div>
-      )}
-
-      {loading && <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>...</div>}
+      {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
 
       {isPlayoffs && (
         <div
@@ -2562,36 +2585,38 @@ function BracketPage({ vlrEvents, onBack, T }) {
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "8px 16px 24px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+          style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
           className="no-scrollbar"
         >
-          {currentData.bracket.upper && currentData.bracket.upper.length > 0 && (
-            <BracketTree rounds={currentData.bracket.upper} label={T.bracketUpper} labelColor="#C4F000" />
-          )}
-          {currentData.bracket.lower && currentData.bracket.lower.length > 0 && (
-            <BracketTree rounds={currentData.bracket.lower} label={T.bracketLower} labelColor="#ff4655" />
-          )}
-          {currentData.bracket.grand_final && currentData.bracket.grand_final.length > 0 && (
-            <BracketTree rounds={currentData.bracket.grand_final} label={T.bracketGrandFinal} labelColor="#FFD700" />
-          )}
+          {currentData.bracket.upper?.length > 0 && <BracketTree rounds={currentData.bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
+          {currentData.bracket.lower?.length > 0 && <BracketTree rounds={currentData.bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
+          {currentData.bracket.grand_final?.length > 0 && <BracketTree rounds={currentData.bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" />}
         </div>
       )}
 
       {isPlayIns && (
-        <div style={{ padding: "8px 16px 24px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketPlayIns || "Play-ins"}</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {currentData.matches.map((m) => (
-              <div key={m.match_id} style={{ maxWidth: 280 }}>
-                <BracketMatchCard match={m} />
+        <div style={{ padding: "16px 16px 32px" }}>
+          {(() => {
+            const groups = {};
+            currentData.matches.forEach((m) => { const k = m.round || "Matches"; if (!groups[k]) groups[k] = []; groups[k].push(m); });
+            return Object.entries(groups).map(([name, matches]) => (
+              <div key={name} style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#666", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{name}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {matches.map((m) => (
+                    <div key={m.match_id} style={{ maxWidth: 260 }}>
+                      <BracketMatchCard match={m} accent={accent} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+            ));
+          })()}
         </div>
       )}
 
-      {region && !loading && !currentData && (
-        <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>{T.bracketNoEvent || "Aucun bracket disponible"}</div>
+      {!loading && !currentData && (
+        <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
       )}
     </div>
   );
