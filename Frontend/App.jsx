@@ -2522,17 +2522,16 @@ function GroupStandings({ standings, accent, T }) {
             <span style={{ fontSize: 9, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{groupName}</span>
           </div>
           <div style={{ background: "#111", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 44px 44px 50px", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: 8, fontWeight: 700, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 44px 44px", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: 8, fontWeight: 700, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               <span>{T.bracketTeams || "Team"}</span>
               <span style={{ textAlign: "center" }}>W</span>
               <span style={{ textAlign: "center" }}>L</span>
-              <span style={{ textAlign: "center" }}>PTS</span>
             </div>
             {teams.map((t, i) => {
               const qualified = i < 2;
               return (
                 <div key={t.name} style={{
-                  display: "grid", gridTemplateColumns: "1fr 44px 44px 50px",
+                  display: "grid", gridTemplateColumns: "1fr 44px 44px",
                   padding: "7px 12px",
                   borderBottom: i < teams.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
                   background: qualified ? `${accent}06` : "transparent",
@@ -2544,7 +2543,6 @@ function GroupStandings({ standings, accent, T }) {
                   </span>
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#6a6", textAlign: "center" }}>{t.wins}</span>
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#a55", textAlign: "center" }}>{t.losses}</span>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: qualified ? accent : "#444", textAlign: "center" }}>{t.points}</span>
                 </div>
               );
             })}
