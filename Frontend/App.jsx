@@ -2339,11 +2339,11 @@ function BracketMatchCard({ match, accent }) {
   const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
   return (
     <div style={{
-      width: "100%", borderRadius: 6, overflow: "hidden", position: "relative",
-      background: "#111",
-      border: isLive ? "1px solid #ff4655" : "1px solid rgba(255,255,255,0.06)",
-      boxShadow: isLive ? "0 0 12px rgba(255,70,85,0.25)" : "0 2px 8px rgba(0,0,0,0.4)",
-      opacity: isTBD ? 0.45 : 1,
+      width: "100%", borderRadius: 8, overflow: "hidden", position: "relative",
+      background: "linear-gradient(135deg, #161616 0%, #111 100%)",
+      border: isLive ? "1px solid #ff4655" : "1px solid rgba(255,255,255,0.08)",
+      boxShadow: isLive ? "0 0 16px rgba(255,70,85,0.3)" : "0 3px 12px rgba(0,0,0,0.5)",
+      opacity: isTBD ? 0.4 : 1,
     }}>
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
@@ -2351,9 +2351,8 @@ function BracketMatchCard({ match, accent }) {
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
-            borderBottom: i === 0 ? "1px solid rgba(255,255,255,0.04)" : "none",
-            background: won ? `linear-gradient(90deg, ${accent}18 0%, ${accent}06 100%)` : "transparent",
-            transition: "background 0.2s",
+            borderBottom: i === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+            background: won ? `linear-gradient(90deg, ${accent}20 0%, ${accent}08 100%)` : "transparent",
           }}>
             <div style={{
               width: 3, alignSelf: "stretch", flexShrink: 0,
@@ -2361,19 +2360,19 @@ function BracketMatchCard({ match, accent }) {
             }} />
             <div style={{
               flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "7px 10px 7px 8px",
+              padding: "9px 12px 9px 10px",
               opacity: lost ? 0.3 : 1,
             }}>
               <span style={{
-                fontSize: 11, fontWeight: won ? 700 : 500,
-                color: won ? "#fff" : "#999",
+                fontSize: 12, fontWeight: won ? 700 : 500,
+                color: won ? "#fff" : "#aaa",
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
               }}>
                 {team.name || "TBD"}
               </span>
               <span style={{
-                fontSize: 13, fontWeight: 800, minWidth: 18, textAlign: "center", marginLeft: 8,
-                color: won ? accent : "#444",
+                fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 10,
+                color: won ? accent : "#555",
                 fontVariantNumeric: "tabular-nums",
               }}>
                 {team.score ?? "–"}
@@ -2395,9 +2394,11 @@ function BracketMatchCard({ match, accent }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor }) {
-  const CARD_W = 190, CARD_H = 52, BASE_GAP = 14, COL_GAP = 40, LABEL_H = 28, CR = 10;
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs }) {
+  const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10;
   if (!rounds || rounds.length === 0) return null;
+  const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
+  if (isPlayoffs) rounds = rounds.map(r => ({ ...r, name: ROUND_RENAME[r.name.toLowerCase()] || r.name }));
 
   const maxMatches = Math.max(...rounds.map((r) => r.matches.length));
   const slotH = CARD_H + BASE_GAP;
@@ -2461,7 +2462,7 @@ function BracketTree({ rounds, accent, label, labelColor }) {
     }
   }
 
-  const accentDim = accent + "40";
+  const accentDim = accent + "55";
 
   return (
     <div style={{ marginBottom: 32 }}>
@@ -2482,8 +2483,8 @@ function BracketTree({ rounds, accent, label, labelColor }) {
           <React.Fragment key={ri}>
             <div style={{
               position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W,
-              textAlign: "center", fontSize: 8, fontWeight: 700,
-              color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
+              textAlign: "center", fontSize: 9, fontWeight: 800,
+              color: "#666", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap",
             }}>
               {round.name}
             </div>
@@ -2768,12 +2769,13 @@ function BracketPage({ vlrEvents, onBack, T }) {
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
-  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.75), rgba(10,10,10,0.85)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
+  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.88)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
-    background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)",
-    borderBottom: "1px solid rgba(255,255,255,0.04)",
+    background: "#0A0A0A",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    position: "sticky", top: 0, zIndex: 20,
   };
   const backBtn = (fn) => (
     <button onClick={fn || goBack} style={{
@@ -2796,9 +2798,9 @@ function BracketPage({ vlrEvents, onBack, T }) {
   const renderBracketSection = (bracket, accentColor) => {
     if (!bracket) return null;
     return dragContainer(<>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" />}
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs />}
     </>);
   };
 
