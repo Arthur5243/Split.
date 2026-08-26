@@ -1284,31 +1284,38 @@ function splitPlayInsPlayoffs(bracketMatches) {
   if (bracketMatches.length === 0) return { playIn: [], playoff: [] };
 
   const hasGF = bracketMatches.some((m) => m.bracket === "grand_final");
+  if (!hasGF) return { playIn: bracketMatches, playoff: [] };
 
-  if (!hasGF) {
-    return { playIn: bracketMatches, playoff: [] };
+  const byRound = {};
+  for (const m of bracketMatches) {
+    if (!byRound[m.round]) byRound[m.round] = [];
+    byRound[m.round].push(m);
   }
 
-  const sorted = [...bracketMatches].sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date));
-  const gfDate = Math.max(...bracketMatches.filter((m) => m.bracket === "grand_final").map((m) => parseMatchDate(m.date)));
-
-  let bestGap = 0, splitIdx = -1;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = parseMatchDate(sorted[i - 1].date);
-    const curr = parseMatchDate(sorted[i].date);
-    if (!prev || !curr) continue;
-    const gap = (curr - prev) / 86400000;
-    if (gap > bestGap) {
-      bestGap = gap;
-      splitIdx = i;
+  let splitDate = null;
+  for (const matches of Object.values(byRound)) {
+    const dates = matches.map((m) => parseMatchDate(m.date)).filter((d) => d > 0).sort((a, b) => a - b);
+    if (dates.length < 2) continue;
+    for (let i = 1; i < dates.length; i++) {
+      const gapDays = (dates[i] - dates[i - 1]) / 86400000;
+      if (gapDays >= 7) {
+        const candidate = (dates[i - 1] + dates[i]) / 2;
+        if (!splitDate || candidate < splitDate) splitDate = candidate;
+        break;
+      }
     }
   }
 
-  if (bestGap >= 2 && splitIdx > 0) {
-    return {
-      playIn: sorted.slice(0, splitIdx),
-      playoff: sorted.slice(splitIdx),
-    };
+  if (splitDate) {
+    const playIn = bracketMatches.filter((m) => {
+      const d = parseMatchDate(m.date);
+      return d > 0 && d < splitDate;
+    });
+    const playoff = bracketMatches.filter((m) => {
+      const d = parseMatchDate(m.date);
+      return d === 0 || d >= splitDate;
+    });
+    return { playIn, playoff };
   }
 
   return { playIn: [], playoff: bracketMatches };
