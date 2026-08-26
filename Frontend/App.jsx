@@ -39,6 +39,8 @@ const NAV_VALORANT_IMG = "/Valo(1).png";
 const NAV_CSGO_IMG = "/Cs2(2).png";
 const NAV_RL_IMG = "/Rl(1).png";
 
+[NEWS_IMAGE, NEWS_EWC_IMAGE, REWARDS_BANNER].forEach(src => { const img = new Image(); img.src = src; });
+
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
   { key: "EMEA", accent: "#C4F000" },
@@ -2244,6 +2246,8 @@ function NewsCarousel({ T }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
+      <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 0, height: 0, opacity: 0 }} />
+      <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 0, height: 0, opacity: 0 }} />
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
@@ -2769,6 +2773,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
+  const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
   const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.88)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
@@ -2864,7 +2869,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
   // --- Step 1 : Choose stage ---
   if (!stage) {
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>
           {backBtn(onBack)}
           {titleSpan("Bracket VCT")}
@@ -2903,7 +2908,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
   // --- Champions ---
   if (stage === "champions") {
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketChampions, "#ff4655")}</div>
         <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" /></div>
       </div>
@@ -2914,7 +2919,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
   if (stage === "masters") {
     if (!region) {
       return (
-        <div style={pageStyle}>
+        <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketMasters, "#FFD700")}</div>
           <div style={{ textAlign: "center", padding: 40 }}>
             {vlrEvents?.masters
@@ -2943,7 +2948,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
   // --- Step 2 : Choose phase ---
   if (!phase) {
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(headerTitle, stageInfo?.color)}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
           {BRACKET_PHASES.map((p) => (
@@ -2969,7 +2974,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
   // --- Step 3 : Choose region ---
   if (!region) {
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(headerTitle, phaseInfo?.color)}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {REGIONS.map((r) => {
