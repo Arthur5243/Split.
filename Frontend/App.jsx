@@ -2828,10 +2828,10 @@ function BracketPage({ vlrEvents, onBack, T }) {
     if (!currentData) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
     if (phase === "play_ins") {
-      const piData = currentData.play_ins;
-      const hasRounds = piData?.rounds?.length > 0;
+      const bracket = currentData.play_ins?.bracket;
       const groupData = currentData.group_stage;
       const hasGroupStandings = groupData?.standings && Object.keys(groupData.standings).length > 0;
+      const hasBracket = bracket && (bracket.upper?.length > 0 || bracket.lower?.length > 0);
       return (
         <>
           {hasGroupStandings && (
@@ -2839,19 +2839,14 @@ function BracketPage({ vlrEvents, onBack, T }) {
               <GroupStandings standings={groupData.standings} accent={accent} T={T} />
             </div>
           )}
-          <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-            {hasRounds ? (
-              <BracketTree rounds={piData.rounds} accent={accent} label={T.bracketPlayIns} labelColor={accent} />
-            ) : piData?.matches?.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {piData.matches.map((m) => (
-                  <div key={m.match_id} style={{ maxWidth: 280 }}><BracketMatchCard match={m} accent={accent} /></div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
-            )}
-          </div>
+          {hasBracket ? (
+            <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
+              {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
+              {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
+          )}
         </>
       );
     }

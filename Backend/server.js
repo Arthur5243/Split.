@@ -1139,7 +1139,7 @@ const VCT_REGION_MAP = {
   EMEA: ["emea"],
   AMERICAS: ["americas"],
   PACIFIC: ["pacific"],
-  CN: ["china"],
+  CN: ["china", " cn "],
 };
 
 async function fetchVlrEvents(query) {
@@ -1261,13 +1261,65 @@ function classifyRound(series) {
   return { bracket: "other", round: s, sort: -1 };
 }
 
+function buildBracket(matches) {
+  const rounds = {};
+  for (const m of matches) {
+    const key = m.round;
+    if (!rounds[key]) rounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
+    rounds[key].matches.push(m);
+  }
+  const upper = Object.values(rounds).filter((r) => r.bracket === "upper").sort((a, b) => a.sort - b.sort);
+  const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
+  const grandFinal = Object.values(rounds).filter((r) => r.bracket === "grand_final").sort((a, b) => a.sort - b.sort);
+  return { upper, lower, grand_final: grandFinal };
+}
+
+function parseMatchDate(dateStr) {
+  if (!dateStr) return 0;
+  const d = new Date(dateStr);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+function splitPlayInsPlayoffs(bracketMatches) {
+  if (bracketMatches.length === 0) return { playIn: [], playoff: [] };
+
+  const hasGF = bracketMatches.some((m) => m.bracket === "grand_final");
+
+  if (!hasGF) {
+    return { playIn: bracketMatches, playoff: [] };
+  }
+
+  const sorted = [...bracketMatches].sort((a, b) => parseMatchDate(a.date) - parseMatchDate(b.date));
+  const gfDate = Math.max(...bracketMatches.filter((m) => m.bracket === "grand_final").map((m) => parseMatchDate(m.date)));
+
+  let bestGap = 0, splitIdx = -1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = parseMatchDate(sorted[i - 1].date);
+    const curr = parseMatchDate(sorted[i].date);
+    if (!prev || !curr) continue;
+    const gap = (curr - prev) / 86400000;
+    if (gap > bestGap) {
+      bestGap = gap;
+      splitIdx = i;
+    }
+  }
+
+  if (bestGap >= 2 && splitIdx > 0) {
+    return {
+      playIn: sorted.slice(0, splitIdx),
+      playoff: sorted.slice(splitIdx),
+    };
+  }
+
+  return { playIn: [], playoff: bracketMatches };
+}
+
 app.get("/api/vlr-bracket/:eventId", async (req, res) => {
   const { eventId } = req.params;
-  const phase = req.query.phase || "all";
   if (!/^\d+$/.test(eventId)) return res.status(400).json({ error: "eventId invalide" });
 
   try {
-    const cacheKey = "bracket:" + eventId + ":" + phase;
+    const cacheKey = "bracket:" + eventId;
     const cached = bracketCache.get(cacheKey);
     if (cached && Date.now() - cached.at < BRACKET_CACHE_TTL) {
       return res.json(cached.data);
@@ -1290,7 +1342,6 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     const bracketMatches = [];
     const groupMatches = [];
-    const playInMatches = [];
 
     for (const m of allMatches) {
       const cl = classifyRound(m.event_series);
@@ -1307,18 +1358,13 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
         url: m.url,
       };
       if (cl.bracket === "group" || cl.bracket === "other") {
-        const s = (m.event_series || "").toLowerCase();
-        if (s.includes("play-in") || s.includes("elimination") || s.includes("decider")) {
-          playInMatches.push(match);
-        } else {
-          groupMatches.push(match);
-        }
+        groupMatches.push(match);
       } else {
         bracketMatches.push(match);
       }
     }
 
-    bracketMatches.sort((a, b) => a.sort - b.sort);
+    const { playIn, playoff } = splitPlayInsPlayoffs(bracketMatches);
 
     const groupStandings = {};
     for (const m of groupMatches) {
@@ -1347,32 +1393,6 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
         .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
     }
 
-    const piRounds = {};
-    for (const m of [...playInMatches, ...bracketMatches.filter(b => {
-      const s = (b.round || "").toLowerCase();
-      return s.includes("play-in") || s.includes("opening") || s.includes("elimination");
-    })]) {
-      const key = m.round;
-      if (!piRounds[key]) piRounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
-      piRounds[key].matches.push(m);
-    }
-
-    const playoffBracketMatches = bracketMatches.filter(b => {
-      const s = (b.round || "").toLowerCase();
-      return !s.includes("play-in") && !s.includes("opening") && !s.includes("elimination");
-    });
-
-    const rounds = {};
-    for (const m of playoffBracketMatches) {
-      const key = m.round;
-      if (!rounds[key]) rounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
-      rounds[key].matches.push(m);
-    }
-
-    const upper = Object.values(rounds).filter((r) => r.bracket === "upper").sort((a, b) => a.sort - b.sort);
-    const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
-    const grandFinal = Object.values(rounds).filter((r) => r.bracket === "grand_final").sort((a, b) => a.sort - b.sort);
-
     const teamsList = new Set();
     for (const m of allMatches) {
       if (m.team1?.name && m.team1.name !== "TBD") teamsList.add(m.team1.name);
@@ -1382,15 +1402,11 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
     const result = {
       event: eventInfo,
       group_stage: { matches: groupMatches, standings },
-      play_ins: {
-        rounds: Object.values(piRounds).sort((a, b) => (a.sort || 0) - (b.sort || 0)),
-        matches: playInMatches,
-      },
-      playoffs: {
-        bracket: { upper, lower, grand_final: grandFinal },
-      },
+      play_ins: { bracket: buildBracket(playIn) },
+      playoffs: { bracket: buildBracket(playoff) },
       teams: [...teamsList].sort(),
       total_matches: allMatches.length,
+      debug_split: { play_in_count: playIn.length, playoff_count: playoff.length },
     };
 
     bracketCache.set(cacheKey, { data: result, at: Date.now() });
@@ -1398,6 +1414,28 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
   } catch (e) {
     console.error("vlr-bracket error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer le bracket VLR." });
+  }
+});
+
+app.get("/admin/debug-vlr-raw/:eventId", async (req, res) => {
+  const { eventId } = req.params;
+  if (!/^\d+$/.test(eventId)) return res.status(400).json({ error: "eventId invalide" });
+  try {
+    const [matchesRes, eventRes] = await Promise.all([
+      fetch(VLRGGAPI_BASE + "/v2/events/matches?event_id=" + eventId),
+      fetch(VLRGGAPI_BASE + "/v2/event/" + eventId),
+    ]);
+    const matchesBody = matchesRes.ok ? await matchesRes.json() : null;
+    const eventBody = eventRes.ok ? await eventRes.json() : null;
+    const matches = (matchesBody?.data?.segments || []).slice(0, 10);
+    res.json({
+      event_raw: eventBody?.data,
+      matches_sample: matches,
+      matches_total: (matchesBody?.data?.segments || []).length,
+      unique_rounds: [...new Set((matchesBody?.data?.segments || []).map((m) => m.event_series))],
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
