@@ -2334,75 +2334,136 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
 }
 
 function BracketMatchCard({ match, accent }) {
-  const won1 = match.team1.is_winner;
-  const won2 = match.team2.is_winner;
   const isCompleted = (match.status || "").toLowerCase() === "completed";
   const isLive = (match.status || "").toLowerCase().includes("live");
   return (
-    <div style={{ width: 200, background: "#1a1a1a", borderRadius: 8, border: "1px solid #2a2a2a", overflow: "hidden", flexShrink: 0 }}>
+    <div style={{ width: "100%", background: "#1a1a1a", borderRadius: 6, border: isLive ? "1px solid #ff4655" : "1px solid #2a2a2a", overflow: "hidden", position: "relative" }}>
       {[match.team1, match.team2].map((team, i) => {
-        const won = i === 0 ? won1 : won2;
+        const won = team.is_winner;
         const lost = isCompleted && !won;
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 10px", borderBottom: i === 0 ? "1px solid #2a2a2a" : "none", opacity: lost ? 0.4 : 1 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: won && isCompleted ? accent : "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", borderBottom: i === 0 ? "1px solid #222" : "none", opacity: lost ? 0.35 : 1 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: won && isCompleted ? accent : "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
               {team.name || "TBD"}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: won && isCompleted ? accent : "#888", minWidth: 16, textAlign: "right" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: won && isCompleted ? accent : "#666", minWidth: 14, textAlign: "right", marginLeft: 6 }}>
               {team.score || "–"}
             </span>
           </div>
         );
       })}
-      {isLive && (
-        <div style={{ background: "#ff4655", textAlign: "center", padding: "2px 0", fontSize: 9, fontWeight: 700, color: "#fff", letterSpacing: "0.08em" }}>LIVE</div>
-      )}
+      {isLive && <div style={{ position: "absolute", top: 0, right: 0, background: "#ff4655", padding: "1px 5px", fontSize: 8, fontWeight: 700, color: "#fff", borderBottomLeftRadius: 4 }}>LIVE</div>}
     </div>
   );
 }
 
-function BracketRound({ round, accent }) {
+function BracketTree({ rounds, accent, label, labelColor }) {
+  const CARD_W = 170, CARD_H = 46, BASE_GAP = 12, COL_GAP = 32, LABEL_H = 20;
+  if (!rounds || rounds.length === 0) return null;
+
+  const maxMatches = Math.max(...rounds.map((r) => r.matches.length));
+  const slotH = CARD_H + BASE_GAP;
+  const totalH = Math.max(maxMatches * slotH - BASE_GAP, CARD_H);
+
+  const yPositions = [];
+  let prevYs = null;
+  rounds.forEach((round, ri) => {
+    const count = round.matches.length;
+    const prevCount = ri > 0 ? rounds[ri - 1].matches.length : 0;
+    const ys = [];
+    if (ri === 0) {
+      const blockH = count * CARD_H + (count - 1) * BASE_GAP;
+      const startY = (totalH - blockH) / 2;
+      for (let i = 0; i < count; i++) ys.push(startY + i * slotH);
+    } else if (prevCount === 2 * count && prevYs) {
+      for (let i = 0; i < count; i++) ys.push((prevYs[i * 2] + prevYs[i * 2 + 1]) / 2);
+    } else if (prevCount === count && prevYs) {
+      ys.push(...prevYs);
+    } else {
+      const blockH = count * CARD_H + (count - 1) * BASE_GAP;
+      const startY = (totalH - blockH) / 2;
+      for (let i = 0; i < count; i++) ys.push(startY + i * slotH);
+    }
+    prevYs = ys;
+    yPositions.push(ys);
+  });
+
+  const totalW = rounds.length * CARD_W + (rounds.length - 1) * COL_GAP;
+  const svgH = totalH + LABEL_H;
+
+  const lines = [];
+  for (let ri = 1; ri < rounds.length; ri++) {
+    const pCount = rounds[ri - 1].matches.length;
+    const cCount = rounds[ri].matches.length;
+    const x1 = (ri - 1) * (CARD_W + COL_GAP) + CARD_W;
+    const x2 = ri * (CARD_W + COL_GAP);
+    const xMid = (x1 + x2) / 2;
+
+    if (pCount === 2 * cCount) {
+      for (let ci = 0; ci < cCount; ci++) {
+        const tY = yPositions[ri - 1][ci * 2] + CARD_H / 2 + LABEL_H;
+        const bY = yPositions[ri - 1][ci * 2 + 1] + CARD_H / 2 + LABEL_H;
+        const mY = (tY + bY) / 2;
+        lines.push(
+          <line key={`${ri}${ci}a`} x1={x1} y1={tY} x2={xMid} y2={tY} stroke="#444" strokeWidth={1.5} />,
+          <line key={`${ri}${ci}b`} x1={x1} y1={bY} x2={xMid} y2={bY} stroke="#444" strokeWidth={1.5} />,
+          <line key={`${ri}${ci}c`} x1={xMid} y1={tY} x2={xMid} y2={bY} stroke="#444" strokeWidth={1.5} />,
+          <line key={`${ri}${ci}d`} x1={xMid} y1={mY} x2={x2} y2={mY} stroke="#444" strokeWidth={1.5} />
+        );
+      }
+    } else {
+      const n = Math.min(pCount, cCount);
+      for (let ci = 0; ci < n; ci++) {
+        const pY = yPositions[ri - 1][ci] + CARD_H / 2 + LABEL_H;
+        const cY = yPositions[ri][ci] + CARD_H / 2 + LABEL_H;
+        if (Math.abs(pY - cY) < 2) {
+          lines.push(<line key={`${ri}${ci}h`} x1={x1} y1={pY} x2={x2} y2={pY} stroke="#444" strokeWidth={1.5} />);
+        } else {
+          lines.push(
+            <line key={`${ri}${ci}a`} x1={x1} y1={pY} x2={xMid} y2={pY} stroke="#444" strokeWidth={1.5} />,
+            <line key={`${ri}${ci}b`} x1={xMid} y1={pY} x2={xMid} y2={cY} stroke="#444" strokeWidth={1.5} />,
+            <line key={`${ri}${ci}c`} x1={xMid} y1={cY} x2={x2} y2={cY} stroke="#444" strokeWidth={1.5} />
+          );
+        }
+      }
+    }
+  }
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 200, flexShrink: 0 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", textAlign: "center", paddingBottom: 4 }}>
-        {round.name}
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: labelColor, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, paddingLeft: 2 }}>{label}</div>
+      <div style={{ position: "relative", width: totalW, height: svgH, minWidth: totalW }}>
+        <svg style={{ position: "absolute", left: 0, top: 0, width: totalW, height: svgH, pointerEvents: "none" }}>{lines}</svg>
+        {rounds.map((round, ri) => (
+          <React.Fragment key={round.name}>
+            <div style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W, textAlign: "center", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
+              {round.name}
+            </div>
+            {round.matches.map((m, mi) => (
+              <div key={m.match_id} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
+                <BracketMatchCard match={m} accent={accent} />
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
       </div>
-      {round.matches.map((m) => (
-        <BracketMatchCard key={m.match_id} match={m} accent={accent} />
-      ))}
     </div>
   );
 }
 
 function BracketView({ data, accent, T, onClose }) {
   const dragRef = React.useRef(null);
-  const [isDragging, setIsDragging] = React.useState(false);
-  const [startX, setStartX] = React.useState(0);
-  const [scrollLeft, setScrollLeft] = React.useState(0);
+  const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
 
-  const onMouseDown = (e) => {
-    setIsDragging(true);
-    setStartX(e.pageX - dragRef.current.offsetLeft);
-    setScrollLeft(dragRef.current.scrollLeft);
+  const onPointerDown = (e) => {
+    dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft };
   };
-  const onMouseMove = (e) => {
-    if (!isDragging) return;
+  const onPointerMove = (e) => {
+    if (!dragState.current.active) return;
     e.preventDefault();
-    const x = e.pageX - dragRef.current.offsetLeft;
-    dragRef.current.scrollLeft = scrollLeft - (x - startX);
+    dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX);
   };
-  const onMouseUp = () => setIsDragging(false);
-
-  const onTouchStart = (e) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - dragRef.current.offsetLeft);
-    setScrollLeft(dragRef.current.scrollLeft);
-  };
-  const onTouchMove = (e) => {
-    if (!isDragging) return;
-    const x = e.touches[0].pageX - dragRef.current.offsetLeft;
-    dragRef.current.scrollLeft = scrollLeft - (x - startX);
-  };
+  const onPointerUp = () => { dragState.current.active = false; };
 
   if (!data || !data.bracket) return null;
   const { upper, lower, grand_final } = data.bracket;
@@ -2418,56 +2479,16 @@ function BracketView({ data, accent, T, onClose }) {
       </div>
       <div
         ref={dragRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onMouseUp}
-        style={{ overflowX: "auto", cursor: isDragging ? "grabbing" : "grab", userSelect: "none", padding: "0 16px 16px", WebkitOverflowScrolling: "touch" }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "8px 16px 16px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
         className="no-scrollbar"
       >
-        {hasUpper && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketUpper}</div>
-            <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-              {upper.map((round, i) => (
-                <React.Fragment key={round.name}>
-                  {i > 0 && <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignSelf: "stretch", padding: "24px 0" }}>{round.matches.map((_, j) => <div key={j} style={{ width: 24, height: 2, background: "#333", margin: "auto 0" }} />)}</div>}
-                  <BracketRound round={round} accent={accent} />
-                </React.Fragment>
-              ))}
-              {hasGF && !hasLower && (
-                <>
-                  <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignSelf: "stretch", padding: "24px 0" }}><div style={{ width: 24, height: 2, background: "#333", margin: "auto 0" }} /></div>
-                  {grand_final.map((round) => <BracketRound key={round.name} round={round} accent={accent} />)}
-                </>
-              )}
-            </div>
-          </div>
-        )}
-        {hasLower && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#ff4655", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketLower}</div>
-            <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-              {lower.map((round, i) => (
-                <React.Fragment key={round.name}>
-                  {i > 0 && <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignSelf: "stretch", padding: "24px 0" }}>{round.matches.map((_, j) => <div key={j} style={{ width: 24, height: 2, background: "#333", margin: "auto 0" }} />)}</div>}
-                  <BracketRound round={round} accent={accent} />
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-        )}
-        {hasGF && hasLower && (
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#FFD700", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketGrandFinal}</div>
-            <div style={{ display: "flex", gap: 24 }}>
-              {grand_final.map((round) => <BracketRound key={round.name} round={round} accent={accent} />)}
-            </div>
-          </div>
-        )}
+        {hasUpper && <BracketTree rounds={hasLower ? upper : [...upper, ...(grand_final || [])]} accent={accent} label={T.bracketUpper} labelColor={accent} />}
+        {hasLower && <BracketTree rounds={lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
+        {hasGF && hasLower && <BracketTree rounds={grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" />}
       </div>
     </div>
   );
@@ -2573,23 +2594,24 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
       </div>
 
       {(() => {
-        const regionForBracket = selectedRegions.length === 1 ? selectedRegions[0] : null;
-        const ev = regionForBracket && vlrEvents[regionForBracket];
+        const regionsWithEvents = REGIONS.filter((r) => r.key !== "TOUT" && vlrEvents[r.key]);
+        if (regionsWithEvents.length === 0) return null;
         const activeBracketData = bracketRegion && vlrEvents[bracketRegion] && bracketData[vlrEvents[bracketRegion].event_id];
         const bracketAccent = bracketRegion ? (REGIONS.find((r) => r.key === bracketRegion) || {}).accent || "#fff" : "#fff";
         return (
           <>
-            {ev && (
-              <div className="px-4 pb-2">
+            <div className="px-4 pb-2" style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+              {regionsWithEvents.map((r) => (
                 <button
-                  onClick={() => bracketRegion === regionForBracket ? onCloseBracket() : onFetchBracket(regionForBracket)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: (REGIONS.find((r) => r.key === regionForBracket) || {}).accent || "#888", fontSize: 13, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 6 }}
+                  key={r.key}
+                  onClick={() => bracketRegion === r.key ? onCloseBracket() : onFetchBracket(r.key)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: r.accent, fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 4, opacity: bracketRegion && bracketRegion !== r.key ? 0.5 : 1 }}
                 >
-                  <span style={{ fontSize: 14 }}>{bracketRegion === regionForBracket ? "▲" : "▼"}</span>
-                  {bracketRegion === regionForBracket ? T.bracketHide : T.bracketShow}
+                  <span style={{ fontSize: 12 }}>{bracketRegion === r.key ? "▲" : "▼"}</span>
+                  {T.bracketShow} {regionLabel(r.key, T)}
                 </button>
-              </div>
-            )}
+              ))}
+            </div>
             {activeBracketData && bracketRegion && (
               <BracketView data={activeBracketData} accent={bracketAccent} T={T} onClose={onCloseBracket} />
             )}
