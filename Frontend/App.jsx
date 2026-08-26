@@ -2336,29 +2336,67 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
 function BracketMatchCard({ match, accent }) {
   const isCompleted = (match.status || "").toLowerCase() === "completed";
   const isLive = (match.status || "").toLowerCase().includes("live");
+  const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
   return (
-    <div style={{ width: "100%", borderRadius: 8, overflow: "hidden", position: "relative", border: isLive ? "1.5px solid #ff4655" : "1px solid #2a2a2a" }}>
+    <div style={{
+      width: "100%", borderRadius: 6, overflow: "hidden", position: "relative",
+      background: "#111",
+      border: isLive ? "1px solid #ff4655" : "1px solid rgba(255,255,255,0.06)",
+      boxShadow: isLive ? "0 0 12px rgba(255,70,85,0.25)" : "0 2px 8px rgba(0,0,0,0.4)",
+      opacity: isTBD ? 0.45 : 1,
+    }}>
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 10px", borderBottom: i === 0 ? "1px solid " + (won ? "rgba(0,0,0,0.15)" : "#222") : "none", background: won ? accent : "#1a1a1a", opacity: lost ? 0.35 : 1 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: won ? "#000" : "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-              {team.name || "TBD"}
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: won ? "#000" : "#555", minWidth: 16, textAlign: "right", marginLeft: 8 }}>
-              {team.score ?? "–"}
-            </span>
+          <div key={i} style={{
+            display: "flex", alignItems: "center", gap: 0,
+            borderBottom: i === 0 ? "1px solid rgba(255,255,255,0.04)" : "none",
+            background: won ? `linear-gradient(90deg, ${accent}18 0%, ${accent}06 100%)` : "transparent",
+            transition: "background 0.2s",
+          }}>
+            <div style={{
+              width: 3, alignSelf: "stretch", flexShrink: 0,
+              background: won ? accent : "transparent",
+            }} />
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "7px 10px 7px 8px",
+              opacity: lost ? 0.3 : 1,
+            }}>
+              <span style={{
+                fontSize: 11, fontWeight: won ? 700 : 500,
+                color: won ? "#fff" : "#999",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
+              }}>
+                {team.name || "TBD"}
+              </span>
+              <span style={{
+                fontSize: 13, fontWeight: 800, minWidth: 18, textAlign: "center", marginLeft: 8,
+                color: won ? accent : "#444",
+                fontVariantNumeric: "tabular-nums",
+              }}>
+                {team.score ?? "–"}
+              </span>
+            </div>
           </div>
         );
       })}
-      {isLive && <div style={{ position: "absolute", top: 0, right: 0, background: "#ff4655", padding: "1px 6px", fontSize: 8, fontWeight: 700, color: "#fff", borderBottomLeftRadius: 5 }}>LIVE</div>}
+      {isLive && (
+        <div style={{
+          position: "absolute", top: 0, right: 0,
+          background: "#ff4655", padding: "2px 7px 2px 6px",
+          fontSize: 7, fontWeight: 800, color: "#fff", letterSpacing: "0.08em",
+          borderBottomLeftRadius: 5,
+          animation: "bracketLivePulse 2s ease-in-out infinite",
+        }}>LIVE</div>
+      )}
     </div>
   );
 }
 
 function BracketTree({ rounds, accent, label, labelColor }) {
-  const CARD_W = 175, CARD_H = 50, BASE_GAP = 16, COL_GAP = 44, LABEL_H = 24, CR = 8;
+  const CARD_W = 190, CARD_H = 52, BASE_GAP = 14, COL_GAP = 40, LABEL_H = 28, CR = 10;
   if (!rounds || rounds.length === 0) return null;
 
   const maxMatches = Math.max(...rounds.map((r) => r.matches.length));
@@ -2423,20 +2461,34 @@ function BracketTree({ rounds, accent, label, labelColor }) {
     }
   }
 
+  const accentDim = accent + "40";
+
   return (
-    <div style={{ marginBottom: 28 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: labelColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>{label}</div>
+    <div style={{ marginBottom: 32 }}>
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        padding: "4px 12px 4px 8px", marginBottom: 12,
+        background: `${labelColor}12`, borderRadius: 6,
+        border: `1px solid ${labelColor}25`,
+      }}>
+        <div style={{ width: 3, height: 14, borderRadius: 2, background: labelColor }} />
+        <span style={{ fontSize: 10, fontWeight: 800, color: labelColor, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+      </div>
       <div style={{ position: "relative", width: totalW, height: svgH, minWidth: totalW }}>
         <svg style={{ position: "absolute", inset: 0, width: totalW, height: svgH, pointerEvents: "none" }}>
-          {svgPaths.map((d, i) => <path key={i} d={d} fill="none" stroke="#333" strokeWidth={1.5} />)}
+          {svgPaths.map((d, i) => <path key={i} d={d} fill="none" stroke={accentDim} strokeWidth={1.5} />)}
         </svg>
         {rounds.map((round, ri) => (
-          <React.Fragment key={round.name}>
-            <div style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W, textAlign: "center", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>
+          <React.Fragment key={ri}>
+            <div style={{
+              position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W,
+              textAlign: "center", fontSize: 8, fontWeight: 700,
+              color: "#555", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
+            }}>
               {round.name}
             </div>
             {round.matches.map((m, mi) => (
-              <div key={m.match_id} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
+              <div key={m.match_id || mi} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
                 <BracketMatchCard match={m} accent={accent} />
               </div>
             ))}
@@ -2465,24 +2517,37 @@ function GroupStandings({ standings, accent, T }) {
     <div style={{ padding: "12px 0" }}>
       {Object.entries(standings).map(([groupName, teams]) => (
         <div key={groupName} style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{groupName}</div>
-          <div style={{ background: "#141414", borderRadius: 10, overflow: "hidden", border: "1px solid #1e1e1e" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 50px 50px 60px", padding: "8px 12px", borderBottom: "1px solid #222", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
+            <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{groupName}</span>
+          </div>
+          <div style={{ background: "#111", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 44px 44px 50px", padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.04)", fontSize: 8, fontWeight: 700, color: "#444", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               <span>{T.bracketTeams || "Team"}</span>
               <span style={{ textAlign: "center" }}>W</span>
               <span style={{ textAlign: "center" }}>L</span>
               <span style={{ textAlign: "center" }}>PTS</span>
             </div>
-            {teams.map((t, i) => (
-              <div key={t.name} style={{ display: "grid", gridTemplateColumns: "1fr 50px 50px 60px", padding: "7px 12px", borderBottom: i < teams.length - 1 ? "1px solid #1a1a1a" : "none", background: i < 2 ? "rgba(196,240,0,0.04)" : "transparent" }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: i < 2 ? accent : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  <span style={{ color: "#444", fontSize: 10, marginRight: 6 }}>{i + 1}.</span>{t.name}
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#8f8", textAlign: "center" }}>{t.wins}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: "#f88", textAlign: "center" }}>{t.losses}</span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: i < 2 ? accent : "#777", textAlign: "center" }}>{t.points}</span>
-              </div>
-            ))}
+            {teams.map((t, i) => {
+              const qualified = i < 2;
+              return (
+                <div key={t.name} style={{
+                  display: "grid", gridTemplateColumns: "1fr 44px 44px 50px",
+                  padding: "7px 12px",
+                  borderBottom: i < teams.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  background: qualified ? `${accent}06` : "transparent",
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: qualified ? 700 : 500, color: qualified ? "#ddd" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ color: qualified ? accent : "#333", fontSize: 9, fontWeight: 800, fontVariantNumeric: "tabular-nums", minWidth: 12 }}>{i + 1}</span>
+                    {qualified && <span style={{ width: 2, height: 10, borderRadius: 1, background: accent, flexShrink: 0 }} />}
+                    {t.name}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6a6", textAlign: "center" }}>{t.wins}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#a55", textAlign: "center" }}>{t.losses}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: qualified ? accent : "#444", textAlign: "center" }}>{t.points}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       ))}
@@ -2640,51 +2705,85 @@ function BracketPage({ vlrEvents, onBack, T }) {
   if (stage && phase && !region) headerTitle = (T[stageInfo?.labelKey] || stage) + " · " + (T[phaseInfo?.labelKey] || phase);
   if (stage && phase && region) headerTitle = regionLabel(region, T) + " · " + (T[phaseInfo?.labelKey] || phase);
 
-  const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "18px 16px 16px", borderBottom: "1px solid #1a1a1a" };
-  const backBtn = (fn) => <button onClick={fn || goBack} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>;
+  const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
+
+  const pageStyle = { minHeight: "100vh", background: "#0a0a0a" };
+  const headerStyle = {
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "16px 16px 14px",
+    background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)",
+    borderBottom: "1px solid rgba(255,255,255,0.04)",
+  };
+  const backBtn = (fn) => (
+    <button onClick={fn || goBack} style={{
+      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+      color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px",
+      borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center",
+    }}>←</button>
+  );
+  const titleSpan = (text, color) => (
+    <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
+  );
+
+  const dragContainer = (children) => (
+    <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+      style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "20px 16px 40px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
+      {children}
+    </div>
+  );
+
+  const renderBracketSection = (bracket, accentColor) => {
+    if (!bracket) return null;
+    return dragContainer(<>
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" />}
+    </>);
+  };
 
   // --- History views ---
   if (showHistory) {
     if (historyEvent && historyBracketData) {
-      const bracket = historyBracketData.playoffs?.bracket;
       return (
-        <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+        <div style={pageStyle}>
           <div style={headerStyle}>
-            <button onClick={() => setHistoryEvent(null)} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
-            <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{historyEvent.title}</span>
+            <button onClick={() => setHistoryEvent(null)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
+            {titleSpan(historyEvent.title)}
           </div>
           {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-          {bracket && (
-            <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-              {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent="#C4F000" label={T.bracketUpper} labelColor="#C4F000" />}
-              {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent="#C4F000" label={T.bracketLower} labelColor="#ff4655" />}
-              {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent="#C4F000" label={T.bracketGrandFinal} labelColor="#FFD700" />}
-            </div>
-          )}
+          {renderBracketSection(historyBracketData.playoffs?.bracket, "#C4F000")}
         </div>
       );
     }
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+      <div style={pageStyle}>
         <div style={headerStyle}>
-          <button onClick={() => { setShowHistory(false); setHistoryEvent(null); }} style={{ background: "none", border: "none", color: "#666", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{T.bracketHistory}</span>
+          <button onClick={() => { setShowHistory(false); setHistoryEvent(null); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
+          {titleSpan(T.bracketHistory)}
         </div>
         {!historyData && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
         {historyData && (
-          <div style={{ padding: "12px 16px 32px" }}>
+          <div style={{ padding: "16px 16px 32px" }}>
             {BRACKET_STAGES.map((s) => {
               const events = historyData[s.key] || [];
               if (events.length === 0) return null;
               return (
-                <div key={s.key} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{T[s.labelKey] || s.key}</div>
+                <div key={s.key} style={{ marginBottom: 24 }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${s.color}12`, borderRadius: 5, border: `1px solid ${s.color}25` }}>
+                    <div style={{ width: 3, height: 12, borderRadius: 2, background: s.color }} />
+                    <span style={{ fontSize: 9, fontWeight: 800, color: s.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
+                  </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {events.map((ev) => (
-                      <button key={ev.event_id} onClick={() => selectHistoryEvent(ev)} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 10, padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                      <button key={ev.event_id} onClick={() => selectHistoryEvent(ev)} style={{
+                        background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
+                        padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center",
+                        justifyContent: "space-between", width: "100%",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}>
                         <div style={{ textAlign: "left" }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: "#ccc" }}>{ev.title}</div>
-                          {ev.dates && <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>{ev.dates}</div>}
+                          {ev.dates && <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{ev.dates}</div>}
                         </div>
                         <ChevronRight size={14} color="#444" />
                       </button>
@@ -2699,100 +2798,104 @@ function BracketPage({ vlrEvents, onBack, T }) {
     );
   }
 
-  // --- Step 1 : Choose stage (Kickoff / Stage / Masters / Champions) ---
+  // --- Step 1 : Choose stage ---
   if (!stage) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+      <div style={pageStyle}>
         <div style={headerStyle}>
           {backBtn(onBack)}
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>Bracket VCT</span>
+          {titleSpan("Bracket VCT")}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {BRACKET_STAGES.map((s) => {
             const avail = stageAvailable(s.key);
             return (
-              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 14, padding: "32px 12px", cursor: avail ? "pointer" : "default", opacity: avail ? 1 : 0.3, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 800, color: s.color, letterSpacing: "0.03em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
+              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{
+                background: avail ? `linear-gradient(135deg, ${s.color}0A 0%, #111 60%)` : "#111",
+                border: avail ? `1px solid ${s.color}30` : "1px solid rgba(255,255,255,0.04)",
+                borderRadius: 12, padding: "36px 12px", cursor: avail ? "pointer" : "default",
+                opacity: avail ? 1 : 0.25,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                boxShadow: avail ? `0 4px 20px ${s.color}10` : "none",
+                transition: "transform 0.15s",
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
               </button>
             );
           })}
         </div>
-        <div style={{ padding: "0 16px 20px" }}>
-          <button onClick={openHistory} style={{ width: "100%", background: "#141414", border: "1px solid #2a2a2a", borderRadius: 12, padding: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#666", letterSpacing: "0.04em", textTransform: "uppercase" }}>{T.bracketHistory}</span>
+        <div style={{ padding: "4px 16px 20px" }}>
+          <button onClick={openHistory} style={{
+            width: "100%", background: "#111", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 10, padding: "13px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T.bracketHistory}</span>
           </button>
         </div>
       </div>
     );
   }
 
-  // --- Champions : skip phase/region, show all points directly ---
+  // --- Champions ---
   if (stage === "champions") {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-        <div style={headerStyle}>
-          {backBtn()}
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{T.bracketChampions}</span>
-        </div>
-        <div style={{ padding: "0 16px 32px" }}>
-          <ChampionsView T={T} accent="#ff4655" />
-        </div>
+      <div style={pageStyle}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketChampions, "#ff4655")}</div>
+        <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" /></div>
       </div>
     );
   }
 
-  // --- Masters : skip phase, go straight to region then bracket ---
+  // --- Masters ---
   if (stage === "masters") {
     if (!region) {
       return (
-        <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-          <div style={headerStyle}>
-            {backBtn()}
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{T.bracketMasters}</span>
-          </div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>
+        <div style={pageStyle}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketMasters, "#FFD700")}</div>
+          <div style={{ textAlign: "center", padding: 40 }}>
             {vlrEvents?.masters
-              ? <button onClick={() => selectRegion("ALL")} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 14, padding: "28px 32px", cursor: "pointer" }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#FFD700", textTransform: "uppercase" }}>{vlrEvents.masters.title || "Masters"}</span>
+              ? <button onClick={() => selectRegion("ALL")} style={{
+                  background: "linear-gradient(135deg, #FFD70010 0%, #111 60%)",
+                  border: "1px solid #FFD70030", borderRadius: 12, padding: "28px 32px", cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(255,215,0,0.08)",
+                }}>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em" }}>{vlrEvents.masters.title || "Masters"}</span>
                 </button>
-              : T.bracketNoEvent}
+              : <span style={{ color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</span>}
           </div>
         </div>
       );
     }
-    const bracket = currentData?.playoffs?.bracket;
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-        <div style={headerStyle}>
-          {backBtn()}
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{T.bracketMasters}</span>
-        </div>
+      <div style={pageStyle}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketMasters, "#FFD700")}</div>
         {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-        {bracket && (
-          <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-            {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent="#FFD700" label={T.bracketUpper} labelColor="#FFD700" />}
-            {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent="#FFD700" label={T.bracketLower} labelColor="#ff4655" />}
-            {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent="#FFD700" label={T.bracketGrandFinal} labelColor="#FFD700" />}
-          </div>
-        )}
-        {!loading && !bracket && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>}
+        {renderBracketSection(currentData?.playoffs?.bracket, "#FFD700")}
+        {!loading && !currentData?.playoffs?.bracket && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>}
       </div>
     );
   }
 
-  // --- Step 2 (Kickoff/Stage) : Choose phase (Play-ins / Playoffs) ---
+  // --- Step 2 : Choose phase ---
   if (!phase) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-        <div style={headerStyle}>
-          {backBtn()}
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{headerTitle}</span>
-        </div>
+      <div style={pageStyle}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(headerTitle, stageInfo?.color)}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
           {BRACKET_PHASES.map((p) => (
-            <button key={p.key} onClick={() => setPhase(p.key)} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 12, padding: "28px 16px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 15, fontWeight: 800, color: p.color || "#aaa", textTransform: "uppercase", letterSpacing: "0.04em" }}>{T[p.labelKey] || p.key}</span>
-              <ChevronRight size={16} color="#555" />
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{
+              background: `linear-gradient(90deg, ${p.color}08 0%, #111 50%)`,
+              border: `1px solid ${p.color}20`,
+              borderRadius: 10, padding: "24px 18px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              boxShadow: `0 2px 12px ${p.color}08`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 20, borderRadius: 2, background: p.color }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: p.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
+              </div>
+              <ChevronRight size={16} color="#444" />
             </button>
           ))}
         </div>
@@ -2803,17 +2906,21 @@ function BracketPage({ vlrEvents, onBack, T }) {
   // --- Step 3 : Choose region ---
   if (!region) {
     return (
-      <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
-        <div style={headerStyle}>
-          {backBtn()}
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{headerTitle}</span>
-        </div>
+      <div style={pageStyle}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(headerTitle, phaseInfo?.color)}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {REGIONS.map((r) => {
             const avail = regionAvailable(r.key);
             return (
-              <button key={r.key} onClick={() => avail && selectRegion(r.key)} style={{ background: "#141414", border: "1px solid #2a2a2a", borderRadius: 14, padding: "28px 12px", cursor: avail ? "pointer" : "default", opacity: avail ? 1 : 0.25, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: r.accent, letterSpacing: "0.03em", textTransform: "uppercase" }}>{regionLabel(r.key, T)}</span>
+              <button key={r.key} onClick={() => avail && selectRegion(r.key)} style={{
+                background: avail ? `linear-gradient(135deg, ${r.accent}0A 0%, #111 60%)` : "#111",
+                border: avail ? `1px solid ${r.accent}25` : "1px solid rgba(255,255,255,0.04)",
+                borderRadius: 12, padding: "30px 12px", cursor: avail ? "pointer" : "default",
+                opacity: avail ? 1 : 0.2,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                boxShadow: avail ? `0 4px 16px ${r.accent}10` : "none",
+              }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: r.accent, letterSpacing: "0.06em", textTransform: "uppercase" }}>{regionLabel(r.key, T)}</span>
               </button>
             );
           })}
@@ -2822,7 +2929,7 @@ function BracketPage({ vlrEvents, onBack, T }) {
     );
   }
 
-  // --- Step 4 : Show bracket for selected phase + region ---
+  // --- Step 4 : Show bracket ---
   const renderBracketView = () => {
     if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>;
     if (!currentData) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
@@ -2839,12 +2946,10 @@ function BracketPage({ vlrEvents, onBack, T }) {
               <GroupStandings standings={groupData.standings} accent={accent} T={T} />
             </div>
           )}
-          {hasBracket ? (
-            <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-              {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
-              {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
-            </div>
-          ) : (
+          {hasBracket ? dragContainer(<>
+            {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
+            {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
+          </>) : (
             <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
           )}
         </>
@@ -2852,33 +2957,32 @@ function BracketPage({ vlrEvents, onBack, T }) {
     }
 
     if (phase === "playoffs") {
-      const bracket = currentData.playoffs?.bracket;
-      if (!bracket) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
-      return (
-        <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "16px 16px 32px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-          {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} />}
-          {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
-          {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" />}
-        </div>
-      );
+      return renderBracketSection(currentData.playoffs?.bracket, accent) ||
+        <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
     }
-
     return null;
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+    <div style={pageStyle}>
       <div style={headerStyle}>
         {backBtn()}
-        <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{headerTitle}</span>
+        {titleSpan(headerTitle, accent)}
       </div>
       {renderBracketView()}
       {currentData?.teams?.length > 0 && (
         <div style={{ padding: "0 16px 24px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#555", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketTeams}</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ width: 3, height: 12, borderRadius: 2, background: "#555" }} />
+            <span style={{ fontSize: 9, fontWeight: 800, color: "#555", letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.bracketTeams}</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
             {currentData.teams.map(t => (
-              <span key={t} style={{ fontSize: 11, fontWeight: 600, color: "#888", background: "#141414", border: "1px solid #1e1e1e", borderRadius: 6, padding: "4px 8px" }}>{t}</span>
+              <span key={t} style={{
+                fontSize: 10, fontWeight: 600, color: "#777",
+                background: "#111", border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 5, padding: "4px 8px",
+              }}>{t}</span>
             ))}
           </div>
         </div>
@@ -5036,6 +5140,7 @@ export default function ClutchApp() {
         .dark-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .dark-scroll { scrollbar-width: thin; scrollbar-color: #333 transparent; }
         @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+        @keyframes bracketLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
       `}</style>
     </div>
   );
