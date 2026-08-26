@@ -185,7 +185,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programme CS2 2026", cs2CalendarEmpty: "Aucun évènement à afficher.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
-    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes",
+    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Aucun event disponible",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -246,7 +246,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2 Program 2026", cs2CalendarEmpty: "No events to display.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
-    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage",
+    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "No event available",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -307,7 +307,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programa CS2 2026", cs2CalendarEmpty: "Sin eventos para mostrar.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
-    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos",
+    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Sin evento disponible",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -366,7 +366,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programma CS2 2026", cs2CalendarEmpty: "Nessun evento da mostrare.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
-    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi",
+    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Nessun evento disponibile",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -425,7 +425,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2カレンダー", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2プログラム 2026", cs2CalendarEmpty: "表示するイベントはありません。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
-    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ",
+    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ", bracketPlayIns: "プレイイン", bracketPlayoffs: "プレイオフ", bracketMasters: "マスターズ", bracketChampions: "チャンピオンズ", bracketNoEvent: "イベントなし",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -484,7 +484,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2-Kalender", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2-Programm 2026", cs2CalendarEmpty: "Keine Ereignisse anzuzeigen.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
-    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase",
+    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Kein Event verfügbar",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -543,7 +543,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2赛程", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2赛程 2026", cs2CalendarEmpty: "暂无赛事。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
-    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛",
+    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛", bracketPlayIns: "入围赛", bracketPlayoffs: "季后赛", bracketMasters: "大师赛", bracketChampions: "冠军赛", bracketNoEvent: "暂无赛事",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -2333,20 +2333,20 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
   );
 }
 
-function BracketMatchCard({ match, accent }) {
+function BracketMatchCard({ match }) {
   const isCompleted = (match.status || "").toLowerCase() === "completed";
   const isLive = (match.status || "").toLowerCase().includes("live");
   return (
-    <div style={{ width: "100%", background: "#1a1a1a", borderRadius: 6, border: isLive ? "1px solid #ff4655" : "1px solid #2a2a2a", overflow: "hidden", position: "relative" }}>
+    <div style={{ width: "100%", borderRadius: 6, border: isLive ? "1px solid #ff4655" : "1px solid #2a2a2a", overflow: "hidden", position: "relative" }}>
       {[match.team1, match.team2].map((team, i) => {
-        const won = team.is_winner;
-        const lost = isCompleted && !won;
+        const won = team.is_winner && isCompleted;
+        const lost = isCompleted && !team.is_winner;
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", borderBottom: i === 0 ? "1px solid #222" : "none", opacity: lost ? 0.35 : 1 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: won && isCompleted ? accent : "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 8px", borderBottom: i === 0 ? "1px solid #222" : "none", background: won ? "#2e7d32" : "#1a1a1a", opacity: lost ? 0.4 : 1 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: won ? "#fff" : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
               {team.name || "TBD"}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: won && isCompleted ? accent : "#666", minWidth: 14, textAlign: "right", marginLeft: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: won ? "#fff" : "#555", minWidth: 14, textAlign: "right", marginLeft: 6 }}>
               {team.score || "–"}
             </span>
           </div>
@@ -2357,7 +2357,7 @@ function BracketMatchCard({ match, accent }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor }) {
+function BracketTree({ rounds, label, labelColor }) {
   const CARD_W = 170, CARD_H = 46, BASE_GAP = 12, COL_GAP = 32, LABEL_H = 20;
   if (!rounds || rounds.length === 0) return null;
 
@@ -2441,7 +2441,7 @@ function BracketTree({ rounds, accent, label, labelColor }) {
             </div>
             {round.matches.map((m, mi) => (
               <div key={m.match_id} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
-                <BracketMatchCard match={m} accent={accent} />
+                <BracketMatchCard match={m} />
               </div>
             ))}
           </React.Fragment>
@@ -2451,50 +2451,157 @@ function BracketTree({ rounds, accent, label, labelColor }) {
   );
 }
 
-function BracketView({ data, accent, T, onClose }) {
+const BRACKET_STAGES = [
+  { key: "play_ins", labelKey: "bracketPlayIns", color: "#888" },
+  { key: "playoffs", labelKey: "bracketPlayoffs", color: "#C4F000" },
+  { key: "masters", labelKey: "bracketMasters", color: "#FFD700" },
+  { key: "champions", labelKey: "bracketChampions", color: "#ff4655" },
+];
+
+function BracketPage({ vlrEvents, onBack, T }) {
+  const [stage, setStage] = useState(null);
+  const [region, setRegion] = useState(null);
+  const [bracketData, setBracketData] = useState({});
+  const [loading, setLoading] = useState(false);
   const dragRef = React.useRef(null);
   const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
 
-  const onPointerDown = (e) => {
-    dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft };
-  };
-  const onPointerMove = (e) => {
-    if (!dragState.current.active) return;
-    e.preventDefault();
-    dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX);
-  };
+  const onPointerDown = (e) => { dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
+  const onPointerMove = (e) => { if (!dragState.current.active) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
   const onPointerUp = () => { dragState.current.active = false; };
 
-  if (!data || !data.bracket) return null;
-  const { upper, lower, grand_final } = data.bracket;
-  const hasUpper = upper && upper.length > 0;
-  const hasLower = lower && lower.length > 0;
-  const hasGF = grand_final && grand_final.length > 0;
+  const regionsForStage = React.useMemo(() => {
+    if (!stage || !vlrEvents) return [];
+    if (stage === "masters") return vlrEvents.masters ? [{ key: "INTL", label: "International", accent: "#FFD700" }] : [];
+    if (stage === "champions") return vlrEvents.champions ? [{ key: "INTL", label: "International", accent: "#ff4655" }] : [];
+    const src = vlrEvents[stage] || {};
+    return REGIONS.filter((r) => src[r.key]);
+  }, [stage, vlrEvents]);
+
+  const fetchBracket = React.useCallback(async (stageKey, regionKey) => {
+    let ev;
+    if (stageKey === "masters") ev = vlrEvents.masters;
+    else if (stageKey === "champions") ev = vlrEvents.champions;
+    else ev = vlrEvents[stageKey] && vlrEvents[stageKey][regionKey];
+    if (!ev) return;
+
+    const cacheKey = ev.event_id + ":" + stageKey;
+    if (bracketData[cacheKey]) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id + "?stage=" + stageKey);
+      if (!res.ok) return;
+      const data = await res.json();
+      setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
+    } catch (e) { /* silencieux */ }
+    finally { setLoading(false); }
+  }, [vlrEvents, bracketData]);
+
+  const selectRegion = (r) => {
+    setRegion(r);
+    fetchBracket(stage, r);
+  };
+
+  const currentData = React.useMemo(() => {
+    if (!stage || !region || !vlrEvents) return null;
+    let ev;
+    if (stage === "masters") ev = vlrEvents.masters;
+    else if (stage === "champions") ev = vlrEvents.champions;
+    else ev = vlrEvents[stage] && vlrEvents[stage][region];
+    if (!ev) return null;
+    return bracketData[ev.event_id + ":" + stage] || null;
+  }, [stage, region, vlrEvents, bracketData]);
+
+  const isPlayoffs = currentData && currentData.stage === "playoffs" && currentData.bracket;
+  const isPlayIns = currentData && currentData.stage === "play_ins" && currentData.matches;
 
   return (
-    <div style={{ background: "#111", borderRadius: 12, border: "1px solid #2a2a2a", margin: "0 16px 12px", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px 8px" }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{data.event?.title || "Bracket"}</span>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: "#666", fontSize: 18, cursor: "pointer", padding: "0 4px" }}>&times;</button>
+    <div style={{ minHeight: "100vh", background: "#0a0a0a" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 16px 12px" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer", padding: 0 }}>←</button>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>Bracket VCT</span>
       </div>
-      <div
-        ref={dragRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "8px 16px 16px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
-        className="no-scrollbar"
-      >
-        {hasUpper && <BracketTree rounds={hasLower ? upper : [...upper, ...(grand_final || [])]} accent={accent} label={T.bracketUpper} labelColor={accent} />}
-        {hasLower && <BracketTree rounds={lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" />}
-        {hasGF && hasLower && <BracketTree rounds={grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" />}
+
+      <div style={{ display: "flex", gap: 8, padding: "0 16px 12px", flexWrap: "wrap" }}>
+        {BRACKET_STAGES.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => { setStage(s.key); setRegion(null); }}
+            style={{ padding: "8px 16px", borderRadius: 8, border: stage === s.key ? "2px solid " + s.color : "1px solid #333", background: stage === s.key ? s.color + "18" : "#151515", color: stage === s.key ? s.color : "#888", fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" }}
+          >
+            {T[s.labelKey] || s.key}
+          </button>
+        ))}
       </div>
+
+      {stage && regionsForStage.length > 0 && (
+        <div style={{ display: "flex", gap: 8, padding: "0 16px 12px", flexWrap: "wrap" }}>
+          {regionsForStage.map((r) => (
+            <button
+              key={r.key}
+              onClick={() => selectRegion(r.key)}
+              style={{ padding: "6px 14px", borderRadius: 8, border: region === r.key ? "2px solid " + (r.accent || "#888") : "1px solid #333", background: region === r.key ? (r.accent || "#888") + "18" : "#151515", color: region === r.key ? (r.accent || "#fff") : "#666", fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "uppercase" }}
+            >
+              {r.label || regionLabel(r.key, T)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {stage && regionsForStage.length === 0 && (
+        <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>{T.bracketNoEvent || "Aucun event disponible"}</div>
+      )}
+
+      {loading && <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>...</div>}
+
+      {isPlayoffs && (
+        <div
+          ref={dragRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "8px 16px 24px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+          className="no-scrollbar"
+        >
+          {currentData.bracket.upper && currentData.bracket.upper.length > 0 && (
+            <BracketTree rounds={currentData.bracket.upper} label={T.bracketUpper} labelColor="#C4F000" />
+          )}
+          {currentData.bracket.lower && currentData.bracket.lower.length > 0 && (
+            <BracketTree rounds={currentData.bracket.lower} label={T.bracketLower} labelColor="#ff4655" />
+          )}
+          {currentData.bracket.grand_final && currentData.bracket.grand_final.length > 0 && (
+            <BracketTree rounds={currentData.bracket.grand_final} label={T.bracketGrandFinal} labelColor="#FFD700" />
+          )}
+        </div>
+      )}
+
+      {isPlayIns && (
+        <div style={{ padding: "8px 16px 24px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#888", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.bracketPlayIns || "Play-ins"}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {currentData.matches.map((m) => (
+              <div key={m.match_id} style={{ maxWidth: 280 }}>
+                <BracketMatchCard match={m} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {region && !loading && !currentData && (
+        <div style={{ padding: "24px 16px", textAlign: "center", color: "#555", fontSize: 12 }}>{T.bracketNoEvent || "Aucun bracket disponible"}</div>
+      )}
     </div>
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, bracketData, bracketRegion, onFetchBracket, onCloseBracket }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage }) {
+  if (showBracketPage) {
+    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
+  }
+
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
   const glowAccent = single ? single.accent : "#ffffff";
   const allSelected = selectedRegions.length === REGIONS.length;
@@ -2593,31 +2700,15 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
         })}
       </div>
 
-      {(() => {
-        const regionsWithEvents = REGIONS.filter((r) => r.key !== "TOUT" && vlrEvents[r.key]);
-        if (regionsWithEvents.length === 0) return null;
-        const activeBracketData = bracketRegion && vlrEvents[bracketRegion] && bracketData[vlrEvents[bracketRegion].event_id];
-        const bracketAccent = bracketRegion ? (REGIONS.find((r) => r.key === bracketRegion) || {}).accent || "#fff" : "#fff";
-        return (
-          <>
-            <div className="px-4 pb-2" style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
-              {regionsWithEvents.map((r) => (
-                <button
-                  key={r.key}
-                  onClick={() => bracketRegion === r.key ? onCloseBracket() : onFetchBracket(r.key)}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: r.accent, fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 4, opacity: bracketRegion && bracketRegion !== r.key ? 0.5 : 1 }}
-                >
-                  <span style={{ fontSize: 12 }}>{bracketRegion === r.key ? "▲" : "▼"}</span>
-                  {T.bracketShow} {regionLabel(r.key, T)}
-                </button>
-              ))}
-            </div>
-            {activeBracketData && bracketRegion && (
-              <BracketView data={activeBracketData} accent={bracketAccent} T={T} onClose={onCloseBracket} />
-            )}
-          </>
-        );
-      })()}
+      <div className="px-4 pb-2">
+        <button
+          onClick={() => setShowBracketPage(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#C4F000", fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
+        >
+          <span style={{ fontSize: 13 }}>▶</span>
+          {T.bracketShow}
+        </button>
+      </div>
 
       <div className="px-4 pb-6 relative">
         {combined.map((m) => {
@@ -3960,8 +4051,7 @@ export default function ClutchApp() {
   const [rlDataLoading, setRlDataLoading] = useState(true);
 
   const [vlrEvents, setVlrEvents] = useState({});
-  const [bracketData, setBracketData] = useState({});
-  const [bracketRegion, setBracketRegion] = useState(null);
+  const [showBracketPage, setShowBracketPage] = useState(false);
 
   const T = STR[currentLang] || STR.fr;
   const isLight = false;
@@ -4207,24 +4297,6 @@ export default function ClutchApp() {
     const interval = setInterval(loadVlrEvents, 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-  const fetchBracket = React.useCallback(async (region) => {
-    const ev = vlrEvents[region];
-    if (!ev) return;
-    if (bracketData[ev.event_id]) {
-      setBracketRegion(region);
-      return;
-    }
-    try {
-      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id);
-      if (!res.ok) return;
-      const data = await res.json();
-      setBracketData((prev) => ({ ...prev, [ev.event_id]: data }));
-      setBracketRegion(region);
-    } catch (e) { /* silencieux */ }
-  }, [vlrEvents, bracketData]);
-
-  const closeBracket = React.useCallback(() => setBracketRegion(null), []);
 
   const allTeams = React.useMemo(() => {
     const set = [];
@@ -4566,10 +4638,8 @@ export default function ClutchApp() {
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "valorant", region)}
               toggleMatchNotif={toggleMatchNotif}
               vlrEvents={vlrEvents}
-              bracketData={bracketData}
-              bracketRegion={bracketRegion}
-              onFetchBracket={fetchBracket}
-              onCloseBracket={closeBracket}
+              showBracketPage={showBracketPage}
+              setShowBracketPage={setShowBracketPage}
             />
           )}
           {activeTab === "csgo" && (

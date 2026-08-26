@@ -1142,41 +1142,65 @@ const VCT_REGION_MAP = {
   CN: ["china"],
 };
 
+async function fetchVlrEvents(query) {
+  const r = await fetch(VLRGGAPI_BASE + "/v2/events?q=" + query + "&page=1");
+  if (!r.ok) return [];
+  const b = await r.json();
+  return (b && b.data && b.data.segments) || [];
+}
+
 app.get("/api/vlr-events", async (req, res) => {
   try {
     if (vlrEventsCache.data && Date.now() - vlrEventsCache.at < VLR_EVENTS_TTL) {
       return res.json(vlrEventsCache.data);
     }
-    const json = await fetch(VLRGGAPI_BASE + "/v2/events?q=upcoming&page=1");
-    if (!json.ok) throw new Error("vlrggapi HTTP " + json.status);
-    const body = await json.json();
-    const events = (body && body.data && body.data.segments) || [];
 
-    const vctEvents = events.filter((e) => {
-      const t = (e.title || "").toLowerCase();
-      return t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
+    const [upcoming, ongoing] = await Promise.all([
+      fetchVlrEvents("upcoming"),
+      fetchVlrEvents("ongoing"),
+    ]);
+    const all = [...ongoing, ...upcoming];
+    const seen = new Set();
+    const events = all.filter((e) => {
+      if (seen.has(e.event_id)) return false;
+      seen.add(e.event_id);
+      return true;
     });
 
-    const byRegion = {};
-    for (const e of vctEvents) {
-      const title = (e.title || "").toLowerCase();
+    const isVCT = (t) => t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
+
+    const result = { playoffs: {}, play_ins: {}, masters: null, champions: null };
+
+    for (const e of events) {
+      const t = (e.title || "").toLowerCase();
+      if (!isVCT(t)) continue;
+
+      if (t.includes("masters")) {
+        if (!result.masters || e.status === "ongoing") {
+          result.masters = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+        }
+        continue;
+      }
+      if (t.includes("champions")) {
+        if (!result.champions || e.status === "ongoing") {
+          result.champions = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+        }
+        continue;
+      }
+
       for (const [region, keywords] of Object.entries(VCT_REGION_MAP)) {
-        if (keywords.some((kw) => title.includes(kw))) {
-          if (!byRegion[region] || e.status === "ongoing") {
-            byRegion[region] = {
-              event_id: e.event_id,
-              title: e.title,
-              status: e.status,
-              dates: e.dates,
-              url: e.url_path,
-            };
+        if (keywords.some((kw) => t.includes(kw))) {
+          if (!result.playoffs[region] || e.status === "ongoing") {
+            result.playoffs[region] = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+            result.play_ins[region] = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
           }
         }
       }
     }
-    vlrEventsCache.data = byRegion;
+
+    vlrEventsCache.data = result;
     vlrEventsCache.at = Date.now();
-    res.json(byRegion);
+    res.json(result);
   } catch (e) {
     console.error("vlr-events error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les events VLR." });
@@ -1197,7 +1221,7 @@ function classifyRound(series) {
   if (s.includes("grand final")) return { bracket: "grand_final", round: s, sort: 100 };
   if (s.includes("upper") || s.includes("winners")) return { bracket: "upper", round: s, sort: ROUND_ORDER.indexOf(s) >= 0 ? ROUND_ORDER.indexOf(s) : 50 };
   if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: ROUND_ORDER.indexOf(s) >= 0 ? ROUND_ORDER.indexOf(s) : 60 };
-  if (/^week \d+$/i.test(s) || s.includes("group") || s.includes("regular season")) return { bracket: "group", round: s, sort: -1 };
+  if (/^week \d+$/i.test(s) || s.includes("group") || s.includes("regular season") || s.includes("play-in") || s.includes("opening") || s.includes("elimination")) return { bracket: "group", round: s, sort: -1 };
   if (s.includes("semifinal")) return { bracket: "upper", round: s, sort: 45 };
   if (s.includes("quarterfinal")) return { bracket: "upper", round: s, sort: 40 };
   if (s.includes("final")) return { bracket: "grand_final", round: s, sort: 100 };
@@ -1206,10 +1230,11 @@ function classifyRound(series) {
 
 app.get("/api/vlr-bracket/:eventId", async (req, res) => {
   const { eventId } = req.params;
+  const stage = req.query.stage || "playoffs";
   if (!/^\d+$/.test(eventId)) return res.status(400).json({ error: "eventId invalide" });
 
   try {
-    const cacheKey = "bracket:" + eventId;
+    const cacheKey = "bracket:" + eventId + ":" + stage;
     const cached = bracketCache.get(cacheKey);
     if (cached && Date.now() - cached.at < BRACKET_CACHE_TTL) {
       return res.json(cached.data);
@@ -1256,6 +1281,17 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     bracketMatches.sort((a, b) => a.sort - b.sort);
 
+    if (stage === "play_ins") {
+      const result = {
+        event: eventInfo,
+        stage: "play_ins",
+        matches: groupMatches,
+        total_matches: groupMatches.length,
+      };
+      bracketCache.set(cacheKey, { data: result, at: Date.now() });
+      return res.json(result);
+    }
+
     const rounds = {};
     for (const m of bracketMatches) {
       const key = m.round;
@@ -1269,8 +1305,8 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     const result = {
       event: eventInfo,
+      stage: "playoffs",
       bracket: { upper, lower, grand_final: grandFinal },
-      group_stage: groupMatches.length > 0 ? groupMatches : null,
       total_matches: allMatches.length,
       bracket_matches: bracketMatches.length,
     };
