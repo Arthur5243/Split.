@@ -1169,30 +1169,30 @@ app.get("/api/vlr-events", async (req, res) => {
 
     const isVCT = (t) => t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
 
-    const result = { playoffs: {}, play_ins: {}, masters: null, champions: null };
+    const result = { kickoff: {}, stage: {}, masters: null, champions: null };
 
     for (const e of events) {
       const t = (e.title || "").toLowerCase();
       if (!isVCT(t)) continue;
 
+      const info = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+
       if (t.includes("masters")) {
-        if (!result.masters || e.status === "ongoing") {
-          result.masters = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
-        }
+        if (!result.masters || e.status === "ongoing") result.masters = info;
         continue;
       }
       if (t.includes("champions")) {
-        if (!result.champions || e.status === "ongoing") {
-          result.champions = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
-        }
+        if (!result.champions || e.status === "ongoing") result.champions = info;
         continue;
       }
 
+      const isKickoff = t.includes("kickoff");
+      const bucket = isKickoff ? "kickoff" : "stage";
+
       for (const [region, keywords] of Object.entries(VCT_REGION_MAP)) {
         if (keywords.some((kw) => t.includes(kw))) {
-          if (!result.playoffs[region] || e.status === "ongoing") {
-            result.playoffs[region] = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
-            result.play_ins[region] = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+          if (!result[bucket][region] || e.status === "ongoing") {
+            result[bucket][region] = info;
           }
         }
       }
@@ -1204,6 +1204,39 @@ app.get("/api/vlr-events", async (req, res) => {
   } catch (e) {
     console.error("vlr-events error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les events VLR." });
+  }
+});
+
+const vlrHistoryCache = { data: null, at: 0 };
+
+app.get("/api/vlr-history", async (req, res) => {
+  try {
+    if (vlrHistoryCache.data && Date.now() - vlrHistoryCache.at < VLR_EVENTS_TTL) {
+      return res.json(vlrHistoryCache.data);
+    }
+
+    const completed = await fetchVlrEvents("completed");
+    const isVCT = (t) => t.includes("vct") && !t.includes("game changers") && !t.includes("challengers");
+
+    const history = { kickoff: [], stage: [], masters: [], champions: [] };
+
+    for (const e of completed) {
+      const t = (e.title || "").toLowerCase();
+      if (!isVCT(t)) continue;
+      const info = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
+
+      if (t.includes("champions")) { history.champions.push(info); continue; }
+      if (t.includes("masters")) { history.masters.push(info); continue; }
+      if (t.includes("kickoff")) { history.kickoff.push(info); continue; }
+      history.stage.push(info);
+    }
+
+    vlrHistoryCache.data = history;
+    vlrHistoryCache.at = Date.now();
+    res.json(history);
+  } catch (e) {
+    console.error("vlr-history error:", e.message);
+    res.status(502).json({ error: "Impossible de récupérer l'historique VLR." });
   }
 });
 
@@ -1230,11 +1263,11 @@ function classifyRound(series) {
 
 app.get("/api/vlr-bracket/:eventId", async (req, res) => {
   const { eventId } = req.params;
-  const stage = req.query.stage || "playoffs";
+  const phase = req.query.phase || "all";
   if (!/^\d+$/.test(eventId)) return res.status(400).json({ error: "eventId invalide" });
 
   try {
-    const cacheKey = "bracket:" + eventId + ":" + stage;
+    const cacheKey = "bracket:" + eventId + ":" + phase;
     const cached = bracketCache.get(cacheKey);
     if (cached && Date.now() - cached.at < BRACKET_CACHE_TTL) {
       return res.json(cached.data);
@@ -1257,6 +1290,7 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     const bracketMatches = [];
     const groupMatches = [];
+    const playInMatches = [];
 
     for (const m of allMatches) {
       const cl = classifyRound(m.event_series);
@@ -1273,7 +1307,12 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
         url: m.url,
       };
       if (cl.bracket === "group" || cl.bracket === "other") {
-        groupMatches.push(match);
+        const s = (m.event_series || "").toLowerCase();
+        if (s.includes("play-in") || s.includes("elimination") || s.includes("decider")) {
+          playInMatches.push(match);
+        } else {
+          groupMatches.push(match);
+        }
       } else {
         bracketMatches.push(match);
       }
@@ -1281,19 +1320,50 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     bracketMatches.sort((a, b) => a.sort - b.sort);
 
-    if (stage === "play_ins") {
-      const result = {
-        event: eventInfo,
-        stage: "play_ins",
-        matches: groupMatches,
-        total_matches: groupMatches.length,
-      };
-      bracketCache.set(cacheKey, { data: result, at: Date.now() });
-      return res.json(result);
+    const groupStandings = {};
+    for (const m of groupMatches) {
+      const grp = m.round || "Group";
+      if (!groupStandings[grp]) groupStandings[grp] = {};
+      for (const team of [m.team1, m.team2]) {
+        const name = team.name || "TBD";
+        if (name === "TBD") continue;
+        if (!groupStandings[grp][name]) groupStandings[grp][name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
+        const completed = (m.status || "").toLowerCase() === "completed";
+        if (completed) {
+          if (team.is_winner) groupStandings[grp][name].wins++;
+          else groupStandings[grp][name].losses++;
+          const score = parseInt(team.score, 10) || 0;
+          groupStandings[grp][name].maps_won += score;
+          const other = team === m.team1 ? m.team2 : m.team1;
+          groupStandings[grp][name].maps_lost += parseInt(other.score, 10) || 0;
+        }
+      }
     }
 
+    const standings = {};
+    for (const [grp, teams] of Object.entries(groupStandings)) {
+      standings[grp] = Object.entries(teams)
+        .map(([name, s]) => ({ name, ...s, points: s.wins * 3 }))
+        .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
+    }
+
+    const piRounds = {};
+    for (const m of [...playInMatches, ...bracketMatches.filter(b => {
+      const s = (b.round || "").toLowerCase();
+      return s.includes("play-in") || s.includes("opening") || s.includes("elimination");
+    })]) {
+      const key = m.round;
+      if (!piRounds[key]) piRounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
+      piRounds[key].matches.push(m);
+    }
+
+    const playoffBracketMatches = bracketMatches.filter(b => {
+      const s = (b.round || "").toLowerCase();
+      return !s.includes("play-in") && !s.includes("opening") && !s.includes("elimination");
+    });
+
     const rounds = {};
-    for (const m of bracketMatches) {
+    for (const m of playoffBracketMatches) {
       const key = m.round;
       if (!rounds[key]) rounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
       rounds[key].matches.push(m);
@@ -1303,12 +1373,24 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
     const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
     const grandFinal = Object.values(rounds).filter((r) => r.bracket === "grand_final").sort((a, b) => a.sort - b.sort);
 
+    const teamsList = new Set();
+    for (const m of allMatches) {
+      if (m.team1?.name && m.team1.name !== "TBD") teamsList.add(m.team1.name);
+      if (m.team2?.name && m.team2.name !== "TBD") teamsList.add(m.team2.name);
+    }
+
     const result = {
       event: eventInfo,
-      stage: "playoffs",
-      bracket: { upper, lower, grand_final: grandFinal },
+      group_stage: { matches: groupMatches, standings },
+      play_ins: {
+        rounds: Object.values(piRounds).sort((a, b) => (a.sort || 0) - (b.sort || 0)),
+        matches: playInMatches,
+      },
+      playoffs: {
+        bracket: { upper, lower, grand_final: grandFinal },
+      },
+      teams: [...teamsList].sort(),
       total_matches: allMatches.length,
-      bracket_matches: bracketMatches.length,
     };
 
     bracketCache.set(cacheKey, { data: result, at: Date.now() });
@@ -1412,6 +1494,75 @@ app.get("/api/map-scores", async (req, res) => {
     console.error("map-scores error:", e.message);
     res.status(502).json({ error: "Erreur vlr.gg : " + e.message });
   }
+});
+
+// --- Championship Points ---
+
+const VCT_CHAMPIONSHIP_POINTS = {
+  EMEA: [
+    { team: "Team Vitality", pts: 14 },
+    { team: "FUT Esports", pts: 13 },
+    { team: "Team Heretics", pts: 12 },
+    { team: "BBL Esports", pts: 11 },
+    { team: "Team Liquid", pts: 9 },
+    { team: "FNATIC", pts: 8 },
+    { team: "Eternal Fire", pts: 8 },
+    { team: "Gentle Mates", pts: 7 },
+    { team: "NAVI", pts: 4 },
+    { team: "Karmine Corp", pts: 4 },
+    { team: "GIANTX", pts: 3 },
+    { team: "PCIFIC Esports", pts: 0 },
+  ],
+  AMERICAS: [
+    { team: "Leviatán Esports", pts: 19 },
+    { team: "G2 Esports", pts: 17 },
+    { team: "NRG", pts: 16 },
+    { team: "100 Thieves", pts: 9 },
+    { team: "FURIA", pts: 7 },
+    { team: "MIBR", pts: 7 },
+    { team: "LOUD", pts: 6 },
+    { team: "KRÜ Esports", pts: 5 },
+    { team: "Sentinels", pts: 4 },
+    { team: "ENVY", pts: 3 },
+    { team: "Cloud9", pts: 3 },
+    { team: "Evil Geniuses", pts: 2 },
+  ],
+  PACIFIC: [
+    { team: "Paper Rex", pts: 25 },
+    { team: "Nongshim RedForce", pts: 14 },
+    { team: "T1", pts: 13 },
+    { team: "Global Esports", pts: 9 },
+    { team: "FULL SENSE", pts: 8 },
+    { team: "Rex Regum Qeon", pts: 7 },
+    { team: "Gen.G", pts: 6 },
+    { team: "DetonatioN FocusMe", pts: 5 },
+    { team: "Kiwoom DRX", pts: 5 },
+    { team: "VARREL", pts: 4 },
+    { team: "ZETA DIVISION", pts: 3 },
+    { team: "Team Secret", pts: 2 },
+  ],
+  CN: [
+    { team: "EDward Gaming", pts: 23 },
+    { team: "Xi Lai Gaming", pts: 18 },
+    { team: "TYLOO", pts: 15 },
+    { team: "All Gamers", pts: 13 },
+    { team: "Bilibili Gaming", pts: 12 },
+    { team: "Nova Esports", pts: 10 },
+    { team: "Dragon Ranger Gaming", pts: 10 },
+    { team: "JD Gaming", pts: 10 },
+    { team: "FunPlus Phoenix", pts: 6 },
+    { team: "Wolves Esports", pts: 4 },
+    { team: "Trace Esports", pts: 2 },
+    { team: "TITAN Esports Club", pts: 3 },
+  ],
+};
+
+app.get("/api/vct-points", (req, res) => {
+  const region = (req.query.region || "").toUpperCase();
+  if (region && VCT_CHAMPIONSHIP_POINTS[region]) {
+    return res.json({ [region]: VCT_CHAMPIONSHIP_POINTS[region] });
+  }
+  res.json(VCT_CHAMPIONSHIP_POINTS);
 });
 
 app.listen(PORT, () => {
