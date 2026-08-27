@@ -176,7 +176,7 @@ const VLR_LOGOS = {
   "bleed esports": "/logos/bst.png",
   "mibr": "/logos/mibr.png",
   "evil geniuses": "/logos/eg.png",
-  "enterprise esports": "/logos/eg.png",
+  "enterprise esports": null,
   "onic esports": "/logos/ong.png",
   "fut esports": "/logos/fut.png",
   "zeta division": "/logos/zeta.png",
@@ -253,6 +253,8 @@ const STR = {
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pts d'écart après 12",
     alreadyWonSuffix: "aurait déjà gagné si tu mets ce score",
+    mustWinLastMap: "doit gagner la dernière map",
+    mustWinAllMaps: "doit gagner cette map dans un 2-0",
     betLocked: "Pari verrouillé — le match a commencé",
     myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
@@ -314,6 +316,8 @@ const STR = {
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
     scoreInvalid: "13 pts min, 2 pt gap after 12",
     alreadyWonSuffix: "would have already won with this score",
+    mustWinLastMap: "must win the last map",
+    mustWinAllMaps: "must win this map in a 2-0",
     betLocked: "Bet locked — match has started",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
@@ -375,6 +379,8 @@ const STR = {
     seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
     scoreInvalid: "13 pts mín, 2 pts de diferencia tras 12",
     alreadyWonSuffix: "ya habría ganado con este marcador",
+    mustWinLastMap: "debe ganar el último mapa",
+    mustWinAllMaps: "debe ganar este mapa en un 2-0",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
     classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
@@ -434,6 +440,8 @@ const STR = {
     seriesHint: "Inserisci un punteggio di serie valido sopra (es. 2-0, 2-1).",
     scoreInvalid: "13 pt min, 2 pt di scarto dopo il 12",
     alreadyWonSuffix: "avrebbe già vinto con questo punteggio",
+    mustWinLastMap: "deve vincere l'ultima mappa",
+    mustWinAllMaps: "deve vincere questa mappa in un 2-0",
     placeholderSoon: "Presto disponibile. Stiamo preparando i pronostici {label}, torna a trovarci!",
     classementTitle: "Classifica", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
@@ -493,6 +501,8 @@ const STR = {
     seriesHint: "上のボックスに有効なシリーズスコアを入力してください(例: 2-0、2-1)。",
     scoreInvalid: "13点先取、12点以降は2点差が必要",
     alreadyWonSuffix: "はこのスコアだと既に勝利しています",
+    mustWinLastMap: "が最終マップを勝たなければなりません",
+    mustWinAllMaps: "が2-0でこのマップを勝たなければなりません",
     placeholderSoon: "近日公開。{label}の予想機能を準備中です、お楽しみに!",
     classementTitle: "ランキング", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
@@ -552,6 +562,8 @@ const STR = {
     seriesHint: "Gib oben einen gültigen Serien-Score ein (z. B. 2-0, 2-1).",
     scoreInvalid: "Mind. 13 Punkte, 2 Punkte Vorsprung nach 12",
     alreadyWonSuffix: "hätte mit diesem Ergebnis bereits gewonnen",
+    mustWinLastMap: "muss die letzte Map gewinnen",
+    mustWinAllMaps: "muss diese Map bei einem 2-0 gewinnen",
     placeholderSoon: "Bald verfügbar. Wir bereiten die {label}-Tipps vor, schau bald wieder vorbei!",
     classementTitle: "Rangliste", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
@@ -611,6 +623,8 @@ const STR = {
     seriesHint: "请在上方输入有效的系列赛比分(如2-0、2-1)。",
     scoreInvalid: "先得13分，12平后须净胜2分",
     alreadyWonSuffix: "按这个比分已经提前获胜了",
+    mustWinLastMap: "必须赢得最后一张地图",
+    mustWinAllMaps: "在2-0中必须赢得此地图",
     placeholderSoon: "敬请期待。{label}竞猜功能筹备中，请稍后再来查看!",
     classementTitle: "排行榜", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
@@ -846,7 +860,6 @@ const TEAM_CODE_OVERRIDES = {
   DETO: "DFM",
   FULL: "FS",
   NONG: "NS",
-  TEAM: "TEAM",
   PAPE: "PR",
   EVIL: "EG",
   FLUXO: "W7M",
@@ -866,9 +879,29 @@ const TEAM_CODE_OVERRIDES = {
   "XI L": "XLG",
   "ALL ": "AG",
   "QT D": "QTD",
-  ONSI: "OSG",
+  ONSI: "ONG",
   "2GAM": "2G",
   M80: "M80",
+  COMP: "COL",
+  IMPE: "IMP",
+  THEM: "MGL",
+  LYNN: "LV",
+  VIRT: "VP",
+  PASS: "PUA",
+  RARE: "RA",
+  BETB: "BB",
+  SASH: "SASH",
+  INTO: "ITB",
+  LEGA: "LEG",
+  CHIN: "CW",
+  PERM: "PRMT",
+  ROOS: "RST",
+  GRAY: "GH",
+  MIND: "MFR",
+  NEMI: "NMG",
+  AURO: "AUR",
+  ECST: "ECST",
+  APEK: "APKS",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
@@ -877,7 +910,7 @@ const TEAM_CODE_OVERRIDES = {
 // trop, qui ne matcherait même pas une entrée dans TEAM_CODE_OVERRIDES).
 const NAME_CODE_OVERRIDES = {
   "FUT Esports": "FUT",
-  "Gentle Mates": "GM",
+  "Gentle Mates": "M8",
   "Natus Vincere": "NAVI",
   "Team Spirit": "TSPIRIT",
   "Shopify Rebellion": "SR",
@@ -939,6 +972,48 @@ const NAME_CODE_OVERRIDES = {
   "Dragon Ranger Gaming": "DRG",
   "Global Esports": "GE",
   "Rex Regum Qeon": "RRQ",
+  "Team Envy": "ENVY",
+  "FaZe Clan": "FAZE",
+  "FaZe": "FAZE",
+  "Heroic": "HERO",
+  "MOUZ": "MOUZ",
+  "Astralis": "ASTR",
+  "Complexity Gaming": "COL",
+  "Imperial Esports": "IMP",
+  "TheMongolz": "MGL",
+  "GamerLegion": "GL",
+  "SAW": "SAW",
+  "BIG": "BIG",
+  "Monte": "MNT",
+  "Falcons Esports": "FALC",
+  "9 Pandas": "9PD",
+  "9INE": "9INE",
+  "Virtus.pro": "VP",
+  "Lynn Vision": "LV",
+  "Wildcard Gaming": "WC",
+  "paiN Gaming": "PAIN",
+  "Apeks": "APKS",
+  "Passion UA": "PUA",
+  "Rare Atom": "RA",
+  "Spirit Academy": "SPA",
+  "Nemiga Gaming": "NMG",
+  "Aurora Gaming": "AUR",
+  "Betboom Team": "BB",
+  "BetBoom Team": "BB",
+  "Fnatic": "FNC",
+  "ECSTATIC": "ECST",
+  "Sashi Esport": "SASH",
+  "Into the Breach": "ITB",
+  "Legacy": "LEG",
+  "Sharks Esports": "SHK",
+  "ODDIK": "ODDIK",
+  "RED Canids": "RED",
+  "Chinggis Warriors": "CW",
+  "Permitta Esports": "PRMT",
+  "Rooster": "RST",
+  "Grayhound Gaming": "GH",
+  "Mindfreak": "MFR",
+  "Encore": "ENC",
 };
 
 function teamCode(opp) {
@@ -1731,34 +1806,47 @@ function isValidScore(aStr, bStr) {
   return w - l === 2;
 }
 
-// Cas spécifique Bo3 (seul format de l'app, score de série max 2-1) : si la
-// série pronostiquée compte 3 maps, la même équipe ne peut PAS avoir gagné
-// les 2 premières. Si elle l'avait fait, la série se serait terminée 2-0 et
-// la 3e map n'aurait jamais été jouée. On ne peut détecter ça qu'une fois les
-// 2 premières maps entièrement saisies (et seulement s'il y a bien une 3e map
-// à pronostiquer). Renvoie le nom de l'équipe "déjà gagnante" à ce stade, ou
-// null si rien à signaler.
-function computeGameOverrunWinner(games, team1Name, team2Name) {
-  if (!Array.isArray(games) || games.length !== 3) return null; // rien à valider hors 2-1
-  const g0 = games[0];
-  const g1 = games[1];
-  if (!g0 || !g1) return null;
-  if (g0.a === "" || g0.b === "" || g1.a === "" || g1.b === "") return null;
-  if (!isGameScoreComplete(g0.a) || !isGameScoreComplete(g0.b) || !isGameScoreComplete(g1.a) || !isGameScoreComplete(g1.b)) {
-    return null; // saisie encore en cours sur l'une des 2 maps
+// Vérifie que les scores par map saisis sont cohérents avec le score de série :
+// 2-0 → les 2 maps doivent être gagnées par le vainqueur de la série ;
+// 2-1 → pas de 2-0 caché sur les 2 premières maps + la map 3 gagnée par le
+// vainqueur. Renvoie un tableau parallèle à games (null ou {name, key}).
+function computeMapErrors(games, seriesA, seriesB, team1Name, team2Name) {
+  if (!Array.isArray(games) || games.length === 0) return [];
+  const sa = parseInt(seriesA, 10);
+  const sb = parseInt(seriesB, 10);
+  if (isNaN(sa) || isNaN(sb)) return games.map(() => null);
+  const seriesWinner = sa > sb ? 1 : 2;
+  const winnerName = seriesWinner === 1 ? team1Name : team2Name;
+  const errors = games.map(() => null);
+  const mapWinners = games.map((g) => {
+    if (!g || g.a === "" || g.b === "") return null;
+    if (!isGameScoreComplete(g.a) || !isGameScoreComplete(g.b)) return null;
+    const a = parseInt(g.a, 10);
+    const b = parseInt(g.b, 10);
+    if (isNaN(a) || isNaN(b) || a === b) return null;
+    return a > b ? 1 : 2;
+  });
+  if (games.length === 2) {
+    for (let i = 0; i < 2; i++) {
+      if (mapWinners[i] !== null && mapWinners[i] !== seriesWinner) {
+        errors[i] = { name: winnerName, key: "mustWinAllMaps" };
+      }
+    }
+  } else if (games.length === 3) {
+    if (mapWinners[0] !== null && mapWinners[1] !== null && mapWinners[0] === mapWinners[1]) {
+      const overrunName = mapWinners[0] === 1 ? team1Name : team2Name;
+      errors[1] = { name: overrunName, key: "alreadyWonSuffix" };
+    }
+    if (mapWinners[2] !== null && mapWinners[2] !== seriesWinner) {
+      errors[2] = { name: winnerName, key: "mustWinLastMap" };
+    }
   }
-  const a0 = parseInt(g0.a, 10);
-  const b0 = parseInt(g0.b, 10);
-  const a1 = parseInt(g1.a, 10);
-  const b1 = parseInt(g1.b, 10);
-  const winner0 = a0 > b0 ? 1 : a0 < b0 ? 2 : null;
-  const winner1 = a1 > b1 ? 1 : a1 < b1 ? 2 : null;
-  if (winner0 === null || winner1 === null || winner0 !== winner1) return null;
-  return winner0 === 1 ? team1Name : team2Name;
+  return errors;
 }
 
 function TeamLogo({ code, apiLogo, accent, tbd }) {
   const src = LOGOS[code] || apiLogo || null;
+  const pct = code === "NRG" ? "98%" : "70%";
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
@@ -1768,7 +1856,7 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
         <img
           src={src}
           alt={code}
-          style={{ width: "70%", height: "70%", objectFit: "contain" }}
+          style={{ width: pct, height: pct, objectFit: "contain" }}
         />
       ) : (
         code
@@ -1885,10 +1973,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const markTouched = (key) => setTouchedFields((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
   const markUntouched = (key) => setTouchedFields((prev) => (prev[key] ? { ...prev, [key]: false } : prev));
 
-  // Équipe qui aurait déjà gagné la série avant la 3e map, si la série
-  // pronostiquée est en 2-1 (3 maps) et que les maps 1 et 2 ont le même
-  // vainqueur. Affiché comme erreur sur la Map 2, dès qu'elle est saisie.
-  const overrunWinner = computeGameOverrunWinner(games, match.team1Name, match.team2Name);
+  const mapErrors = computeMapErrors(games, seriesA, seriesB, match.team1Name, match.team2Name);
 
   // Chaîne Twitch selon la région du match (repli sur valorant_emea si
   // inconnue) — uniquement quand useRegionStreamFallback est actif
@@ -1917,17 +2002,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const hasReplay = finished && match.team1Name && match.team2Name;
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
-  const openReplayYT = () => {
-    const cacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
-    const cached = _ytCache.get(cacheKey);
-    const searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
-    window.open(cached || searchUrl, "_blank", "noopener,noreferrer");
-    if (!cached) fetchYouTubeReplay(match.team1, match.team2, match.day, gameLabel, match.league);
+  const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
+  const replayUrl = _ytCache.get(replayCacheKey) || "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
+  const onReplayClick = () => {
+    if (!_ytCache.get(replayCacheKey)) fetchYouTubeReplay(match.team1, match.team2, match.day, gameLabel, match.league);
   };
 
   const openLiveYT = async () => {
+    const w = window.open("about:blank", "_blank");
     const url = await fetchYouTubeLive(match.team1Name, match.team2Name, gameLabel);
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    if (url && w) { w.location.href = url; } else if (w) { w.close(); }
   };
 
   // Détail des points gagnés sur ce match précis, uniquement si un pari a été
@@ -1955,14 +2039,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
         {running ? (
           streamUrl ? (
-            <button
-              onClick={() => window.open(streamUrl, "_blank", "noopener,noreferrer")}
+            <a
+              href={streamUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none" }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
-            </button>
+            </a>
           ) : useRegionStreamFallback ? (
             <div style={{ position: "relative" }}>
               <button
@@ -1994,26 +2080,26 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       boxShadow: "0 8px 20px rgba(0,0,0,0.4)",
                     }}
                   >
-                    <button
-                      onClick={() => {
-                        setShowStreamPicker(false);
-                        window.open(twitchLiveUrl, "_blank", "noopener,noreferrer");
-                      }}
+                    <a
+                      href={twitchLiveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowStreamPicker(false)}
                       className="w-full text-left"
-                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", borderBottom: "1px solid #2a2a2a" }}
+                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", borderBottom: "1px solid #2a2a2a", textDecoration: "none" }}
                     >
                       Twitch
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowStreamPicker(false);
-                        window.open(youtubeLiveUrl, "_blank", "noopener,noreferrer");
-                      }}
+                    </a>
+                    <a
+                      href={youtubeLiveUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setShowStreamPicker(false)}
                       className="w-full text-left"
-                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent" }}
+                      style={{ display: "block", padding: "10px 14px", color: "#fff", fontSize: "12px", fontWeight: 700, background: "transparent", textDecoration: "none" }}
                     >
                       YouTube
-                    </button>
+                    </a>
                   </div>
                 </>
               )}
@@ -2225,27 +2311,33 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           <div onClick={() => setShowReplayPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                           <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: "10px", padding: "12px 16px", minWidth: "220px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
                             {replayDaysText && <p style={{ color: "#ccc", fontSize: "12px", fontWeight: 600, marginBottom: "10px" }}>{replayDaysText}</p>}
-                            <button
-                              onClick={() => { window.open(cs2KickUrl, "_blank", "noopener,noreferrer"); setShowReplayPopup(false); }}
+                            <a
+                              href={cs2KickUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setShowReplayPopup(false)}
                               className="flex items-center gap-2 w-full"
-                              style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: accent + "22", border: "1px solid " + accent + "44", borderRadius: "8px", padding: "8px 12px" }}
+                              style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: accent + "22", border: "1px solid " + accent + "44", borderRadius: "8px", padding: "8px 12px", textDecoration: "none" }}
                             >
                               <Play size={14} fill={accent} color={accent} />
                               <span style={{ color: accent }}>Voir sur Kick</span>
-                            </button>
+                            </a>
                           </div>
                         </>
                       )}
                     </div>
                   ) : (
-                    <button
-                      onClick={openReplayYT}
+                    <a
+                      href={replayUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onReplayClick}
                       className="flex items-center gap-1.5"
-                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}
+                      style={{ color: accent, fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", textDecoration: "none" }}
                     >
                       <Play size={12} />
                       {T.replay}
-                    </button>
+                    </a>
                   )
                 ) : (
                   <span />
@@ -2288,19 +2380,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                     const bothFilled = g.a !== "" && g.b !== "";
                     const bothTouched = touchedFields[i + "-a"] && touchedFields[i + "-b"];
                     const showError = bothFilled && bothTouched && !isValidScore(g.a, g.b);
-                    // Erreur spécifique "série déjà gagnée" : seulement sur
-                    // la Map 2 (i === 1), et seulement une fois qu'elle est
-                    // entièrement saisie/quittée (même logique que showError
-                    // ci-dessus, jamais pendant que l'utilisateur tape).
-                    const showOverrunError = i === 1 && bothFilled && bothTouched && !!overrunWinner;
+                    const mapErr = mapErrors[i];
+                    const showMapError = !!mapErr && bothFilled && bothTouched;
                     return (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
                           <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
-                          {showOverrunError ? (
+                          {showMapError ? (
                             <span className="flex items-center gap-1" style={{ color: "#e05252", fontSize: "10px", textAlign: "right" }}>
                               <AlertCircle size={12} />
-                              {overrunWinner} {T.alreadyWonSuffix}
+                              {mapErr.name} {T[mapErr.key]}
                             </span>
                           ) : (
                             showError && (
