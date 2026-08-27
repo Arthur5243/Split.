@@ -3414,7 +3414,6 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   };
 
   const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
-  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.88)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -3440,7 +3439,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   if (comp && phase) {
     if (!serie && !loading) {
       return (
-        <div style={pageStyle}>
+        <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
           <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
         </div>
@@ -3448,7 +3447,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     }
     if (!serie || !currentData) {
       return (
-        <div style={pageStyle}>
+        <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
           <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>
         </div>
@@ -3469,7 +3468,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     });
 
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>
           {backBtn()}
           {titleSpan(serie.title + " · " + phaseLabel, accent)}
