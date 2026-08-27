@@ -760,15 +760,12 @@ router.get("/api/cs2-events", async (req, res) => {
       return res.json(cs2EventsCache.data);
     }
 
-    const all = await pandaFetch("/" + CS2_SLUG + "/series?sort=-begin_at&per_page=50");
+    const all = await pandaFetch("/" + CS2_SLUG + "/series?sort=-begin_at&per_page=100");
     const deduped = all || [];
 
     const result = { major: [], iem: [], blast: [], esl: [], pgl: [] };
 
     for (const s of deduped) {
-      const tier = (s.tier || "").toLowerCase();
-      if (!["s", "a", "b"].includes(tier)) continue;
-
       const leagueName = s.league?.name || "";
       const serieName = s.full_name || s.name || "";
       const comp = classifyCS2Competition(leagueName, serieName);
@@ -789,7 +786,7 @@ router.get("/api/cs2-events", async (req, res) => {
         status: s.status || "unknown",
         begin_at: s.begin_at,
         end_at: s.end_at,
-        tier: tier,
+        tier: (s.tier || "").toLowerCase(),
         type: comp,
         year: s.year,
       };
