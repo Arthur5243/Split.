@@ -153,7 +153,53 @@ const LOGOS = {
   VARR: "/logos/varr.png",
   ICE: "/logos/ice.png",
   VIT: "/logos/vit.png",
+  GM: "/logos/gm.png",
+  NRG: "/logos/nrg.png",
+  TSM: "/logos/tsm.png",
+  NIP: "/logos/nip.png",
+  SR: "/logos/sr.png",
+  TSPIRIT: "/logos/tspirit.png",
 };
+
+const VLR_LOGOS = {
+  "team liquid": "/logos/tl.png",
+  "karmine corp": "/logos/kc.png",
+  "g2 esports": "/logos/g2.png",
+  "paper rex": "/logos/pr.png",
+  "joblife": "/logos/jl.png",
+  "team heretics": "/logos/th.png",
+  "b8 esports": "/logos/b8.png",
+  "bleed esports": "/logos/bst.png",
+  "mibr": "/logos/mibr.png",
+  "evil geniuses": "/logos/eg.png",
+  "enterprise esports": "/logos/eg.png",
+  "onic esports": "/logos/ong.png",
+  "fut esports": "/logos/fut.png",
+  "zeta division": "/logos/zeta.png",
+  "team vitality": "/logos/vit.png",
+  "ice esports": "/logos/ice.png",
+  "pain gaming": "/logos/pain.png",
+  "varrel": "/logos/varr.png",
+  "drx": "/logos/drx.png",
+  "gentle mates": "/logos/gm.png",
+  "nrg esports": "/logos/nrg.png",
+  "nrg": "/logos/nrg.png",
+  "tsm": "/logos/tsm.png",
+  "ninjas in pyjamas": "/logos/nip.png",
+  "shopify rebellion": "/logos/sr.png",
+  "team spirit": "/logos/tspirit.png",
+  "natus vincere": "/logos/envy.png",
+  "eintracht frankfurt": "/logos/fort.webp",
+  "xerxia esports": "/logos/xe.png",
+  "talon esports": "/logos/ts.png",
+  "w7m esports": "/logos/w7m.png",
+  "bbl esports": "/logos/bst.png",
+  "pcific esports": "/logos/pr.png",
+  "fnatic": "/logos/kc.png",
+};
+function vlrTeamLogo(name) {
+  return VLR_LOGOS[(name || "").toLowerCase()] || null;
+}
 
 // Langues disponibles dans le sélecteur
 const LANGS = [
@@ -2352,6 +2398,7 @@ function BracketMatchCard({ match, accent }) {
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
+        const logo = vlrTeamLogo(team.name);
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
@@ -2367,13 +2414,16 @@ function BracketMatchCard({ match, accent }) {
               padding: "9px 12px 9px 10px",
               opacity: lost ? 0.3 : 1,
             }}>
-              <span style={{
-                fontSize: 12, fontWeight: won ? 700 : 500,
-                color: won ? "#fff" : "#aaa",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
-              }}>
-                {team.name || "TBD"}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, overflow: "hidden" }}>
+                {logo && <img src={logo} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: "contain", flexShrink: 0 }} />}
+                <span style={{
+                  fontSize: 12, fontWeight: won ? 700 : 500,
+                  color: won ? "#fff" : "#aaa",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
+                }}>
+                  {team.name || "TBD"}
+                </span>
+              </div>
               <span style={{
                 fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 10,
                 color: won ? accent : "#555",
