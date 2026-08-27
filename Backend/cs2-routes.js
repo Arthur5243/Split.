@@ -851,12 +851,29 @@ function classifyCS2MatchRound(series) {
   return { bracket: "upper", round: s, sort: 5 };
 }
 
+function roundDisplayName(bracket, sort) {
+  if (bracket === "grand_final") return "Grand Final";
+  const p = bracket === "upper" ? "Upper Bracket" : "Lower Bracket";
+  if (sort === 5) return p + " Round 1";
+  if (sort === 10) return p + " Quarterfinals";
+  if (sort === 20) return p + " Semifinals";
+  if (sort === 25) return p;
+  if (sort === 30) return p + " Final";
+  if (sort === 35) return p + " Decider";
+  if (sort === 40) return "Quarterfinals";
+  if (sort === 45) return "Semifinals";
+  return p;
+}
+
 function buildCS2Bracket(matches) {
   const rounds = {};
   for (const m of matches) {
-    const key = m.round;
-    if (!rounds[key]) rounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
+    const key = m.bracket + ":" + m.sort;
+    if (!rounds[key]) rounds[key] = { name: roundDisplayName(m.bracket, m.sort), bracket: m.bracket, sort: m.sort, matches: [] };
     rounds[key].matches.push(m);
+  }
+  for (const r of Object.values(rounds)) {
+    r.matches.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   }
   const upper = Object.values(rounds).filter((r) => r.bracket === "upper").sort((a, b) => a.sort - b.sort);
   const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
