@@ -2665,7 +2665,7 @@ function BracketMatchCard({ match, accent }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
@@ -2798,25 +2798,31 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             }}>
               {qualifiedLabel}
             </div>
-            {qualSlots.map((winner, mi) => (
-              <div key={"q" + mi} style={{
-                position: "absolute",
-                left: rounds.length * (CARD_W + COL_GAP),
-                top: yPositions[rounds.length - 1][mi] + (CARD_H - QUAL_H) / 2 + LABEL_H,
-                width: CARD_W, height: QUAL_H,
-                borderRadius: 8, overflow: "hidden",
-                background: winner ? `linear-gradient(90deg, ${accent}20 0%, #161616 100%)` : "#161616",
-                border: `1px solid ${winner ? accent + "40" : "rgba(255,255,255,0.08)"}`,
-                display: "flex", alignItems: "center",
-              }}>
-                <div style={{ width: 3, alignSelf: "stretch", background: winner ? accent : "transparent" }} />
-                <span style={{
-                  flex: 1, padding: "0 12px", fontSize: 12, fontWeight: 700,
-                  color: winner ? "#fff" : "#555",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>{winner?.name || "TBD"}</span>
-              </div>
-            ))}
+            {qualSlots.map((winner, mi) => {
+              const boxText = qualifiedIsLabel ? qualifiedLabel : (winner?.name || "TBD");
+              const isActive = qualifiedIsLabel || !!winner;
+              return (
+                <div key={"q" + mi} style={{
+                  position: "absolute",
+                  left: rounds.length * (CARD_W + COL_GAP),
+                  top: yPositions[rounds.length - 1][mi] + (CARD_H - QUAL_H) / 2 + LABEL_H,
+                  width: CARD_W, height: QUAL_H,
+                  borderRadius: 8, overflow: "hidden",
+                  background: isActive ? `linear-gradient(90deg, ${accent}20 0%, #161616 100%)` : "#161616",
+                  border: `1px solid ${isActive ? accent + "40" : "rgba(255,255,255,0.08)"}`,
+                  display: "flex", alignItems: "center",
+                }}>
+                  <div style={{ width: 3, alignSelf: "stretch", background: isActive ? accent : "transparent" }} />
+                  <span style={{
+                    flex: 1, padding: "0 12px", fontSize: qualifiedIsLabel ? 10 : 12, fontWeight: qualifiedIsLabel ? 800 : 700,
+                    color: isActive ? (qualifiedIsLabel ? accent : "#fff") : "#555",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    textTransform: qualifiedIsLabel ? "uppercase" : "none",
+                    letterSpacing: qualifiedIsLabel ? "0.06em" : "normal",
+                  }}>{boxText}</span>
+                </div>
+              );
+            })}
           </>
         )}
       </div>
@@ -3120,12 +3126,12 @@ function BracketPage({ vlrEvents, onBack, T }) {
     </div>
   );
 
-  const renderBracketSection = (bracket, accentColor) => {
+  const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
     return dragContainer(<>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={T.bracketQualified} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={T.bracketQualified} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} />}
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
     </>);
   };
 
@@ -3458,12 +3464,12 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     </div>
   );
 
-  const renderBracketSection = (bracket, accentColor) => {
+  const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
     return dragContainer(<>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={T.bracketQualified} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={T.bracketQualified} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} />}
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
     </>);
   };
 
@@ -3545,7 +3551,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
                 </div>
               )}
               {hasStandings && <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />}
-              {hasBracket && renderBracketSection(b, accent)}
+              {hasBracket && renderBracketSection(b, accent, phase === "group_stage")}
             </div>
           );
         })}
