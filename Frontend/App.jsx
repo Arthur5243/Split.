@@ -119,6 +119,7 @@ const BIO_LINK_RE = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|discord\.|twitc
 // Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
 // utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
 const LOGOS = {
+  XIP: "/logos/xe.png",
   XE: "/logos/xe.png",
   TS: "/logos/ts.png",
   DRX: "/logos/drx.png",
@@ -160,6 +161,7 @@ const LOGOS = {
   TSM: "/logos/tsm.png",
   NIP: "/logos/nip.png",
   SR: "/logos/sr.png",
+  SP: "/logos/tspirit.png",
   TSPIRIT: "/logos/tspirit.png",
   SPIR: "/logos/tspirit.png",
   NAVI: "/logos/envy.png",
@@ -240,6 +242,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Résultats RLCS · toutes les régions",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
+    cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
@@ -303,6 +306,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS results · all regions",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
+    cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
@@ -366,6 +370,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Resultados RLCS · todas las regiones",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceanía",
     cs2CircuitToggleShow: "Ver el circuito CS2", cs2CircuitToggleHide: "Ocultar el circuito",
+    cs2BracketShow: "Ver Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase de grupos", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Ningún evento CS2 disponible",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Inspirado en el sistema regional de Valorant, pero sin ligas cerradas: los equipos progresan por clasificación, no por franquicia.",
     cs2CircuitRegions: "Regiones", cs2CircuitRegionsDesc: "3 grandes regiones: Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking regional", cs2CircuitRankingDesc: "Cada equipo se clasifica en su región según sus resultados recientes.",
@@ -427,6 +432,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Risultati RLCS · tutte le regioni",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "Vedi il circuito CS2", cs2CircuitToggleHide: "Nascondi il circuito",
+    cs2BracketShow: "Vedi Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase a gironi", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Nessun evento CS2 disponibile",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Ispirato al sistema regionale di Valorant, ma senza leghe chiuse: le squadre avanzano tramite il ranking, non per franchising.",
     cs2CircuitRegions: "Regioni", cs2CircuitRegionsDesc: "3 grandi regioni seguite: Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking regionale", cs2CircuitRankingDesc: "Ogni squadra è classificata nella propria regione in base ai risultati recenti.",
@@ -488,6 +494,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS結果・全リージョン",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "CS2サーキットを見る", cs2CircuitToggleHide: "サーキットを隠す",
+    cs2BracketShow: "ブラケットを見る", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "グループステージ", cs2BracketPlayoffs: "プレイオフ", cs2BracketPlayIns: "プレイイン", cs2BracketFinal: "決勝", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "CS2イベントなし",
     cs2CircuitTitle: "CS2サーキット", cs2CircuitIntro: "Valorantの地域制度を参考にしつつ、クローズドリーグはなし：チームはフランチャイズではなくランキングで昇格します。",
     cs2CircuitRegions: "地域", cs2CircuitRegionsDesc: "追跡する3大地域：Europe、Americas、Asia。",
     cs2CircuitRanking: "地域ランキング", cs2CircuitRankingDesc: "各チームは直近の結果に基づき自地域内でランク付けされます。",
@@ -549,6 +556,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS-Ergebnisse · alle Regionen",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Ozeanien",
     cs2CircuitToggleShow: "CS2-Circuit anzeigen", cs2CircuitToggleHide: "Circuit ausblenden",
+    cs2BracketShow: "Bracket anzeigen", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Gruppenphase", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Kein CS2-Event verfügbar",
     cs2CircuitTitle: "CS2-Circuit", cs2CircuitIntro: "Inspiriert vom Valorant-Regionalsystem, aber ohne geschlossene Ligen: Teams steigen über das Ranking auf, nicht über ein Franchise.",
     cs2CircuitRegions: "Regionen", cs2CircuitRegionsDesc: "3 große Regionen im Blick: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regionales Ranking", cs2CircuitRankingDesc: "Jedes Team wird innerhalb seiner Region nach den jüngsten Ergebnissen eingestuft.",
@@ -610,6 +618,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS赛果 · 所有赛区",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "大洋洲",
     cs2CircuitToggleShow: "查看CS2赛事体系", cs2CircuitToggleHide: "隐藏赛事体系",
+    cs2BracketShow: "查看赛程", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "小组赛", cs2BracketPlayoffs: "淘汰赛", cs2BracketPlayIns: "入围赛", cs2BracketFinal: "决赛", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "暂无CS2赛事",
     cs2CircuitTitle: "CS2赛事体系", cs2CircuitIntro: "灵感来自Valorant的分区制度，但没有封闭联赛：战队凭积分晋级，而非特许经营。",
     cs2CircuitRegions: "赛区", cs2CircuitRegionsDesc: "追踪三大赛区：Europe、Americas、Asia。",
     cs2CircuitRanking: "赛区排名", cs2CircuitRankingDesc: "每支战队根据近期战绩在其赛区内排名。",
@@ -844,7 +853,7 @@ const TEAM_CODE_OVERRIDES = {
   ETER: "EF",
   JOBL: "JL",
   "BBL ": "BBL",
-  FIRE: "FFX",
+  FIRE: "FF",
   PCIF: "PCIF",
   ENTE: "ENT",
   EINT: "FORT",
@@ -912,7 +921,7 @@ const NAME_CODE_OVERRIDES = {
   "FUT Esports": "FUT",
   "Gentle Mates": "M8",
   "Natus Vincere": "NAVI",
-  "Team Spirit": "TSPIRIT",
+  "Team Spirit": "SP",
   "Shopify Rebellion": "SR",
   "Ninjas in Pyjamas": "NIP",
   "NRG Esports": "NRG",
@@ -920,7 +929,7 @@ const NAME_CODE_OVERRIDES = {
   "GIANTX": "GIANTX",
   "Eternal Fire": "EF",
   "BBL Esports": "BBL",
-  "Fire Flux Esports": "FFX",
+  "Fire Flux Esports": "FF",
   "PCIFIC Esports": "PCIF",
   "Enterprise Esports": "ENT",
   "Eintracht Frankfurt": "FORT",
@@ -954,7 +963,7 @@ const NAME_CODE_OVERRIDES = {
   "KIWOOM DRX": "DRX",
   "Fluxo W7M": "W7M",
   "ENVY": "ENVY",
-  "Xerxia Esports": "XE",
+  "Xerxia Esports": "XIP",
   "Talon Esports": "TS",
   "W7M Esports": "W7M",
   "T1": "T1",
@@ -1144,6 +1153,18 @@ function abbreviateCS2League(name) {
   return CS2_LEAGUE_ABBREV[name.toLowerCase().trim()] || name;
 }
 
+function classifyCS2MatchTier(leagueName, serieName) {
+  const l = (leagueName || "").toLowerCase();
+  const s = (serieName || "").toLowerCase();
+  const combined = l + " " + s;
+  if (combined.includes("major") && !combined.includes("iem")) return { label: "Major", color: "#FFD700" };
+  if (l.includes("iem") || l.includes("intel extreme masters")) return { label: "IEM", color: "#00BFFF" };
+  if (l.includes("blast")) return { label: "Blast", color: "#FF6B00" };
+  if (l.includes("esl")) return { label: "ESL", color: "#0078D4" };
+  if (l.includes("pgl")) return { label: "PGL", color: "#E040FB" };
+  return null;
+}
+
 function transformMatchCS2(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -1156,6 +1177,7 @@ function transformMatchCS2(m) {
 
   const rawLeague = (m.league && m.league.name) || "CS2";
   const rawPhase = (m.serie && m.serie.full_name) || (m.tournament && m.tournament.name) || "";
+  const matchTier = classifyCS2MatchTier(rawLeague, rawPhase);
   // Cas précis demandé : "European Pro League" + "Season 6" (sans année)
   // -> on ajoute "2026" pour que ce soit clair (l'API ne le précise pas).
   const phase = rawLeague.toLowerCase().trim() === "european pro league" && /^season\s*\d+$/i.test(rawPhase.trim()) ? rawPhase + " 2026" : rawPhase;
@@ -1180,6 +1202,7 @@ function transformMatchCS2(m) {
     score1: score1,
     score2: score2,
     tier: m.tier || (m.league && m.league.name) || null,
+    matchTier: matchTier,
     // Score par map (13-9 etc.), récupéré directement depuis PandaScore côté
     // backend cette fois (/api/cs2-results — voir Backend/cs2-scores.js),
     // sans pont externe : PandaScore fournit lui-même le round_score par map
@@ -2027,6 +2050,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
           <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            {match.matchTier && (
+              <span style={{ color: match.matchTier.color, fontWeight: 800, fontSize: 9, border: `1px solid ${match.matchTier.color}44`, borderRadius: 4, padding: "1px 5px", marginRight: 5 }}>{match.matchTier.label}</span>
+            )}
             {match.league} • {match.phase}
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
@@ -3293,6 +3319,260 @@ function BracketPage({ vlrEvents, onBack, T }) {
   );
 }
 
+const CS2_BRACKET_COMPS = [
+  { key: "major", labelKey: "cs2BracketMajor", color: "#FFD700", icon: "🏆" },
+  { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡" },
+  { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥" },
+  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
+  { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
+];
+
+function getCS2Phases(compKey, serieName) {
+  const s = (serieName || "").toLowerCase();
+  if (compKey === "major" || (compKey === "iem" && s.includes("major"))) {
+    return [
+      { key: "stage1", labelKey: "cs2BracketStage1" },
+      { key: "stage2", labelKey: "cs2BracketStage2" },
+      { key: "stage3", labelKey: "cs2BracketStage3" },
+      { key: "playoffs", labelKey: "cs2BracketPlayoffs" },
+    ];
+  }
+  if (compKey === "blast" && s.includes("bounty")) {
+    return [
+      { key: "play_ins", labelKey: "cs2BracketPlayIns" },
+      { key: "final", labelKey: "cs2BracketFinal" },
+    ];
+  }
+  return [
+    { key: "group_stage", labelKey: "cs2BracketGroupStage" },
+    { key: "playoffs", labelKey: "cs2BracketPlayoffs" },
+  ];
+}
+
+function matchPhaseToTournament(phase, tournament) {
+  const tName = (tournament.name || "").toLowerCase();
+  if (phase.key === "stage1" && (tName.includes("stage 1") || tName.includes("challengers stage") || tName.includes("opening stage"))) return true;
+  if (phase.key === "stage2" && (tName.includes("stage 2") || tName.includes("legends stage") || tName.includes("elimination stage"))) return true;
+  if (phase.key === "stage3" && tName.includes("stage 3")) return true;
+  if (phase.key === "playoffs" && (tName.includes("playoff") || tName.includes("final") || tName.includes("champions stage"))) return true;
+  if (phase.key === "play_ins" && (tName.includes("play-in") || tName.includes("play_in") || tName.includes("open"))) return true;
+  if (phase.key === "final" && (tName.includes("final") || tName.includes("playoff"))) return true;
+  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("stage") || tName.includes("regular"))) return true;
+  return false;
+}
+
+function CS2BracketPage({ cs2Events, onBack, T }) {
+  const [comp, setComp] = useState(null);
+  const [serie, setSerie] = useState(null);
+  const [phase, setPhase] = useState(null);
+  const [bracketData, setBracketData] = useState({});
+  const [loading, setLoading] = useState(false);
+  const dragRef = React.useRef(null);
+  const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
+
+  const goBack = () => {
+    if (phase) setPhase(null);
+    else if (serie) setSerie(null);
+    else if (comp) setComp(null);
+    else onBack();
+  };
+
+  const selectSerie = async (s) => {
+    setSerie(s);
+    const cacheKey = "cs2:" + s.serie_id;
+    if (bracketData[cacheKey]) return;
+    setLoading(true);
+    try {
+      const res = await fetch(API_BASE + "/api/cs2-bracket/" + s.serie_id);
+      if (res.ok) {
+        const data = await res.json();
+        setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
+      }
+    } catch (e) { /* silent */ }
+    finally { setLoading(false); }
+  };
+
+  const currentData = serie ? bracketData["cs2:" + serie.serie_id] : null;
+
+  const onPointerDown = (e) => { if (!dragRef.current) return; dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
+  const onPointerMove = (e) => { if (!dragState.current.active || !dragRef.current) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
+  const onPointerUp = () => { dragState.current.active = false; };
+
+  const dragContainer = (children) => (
+    <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
+      style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "20px 16px 40px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
+      {children}
+    </div>
+  );
+
+  const renderBracketSection = (bracket, accentColor) => {
+    if (!bracket) return null;
+    return dragContainer(<>
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs />}
+    </>);
+  };
+
+  const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
+  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.88)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
+  const headerStyle = {
+    display: "flex", alignItems: "center", gap: 12,
+    padding: "16px 16px 14px",
+    background: "#0A0A0A",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    position: "sticky", top: 0, zIndex: 20,
+  };
+  const backBtn = (fn) => (
+    <button onClick={fn || goBack} style={{
+      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+      color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px",
+      borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center",
+    }}>←</button>
+  );
+  const titleSpan = (text, color) => (
+    <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
+  );
+
+  const compInfo = CS2_BRACKET_COMPS.find((c) => c.key === comp);
+  const accent = compInfo?.color || "#FFD700";
+
+  // --- Step 4: Show phase content ---
+  if (comp && serie && phase && currentData) {
+    const phases = getCS2Phases(comp, serie.title);
+    const phaseInfo = phases.find((p) => p.key === phase);
+    const phaseLabel = phaseInfo ? (T[phaseInfo.labelKey] || phaseInfo.key) : phase;
+
+    const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournament({ key: phase }, p));
+    const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
+
+    const hasGroupData = fallbackPhases.some((p) => p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0);
+    const hasBracketData = fallbackPhases.some((p) => {
+      const b = p.playoffs?.bracket;
+      return b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+    });
+
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          {backBtn()}
+          {titleSpan(serie.title + " · " + phaseLabel, accent)}
+        </div>
+        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        {!loading && hasGroupData && fallbackPhases.map((p) => (
+          <div key={p.tournament_id}>
+            {Object.keys(p.group_stage?.standings || {}).length > 0 && (
+              <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />
+            )}
+          </div>
+        ))}
+        {!loading && hasBracketData && fallbackPhases.map((p) => (
+          <div key={p.tournament_id}>
+            {renderBracketSection(p.playoffs?.bracket, accent)}
+          </div>
+        ))}
+        {!loading && !hasGroupData && !hasBracketData && (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
+        )}
+      </div>
+    );
+  }
+
+  // --- Step 3: Choose phase ---
+  if (comp && serie) {
+    const phases = getCS2Phases(comp, serie.title);
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(serie.title, accent)}</div>
+        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+          {phases.map((p) => (
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{
+              background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
+              border: `1px solid ${accent}20`,
+              borderRadius: 10, padding: "24px 18px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              boxShadow: `0 2px 12px ${accent}08`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
+              </div>
+              <ChevronRight size={16} color="#444" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // --- Step 2: Choose serie (event) ---
+  if (comp) {
+    const events = cs2Events ? (cs2Events[comp] || []) : [];
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
+        {events.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 16px 32px" }}>
+          {events.map((ev) => (
+            <button key={ev.serie_id} onClick={() => selectSerie(ev)} style={{
+              background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
+              padding: "14px 14px", cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "space-between", width: "100%",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            }}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#ccc" }}>{ev.title}</div>
+                <div style={{ fontSize: 10, color: "#555", marginTop: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                  {ev.status === "running" && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
+                  {ev.begin_at && ev.begin_at.slice(0, 10)}
+                </div>
+              </div>
+              <ChevronRight size={14} color="#444" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // --- Step 1: Choose competition ---
+  return (
+    <div style={pageStylePlain}>
+      <div style={headerStyle}>
+        {backBtn(onBack)}
+        {titleSpan("Bracket CS2")}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+        {CS2_BRACKET_COMPS.map((c) => {
+          const events = cs2Events ? (cs2Events[c.key] || []) : [];
+          const hasRunning = events.some((e) => e.status === "running");
+          return (
+            <button key={c.key} onClick={() => setComp(c.key)} style={{
+              background: events.length > 0 ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#111",
+              border: events.length > 0 ? `1px solid ${c.color}30` : "1px solid rgba(255,255,255,0.04)",
+              borderRadius: 12, padding: "32px 12px", cursor: "pointer",
+              opacity: events.length > 0 ? 1 : 0.35,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+              boxShadow: events.length > 0 ? `0 4px 20px ${c.color}10` : "none",
+              transition: "transform 0.15s",
+              position: "relative",
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+              {hasRunning && (
+                <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
+              )}
+              {events.length > 0 && !hasRunning && (
+                <span style={{ fontSize: 9, color: "#555" }}>{events.length} event{events.length > 1 ? "s" : ""}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
@@ -3474,7 +3754,10 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage }) {
+  if (showCs2BracketPage) {
+    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} />;
+  }
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -3586,6 +3869,16 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
             </button>
           );
         })}
+      </div>
+
+      <div className="px-4 pb-2">
+        <button
+          onClick={() => setShowCs2BracketPage(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#FFD700", fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
+        >
+          <span style={{ fontSize: 13 }}>▶</span>
+          {T.cs2BracketShow}
+        </button>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -4748,6 +5041,8 @@ export default function ClutchApp() {
 
   const [vlrEvents, setVlrEvents] = useState({});
   const [showBracketPage, setShowBracketPage] = useState(false);
+  const [cs2Events, setCs2Events] = useState(null);
+  const [showCs2BracketPage, setShowCs2BracketPage] = useState(false);
 
   const T = STR[currentLang] || STR.fr;
   const isLight = false;
@@ -4991,6 +5286,20 @@ export default function ClutchApp() {
     }
     loadVlrEvents();
     const interval = setInterval(loadVlrEvents, 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    async function loadCs2Events() {
+      try {
+        const res = await fetch(API_BASE + "/api/cs2-events");
+        if (!res.ok) return;
+        const data = await res.json();
+        setCs2Events(data);
+      } catch (e) { /* silencieux */ }
+    }
+    loadCs2Events();
+    const interval = setInterval(loadCs2Events, 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -5357,6 +5666,9 @@ export default function ClutchApp() {
               loading={cs2DataLoading}
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "cs2", region)}
               toggleMatchNotif={toggleMatchNotif}
+              cs2Events={cs2Events}
+              showCs2BracketPage={showCs2BracketPage}
+              setShowCs2BracketPage={setShowCs2BracketPage}
             />
           )}
           {activeTab === "rocketleague" && (

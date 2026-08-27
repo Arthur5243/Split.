@@ -716,4 +716,289 @@ router.get("/api/cs2-match-history", (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// CS2 Bracket system — /api/cs2-events + /api/cs2-bracket/:serieId
+// ---------------------------------------------------------------------------
+
+const cs2EventsCache = { data: null, at: 0 };
+const CS2_EVENTS_TTL = 10 * 60 * 1000;
+
+function classifyCS2Competition(leagueName, serieName) {
+  const l = (leagueName || "").toLowerCase();
+  const s = (serieName || "").toLowerCase();
+  const combined = l + " " + s;
+
+  if (combined.includes("major") && !combined.includes("iem"))
+    return "major";
+  if (l.includes("iem") || l.includes("intel extreme masters"))
+    return combined.includes("major") ? "iem_major" : "iem";
+  if (l.includes("blast"))
+    return combined.includes("bounty") ? "blast_bounty" : "blast";
+  if (l.includes("esl"))
+    return "esl";
+  if (l.includes("pgl"))
+    return "pgl";
+  return null;
+}
+
+function cs2CompetitionLabel(comp) {
+  const labels = {
+    major: "Major",
+    iem_major: "IEM Major",
+    iem: "IEM",
+    blast: "Blast",
+    blast_bounty: "Blast Bounty",
+    esl: "ESL",
+    pgl: "PGL",
+  };
+  return labels[comp] || comp;
+}
+
+router.get("/api/cs2-events", async (req, res) => {
+  try {
+    if (cs2EventsCache.data && Date.now() - cs2EventsCache.at < CS2_EVENTS_TTL) {
+      return res.json(cs2EventsCache.data);
+    }
+
+    const all = await pandaFetch("/" + CS2_SLUG + "/series?sort=-begin_at&per_page=50");
+    const deduped = all || [];
+
+    const result = { major: [], iem: [], blast: [], esl: [], pgl: [] };
+
+    for (const s of deduped) {
+      const tier = (s.tier || "").toLowerCase();
+      if (!["s", "a", "b"].includes(tier)) continue;
+
+      const leagueName = s.league?.name || "";
+      const serieName = s.full_name || s.name || "";
+      const comp = classifyCS2Competition(leagueName, serieName);
+      if (!comp) continue;
+
+      const bucket =
+        comp === "major" ? "major" :
+        comp === "iem_major" || comp === "iem" ? "iem" :
+        comp === "blast" || comp === "blast_bounty" ? "blast" :
+        comp === "esl" ? "esl" :
+        comp === "pgl" ? "pgl" : null;
+      if (!bucket) continue;
+
+      const info = {
+        serie_id: s.id,
+        title: serieName || leagueName,
+        league: leagueName,
+        status: s.status || "unknown",
+        begin_at: s.begin_at,
+        end_at: s.end_at,
+        tier: tier,
+        type: comp,
+        year: s.year,
+      };
+
+      result[bucket].push(info);
+    }
+
+    for (const key of Object.keys(result)) {
+      result[key].sort((a, b) => {
+        if (a.status === "running" && b.status !== "running") return -1;
+        if (b.status === "running" && a.status !== "running") return 1;
+        return (b.begin_at || "").localeCompare(a.begin_at || "");
+      });
+    }
+
+    cs2EventsCache.data = result;
+    cs2EventsCache.at = Date.now();
+    res.json(result);
+  } catch (e) {
+    console.error("cs2-events error:", e.message);
+    res.status(502).json({ error: "Impossible de récupérer les events CS2." });
+  }
+});
+
+const cs2BracketCache = new Map();
+const CS2_BRACKET_TTL = 5 * 60 * 1000;
+
+function classifyCS2Round(matchData) {
+  const tournamentName = (matchData._tournamentName || "").toLowerCase();
+  const matchName = (matchData.name || "").toLowerCase();
+
+  if (tournamentName.includes("playoff") || tournamentName.includes("final")) {
+    return "playoffs";
+  }
+  if (tournamentName.includes("play-in") || tournamentName.includes("play_in") || tournamentName.includes("play in")) {
+    return "play_ins";
+  }
+  if (tournamentName.includes("stage 1") || tournamentName.includes("stage 2") || tournamentName.includes("stage 3")) {
+    return "stage";
+  }
+  if (tournamentName.includes("group") || tournamentName.includes("round robin") || tournamentName.includes("swiss") || tournamentName.includes("elimination")) {
+    return "group_stage";
+  }
+  return "group_stage";
+}
+
+function classifyCS2MatchRound(series) {
+  const s = (series || "").toLowerCase().trim();
+  if (s.includes("grand final")) return { bracket: "grand_final", round: s, sort: 100 };
+  if (s.includes("upper") || s.includes("winners")) return { bracket: "upper", round: s, sort: 50 };
+  if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: 60 };
+  if (s.includes("semifinal")) return { bracket: "upper", round: s, sort: 45 };
+  if (s.includes("quarterfinal")) return { bracket: "upper", round: s, sort: 40 };
+  if (s.includes("final")) return { bracket: "grand_final", round: s, sort: 100 };
+  if (s.includes("round") || s.includes("group") || s.includes("swiss")) return { bracket: "group", round: s, sort: -1 };
+  return { bracket: "other", round: s, sort: -1 };
+}
+
+function buildCS2Bracket(matches) {
+  const rounds = {};
+  for (const m of matches) {
+    const key = m.round;
+    if (!rounds[key]) rounds[key] = { name: m.round, bracket: m.bracket, sort: m.sort, matches: [] };
+    rounds[key].matches.push(m);
+  }
+  const upper = Object.values(rounds).filter((r) => r.bracket === "upper").sort((a, b) => a.sort - b.sort);
+  const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
+  const grandFinal = Object.values(rounds).filter((r) => r.bracket === "grand_final").sort((a, b) => a.sort - b.sort);
+  return { upper, lower, grand_final: grandFinal };
+}
+
+router.get("/api/cs2-bracket/:serieId", async (req, res) => {
+  const { serieId } = req.params;
+  if (!/^\d+$/.test(serieId)) return res.status(400).json({ error: "serieId invalide" });
+
+  try {
+    const cacheKey = "cs2-bracket:" + serieId;
+    const cached = cs2BracketCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < CS2_BRACKET_TTL) {
+      return res.json(cached.data);
+    }
+
+    const [serie, tournamentsRaw] = await Promise.all([
+      pandaFetch("/" + CS2_SLUG + "/series/" + serieId),
+      pandaFetch("/" + CS2_SLUG + "/series/" + serieId + "/tournaments"),
+    ]);
+    const tournaments = Array.isArray(tournamentsRaw) && tournamentsRaw.length > 0
+      ? tournamentsRaw
+      : (serie.tournaments || []);
+
+    const phases = [];
+    const allTeams = new Set();
+
+    for (let ti = 0; ti < tournaments.length; ti++) {
+      const t = tournaments[ti];
+      const tName = t.name || "";
+      const tId = t.id;
+
+      let matches = [];
+      try {
+        if (ti > 0) await sleep(300);
+        matches = await pandaFetch("/" + CS2_SLUG + "/tournaments/" + tId + "/matches?per_page=100&sort=scheduled_at");
+      } catch (e) {
+        console.warn("cs2-bracket: skip tournament", tId, e.message);
+        continue;
+      }
+
+      const groupMatches = [];
+      const bracketMatches = [];
+
+      for (const m of matches) {
+        const t1 = m.opponents?.[0]?.opponent;
+        const t2 = m.opponents?.[1]?.opponent;
+        if (t1?.name) allTeams.add(t1.name);
+        if (t2?.name) allTeams.add(t2.name);
+
+        const results = m.results || [];
+        const r1 = t1 ? results.find((r) => r.team_id === t1.id) : null;
+        const r2 = t2 ? results.find((r) => r.team_id === t2.id) : null;
+
+        const roundName = m.name || tName;
+        const cl = classifyCS2MatchRound(roundName);
+
+        const match = {
+          match_id: m.id,
+          date: m.begin_at || m.scheduled_at,
+          status: m.status,
+          round: roundName,
+          round_normalized: cl.round,
+          bracket: cl.bracket,
+          sort: cl.sort,
+          team1: {
+            name: t1?.name || "TBD",
+            score: r1?.score != null ? String(r1.score) : "–",
+            is_winner: m.winner_id && t1 && m.winner_id === t1.id,
+            image_url: t1?.image_url || null,
+          },
+          team2: {
+            name: t2?.name || "TBD",
+            score: r2?.score != null ? String(r2.score) : "–",
+            is_winner: m.winner_id && t2 && m.winner_id === t2.id,
+            image_url: t2?.image_url || null,
+          },
+        };
+
+        if (cl.bracket === "group" || cl.bracket === "other") {
+          groupMatches.push(match);
+        } else {
+          bracketMatches.push(match);
+        }
+      }
+
+      const groupStandings = {};
+      for (const m of groupMatches) {
+        const grp = m.round || "Group";
+        if (!groupStandings[grp]) groupStandings[grp] = {};
+        for (const team of [m.team1, m.team2]) {
+          const name = team.name || "TBD";
+          if (name === "TBD") continue;
+          if (!groupStandings[grp][name]) groupStandings[grp][name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
+          const completed = (m.status || "").toLowerCase() === "finished";
+          if (completed) {
+            if (team.is_winner) groupStandings[grp][name].wins++;
+            else groupStandings[grp][name].losses++;
+            const score = parseInt(team.score, 10) || 0;
+            groupStandings[grp][name].maps_won += score;
+            const other = team === m.team1 ? m.team2 : m.team1;
+            groupStandings[grp][name].maps_lost += parseInt(other.score, 10) || 0;
+          }
+        }
+      }
+
+      const standings = {};
+      for (const [grp, teams] of Object.entries(groupStandings)) {
+        standings[grp] = Object.entries(teams)
+          .map(([name, s]) => ({ name, ...s, points: s.wins * 3 }))
+          .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
+      }
+
+      phases.push({
+        tournament_id: tId,
+        name: tName,
+        group_stage: { matches: groupMatches, standings },
+        playoffs: { bracket: buildCS2Bracket(bracketMatches) },
+        total_matches: matches.length,
+      });
+    }
+
+    const serieInfo = {
+      id: serie.id,
+      title: serie.full_name || serie.name || "",
+      league: serie.league?.name || "",
+      status: serie.status,
+      begin_at: serie.begin_at,
+      end_at: serie.end_at,
+    };
+
+    const result = {
+      serie: serieInfo,
+      phases,
+      teams: [...allTeams].sort(),
+    };
+
+    cs2BracketCache.set(cacheKey, { data: result, at: Date.now() });
+    res.json(result);
+  } catch (e) {
+    console.error("cs2-bracket error:", e.message);
+    res.status(502).json({ error: "Impossible de récupérer le bracket CS2." });
+  }
+});
+
 export default router;
