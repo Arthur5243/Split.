@@ -875,10 +875,18 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
       return res.json(cached.data);
     }
 
-    const [serie, tournamentsRaw] = await Promise.all([
-      pandaFetch("/" + CS2_SLUG + "/series/" + serieId),
-      pandaFetch("/" + CS2_SLUG + "/series/" + serieId + "/tournaments"),
-    ]);
+    let serie, tournamentsRaw;
+    try {
+      [serie, tournamentsRaw] = await Promise.all([
+        pandaFetch("/" + CS2_SLUG + "/series/" + serieId),
+        pandaFetch("/" + CS2_SLUG + "/series/" + serieId + "/tournaments"),
+      ]);
+    } catch (e1) {
+      [serie, tournamentsRaw] = await Promise.all([
+        pandaFetch("/series/" + serieId),
+        pandaFetch("/series/" + serieId + "/tournaments"),
+      ]);
+    }
     const tournaments = Array.isArray(tournamentsRaw) && tournamentsRaw.length > 0
       ? tournamentsRaw
       : (serie.tournaments || []);
@@ -894,7 +902,11 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
       let matches = [];
       try {
         if (ti > 0) await sleep(300);
-        matches = await pandaFetch("/" + CS2_SLUG + "/tournaments/" + tId + "/matches?per_page=100&sort=scheduled_at");
+        try {
+          matches = await pandaFetch("/" + CS2_SLUG + "/tournaments/" + tId + "/matches?per_page=100&sort=scheduled_at");
+        } catch (e2) {
+          matches = await pandaFetch("/tournaments/" + tId + "/matches?per_page=100&sort=scheduled_at");
+        }
       } catch (e) {
         console.warn("cs2-bracket: skip tournament", tId, e.message);
         continue;

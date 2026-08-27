@@ -2604,8 +2604,9 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
 }
 
 function BracketMatchCard({ match, accent }) {
-  const isCompleted = (match.status || "").toLowerCase() === "completed";
-  const isLive = (match.status || "").toLowerCase().includes("live");
+  const st = (match.status || "").toLowerCase();
+  const isCompleted = st === "completed" || st === "finished";
+  const isLive = st.includes("live") || st === "running";
   const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
   return (
     <div style={{
