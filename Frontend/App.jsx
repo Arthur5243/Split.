@@ -3438,6 +3438,14 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
 
   // --- Step 3: Show phase content ---
   if (comp && phase) {
+    if (!serie && !loading) {
+      return (
+        <div style={pageStyle}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
+        </div>
+      );
+    }
     if (!serie || !currentData) {
       return (
         <div style={pageStyle}>
@@ -3502,14 +3510,6 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     const serieName = bestEvent?.title || serie?.title || "";
     const phases = getCS2Phases(comp, serieName);
 
-    if (events.length === 0) {
-      return (
-        <div style={pageStylePlain}>
-          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
-        </div>
-      );
-    }
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
@@ -3547,21 +3547,17 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
           const hasRunning = events.some((e) => e.status === "running");
           return (
             <button key={c.key} onClick={() => setComp(c.key)} style={{
-              background: events.length > 0 ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#111",
-              border: events.length > 0 ? `1px solid ${c.color}30` : "1px solid rgba(255,255,255,0.04)",
+              background: `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)`,
+              border: `1px solid ${c.color}30`,
               borderRadius: 12, padding: "32px 12px", cursor: "pointer",
-              opacity: events.length > 0 ? 1 : 0.35,
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: events.length > 0 ? `0 4px 20px ${c.color}10` : "none",
+              boxShadow: `0 4px 20px ${c.color}10`,
               transition: "transform 0.15s",
               position: "relative",
             }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
-              )}
-              {events.length > 0 && !hasRunning && (
-                <span style={{ fontSize: 9, color: "#555" }}>{events.length} event{events.length > 1 ? "s" : ""}</span>
               )}
             </button>
           );
