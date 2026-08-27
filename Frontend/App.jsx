@@ -3354,10 +3354,10 @@ function matchPhaseToTournament(phase, tournament) {
   if (phase.key === "stage1" && (tName.includes("stage 1") || tName.includes("challengers stage") || tName.includes("opening stage"))) return true;
   if (phase.key === "stage2" && (tName.includes("stage 2") || tName.includes("legends stage") || tName.includes("elimination stage"))) return true;
   if (phase.key === "stage3" && tName.includes("stage 3")) return true;
-  if (phase.key === "playoffs" && (tName.includes("playoff") || tName.includes("final") || tName.includes("champions stage"))) return true;
-  if (phase.key === "play_ins" && (tName.includes("play-in") || tName.includes("play_in") || tName.includes("open"))) return true;
-  if (phase.key === "final" && (tName.includes("final") || tName.includes("playoff"))) return true;
-  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("stage") || tName.includes("regular"))) return true;
+  if (phase.key === "playoffs" && (tName.includes("playoff") || (tName.includes("final") && !tName.includes("group")) || tName.includes("champions stage"))) return true;
+  if (phase.key === "play_ins" && (tName.includes("play-in") || tName.includes("play_in") || tName.includes("opening"))) return true;
+  if (phase.key === "final" && (tName.includes("final") && !tName.includes("group"))) return true;
+  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("regular") || (tName.includes("stage") && !(/stage\s*[123]/).test(tName)))) return true;
   return false;
 }
 
@@ -3446,10 +3446,11 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournament({ key: phase }, p));
     const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
 
-    const hasGroupData = fallbackPhases.some((p) => p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0);
-    const hasBracketData = fallbackPhases.some((p) => {
+    const hasAnyContent = fallbackPhases.some((p) => {
       const b = p.playoffs?.bracket;
-      return b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+      const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+      const hasGroup = p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0;
+      return hasBracket || hasGroup;
     });
 
     return (
@@ -3459,19 +3460,28 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
           {titleSpan(serie.title + " · " + phaseLabel, accent)}
         </div>
         {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-        {!loading && hasGroupData && fallbackPhases.map((p) => (
-          <div key={p.tournament_id}>
-            {Object.keys(p.group_stage?.standings || {}).length > 0 && (
-              <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />
-            )}
-          </div>
-        ))}
-        {!loading && hasBracketData && fallbackPhases.map((p) => (
-          <div key={p.tournament_id}>
-            {renderBracketSection(p.playoffs?.bracket, accent)}
-          </div>
-        ))}
-        {!loading && !hasGroupData && !hasBracketData && (
+        {!loading && fallbackPhases.map((p) => {
+          const b = p.playoffs?.bracket;
+          const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+          const hasStandings = Object.keys(p.group_stage?.standings || {}).length > 0;
+          if (!hasBracket && !hasStandings) return null;
+          const showLabel = fallbackPhases.length > 1;
+          return (
+            <div key={p.tournament_id}>
+              {showLabel && (
+                <div style={{ padding: "16px 16px 0" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
+                    <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
+                    <span style={{ fontSize: 10, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{p.name}</span>
+                  </div>
+                </div>
+              )}
+              {hasStandings && <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />}
+              {hasBracket && renderBracketSection(b, accent)}
+            </div>
+          );
+        })}
+        {!loading && !hasAnyContent && (
           <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
         )}
       </div>

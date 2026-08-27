@@ -839,10 +839,16 @@ function classifyCS2Round(matchData) {
 function classifyCS2MatchRound(series) {
   const s = (series || "").toLowerCase().trim();
   if (s.includes("grand final")) return { bracket: "grand_final", round: s, sort: 100 };
-  if (s.includes("upper") || s.includes("winners")) return { bracket: "upper", round: s, sort: 50 };
-  if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: 60 };
-  if (s.includes("semifinal")) return { bracket: "upper", round: s, sort: 45 };
-  if (s.includes("quarterfinal")) return { bracket: "upper", round: s, sort: 40 };
+  if (s.includes("upper") && s.includes("quarter")) return { bracket: "upper", round: s, sort: 10 };
+  if (s.includes("upper") && s.includes("semi")) return { bracket: "upper", round: s, sort: 20 };
+  if (s.includes("upper") && s.includes("final")) return { bracket: "upper", round: s, sort: 30 };
+  if (s.includes("upper") || s.includes("winners")) return { bracket: "upper", round: s, sort: 25 };
+  if (s.includes("lower") && s.includes("quarter")) return { bracket: "lower", round: s, sort: 10 };
+  if (s.includes("lower") && s.includes("semi")) return { bracket: "lower", round: s, sort: 20 };
+  if (s.includes("lower") && s.includes("final")) return { bracket: "lower", round: s, sort: 30 };
+  if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: 25 };
+  if (s.includes("semifinal") || s.includes("semi-final")) return { bracket: "upper", round: s, sort: 45 };
+  if (s.includes("quarterfinal") || s.includes("quarter-final")) return { bracket: "upper", round: s, sort: 40 };
   if (s.includes("final")) return { bracket: "grand_final", round: s, sort: 100 };
   if (s.includes("round") || s.includes("group") || s.includes("swiss")) return { bracket: "group", round: s, sort: -1 };
   return { bracket: "other", round: s, sort: -1 };
