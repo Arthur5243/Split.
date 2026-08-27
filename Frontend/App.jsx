@@ -3372,8 +3372,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
 
   const goBack = () => {
     if (phase) setPhase(null);
-    else if (serie) setSerie(null);
-    else if (comp) setComp(null);
+    else if (comp) { setComp(null); setSerie(null); }
     else onBack();
   };
 
@@ -3437,8 +3436,16 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   const compInfo = CS2_BRACKET_COMPS.find((c) => c.key === comp);
   const accent = compInfo?.color || "#FFD700";
 
-  // --- Step 4: Show phase content ---
-  if (comp && serie && phase && currentData) {
+  // --- Step 3: Show phase content ---
+  if (comp && phase) {
+    if (!serie || !currentData) {
+      return (
+        <div style={pageStyle}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>
+        </div>
+      );
+    }
     const phases = getCS2Phases(comp, serie.title);
     const phaseInfo = phases.find((p) => p.key === phase);
     const phaseLabel = phaseInfo ? (T[phaseInfo.labelKey] || phaseInfo.key) : phase;
@@ -3488,16 +3495,27 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     );
   }
 
-  // --- Step 3: Choose phase ---
-  if (comp && serie) {
-    const phases = getCS2Phases(comp, serie.title);
+  // --- Step 2: Choose phase (direct, pas de liste d'events) ---
+  if (comp && !phase) {
+    const events = cs2Events ? (cs2Events[comp] || []) : [];
+    const bestEvent = events.find((e) => e.status === "running") || events[0] || null;
+    const serieName = bestEvent?.title || serie?.title || "";
+    const phases = getCS2Phases(comp, serieName);
+
+    if (events.length === 0) {
+      return (
+        <div style={pageStylePlain}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
+        </div>
+      );
+    }
     return (
       <div style={pageStylePlain}>
-        <div style={headerStyle}>{backBtn()}{titleSpan(serie.title, accent)}</div>
-        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
           {phases.map((p) => (
-            <button key={p.key} onClick={() => setPhase(p.key)} style={{
+            <button key={p.key} onClick={() => { if (bestEvent && !serie) selectSerie(bestEvent); setPhase(p.key); }} style={{
               background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
               border: `1px solid ${accent}20`,
               borderRadius: 10, padding: "24px 18px", cursor: "pointer",
@@ -3516,46 +3534,6 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     );
   }
 
-  // --- Step 2: Choose serie (event) ---
-  // Auto-sélection : s'il y a un event running ou un seul event, on skip
-  // la liste et on va direct aux phases.
-  if (comp && !serie) {
-    const events = cs2Events ? (cs2Events[comp] || []) : [];
-
-    if (events.length === 0) {
-      return (
-        <div style={pageStylePlain}>
-          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
-        </div>
-      );
-    }
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 16px 32px" }}>
-          {events.map((ev) => (
-            <button key={ev.serie_id} onClick={() => selectSerie(ev)} style={{
-              background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
-              padding: "14px 14px", cursor: "pointer", display: "flex", alignItems: "center",
-              justifyContent: "space-between", width: "100%",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            }}>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#ccc" }}>{ev.title}</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 3, display: "flex", alignItems: "center", gap: 6 }}>
-                  {ev.status === "running" && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
-                  {ev.begin_at && ev.begin_at.slice(0, 10)}
-                </div>
-              </div>
-              <ChevronRight size={14} color="#444" />
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   // --- Step 1: Choose competition ---
   return (
     <div style={pageStylePlain}>
@@ -3567,13 +3545,8 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
         {CS2_BRACKET_COMPS.map((c) => {
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
           const hasRunning = events.some((e) => e.status === "running");
-          const handleCompClick = () => {
-            setComp(c.key);
-            const best = events.find((e) => e.status === "running") || (events.length === 1 ? events[0] : null);
-            if (best) selectSerie(best);
-          };
           return (
-            <button key={c.key} onClick={handleCompClick} style={{
+            <button key={c.key} onClick={() => setComp(c.key)} style={{
               background: events.length > 0 ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#111",
               border: events.length > 0 ? `1px solid ${c.color}30` : "1px solid rgba(255,255,255,0.04)",
               borderRadius: 12, padding: "32px 12px", cursor: "pointer",
