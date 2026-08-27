@@ -154,11 +154,15 @@ const LOGOS = {
   ICE: "/logos/ice.png",
   VIT: "/logos/vit.png",
   GM: "/logos/gm.png",
+  M8: "/logos/gm.png",
+  GENT: "/logos/gm.png",
   NRG: "/logos/nrg.png",
   TSM: "/logos/tsm.png",
   NIP: "/logos/nip.png",
   SR: "/logos/sr.png",
   TSPIRIT: "/logos/tspirit.png",
+  SPIR: "/logos/tspirit.png",
+  NAVI: "/logos/envy.png",
 };
 
 const VLR_LOGOS = {
@@ -830,6 +834,12 @@ const TEAM_CODE_OVERRIDES = {
 // trop, qui ne matcherait même pas une entrée dans TEAM_CODE_OVERRIDES).
 const NAME_CODE_OVERRIDES = {
   "FUT Esports": "FUT",
+  "Gentle Mates": "GM",
+  "Natus Vincere": "NAVI",
+  "Team Spirit": "TSPIRIT",
+  "Shopify Rebellion": "SR",
+  "Ninjas in Pyjamas": "NIP",
+  "NRG Esports": "NRG",
 };
 
 function teamCode(opp) {
@@ -2394,7 +2404,6 @@ function BracketMatchCard({ match, accent }) {
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
-        const logo = vlrTeamLogo(team.name);
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
@@ -2410,16 +2419,13 @@ function BracketMatchCard({ match, accent }) {
               padding: "9px 12px 9px 10px",
               opacity: lost ? 0.3 : 1,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, overflow: "hidden" }}>
-                {logo && <img src={logo} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: "contain", flexShrink: 0 }} />}
-                <span style={{
-                  fontSize: 12, fontWeight: won ? 700 : 500,
-                  color: won ? "#fff" : "#aaa",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
-                }}>
-                  {team.name || "TBD"}
-                </span>
-              </div>
+              <span style={{
+                fontSize: 12, fontWeight: won ? 700 : 500,
+                color: won ? "#fff" : "#aaa",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
+              }}>
+                {team.name || "TBD"}
+              </span>
               <span style={{
                 fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 10,
                 color: won ? accent : "#555",
