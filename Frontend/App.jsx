@@ -116,38 +116,8 @@ const SCORE_CATS = ["tout","valo","cs2","rl"];
 const BIO_BLOCKED_WORDS = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier"];
 const BIO_LINK_RE = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|discord\.|twitch\.|twitter\.|instagram\./i;
 
-const VLR_LOGOS = {
-  "team liquid": "/logos/tl.png",
-  "karmine corp": "/logos/kc.png",
-  "g2 esports": "/logos/g2.png",
-  "paper rex": "/logos/pr.png",
-  "joblife": "/logos/jl.png",
-  "team heretics": "/logos/th.png",
-  "b8 esports": "/logos/b8.png",
-  "bleed esports": "/logos/bst.png",
-  "mibr": "/logos/mibr.png",
-  "evil geniuses": "/logos/eg.png",
-  "enterprise esports": "/logos/eg.png",
-  "onic esports": "/logos/ong.png",
-  "fut esports": "/logos/fut.png",
-  "zeta division": "/logos/zeta.png",
-  "team vitality": "/logos/vit.png",
-  "ice esports": "/logos/ice.png",
-  "pain gaming": "/logos/pain.png",
-  "varrel": "/logos/varr.png",
-  "drx": "/logos/drx.png",
-  "eintracht frankfurt": "/logos/fort.webp",
-  "xerxia esports": "/logos/xe.png",
-  "talon esports": "/logos/ts.png",
-  "w7m esports": "/logos/w7m.png",
-  "apeks": "/logos/at.png",
-  "koi": "/logos/kbg.png",
-  "natus vincere": "/logos/envy.png",
-};
-function vlrTeamLogo(name) {
-  return VLR_LOGOS[(name || "").toLowerCase()] || null;
-}
-
+// Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
+// utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
 const LOGOS = {
   XE: "/logos/xe.png",
   TS: "/logos/ts.png",
@@ -2382,7 +2352,6 @@ function BracketMatchCard({ match, accent }) {
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
-        const logo = vlrTeamLogo(team.name);
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
@@ -2398,16 +2367,13 @@ function BracketMatchCard({ match, accent }) {
               padding: "9px 12px 9px 10px",
               opacity: lost ? 0.3 : 1,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, overflow: "hidden" }}>
-                {logo && <img src={logo} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: "contain", flexShrink: 0 }} />}
-                <span style={{
-                  fontSize: 12, fontWeight: won ? 700 : 500,
-                  color: won ? "#fff" : "#aaa",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
-                }}>
-                  {team.name || "TBD"}
-                </span>
-              </div>
+              <span style={{
+                fontSize: 12, fontWeight: won ? 700 : 500,
+                color: won ? "#fff" : "#aaa",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
+              }}>
+                {team.name || "TBD"}
+              </span>
               <span style={{
                 fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 10,
                 color: won ? accent : "#555",
