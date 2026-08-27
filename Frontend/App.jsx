@@ -3517,12 +3517,22 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   }
 
   // --- Step 2: Choose serie (event) ---
-  if (comp) {
+  // Auto-sélection : s'il y a un event running ou un seul event, on skip
+  // la liste et on va direct aux phases.
+  if (comp && !serie) {
     const events = cs2Events ? (cs2Events[comp] || []) : [];
+
+    if (events.length === 0) {
+      return (
+        <div style={pageStylePlain}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>
+        </div>
+      );
+    }
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-        {events.length === 0 && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.cs2BracketNoEvent}</div>}
         <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 16px 32px" }}>
           {events.map((ev) => (
             <button key={ev.serie_id} onClick={() => selectSerie(ev)} style={{
@@ -3557,8 +3567,13 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
         {CS2_BRACKET_COMPS.map((c) => {
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
           const hasRunning = events.some((e) => e.status === "running");
+          const handleCompClick = () => {
+            setComp(c.key);
+            const best = events.find((e) => e.status === "running") || (events.length === 1 ? events[0] : null);
+            if (best) selectSerie(best);
+          };
           return (
-            <button key={c.key} onClick={() => setComp(c.key)} style={{
+            <button key={c.key} onClick={handleCompClick} style={{
               background: events.length > 0 ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#111",
               border: events.length > 0 ? `1px solid ${c.color}30` : "1px solid rgba(255,255,255,0.04)",
               borderRadius: 12, padding: "32px 12px", cursor: "pointer",
