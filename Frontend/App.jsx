@@ -2736,7 +2736,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
     }
   }
 
-  if (showQ) {
+  if (showQ && !qualifiedIsLabel) {
     const lastRi = rounds.length - 1;
     const qCol = rounds.length;
     const x1 = lastRi * (CARD_W + COL_GAP) + CARD_W;
@@ -2789,7 +2789,34 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             ))}
           </React.Fragment>
         ))}
-        {showQ && (
+        {showQ && qualifiedIsLabel && (
+          <>
+            <div style={{
+              position: "absolute", left: rounds.length * (CARD_W + COL_GAP), top: 0, width: CARD_W,
+              textAlign: "center", fontSize: 9, fontWeight: 800,
+              color: accent, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap",
+            }}>
+              {qualifiedLabel}
+            </div>
+            {lastRound.matches.map((m, mi) => (
+              <div key={"q" + mi} style={{
+                position: "absolute",
+                left: rounds.length * (CARD_W + COL_GAP),
+                top: yPositions[rounds.length - 1][mi] + LABEL_H,
+                width: CARD_W, height: CARD_H,
+                display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, paddingLeft: 10,
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {m.team1?.name || "TBD"}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {m.team2?.name || "TBD"}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
+        {showQ && !qualifiedIsLabel && (
           <>
             <div style={{
               position: "absolute", left: rounds.length * (CARD_W + COL_GAP), top: 0, width: CARD_W,
@@ -2799,8 +2826,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
               {qualifiedLabel}
             </div>
             {qualSlots.map((winner, mi) => {
-              const boxText = qualifiedIsLabel ? qualifiedLabel : (winner?.name || "TBD");
-              const isActive = qualifiedIsLabel || !!winner;
+              const isActive = !!winner;
               return (
                 <div key={"q" + mi} style={{
                   position: "absolute",
@@ -2814,18 +2840,37 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
                 }}>
                   <div style={{ width: 3, alignSelf: "stretch", background: isActive ? accent : "transparent" }} />
                   <span style={{
-                    flex: 1, padding: "0 12px", fontSize: qualifiedIsLabel ? 10 : 12, fontWeight: qualifiedIsLabel ? 800 : 700,
-                    color: isActive ? (qualifiedIsLabel ? accent : "#fff") : "#555",
+                    flex: 1, padding: "0 12px", fontSize: 12, fontWeight: 700,
+                    color: isActive ? "#fff" : "#555",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    textTransform: qualifiedIsLabel ? "uppercase" : "none",
-                    letterSpacing: qualifiedIsLabel ? "0.06em" : "normal",
-                  }}>{boxText}</span>
+                  }}>{winner?.name || "TBD"}</span>
                 </div>
               );
             })}
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function DragScroll({ children }) {
+  const ref = React.useRef(null);
+  const state = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
+  const isTouch = React.useRef(false);
+  return (
+    <div ref={ref}
+      onPointerDown={(e) => {
+        if (!ref.current) return;
+        isTouch.current = e.pointerType === "touch";
+        if (!isTouch.current) state.current = { active: true, startX: e.clientX, scrollLeft: ref.current.scrollLeft };
+      }}
+      onPointerMove={(e) => { if (!isTouch.current && state.current.active && ref.current) { e.preventDefault(); ref.current.scrollLeft = state.current.scrollLeft - (e.clientX - state.current.startX); } }}
+      onPointerUp={() => { state.current.active = false; }}
+      onPointerCancel={() => { state.current.active = false; }}
+      style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "20px 40px 40px 16px", WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}
+      className="no-scrollbar">
+      {children}
     </div>
   );
 }
@@ -3008,9 +3053,6 @@ function BracketPage({ vlrEvents, onBack, T }) {
   const [showHistory, setShowHistory] = useState(false);
   const [historyData, setHistoryData] = useState(null);
   const [historyEvent, setHistoryEvent] = useState(null);
-  const dragRef = React.useRef(null);
-  const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
-
   const accent = region ? (REGIONS.find((r) => r.key === region) || {}).accent || "#C4F000" : "#C4F000";
 
   const goBack = () => {
@@ -3059,10 +3101,6 @@ function BracketPage({ vlrEvents, onBack, T }) {
     if (!ev) return null;
     return bracketData[ev.event_id + ":all"] || null;
   }, [stage, region, vlrEvents, bracketData]);
-
-  const onPointerDown = (e) => { if (!dragRef.current) return; dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
-  const onPointerMove = (e) => { if (!dragState.current.active || !dragRef.current) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
-  const onPointerUp = () => { dragState.current.active = false; };
 
   const openHistory = async () => {
     setShowHistory(true);
@@ -3119,20 +3157,13 @@ function BracketPage({ vlrEvents, onBack, T }) {
     <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
   );
 
-  const dragContainer = (children) => (
-    <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-      style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "20px 40px 40px 16px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-      {children}
-    </div>
-  );
-
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
-    return dragContainer(<>
+    return <DragScroll>
       {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
       {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
       {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
-    </>);
+    </DragScroll>;
   };
 
   // --- History views ---
@@ -3331,10 +3362,10 @@ function BracketPage({ vlrEvents, onBack, T }) {
     if (phase === "play_ins") {
       const bracket = currentData.play_ins?.bracket;
       const hasBracket = bracket && (bracket.upper?.length > 0 || bracket.lower?.length > 0);
-      return hasBracket ? dragContainer(<>
+      return hasBracket ? <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} qualifiedLabel={T.bracketQualified} />}
         {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" qualifiedLabel={T.bracketQualified} />}
-      </>) : (
+      </DragScroll> : (
         <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>
       );
     }
@@ -3427,8 +3458,6 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   const [phase, setPhase] = useState(null);
   const [bracketData, setBracketData] = useState({});
   const [loading, setLoading] = useState(false);
-  const dragRef = React.useRef(null);
-  const dragState = React.useRef({ active: false, startX: 0, scrollLeft: 0 });
 
   const goBack = () => {
     if (phase) setPhase(null);
@@ -3453,24 +3482,13 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
 
   const currentData = serie ? bracketData["cs2:" + serie.serie_id] : null;
 
-  const onPointerDown = (e) => { if (!dragRef.current) return; dragState.current = { active: true, startX: e.clientX, scrollLeft: dragRef.current.scrollLeft }; };
-  const onPointerMove = (e) => { if (!dragState.current.active || !dragRef.current) return; e.preventDefault(); dragRef.current.scrollLeft = dragState.current.scrollLeft - (e.clientX - dragState.current.startX); };
-  const onPointerUp = () => { dragState.current.active = false; };
-
-  const dragContainer = (children) => (
-    <div ref={dragRef} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-      style={{ overflowX: "auto", cursor: "grab", userSelect: "none", padding: "20px 40px 40px 16px", WebkitOverflowScrolling: "touch", touchAction: "pan-y" }} className="no-scrollbar">
-      {children}
-    </div>
-  );
-
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
-    return dragContainer(<>
+    return <DragScroll>
       {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
       {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
       {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
-    </>);
+    </DragScroll>;
   };
 
   const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
@@ -5752,7 +5770,10 @@ export default function ClutchApp() {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
             return (
-              <button key={item.key} onClick={() => setActiveTab(item.key)} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
+              <button key={item.key} onClick={() => {
+                if (active) { setShowBracketPage(false); setShowCs2BracketPage(false); }
+                setActiveTab(item.key);
+              }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {item.img ? (
                     <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
