@@ -844,11 +844,11 @@ function classifyCS2MatchRound(series) {
   if (s.includes("lower") && s.includes("semi")) return { bracket: "lower", round: s, sort: 20 };
   if (s.includes("lower") && s.includes("final")) return { bracket: "lower", round: s, sort: 30 };
   if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: 25 };
+  if (s.includes("decider") || s.includes("consolidation")) return { bracket: "lower", round: s, sort: 35 };
   if (s.includes("semifinal") || s.includes("semi-final")) return { bracket: "upper", round: s, sort: 45 };
   if (s.includes("quarterfinal") || s.includes("quarter-final")) return { bracket: "upper", round: s, sort: 40 };
   if (s.includes("final")) return { bracket: "grand_final", round: s, sort: 100 };
-  if (s.includes("round") || s.includes("group") || s.includes("swiss")) return { bracket: "group", round: s, sort: -1 };
-  return { bracket: "other", round: s, sort: -1 };
+  return { bracket: "upper", round: s, sort: 5 };
 }
 
 function buildCS2Bracket(matches) {
@@ -900,8 +900,7 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
         continue;
       }
 
-      const groupMatches = [];
-      const bracketMatches = [];
+      const allParsed = [];
 
       for (const m of matches) {
         const t1 = m.opponents?.[0]?.opponent;
@@ -916,7 +915,7 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
         const roundName = m.name || tName;
         const cl = classifyCS2MatchRound(roundName);
 
-        const match = {
+        allParsed.push({
           match_id: m.id,
           date: m.begin_at || m.scheduled_at,
           status: m.status,
@@ -936,38 +935,29 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
             is_winner: m.winner_id && t2 && m.winner_id === t2.id,
             image_url: t2?.image_url || null,
           },
-        };
-
-        if (cl.bracket === "group" || cl.bracket === "other") {
-          groupMatches.push(match);
-        } else {
-          bracketMatches.push(match);
-        }
-      }
-
-      const groupStandings = {};
-      for (const m of groupMatches) {
-        const grp = m.round || "Group";
-        if (!groupStandings[grp]) groupStandings[grp] = {};
-        for (const team of [m.team1, m.team2]) {
-          const name = team.name || "TBD";
-          if (name === "TBD") continue;
-          if (!groupStandings[grp][name]) groupStandings[grp][name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
-          const completed = (m.status || "").toLowerCase() === "finished";
-          if (completed) {
-            if (team.is_winner) groupStandings[grp][name].wins++;
-            else groupStandings[grp][name].losses++;
-            const score = parseInt(team.score, 10) || 0;
-            groupStandings[grp][name].maps_won += score;
-            const other = team === m.team1 ? m.team2 : m.team1;
-            groupStandings[grp][name].maps_lost += parseInt(other.score, 10) || 0;
-          }
-        }
+        });
       }
 
       const standings = {};
-      for (const [grp, teams] of Object.entries(groupStandings)) {
-        standings[grp] = Object.entries(teams)
+      const standingsAll = {};
+      for (const m of allParsed) {
+        for (const team of [m.team1, m.team2]) {
+          const name = team.name || "TBD";
+          if (name === "TBD") continue;
+          if (!standingsAll[name]) standingsAll[name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
+          const completed = (m.status || "").toLowerCase() === "finished";
+          if (completed) {
+            if (team.is_winner) standingsAll[name].wins++;
+            else standingsAll[name].losses++;
+            const score = parseInt(team.score, 10) || 0;
+            standingsAll[name].maps_won += score;
+            const other = team === m.team1 ? m.team2 : m.team1;
+            standingsAll[name].maps_lost += parseInt(other.score, 10) || 0;
+          }
+        }
+      }
+      if (Object.keys(standingsAll).length > 0) {
+        standings[tName] = Object.entries(standingsAll)
           .map(([name, s]) => ({ name, ...s, points: s.wins * 3 }))
           .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
       }
@@ -975,8 +965,8 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
       phases.push({
         tournament_id: tId,
         name: tName,
-        group_stage: { matches: groupMatches, standings },
-        playoffs: { bracket: buildCS2Bracket(bracketMatches) },
+        group_stage: { matches: allParsed, standings },
+        playoffs: { bracket: buildCS2Bracket(allParsed) },
         total_matches: matches.length,
       });
     }
