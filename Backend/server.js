@@ -20,12 +20,14 @@ import {
   resetAbandonedMapScores,
   resetInconsistentMapScores,
 } from "./match-history-store.js";
+import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 app.use(oddsRouter);
 // Endpoints CS2 (/api/cs2-upcoming, /api/cs2-live, /api/cs2-results) : même
 // backend PandaScore, route dédiée dans cs2-routes.js (voir ce fichier pour
@@ -139,6 +141,16 @@ app.get("/api/valorant-live", async (req, res) => {
     }
     const hiddenIds = await reconcileStaleLiveMatches(data);
     const visible = hiddenIds && hiddenIds.length ? data.filter((m) => !hiddenIds.includes(m.id)) : data;
+    for (const m of visible) {
+      if (m.status !== "running") continue;
+      const t1 = m.opponents?.[0]?.opponent?.name;
+      const t2 = m.opponents?.[1]?.opponent?.name;
+      if (!t1 || !t2) continue;
+      const scraped = getScrapedScores(t1, t2);
+      if (scraped && scraped.length > 0) {
+        m.live_map_scores = scraped;
+      }
+    }
     res.json(visible);
   } catch (e) {
     console.error(e);
@@ -349,17 +361,23 @@ async function reconcileStaleLiveMatches(data) {
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
-    // La saisie manuelle passe AVANT la base SQLite : si un match a déjà été
-    // tenté sur vlr.gg sans succès, on veut quand même remonter le score
-    // saisi à la main plutôt que de rester bloqué sur cet échec.
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
+
+    const scraped = t1 && t2 ? getScrapedScores(t1, t2) : null;
+    if (scraped && scraped.length > 0) {
+      console.log(`[map_scores] ${t1} vs ${t2} (${date}) → trouvé via scraper live`);
+      m.map_scores = scraped;
+      saveMapScores(m.id, scraped);
+      continue;
+    }
+
     const manual = t1 && t2 ? findManualMapScores(t1, t2, date) : null;
     if (manual) {
       console.log(`[map_scores] ${t1} vs ${t2} (${date}) → trouvé en saisie manuelle (manual-map-scores.json)`);
       m.map_scores = manual;
-      saveMapScores(m.id, manual); // persiste aussi en base, pour cohérence avec getFullHistory
+      saveMapScores(m.id, manual);
       continue;
     }
 
@@ -1626,8 +1644,40 @@ app.get("/api/vct-points", (req, res) => {
   res.json(VCT_CHAMPIONSHIP_POINTS);
 });
 
+app.post("/api/live-scores", (req, res) => {
+  const { team1, team2, maps, matchUrl } = req.body || {};
+  if (!team1 || !team2 || !Array.isArray(maps)) {
+    return res.status(400).json({ error: "team1, team2, maps[] requis" });
+  }
+  const key = (team1 + ":" + team2).toLowerCase().trim();
+  liveScrapedScores.set(key, {
+    team1,
+    team2,
+    matchUrl: matchUrl || "",
+    maps,
+    scrapedAt: Date.now(),
+  });
+  console.log(`[live-scores POST] ${team1} vs ${team2} → ${maps.length} map(s) reçue(s)`);
+  res.json({ ok: true });
+});
+
+app.get("/api/live-scraped", (req, res) => {
+  const entries = [];
+  for (const [, entry] of liveScrapedScores) {
+    entries.push({
+      team1: entry.team1,
+      team2: entry.team2,
+      maps: entry.maps,
+      scrapedAt: new Date(entry.scrapedAt).toISOString(),
+      ageSeconds: Math.round((Date.now() - entry.scrapedAt) / 1000),
+    });
+  }
+  res.json(entries);
+});
+
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
+  startScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
   // définitif (backoff plafonné à 4h), ce reset ne sert que pour les anciens

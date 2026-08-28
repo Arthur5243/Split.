@@ -1130,6 +1130,7 @@ function transformMatch(m) {
     // Passée au garde-fou de cohérence (cf isMapScoresConsistent) avant
     // d'être acceptée.
     map_scores: isMapScoresConsistent(m.map_scores, score1, score2) ? m.map_scores || null : null,
+    live_map_scores: m.live_map_scores || null,
   };
 }
 
@@ -2281,6 +2282,22 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="px-4 pb-2 flex items-center justify-center gap-1.5">
           <Lock size={11} color="#666" />
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>{T.betLocked || "Pari verrouillé"}</span>
+        </div>
+      )}
+      {running && match.live_map_scores && match.live_map_scores.length > 0 && (
+        <div className="px-4 pb-3">
+          <div style={{ background: "#1a1a1a", borderRadius: 8, padding: "6px 10px", display: "flex", flexDirection: "column", gap: 3 }}>
+            {match.live_map_scores.map((ms, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 0" }}>
+                <span style={{ color: "#888", fontSize: "9px", fontWeight: 700, textTransform: "uppercase", minWidth: 50 }}>{ms.map}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ color: ms.score1 > ms.score2 ? "#CCF71D" : "#aaa", fontSize: "11px", fontWeight: 800, minWidth: 16, textAlign: "right" }}>{ms.score1}</span>
+                  <span style={{ color: "#555", fontSize: "9px", fontWeight: 700 }}>–</span>
+                  <span style={{ color: ms.score2 > ms.score1 ? "#CCF71D" : "#aaa", fontSize: "11px", fontWeight: 800, minWidth: 16 }}>{ms.score2}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
