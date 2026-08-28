@@ -289,6 +289,15 @@ const STR = {
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
     yourBet: "Ton pari", replay: "Replay",
+    questTitle: "Quêtes", questDaily: "Quotidiennes", questWeekly: "Hebdomadaire", questCompleted: "Terminée", questClaim: "Réclamer", questProgress: "en cours",
+    questBetToday: "Fais un pronostic aujourd'hui", questBet2Games: "Pronostique sur 2 jeux différents", questUseAllSlots: "Utilise tes 4 pronos du jour", questViewBracket: "Consulte un bracket", questAddAvatar: "Ajoute une photo de profil", questAddBio: "Rédige ta bio", questChooseFav: "Choisis ton équipe favorite", questInviteFriend: "Invite un ami", questOpenNewTab: "Découvre un nouvel onglet jeu", questViewClassement: "Consulte le classement", questExactScore: "Devine le score exact d'un Bo3", questWeekly5Wins: "Gagne 5 pronos cette semaine", questWeekly3Exact: "3 scores exacts cette semaine",
+    streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
+    nexiumBox: "Nexium Box", nexiumOpen: "Ouvrir", nexiumRare: "Rare", nexiumEpic: "Épique", nexiumLegendary: "Légendaire", nexiumUltra: "Ultra", nexiumNew: "Nouveau !", nexiumOwned: "Possédé",
+    cashprizeTitle: "Cashprize", cashprizeRules: "Top 1, 2 et 3 gagnent un cashprize !", cashprizeUnlock: "Disponible à partir de 1 000 installations", cashprizeInstalls: "installations", cashprizeWinners: "Gagnants",
+    predLimit: "Limite atteinte", predRemaining: "pronos restants",
+    slideMatchDay: "Match du jour", slideCommunity: "ont parié sur", slideCountdown: "Compte à rebours",
+    rewardsFree: "Récompenses", rewardsCash: "Cashprize",
+    inventoryTitle: "Inventaire", inventoryEmpty: "Aucun objet pour le moment",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
@@ -353,6 +362,15 @@ const STR = {
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
     yourBet: "Your bet", replay: "Replay",
+    questTitle: "Quests", questDaily: "Daily", questWeekly: "Weekly", questCompleted: "Completed", questClaim: "Claim", questProgress: "in progress",
+    questBetToday: "Make a prediction today", questBet2Games: "Predict on 2 different games", questUseAllSlots: "Use all 4 daily predictions", questViewBracket: "Check a bracket", questAddAvatar: "Add a profile picture", questAddBio: "Write your bio", questChooseFav: "Choose your favorite team", questInviteFriend: "Invite a friend", questOpenNewTab: "Discover a new game tab", questViewClassement: "Check the standings", questExactScore: "Guess the exact score of a Bo3", questWeekly5Wins: "Win 5 predictions this week", questWeekly3Exact: "3 exact scores this week",
+    streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
+    nexiumBox: "Nexium Box", nexiumOpen: "Open", nexiumRare: "Rare", nexiumEpic: "Epic", nexiumLegendary: "Legendary", nexiumUltra: "Ultra", nexiumNew: "New!", nexiumOwned: "Owned",
+    cashprizeTitle: "Cash Prize", cashprizeRules: "Top 1, 2, and 3 win a cash prize!", cashprizeUnlock: "Available from 1,000 installs", cashprizeInstalls: "installs", cashprizeWinners: "Winners",
+    predLimit: "Limit reached", predRemaining: "predictions left",
+    slideMatchDay: "Match of the day", slideCommunity: "bet on", slideCountdown: "Countdown",
+    rewardsFree: "Rewards", rewardsCash: "Cash Prize",
+    inventoryTitle: "Inventory", inventoryEmpty: "No items yet",
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Clasificación",
@@ -2462,6 +2480,374 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   );
 }
 
+// ═══════════════════════════════════════════════════
+// QUEST ENGINE + STREAK + NEXIUM BOX + DAILY LIMIT
+// ═══════════════════════════════════════════════════
+
+const QUEST_DAILY_POOL = [
+  { id: "bet_today", titleKey: "questBetToday", target: 1, kit: "pronostic" },
+  { id: "bet_2_games", titleKey: "questBet2Games", target: 1, kit: "pronostic" },
+  { id: "use_all_slots", titleKey: "questUseAllSlots", target: 4, kit: "pronostic" },
+  { id: "view_bracket", titleKey: "questViewBracket", target: 1, kit: "engagement" },
+  { id: "add_avatar", titleKey: "questAddAvatar", target: 1, kit: "profile", oneTime: true },
+  { id: "add_bio", titleKey: "questAddBio", target: 1, kit: "profile", oneTime: true },
+  { id: "choose_fav", titleKey: "questChooseFav", target: 1, kit: "profile", oneTime: true },
+  { id: "invite_friend", titleKey: "questInviteFriend", target: 1, kit: "social" },
+  { id: "open_new_tab", titleKey: "questOpenNewTab", target: 1, kit: "discovery", oneTime: true },
+  { id: "view_classement", titleKey: "questViewClassement", target: 1, kit: "discovery", oneTime: true },
+  { id: "exact_score", titleKey: "questExactScore", target: 1, kit: "precision" },
+];
+const QUEST_WEEKLY_POOL = [
+  { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly" },
+  { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly" },
+];
+const PRECISION_IDS = new Set(["exact_score"]);
+const DAILY_BET_LIMIT = 4;
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function weekStartStr() { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().slice(0, 10); }
+
+function loadQuests() {
+  try { return JSON.parse(localStorage.getItem("split_quests")) || null; } catch { return null; }
+}
+function saveQuests(q) { localStorage.setItem("split_quests", JSON.stringify(q)); }
+
+function assignDailyQuests(completedOneTimeIds) {
+  const state = loadQuests();
+  const today = todayStr();
+  const ws = weekStartStr();
+  if (state && state.lastAssigned === today) return state;
+  const history = state?.history || [];
+  const avail = QUEST_DAILY_POOL.filter(q => {
+    if (q.oneTime && completedOneTimeIds.has(q.id)) return false;
+    if (PRECISION_IDS.has(q.id) && history.slice(-3).includes(q.id)) return false;
+    if (history.slice(-1).includes(q.id)) return false;
+    return true;
+  });
+  const shuffled = [...avail].sort(() => Math.random() - 0.5);
+  const daily = shuffled.slice(0, 3).map(q => ({ ...q, progress: 0, completed: false, claimed: false }));
+  let weekly = state?.weekly;
+  if (!weekly || state?.weekStart !== ws) {
+    const wPool = [...QUEST_WEEKLY_POOL].sort(() => Math.random() - 0.5);
+    weekly = { ...wPool[0], progress: 0, completed: false, claimed: false };
+  }
+  const newState = { daily, weekly, lastAssigned: today, weekStart: ws, history: [...history.slice(-10), ...daily.map(q => q.id)] };
+  saveQuests(newState);
+  return newState;
+}
+
+function loadStreak() {
+  try { return JSON.parse(localStorage.getItem("split_streak")) || { current: 0, best: 0, lastBetDate: null }; } catch { return { current: 0, best: 0, lastBetDate: null }; }
+}
+function saveStreak(s) { localStorage.setItem("split_streak", JSON.stringify(s)); }
+function updateStreak() {
+  const s = loadStreak();
+  const today = todayStr();
+  if (s.lastBetDate === today) return { ...s, earned: false };
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+  const newCurrent = s.lastBetDate === yStr ? s.current + 1 : 1;
+  const newBest = Math.max(s.best, newCurrent);
+  const next = { current: newCurrent, best: newBest, lastBetDate: today };
+  saveStreak(next);
+  return { ...next, earned: true };
+}
+
+function loadDailyBets() {
+  try {
+    const d = JSON.parse(localStorage.getItem("split_daily_bets"));
+    if (d && d.date === todayStr()) return d;
+    return { date: todayStr(), count: 0 };
+  } catch { return { date: todayStr(), count: 0 }; }
+}
+function saveDailyBets(d) { localStorage.setItem("split_daily_bets", JSON.stringify(d)); }
+
+function loadInventory() {
+  try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
+}
+function saveInventory(inv) { localStorage.setItem("split_inventory", JSON.stringify(inv)); }
+
+const NEXIUM_ITEMS = {
+  rare: [
+    { id: "title_rookie", type: "title", name: "Rookie", icon: "R" },
+    { id: "title_analyst", type: "title", name: "Analyste", icon: "A" },
+    { id: "badge_star", type: "badge", name: "Star", icon: "★" },
+    { id: "badge_bolt", type: "badge", name: "Bolt", icon: "⚡" },
+    { id: "skin_wave", type: "skin", name: "Blue Wave", icon: "W" },
+    { id: "border_silver", type: "border", name: "Argent", icon: "○" },
+  ],
+  epic: [
+    { id: "title_strategist", type: "title", name: "Stratège", icon: "S" },
+    { id: "badge_crown", type: "badge", name: "Couronne", icon: "♛" },
+    { id: "border_purple", type: "border", name: "Aura Violette", icon: "◉" },
+    { id: "skin_neon", type: "skin", name: "Néon", icon: "N" },
+  ],
+  legendary: [
+    { id: "title_oracle", type: "title", name: "Oracle", icon: "O" },
+    { id: "badge_diamond", type: "badge", name: "Diamant", icon: "◆" },
+    { id: "border_gold", type: "border", name: "Anneau Doré", icon: "◎" },
+  ],
+  ultra: [
+    { id: "title_prophet", type: "title", name: "Prophète", icon: "P" },
+    { id: "badge_phoenix", type: "badge", name: "Phoenix", icon: "🔥" },
+    { id: "border_fire", type: "border", name: "Flamme Sacrée", icon: "✦" },
+  ],
+};
+const RARITY_WEIGHTS = { rare: 50, epic: 25, legendary: 15, ultra: 10 };
+const RARITY_COLORS = { rare: "#3B82F6", epic: "#A855F7", legendary: "#F59E0B", ultra: "#EF4444" };
+const RARITY_LABELS = { rare: "nexiumRare", epic: "nexiumEpic", legendary: "nexiumLegendary", ultra: "nexiumUltra" };
+
+function rollNexiumBox() {
+  const r = Math.random() * 100;
+  let rarity;
+  if (r < RARITY_WEIGHTS.ultra) rarity = "ultra";
+  else if (r < RARITY_WEIGHTS.ultra + RARITY_WEIGHTS.legendary) rarity = "legendary";
+  else if (r < RARITY_WEIGHTS.ultra + RARITY_WEIGHTS.legendary + RARITY_WEIGHTS.epic) rarity = "epic";
+  else rarity = "rare";
+  const pool = NEXIUM_ITEMS[rarity];
+  return { ...pool[Math.floor(Math.random() * pool.length)], rarity };
+}
+
+function NexiumBoxModal({ onClose, T }) {
+  const [phase, setPhase] = useState("closed");
+  const [item, setItem] = useState(null);
+
+  const openBox = () => {
+    setPhase("opening");
+    const rolled = rollNexiumBox();
+    setItem(rolled);
+    setTimeout(() => setPhase("reveal"), 1500);
+    const inv = loadInventory();
+    inv.push({ ...rolled, date: todayStr() });
+    saveInventory(inv);
+  };
+
+  const rarColor = item ? RARITY_COLORS[item.rarity] : "#666";
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 300, textAlign: "center" }}>
+        {phase === "closed" && (
+          <>
+            <svg viewBox="0 0 120 120" style={{ width: 140, height: 140, margin: "0 auto 20px", filter: "drop-shadow(0 0 20px rgba(168,85,247,0.4))" }}>
+              <defs>
+                <linearGradient id="boxG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#A855F7" /><stop offset="100%" stopColor="#6366F1" /></linearGradient>
+              </defs>
+              <rect x="15" y="45" width="90" height="60" rx="8" fill="url(#boxG)" stroke="#c084fc" strokeWidth="2" />
+              <rect x="10" y="35" width="100" height="18" rx="4" fill="#7c3aed" stroke="#c084fc" strokeWidth="1.5" />
+              <rect x="55" y="35" width="10" height="70" rx="2" fill="#c084fc" opacity="0.4" />
+              <path d="M60 20 L50 35 L70 35 Z" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" />
+              <circle cx="60" cy="28" r="3" fill="#fef3c7" />
+            </svg>
+            <p style={{ color: "#c084fc", fontSize: 18, fontWeight: 900, marginBottom: 8 }}>{T.nexiumBox}</p>
+            <button onClick={openBox} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 32px", fontSize: 14, fontWeight: 800, cursor: "pointer", letterSpacing: "0.04em" }}>{T.nexiumOpen}</button>
+          </>
+        )}
+        {phase === "opening" && (
+          <div style={{ animation: "nexiumSpin 1.5s ease-in-out" }}>
+            <svg viewBox="0 0 120 120" style={{ width: 160, height: 160, margin: "0 auto", filter: "drop-shadow(0 0 30px rgba(168,85,247,0.6))" }}>
+              <defs><linearGradient id="boxG2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#A855F7" /><stop offset="100%" stopColor="#6366F1" /></linearGradient></defs>
+              <rect x="15" y="55" width="90" height="55" rx="8" fill="url(#boxG2)" stroke="#c084fc" strokeWidth="2" />
+              <rect x="10" y="20" width="100" height="18" rx="4" fill="#7c3aed" stroke="#c084fc" strokeWidth="1.5" style={{ transform: "rotate(-15deg)", transformOrigin: "60px 29px" }} />
+              <circle cx="60" cy="50" r="15" fill="#fef3c7" opacity="0.6"><animate attributeName="r" values="15;25;15" dur="0.8s" repeatCount="indefinite" /></circle>
+            </svg>
+          </div>
+        )}
+        {phase === "reveal" && item && (
+          <div style={{ animation: "nexiumReveal 0.5s ease-out" }}>
+            <div style={{ width: 100, height: 100, borderRadius: "50%", margin: "0 auto 16px", background: `radial-gradient(circle, ${rarColor}40, transparent 70%)`, display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${rarColor}`, boxShadow: `0 0 30px ${rarColor}60`, fontSize: 36 }}>
+              {item.icon}
+            </div>
+            <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, background: `${rarColor}25`, border: `1px solid ${rarColor}50`, marginBottom: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: rarColor, textTransform: "uppercase", letterSpacing: "0.1em" }}>{T[RARITY_LABELS[item.rarity]]}</span>
+            </div>
+            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{item.name}</p>
+            <p style={{ color: "#888", fontSize: 11, marginBottom: 20 }}>{item.type === "title" ? "Titre" : item.type === "badge" ? "Badge" : item.type === "border" ? "Bordure" : "Skin"}</p>
+            <button onClick={onClose} style={{ background: rarColor, color: "#fff", border: "none", borderRadius: 10, padding: "10px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>OK</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuestModal({ quests, onClose, onClaim, T }) {
+  if (!quests) return null;
+  const { daily, weekly } = quests;
+  const renderQuest = (q, idx, isWeekly) => {
+    const pct = Math.min(100, (q.progress / q.target) * 100);
+    const done = q.completed;
+    return (
+      <div key={q.id + idx} style={{ background: done ? "rgba(76,175,80,0.08)" : "#141414", border: `1px solid ${done ? "rgba(76,175,80,0.2)" : "#262626"}`, borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: done ? "rgba(76,175,80,0.15)" : "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
+          {done ? "✓" : isWeekly ? "🏆" : "⚔"}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ color: done ? "#4CAF50" : "#ddd", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{T[q.titleKey] || q.titleKey}</p>
+          <div style={{ height: 4, borderRadius: 2, background: "#262626", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.3s" }} />
+          </div>
+          <p style={{ color: "#666", fontSize: 10, marginTop: 4 }}>{q.progress}/{q.target}</p>
+        </div>
+        {done && !q.claimed && (
+          <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 10, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
+        )}
+        {q.claimed && <span style={{ color: "#4CAF50", fontSize: 10, fontWeight: 700 }}>✓</span>}
+      </div>
+    );
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(390px, 100%)", maxHeight: "75vh", background: "#0a0a0a", borderRadius: "20px 20px 0 0", padding: "20px 16px 32px", overflowY: "auto" }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: "#333", margin: "0 auto 16px" }} />
+        <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 16 }}>{T.questTitle}</p>
+        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.questDaily}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+          {(daily || []).map((q, i) => renderQuest(q, i, false))}
+        </div>
+        {weekly && (
+          <>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.questWeekly}</p>
+            {renderQuest(weekly, 0, true)}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RewardsModal({ onClose, onOpenNexium, T }) {
+  const [tab, setTab] = useState("rewards");
+  const inventory = loadInventory();
+  const installCount = 3;
+  const installTarget = 1000;
+  const pct = Math.min(100, (installCount / installTarget) * 100);
+  const tabStyle = (active) => ({ flex: 1, padding: "10px 0", background: active ? "#1c1c1c" : "transparent", border: "none", borderRadius: 8, color: active ? "#fff" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" });
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(390px, 100%)", maxHeight: "80vh", background: "#0a0a0a", borderRadius: "20px 20px 0 0", padding: "20px 16px 32px", overflowY: "auto" }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: "#333", margin: "0 auto 16px" }} />
+        <div style={{ display: "flex", gap: 4, background: "#111", borderRadius: 10, padding: 3, marginBottom: 20 }}>
+          <button onClick={() => setTab("rewards")} style={tabStyle(tab === "rewards")}>{T.rewardsFree}</button>
+          <button onClick={() => setTab("cashprize")} style={tabStyle(tab === "cashprize")}>{T.cashprizeTitle}</button>
+        </div>
+        {tab === "rewards" && (
+          <>
+            <button onClick={onOpenNexium} style={{ width: "100%", background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.1))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 14, padding: "20px 16px", cursor: "pointer", textAlign: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>📦</span>
+              <span style={{ color: "#c084fc", fontSize: 14, fontWeight: 900, display: "block" }}>{T.nexiumBox}</span>
+              <span style={{ color: "#888", fontSize: 11, display: "block", marginTop: 4 }}>{T.questCompleted} → {T.nexiumOpen}</span>
+            </button>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.inventoryTitle}</p>
+            {inventory.length === 0 && <p style={{ color: "#555", fontSize: 12, textAlign: "center", padding: 20 }}>{T.inventoryEmpty}</p>}
+            {inventory.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {inventory.map((item, i) => (
+                  <div key={i} style={{ background: "#141414", border: `1px solid ${RARITY_COLORS[item.rarity]}30`, borderRadius: 10, padding: "12px 8px", textAlign: "center" }}>
+                    <div style={{ fontSize: 22, marginBottom: 4 }}>{item.icon}</div>
+                    <p style={{ color: "#ccc", fontSize: 10, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
+                    <span style={{ fontSize: 8, color: RARITY_COLORS[item.rarity], fontWeight: 800, textTransform: "uppercase" }}>{T[RARITY_LABELS[item.rarity]]}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+        {tab === "cashprize" && (
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
+            <p style={{ color: "#FFD700", fontSize: 15, fontWeight: 900, marginBottom: 8 }}>{T.cashprizeTitle}</p>
+            <p style={{ color: "#aaa", fontSize: 12, marginBottom: 20 }}>{T.cashprizeRules}</p>
+            <div style={{ background: "#141414", borderRadius: 12, padding: "16px", border: "1px solid #262626", marginBottom: 16 }}>
+              <p style={{ color: "#888", fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.cashprizeUnlock}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <div style={{ flex: 1, height: 6, borderRadius: 3, background: "#262626", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: "linear-gradient(90deg, #FFD700, #F59E0B)" }} />
+                </div>
+                <span style={{ color: "#888", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{installCount}/{installTarget}</span>
+              </div>
+              <p style={{ color: "#555", fontSize: 10 }}>{T.cashprizeInstalls}</p>
+            </div>
+            <div style={{ background: "#141414", borderRadius: 12, padding: "16px", border: "1px solid #262626" }}>
+              <p style={{ color: "#888", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.cashprizeWinners}</p>
+              {[1, 2, 3].map(r => (
+                <div key={r} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: r < 3 ? "1px solid #1f1f1f" : "none" }}>
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: r === 1 ? "#FFD70030" : r === 2 ? "#C0C0C030" : "#CD7F3230", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: r === 1 ? "#FFD700" : r === 2 ? "#C0C0C0" : "#CD7F32" }}>
+                    {r}
+                  </div>
+                  <span style={{ color: "#555", fontSize: 12, fontWeight: 600 }}>—</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StreakPopup({ streak, onClose, T }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(255,107,0,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3s forwards", cursor: "pointer" }}>
+      <span style={{ fontSize: 28 }}>🔥</span>
+      <div>
+        <p style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{T.streakEarned}</p>
+        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600 }}>{streak.current} {T.streakDays} 🔥</p>
+      </div>
+    </div>
+  );
+}
+
+function DynamicSlider({ predictions, T }) {
+  const [slide, setSlide] = useState(0);
+  const slideCount = 3;
+  useEffect(() => {
+    const id = setInterval(() => setSlide(p => (p + 1) % slideCount), 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const totalBets = Object.keys(predictions || {}).length;
+  const fakePct = 55 + Math.floor(Math.random() * 25);
+
+  const slides = [
+    <div key="match" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
+      <span style={{ fontSize: 20 }}>⚔</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ color: "#FFD700", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.slideMatchDay}</p>
+        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>TBD vs TBD</p>
+      </div>
+    </div>,
+    <div key="community" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
+      <span style={{ fontSize: 20 }}>📊</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ color: "#3B82F6", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{fakePct}% {T.slideCommunity}</p>
+        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600 }}>Team Alpha</p>
+      </div>
+    </div>,
+    <div key="countdown" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
+      <span style={{ fontSize: 20 }}>⏳</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ color: "#EF4444", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.slideCountdown}</p>
+        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600 }}>Champions 2026</p>
+      </div>
+    </div>,
+  ];
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden", height: "100%" }}>
+      {slides.map((s, i) => (
+        <div key={i} style={{ position: "absolute", inset: 0, padding: "0 14px", display: "flex", alignItems: "center", transition: "transform 0.5s ease, opacity 0.5s ease", transform: `translateY(${(i - slide) * 100}%)`, opacity: i === slide ? 1 : 0 }}>
+          {s}
+        </div>
+      ))}
+      <div style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", gap: 3 }}>
+        {[0, 1, 2].map(i => <div key={i} style={{ width: 4, height: i === slide ? 10 : 4, borderRadius: 2, background: i === slide ? "#fff" : "#555", transition: "all 0.3s" }} />)}
+      </div>
+    </div>
+  );
+}
+
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [ready, setReady] = useState(false);
@@ -2551,11 +2937,60 @@ function NewsCarousel({ T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, dailyBets, streak, quests, onOpenQuests, onOpenRewards }) {
   return (
     <div className="px-4 pt-5 pb-6">
-      <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-3">{T.newsLabel}</p>
+      {/* Circles row: notif + news label + quests */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <button style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+            <Bell size={14} color="#888" />
+            <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#EF4444", border: "2px solid #000" }} />
+          </button>
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
+        </div>
+        <button onClick={onOpenQuests} style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, rgba(204,247,29,0.1), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+          <Target size={14} color="#CCF71D" />
+          {quests?.daily?.some(q => q.completed && !q.claimed) && <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#4CAF50", border: "2px solid #000" }} />}
+        </button>
+      </div>
       <NewsCarousel T={T} />
+
+      {/* 3 rectangles row */}
+      <div className="flex gap-2 mb-6" style={{ height: 80 }}>
+        {/* Rectangle 1: Rewards */}
+        <button onClick={onOpenRewards} className="flex-1 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.2)", cursor: "pointer", padding: "12px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 4 }}>
+          <Gift size={18} color="#A855F7" />
+          <span style={{ color: "#c084fc", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>{T.rewardsFree}</span>
+        </button>
+
+        {/* Rectangle 2: Streak */}
+        <div className="flex-1 rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "10px 12px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2 }}>
+          <span style={{ fontSize: 22, lineHeight: 1 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+          <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
+          <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
+        </div>
+
+        {/* Rectangle 3: Dynamic slider */}
+        <div className="flex-1 rounded-xl" style={{ background: "#141414", border: "1px solid #262626", overflow: "hidden", position: "relative" }}>
+          <DynamicSlider predictions={predictions} T={T} />
+        </div>
+      </div>
+
+      {/* Daily prediction counter */}
+      <div className="flex items-center justify-between rounded-xl px-4 py-3 mb-6" style={{ background: dailyBets.count >= DAILY_BET_LIMIT ? "rgba(239,68,68,0.08)" : "rgba(204,247,29,0.05)", border: `1px solid ${dailyBets.count >= DAILY_BET_LIMIT ? "rgba(239,68,68,0.15)" : "rgba(204,247,29,0.1)"}` }}>
+        <div className="flex items-center gap-2">
+          <Target size={14} color={dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D"} />
+          <span style={{ color: dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D", fontSize: 12, fontWeight: 700 }}>
+            {dailyBets.count >= DAILY_BET_LIMIT ? T.predLimit : `${DAILY_BET_LIMIT - dailyBets.count} ${T.predRemaining}`}
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {Array.from({ length: DAILY_BET_LIMIT }, (_, i) => (
+            <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < dailyBets.count ? (dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D") : "#333" }} />
+          ))}
+        </div>
+      </div>
 
       <div className="flex items-center justify-between mb-3">
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
@@ -5036,6 +5471,14 @@ export default function ClutchApp() {
     }
   });
 
+  const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
+  const [streak, setStreak] = useState(() => loadStreak());
+  const [dailyBets, setDailyBets] = useState(() => loadDailyBets());
+  const [showQuestModal, setShowQuestModal] = useState(false);
+  const [showRewardsModal, setShowRewardsModal] = useState(false);
+  const [showNexiumBox, setShowNexiumBox] = useState(false);
+  const [streakPopup, setStreakPopup] = useState(null);
+
   useEffect(() => {
     localStorage.setItem("split_predictions", JSON.stringify(predictions));
   }, [predictions]);
@@ -5115,7 +5558,7 @@ export default function ClutchApp() {
   const [cs2Events, setCs2Events] = useState(null);
   const [showCs2BracketPage, setShowCs2BracketPage] = useState(false);
 
-  const T = STR[currentLang] || STR.fr;
+  const T = currentLang === "fr" ? STR.fr : { ...STR.fr, ...(STR[currentLang] || {}) };
   const isLight = false;
 
   function isMatchNotifOn(matchId, gameKey, matchRegion) {
@@ -5550,6 +5993,7 @@ export default function ClutchApp() {
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
+      const isNewBet = !cur.seriesA && !cur.seriesB;
       const next = { ...cur, [team]: digit };
       const a = next.seriesA;
       const b = next.seriesB;
@@ -5559,12 +6003,29 @@ export default function ClutchApp() {
         const validPairs = [[2, 0], [2, 1], [1, 2], [0, 2]];
         const ok = validPairs.some(([x, y]) => x === an && y === bn);
         if (ok) {
+          const db = loadDailyBets();
+          if (isNewBet && db.count >= DAILY_BET_LIMIT) return prev;
+          if (isNewBet) {
+            const newDb = { ...db, count: db.count + 1 };
+            saveDailyBets(newDb);
+            setDailyBets(newDb);
+            const streakResult = updateStreak();
+            setStreak(streakResult);
+            if (streakResult.earned) setStreakPopup(streakResult);
+            setQuestState(qs => {
+              if (!qs) return qs;
+              const updated = { ...qs, daily: qs.daily.map(q => {
+                if (q.completed) return q;
+                if (q.id === "bet_today") return { ...q, progress: Math.min(q.progress + 1, q.target), completed: q.progress + 1 >= q.target };
+                if (q.id === "use_all_slots") return { ...q, progress: newDb.count, completed: newDb.count >= q.target };
+                return q;
+              }), weekly: qs.weekly ? { ...qs.weekly, progress: qs.weekly.id === "weekly_5_wins" ? qs.weekly.progress : qs.weekly.progress } : qs.weekly };
+              saveQuests(updated);
+              return updated;
+            });
+          }
           const count = an + bn;
           const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
-          // On fige les cotes affichées AU MOMENT du pari (avant que le match
-          // ne commence, seul instant où ce champ est éditable) : les points
-          // gagnés plus tard se basent toujours sur cette cote-là, jamais sur
-          // une cote recalculée après-coup une fois le résultat connu.
           const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
           const odds1 = src ? src.odds1 : cur.odds1;
           const odds2 = src ? src.odds2 : cur.odds2;
@@ -5693,7 +6154,7 @@ export default function ClutchApp() {
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
-          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} />}
+          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} dailyBets={dailyBets} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} />}
           {activeTab === "valorant" && (
             <ValorantTab
               selectedRegions={selectedRegions}
@@ -5818,6 +6279,20 @@ export default function ClutchApp() {
             lang={currentLang}
           />
         )}
+        {showQuestModal && <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
+          setQuestState(qs => {
+            if (!qs) return qs;
+            const updated = isWeekly
+              ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
+              : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
+            saveQuests(updated);
+            return updated;
+          });
+          setShowNexiumBox(true);
+        }} T={T} />}
+        {showRewardsModal && <RewardsModal onClose={() => setShowRewardsModal(false)} onOpenNexium={() => { setShowRewardsModal(false); setShowNexiumBox(true); }} T={T} />}
+        {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
+        {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
       </div>
 
       <style>{`
@@ -5829,6 +6304,10 @@ export default function ClutchApp() {
         .dark-scroll { scrollbar-width: thin; scrollbar-color: #333 transparent; }
         @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
         @keyframes bracketLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes nexiumSpin { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); } }
+        @keyframes nexiumReveal { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes streakSlide { 0% { transform: translateX(-50%) translateY(-30px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        @keyframes streakFade { 0% { opacity: 1; } 100% { opacity: 0; } }
       `}</style>
     </div>
   );
