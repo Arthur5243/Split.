@@ -301,7 +301,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
     nexiumBox: "Nexium Box", nexiumOpen: "Ouvrir", nexiumRare: "Rare", nexiumEpic: "Épique", nexiumLegendary: "Légendaire", nexiumUltra: "Ultra", nexiumNew: "Nouveau !", nexiumOwned: "Possédé",
     cashprizeTitle: "Cashprize", cashprizeRules: "Top 1, 2 et 3 gagnent un cashprize !", cashprizeUnlock: "Disponible à partir de 1 000 installations", cashprizeInstalls: "installations", cashprizeWinners: "Gagnants",
-    predLimit: "Limite atteinte", predRemaining: "pronos restants", predActive: "pronos actifs",
+    predLimit: "Tout est joué !", predRemaining: "pronos dispo", predActive: "pronos actifs", predLimitPopup: "Tu as utilisé tes 4 pronos du jour. Reviens demain ou attends qu'un match se termine !",
     slideMatchDay: "Match du jour", slideCommunity: "ont parié sur", slideCountdown: "Compte à rebours",
     rewardsFree: "Récompenses", rewardsCash: "Cashprize",
     inventoryTitle: "Inventaire", inventoryEmpty: "Aucun objet pour le moment",
@@ -377,7 +377,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
     nexiumBox: "Nexium Box", nexiumOpen: "Open", nexiumRare: "Rare", nexiumEpic: "Epic", nexiumLegendary: "Legendary", nexiumUltra: "Ultra", nexiumNew: "New!", nexiumOwned: "Owned",
     cashprizeTitle: "Cash Prize", cashprizeRules: "Top 1, 2, and 3 win a cash prize!", cashprizeUnlock: "Available from 1,000 installs", cashprizeInstalls: "installs", cashprizeWinners: "Winners",
-    predLimit: "Limit reached", predRemaining: "predictions left", predActive: "active predictions",
+    predLimit: "All played!", predRemaining: "left", predActive: "active predictions", predLimitPopup: "You've used all 4 predictions for today. Come back tomorrow or wait for a match to finish!",
     slideMatchDay: "Match of the day", slideCommunity: "bet on", slideCountdown: "Countdown",
     rewardsFree: "Rewards", rewardsCash: "Cash Prize",
     inventoryTitle: "Inventory", inventoryEmpty: "No items yet",
@@ -1993,7 +1993,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 4 }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -2010,7 +2010,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const games = (pred && pred.games) || [];
   // Dès que le match a démarré (live) ou est terminé, le pari est figé :
   // impossible de changer le score série pronostiqué ni les scores par map.
-  const betLocked = running || finished;
+  const hasCompleteBet = seriesA !== "" && seriesB !== "" && [[2,0],[2,1],[1,2],[0,2]].some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
+  const betLocked = running || finished || (remainingPreds <= 0 && !hasCompleteBet);
 
   // Refs pour l'auto-avancement (façon code OTP) : dès qu'une case a une
   // saisie "complète", le focus bascule direct sur l'autre case du même
@@ -2718,7 +2719,7 @@ function QuestModal({ quests, onClose, onClaim, T }) {
     );
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "#000", display: "flex", flexDirection: "column" }}>
+    <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.questTitle}</p>
@@ -2834,6 +2835,24 @@ function StreakPopup({ streak, onClose, T }) {
   );
 }
 
+function PredBadge({ remainingPreds, T }) {
+  const DAILY_LIMIT = 4;
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "6px 16px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 5, background: remainingPreds > 0 ? "rgba(204,247,29,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${remainingPreds > 0 ? "rgba(204,247,29,0.15)" : "rgba(239,68,68,0.15)"}`, borderRadius: 16, padding: "3px 8px" }}>
+        <div style={{ display: "flex", gap: 2 }}>
+          {Array.from({ length: DAILY_LIMIT }, (_, i) => (
+            <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: i < remainingPreds ? "#CCF71D" : "#333" }} />
+          ))}
+        </div>
+        <span style={{ color: remainingPreds > 0 ? "#CCF71D" : "#EF4444", fontSize: 9, fontWeight: 700 }}>
+          {remainingPreds > 0 ? `${remainingPreds} ${T.predRemaining}` : T.predLimit}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function DynamicSlider({ predictions, T }) {
   const [slide, setSlide] = useState(0);
   const slideCount = 3;
@@ -2846,25 +2865,25 @@ function DynamicSlider({ predictions, T }) {
   const fakePct = 55 + Math.floor(Math.random() * 25);
 
   const slides = [
-    <div key="match" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
-      <span style={{ fontSize: 20 }}>⚔</span>
+    <div key="match" style={{ display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
+      <span style={{ fontSize: 16 }}>⚔</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: "#FFD700", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.slideMatchDay}</p>
-        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>TBD vs TBD</p>
+        <p style={{ color: "#FFD700", fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{T.slideMatchDay}</p>
+        <p style={{ color: "#ccc", fontSize: 9, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>TBD vs TBD</p>
       </div>
     </div>,
-    <div key="community" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
-      <span style={{ fontSize: 20 }}>📊</span>
+    <div key="community" style={{ display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
+      <span style={{ fontSize: 16 }}>📊</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: "#3B82F6", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{fakePct}% {T.slideCommunity}</p>
-        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600 }}>Team Alpha</p>
+        <p style={{ color: "#3B82F6", fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fakePct}% {T.slideCommunity}</p>
+        <p style={{ color: "#ccc", fontSize: 9, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Team Alpha</p>
       </div>
     </div>,
-    <div key="countdown" style={{ display: "flex", alignItems: "center", gap: 10, height: "100%" }}>
-      <span style={{ fontSize: 20 }}>⏳</span>
+    <div key="countdown" style={{ display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
+      <span style={{ fontSize: 16 }}>⏳</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: "#EF4444", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.slideCountdown}</p>
-        <p style={{ color: "#ccc", fontSize: 11, fontWeight: 600 }}>Champions 2026</p>
+        <p style={{ color: "#EF4444", fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{T.slideCountdown}</p>
+        <p style={{ color: "#ccc", fontSize: 9, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Champions 2026</p>
       </div>
     </div>,
   ];
@@ -2972,12 +2991,7 @@ function NewsCarousel({ T }) {
   );
 }
 
-function NotificationsPanel({ onClose, T }) {
-  const notifTypes = [
-    { type: "friend", icon: <UserPlus size={16} color="#3B82F6" />, label: T.notifFriendReq, bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.2)" },
-    { type: "match", icon: <Zap size={16} color="#F59E0B" />, label: T.notifBigMatch, bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.2)" },
-    { type: "qualified", icon: <Award size={16} color="#10B981" />, label: T.notifTeamQualified, bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.2)" },
-  ];
+function NotificationsPanel({ notifications, onClose, T }) {
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ width: "min(360px, 90%)", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 16, padding: "20px 16px", maxHeight: "60vh", overflowY: "auto" }}>
@@ -2985,15 +2999,25 @@ function NotificationsPanel({ onClose, T }) {
           <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.notifTitle}</p>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} color="#666" /></button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-          {notifTypes.map(n => (
-            <div key={n.type} style={{ display: "flex", alignItems: "center", gap: 12, background: n.bg, border: `1px solid ${n.border}`, borderRadius: 12, padding: "12px 14px" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{n.icon}</div>
-              <span style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>{n.label}</span>
-            </div>
-          ))}
-        </div>
-        <p style={{ color: "#555", fontSize: 11, textAlign: "center" }}>{T.notifEmpty}</p>
+        {notifications.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {notifications.map((n, i) => {
+              const icon = n.type === "friend" ? <UserPlus size={16} color="#3B82F6" /> : n.type === "match" ? <Zap size={16} color="#F59E0B" /> : <Bell size={16} color="#888" />;
+              const bg = n.type === "friend" ? "rgba(59,130,246,0.08)" : n.type === "match" ? "rgba(245,158,11,0.08)" : "#111";
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: bg, border: "1px solid #1a1a1a", borderRadius: 12, padding: "12px 14px" }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+                  <span style={{ color: "#ccc", fontSize: 12, fontWeight: 600 }}>{n.message}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ textAlign: "center", padding: "32px 0" }}>
+            <Bell size={28} color="#333" style={{ margin: "0 auto 12px" }} />
+            <p style={{ color: "#555", fontSize: 12 }}>{T.notifEmpty}</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -4125,7 +4149,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
   }
@@ -4185,9 +4209,14 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
     <div className="relative">
       <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + glowAccent + "22, transparent 70%)" }} />
       <div className="relative px-4 pt-4 pb-2">
-        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.valorantTitle}</h1>
-        <p style={{ color: "#888", fontSize: "12px" }}>{T.valorantSubtitle}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.valorantTitle}</h1>
+            <p style={{ color: "#888", fontSize: "12px" }}>{T.valorantSubtitle}</p>
+          </div>
+        </div>
       </div>
+      <PredBadge remainingPreds={remainingPreds} T={T} />
 
       <div className="flex gap-2 px-4 pt-1">
         {["upcoming", "finished"].map((s) => {
@@ -4248,7 +4277,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} />
             </React.Fragment>
           );
         })}
@@ -4305,7 +4334,7 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds }) {
   if (showCs2BracketPage) {
     return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} />;
   }
@@ -4382,6 +4411,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
         <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
         <p style={{ color: "#888", fontSize: "12px" }}>{T.cs2Subtitle}</p>
       </div>
+      <PredBadge remainingPreds={remainingPreds} T={T} />
 
       <div className="flex gap-2 px-4 pt-1">
         {["upcoming", "finished"].map((s) => {
@@ -4460,6 +4490,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 team2RegionCode={m.team2Region ? regionCodeCS2(m.team2Region) : null}
                 notifActive={isMatchNotifOn(m.id, m.region)}
                 onToggleNotif={toggleMatchNotif}
+                remainingPreds={remainingPreds}
               />
             </React.Fragment>
           );
@@ -4474,7 +4505,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -4505,6 +4536,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
         <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.rlTitle}</h1>
         <p style={{ color: "#888", fontSize: "12px" }}>{T.rlSubtitle}</p>
       </div>
+      <PredBadge remainingPreds={remainingPreds} T={T} />
 
       <div className="flex gap-2 px-4 pt-1">
         {["upcoming", "finished"].map((s) => {
@@ -4572,6 +4604,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 team2RegionCode={m.team2Region ? regionCodeRL(m.team2Region) : null}
                 notifActive={isMatchNotifOn(m.id, m.team1Region || m.team2Region)}
                 onToggleNotif={toggleMatchNotif}
+                remainingPreds={remainingPreds}
               />
             </React.Fragment>
           );
@@ -5523,6 +5556,8 @@ export default function ClutchApp() {
   const [streakPopup, setStreakPopup] = useState(null);
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     localStorage.setItem("split_predictions", JSON.stringify(predictions));
@@ -6066,7 +6101,7 @@ export default function ClutchApp() {
               if (settledMatchIds.has(id)) continue;
               activeCount++;
             }
-            if (activeCount >= DAILY_BET_LIMIT) return prev;
+            if (activeCount >= DAILY_BET_LIMIT) { setShowLimitPopup(true); return prev; }
             const streakResult = updateStreak();
             setStreak(streakResult);
             if (streakResult.earned) setStreakPopup(streakResult);
@@ -6212,19 +6247,21 @@ export default function ClutchApp() {
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
-        {/* Prediction badge top-right */}
-        <div style={{ position: "absolute", top: 52, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 6, background: remainingPreds > 0 ? "rgba(204,247,29,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${remainingPreds > 0 ? "rgba(204,247,29,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 20, padding: "4px 10px" }}>
-          <span style={{ color: remainingPreds > 0 ? "#CCF71D" : "#EF4444", fontSize: 10, fontWeight: 700 }}>
-            {remainingPreds > 0 ? `${remainingPreds} ${T.predRemaining}` : T.predLimit}
-          </span>
-          <div style={{ display: "flex", gap: 3 }}>
-            {Array.from({ length: DAILY_BET_LIMIT }, (_, i) => (
-              <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: i < remainingPreds ? "#CCF71D" : "#333" }} />
-            ))}
-          </div>
-        </div>
-
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
+          {showQuestModal ? (
+            <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
+              setQuestState(qs => {
+                if (!qs) return qs;
+                const updated = isWeekly
+                  ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
+                  : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
+                saveQuests(updated);
+                return updated;
+              });
+              setShowNexiumBox(true);
+            }} T={T} />
+          ) : (
+          <>
           {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} />}
           {activeTab === "valorant" && (
             <ValorantTab
@@ -6248,6 +6285,7 @@ export default function ClutchApp() {
               vlrEvents={vlrEvents}
               showBracketPage={showBracketPage}
               setShowBracketPage={setShowBracketPage}
+              remainingPreds={remainingPreds}
             />
           )}
           {activeTab === "csgo" && (
@@ -6272,6 +6310,7 @@ export default function ClutchApp() {
               cs2Events={cs2Events}
               showCs2BracketPage={showCs2BracketPage}
               setShowCs2BracketPage={setShowCs2BracketPage}
+              remainingPreds={remainingPreds}
             />
           )}
           {activeTab === "rocketleague" && (
@@ -6291,9 +6330,12 @@ export default function ClutchApp() {
               toggleExpand={toggleExpand}
               teamLogoCache={teamLogoCache}
               predictions={predictions}
+              remainingPreds={remainingPreds}
             />
           )}
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
+          </>
+          )}
         </div>
 
 
@@ -6350,17 +6392,6 @@ export default function ClutchApp() {
             lang={currentLang}
           />
         )}
-        {showQuestModal && <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
-          setQuestState(qs => {
-            if (!qs) return qs;
-            const updated = isWeekly
-              ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
-              : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
-            saveQuests(updated);
-            return updated;
-          });
-          setShowNexiumBox(true);
-        }} T={T} />}
         {showRewardsModal && <RewardsModal onClose={() => setShowRewardsModal(false)} onOpenNexium={() => { setShowRewardsModal(false); setShowNexiumBox(true); }} T={T} />}
         {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
@@ -6375,7 +6406,17 @@ export default function ClutchApp() {
             </div>
           </div>
         )}
-        {showNotifs && <NotificationsPanel onClose={() => setShowNotifs(false)} T={T} />}
+        {showNotifs && <NotificationsPanel notifications={notifications} onClose={() => setShowNotifs(false)} T={T} />}
+        {showLimitPopup && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowLimitPopup(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(300px, 80%)", background: "#141414", border: "1px solid #262626", borderRadius: 20, padding: "28px 24px", textAlign: "center" }}>
+              <span style={{ fontSize: 40, display: "block", marginBottom: 12 }}>🔒</span>
+              <p style={{ color: "#fff", fontSize: 15, fontWeight: 900, marginBottom: 10 }}>{T.predLimit}</p>
+              <p style={{ color: "#888", fontSize: 12, lineHeight: 1.5 }}>{T.predLimitPopup}</p>
+              <button onClick={() => setShowLimitPopup(false)} style={{ marginTop: 20, background: "#262626", color: "#fff", border: "none", borderRadius: 10, padding: "10px 32px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>OK</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
