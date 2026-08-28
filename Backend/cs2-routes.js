@@ -249,7 +249,10 @@ router.get("/api/cs2-upcoming", async (req, res) => {
         const t1 = m.opponents?.[0]?.opponent?.name;
         const t2 = m.opponents?.[1]?.opponent?.name;
         if (!t1 || !t2) return true;
-        return !getHltvScrapedScores(t1, t2);
+        if (getHltvScrapedScores(t1, t2)) return false;
+        const dateStr = m.begin_at || m.scheduled_at;
+        if (findCS2ManualMapScores(t1, t2, dateStr)) return false;
+        return true;
       })
       .map(attachTeamRegions);
     res.json(data);
