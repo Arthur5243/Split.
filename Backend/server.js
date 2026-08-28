@@ -275,15 +275,21 @@ async function reconcileStaleLiveMatches(data) {
     const date = (m.begin_at || "").slice(0, 10);
 
     let mapScores = null;
-    try {
-      mapScores = await getMapScores(t1.name, t2.name, date);
-    } catch (e) {
-      console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → erreur vlr.gg:`, e.message);
-      if (pastAbsoluteLimit) {
-        console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → masqué (running depuis >4h, vlr.gg indisponible)`);
-        toHide.push(m.id);
+    const scraped = getScrapedScores(t1.name, t2.name);
+    if (scraped && scraped.length > 0) {
+      mapScores = scraped;
+      console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → scraper live`);
+    } else {
+      try {
+        mapScores = await getMapScores(t1.name, t2.name, date);
+      } catch (e) {
+        console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → erreur vlr.gg:`, e.message);
+        if (pastAbsoluteLimit) {
+          console.log(`[live-reconcile] ${t1.name} vs ${t2.name} → masqué (running depuis >4h, vlr.gg indisponible)`);
+          toHide.push(m.id);
+        }
+        return;
       }
-      return;
     }
     if (!mapScores || mapScores.length === 0) {
       if (pastAbsoluteLimit) {
@@ -435,13 +441,19 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
       return;
     }
     let fetchError = false;
-    try {
-      m.map_scores = await getMapScores(t1, t2, date); // null si pas trouvé
-      console.log(`[map_scores] ${t1} vs ${t2} (${date}) →`, JSON.stringify(m.map_scores));
-    } catch (e) {
-      m.map_scores = null;
-      fetchError = true;
-      console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
+    const scraped = getScrapedScores(t1, t2);
+    if (scraped && scraped.length > 0) {
+      m.map_scores = scraped;
+      console.log(`[map_scores] ${t1} vs ${t2} (${date}) → scraper live`);
+    } else {
+      try {
+        m.map_scores = await getMapScores(t1, t2, date);
+        console.log(`[map_scores] ${t1} vs ${t2} (${date}) →`, JSON.stringify(m.map_scores));
+      } catch (e) {
+        m.map_scores = null;
+        fetchError = true;
+        console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
+      }
     }
     // Succès -> persisté pour de bon. Échec (ou `null` renvoyé, ex: requête
     // faite trop tôt avant que vlr.gg publie le report du match) -> on

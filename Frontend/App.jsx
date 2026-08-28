@@ -278,7 +278,7 @@ const STR = {
     scoreTout: "TOUT", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Pas de liens, insultes ou gros mots.",
     profileAmis: "Amis", profileTop: "Top", profilePoint: "Point",
-    profileModify: "Modifier le profil", profileHistory: "Historique :",
+    profileModify: "Modifier le profil", profileHistory: "Historique :", profileFavLabel: "Équipes préférées",
     profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
     profileVoir: "voir", profileAddFriend: "Ajouter un ami",
     friendTabAdd: "Ajouter", friendTabRequests: "Demandes",
@@ -354,7 +354,7 @@ const STR = {
     scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "No links, insults or profanity.",
     profileAmis: "Friends", profileTop: "Top", profilePoint: "Point",
-    profileModify: "Edit profile", profileHistory: "History:",
+    profileModify: "Edit profile", profileHistory: "History:", profileFavLabel: "Favorite teams",
     profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
     profileVoir: "view", profileAddFriend: "Add friend",
     friendTabAdd: "Add", friendTabRequests: "Requests",
@@ -428,7 +428,7 @@ const STR = {
     scoreTout: "TODO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Sin enlaces, insultos ni palabrotas.",
     profileAmis: "Amigos", profileTop: "Top", profilePoint: "Punto",
-    profileModify: "Editar perfil", profileHistory: "Historial:",
+    profileModify: "Editar perfil", profileHistory: "Historial:", profileFavLabel: "Equipos favoritos",
     profileExact: "Exacto", profileBon: "Correcto", profileParie: "Apostado",
     profileVoir: "ver", profileAddFriend: "Añadir amigo",
     friendTabAdd: "Añadir", friendTabRequests: "Solicitudes",
@@ -490,7 +490,7 @@ const STR = {
     scoreTout: "TUTTO", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Niente link, insulti o parolacce.",
     profileAmis: "Amici", profileTop: "Top", profilePoint: "Punto",
-    profileModify: "Modifica profilo", profileHistory: "Storico:",
+    profileModify: "Modifica profilo", profileHistory: "Storico:", profileFavLabel: "Squadre preferite",
     profileExact: "Esatto", profileBon: "Giusto", profileParie: "Scommesso",
     profileVoir: "vedi", profileAddFriend: "Aggiungi amico",
     friendTabAdd: "Aggiungi", friendTabRequests: "Richieste",
@@ -552,7 +552,7 @@ const STR = {
     scoreTout: "全体", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "リンク・暴言・悪口は禁止です。",
     profileAmis: "フレンド", profileTop: "Top", profilePoint: "ポイント",
-    profileModify: "プロフィール編集", profileHistory: "履歴：",
+    profileModify: "プロフィール編集", profileHistory: "履歴：", profileFavLabel: "お気に入りチーム",
     profileExact: "完全一致", profileBon: "的中", profileParie: "予想数",
     profileVoir: "見る", profileAddFriend: "フレンド追加",
     friendTabAdd: "追加", friendTabRequests: "申請",
@@ -614,7 +614,7 @@ const STR = {
     scoreTout: "ALLES", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "Keine Links, Beleidigungen oder Schimpfwörter.",
     profileAmis: "Freunde", profileTop: "Top", profilePoint: "Punkt",
-    profileModify: "Profil bearbeiten", profileHistory: "Verlauf:",
+    profileModify: "Profil bearbeiten", profileHistory: "Verlauf:", profileFavLabel: "Lieblingsteams",
     profileExact: "Exakt", profileBon: "Richtig", profileParie: "Gewettet",
     profileVoir: "ansehen", profileAddFriend: "Freund hinzufügen",
     friendTabAdd: "Hinzufügen", friendTabRequests: "Anfragen",
@@ -676,7 +676,7 @@ const STR = {
     scoreTout: "全部", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "链接、侮辱或脏话禁止使用。",
     profileAmis: "好友", profileTop: "排名", profilePoint: "积分",
-    profileModify: "编辑资料", profileHistory: "历史记录：",
+    profileModify: "编辑资料", profileHistory: "历史记录：", profileFavLabel: "最爱战队",
     profileExact: "精准", profileBon: "正确", profileParie: "已竞猜",
     profileVoir: "查看", profileAddFriend: "添加好友",
     friendTabAdd: "添加", friendTabRequests: "请求",
@@ -2058,6 +2058,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const hasReplay = finished && match.team1Name && match.team2Name;
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
+  const [scoresRevealed, setScoresRevealed] = useState(false);
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
   const replayUrl = _ytCache.get(replayCacheKey) || "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
   const onReplayClick = () => {
@@ -2284,23 +2285,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>{T.betLocked || "Pari verrouillé"}</span>
         </div>
       )}
-      {running && match.live_map_scores && match.live_map_scores.length > 0 && (
-        <div className="px-4 pb-3">
-          <div style={{ background: "#1a1a1a", borderRadius: 8, padding: "6px 10px", display: "flex", flexDirection: "column", gap: 3 }}>
-            {match.live_map_scores.map((ms, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 0" }}>
-                <span style={{ color: "#888", fontSize: "9px", fontWeight: 700, textTransform: "uppercase", minWidth: 50 }}>{ms.map}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <span style={{ color: ms.score1 > ms.score2 ? "#CCF71D" : "#aaa", fontSize: "11px", fontWeight: 800, minWidth: 16, textAlign: "right" }}>{ms.score1}</span>
-                  <span style={{ color: "#555", fontSize: "9px", fontWeight: 700 }}>–</span>
-                  <span style={{ color: ms.score2 > ms.score1 ? "#CCF71D" : "#aaa", fontSize: "11px", fontWeight: 800, minWidth: 16 }}>{ms.score2}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {finished ? (
         <>
           <div style={{ position: "relative" }}>
@@ -2331,10 +2315,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
           {expanded && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
-              <div className="flex flex-col gap-2">
-                {/* On affiche toujours quelque chose : le vrai score par map si vlr.gg
-                    l'a fourni (match.map_scores), sinon un repli 0-0 par map (une
-                    seule ligne "0-0" si on n'a même pas le nombre de maps). */}
+              <div className="flex flex-col gap-2" style={{ position: "relative" }}>
                 {(() => {
                   const mapsList = match.map_scores && match.map_scores.length > 0
                     ? match.map_scores
@@ -2353,11 +2334,17 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-col items-end">
-                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                            {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                          </span>
-                          {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                        <div className="flex flex-col items-end" style={{ position: "relative" }}>
+                          {scoresRevealed ? (
+                            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800, animation: "scoreReveal 0.3s ease-out" }}>
+                              {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                            </span>
+                          ) : (
+                            <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); }} style={{ background: "#333", border: "none", borderRadius: 4, padding: "2px 12px", cursor: "pointer", minWidth: 50 }}>
+                              <span style={{ color: "#555", fontSize: "13px", fontWeight: 800 }}>? - ?</span>
+                            </button>
+                          )}
+                          {scoresRevealed && gamePred && gamePred.a !== "" && gamePred.b !== "" && (
                             <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
                               {T.yourBet} : {gamePred.a}-{gamePred.b}
                             </span>
@@ -2704,7 +2691,8 @@ const QUEST_KIT_ICONS = {
   weekly: (done) => <Award size={16} color={done ? "#4CAF50" : "#FFD700"} />,
 };
 
-function QuestModal({ quests, onClose, onClaim, T }) {
+function QuestModal({ quests, onClose, onClaim, onOpenNexium, T }) {
+  const [questTab, setQuestTab] = useState("quests");
   if (!quests) return null;
   const { daily, weekly } = quests;
   const allQuests = [...(daily || []), ...(weekly ? [weekly] : [])];
@@ -2723,15 +2711,20 @@ function QuestModal({ quests, onClose, onClaim, T }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{T[q.titleKey] || q.titleKey}</p>
-          <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden" }}>
+          <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden", width: "calc(100% - 28px)" }}>
             <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.4s ease" }} />
           </div>
           <p style={{ color: "#555", fontSize: 10, marginTop: 4, fontWeight: 600 }}>{q.progress}/{q.target} {isWeekly && <span style={{ color: "#FFD700" }}>({T.questWeekly})</span>}</p>
         </div>
-        {done && !q.claimed && (
-          <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
-        )}
-        {q.claimed && <CheckCircle size={16} color="#4CAF50" />}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          {done && !q.claimed ? (
+            <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
+          ) : q.claimed ? (
+            <CheckCircle size={16} color="#4CAF50" />
+          ) : (
+            <Gift size={14} color="#A855F7" style={{ opacity: 0.5 }} />
+          )}
+        </div>
       </div>
     );
   };
@@ -2739,32 +2732,58 @@ function QuestModal({ quests, onClose, onClaim, T }) {
     <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
-        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.questTitle}</p>
+        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{questTab === "quests" ? T.questTitle : (T.rewardsTitle || "Récompenses")}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "20px 16px", borderBottom: "1px solid #1a1a1a" }}>
-        <div className="flex items-center justify-between mb-2">
-          <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
-          <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
-        </div>
-        <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
-        </div>
+      <div style={{ display: "flex", gap: 4, padding: "12px 16px", background: "#0a0a0a" }}>
+        <button onClick={() => setQuestTab("quests")} style={{ flex: 1, padding: "8px 0", background: questTab === "quests" ? "#1c1c1c" : "transparent", border: questTab === "quests" ? "1px solid #333" : "1px solid transparent", borderRadius: 8, color: questTab === "quests" ? "#fff" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+          <ListChecks size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />{T.questTitle}
+        </button>
+        <button onClick={() => setQuestTab("rewards")} style={{ flex: 1, padding: "8px 0", background: questTab === "rewards" ? "#1c1c1c" : "transparent", border: questTab === "rewards" ? "1px solid #333" : "1px solid transparent", borderRadius: 8, color: questTab === "rewards" ? "#A855F7" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+          <Gift size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />{T.rewardsTitle || "Récompenses"}
+        </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-          {(daily || []).map((q, i) => renderQuest(q, i, false))}
+      {questTab === "quests" ? (
+        <>
+          <div style={{ padding: "20px 16px", borderBottom: "1px solid #1a1a1a" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
+              <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+              {(daily || []).map((q, i) => renderQuest(q, i, false))}
+            </div>
+            {weekly && (
+              <>
+                <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
+                {renderQuest(weekly, 0, true)}
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 80, height: 80, borderRadius: 20, background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.1))", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 20 }}>
+            <Gift size={36} color="#A855F7" />
+          </div>
+          <p style={{ color: "#ccc", fontSize: 14, fontWeight: 800, textAlign: "center" }}>{T.rewardsQuestLinked || "Complète des quêtes pour débloquer des récompenses !"}</p>
+          <p style={{ color: "#666", fontSize: 12, textAlign: "center", maxWidth: 280 }}>{T.rewardsQuestSub || "Chaque quête terminée te donne une chance d'ouvrir une Nexium Box."}</p>
+          {onOpenNexium && (
+            <button onClick={onOpenNexium} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer", marginTop: 8 }}>
+              {T.rewardsOpenBox || "Ouvrir une Box"}
+            </button>
+          )}
         </div>
-        {weekly && (
-          <>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
-            {renderQuest(weekly, 0, true)}
-          </>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -2870,6 +2889,49 @@ function PredBadge({ remainingPreds, T }) {
   );
 }
 
+const RANK_TIERS = [
+  { name: "Recrue",   sub: 3, minPts: 0,   color: "#8B8B8B", icon: "🛡️",  bg: "rgba(139,139,139,0.1)", border: "rgba(139,139,139,0.2)" },
+  { name: "Analyste", sub: 3, minPts: 20,  color: "#4CAF50", icon: "📊",  bg: "rgba(76,175,80,0.1)",  border: "rgba(76,175,80,0.2)" },
+  { name: "Stratège", sub: 3, minPts: 60,  color: "#2196F3", icon: "🧠",  bg: "rgba(33,150,243,0.1)", border: "rgba(33,150,243,0.2)" },
+  { name: "Expert",   sub: 3, minPts: 120, color: "#9C27B0", icon: "🎯",  bg: "rgba(156,39,176,0.1)", border: "rgba(156,39,176,0.2)" },
+  { name: "Maître",   sub: 3, minPts: 250, color: "#FF9800", icon: "👑",  bg: "rgba(255,152,0,0.1)",  border: "rgba(255,152,0,0.2)" },
+  { name: "Oracle",   sub: 1, minPts: 500, color: "#FFD700", icon: "🔮",  bg: "linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,107,0,0.1))", border: "rgba(255,215,0,0.35)" },
+];
+
+function getUserRank(points) {
+  let tier = RANK_TIERS[0];
+  for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
+    if (points >= RANK_TIERS[i].minPts) { tier = RANK_TIERS[i]; break; }
+  }
+  const nextTier = RANK_TIERS[RANK_TIERS.indexOf(tier) + 1];
+  let subTier = "";
+  if (tier.sub > 1 && nextTier) {
+    const range = nextTier.minPts - tier.minPts;
+    const progress = points - tier.minPts;
+    const subIdx = Math.min(Math.floor((progress / range) * tier.sub), tier.sub - 1);
+    subTier = " " + ["I", "II", "III"][subIdx];
+  }
+  const nextPts = nextTier ? nextTier.minPts : null;
+  const progress = nextPts ? Math.min((points - tier.minPts) / (nextPts - tier.minPts), 1) : 1;
+  return { ...tier, subTier, label: tier.name + subTier, progress, nextPts };
+}
+
+function RankBadgeCompact({ points, onClick }) {
+  const rank = getUserRank(points);
+  const isOracle = rank.name === "Oracle";
+  return (
+    <button onClick={onClick} className="rounded-xl" style={{ background: isOracle ? rank.bg : rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
+      <span style={{ fontSize: 18, lineHeight: 1, filter: isOracle ? "drop-shadow(0 0 4px rgba(255,215,0,0.6))" : "none" }}>{rank.icon}</span>
+      <span style={{ color: rank.color, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{rank.label}</span>
+      {rank.nextPts && (
+        <div style={{ width: "80%", height: 3, background: "#262626", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 2 }} />
+        </div>
+      )}
+    </button>
+  );
+}
+
 function DynamicSlider({ predictions, T }) {
   const [slide, setSlide] = useState(0);
   const slideCount = 3;
@@ -2922,14 +2984,32 @@ function DynamicSlider({ predictions, T }) {
 function NewsCarousel({ T }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [ready, setReady] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
   const slideCount = 2;
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
+    let cancelled = false;
+    const imgs = [NEWS_IMAGE, NEWS_EWC_IMAGE];
+    let loaded = 0;
+    imgs.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      const done = () => { loaded++; if (!cancelled) setImagesLoaded(loaded); };
+      img.onload = done;
+      img.onerror = done;
+      if (img.complete) done();
+    });
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (imagesLoaded >= 2) {
+      const id = requestAnimationFrame(() => setReady(true));
+      return () => cancelAnimationFrame(id);
+    }
+  }, [imagesLoaded]);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -2969,9 +3049,7 @@ function NewsCarousel({ T }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 0, height: 0, opacity: 0 }} />
-      <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 0, height: 0, opacity: 0 }} />
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -2982,7 +3060,7 @@ function NewsCarousel({ T }) {
           <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
         </div>
       </div>
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_EWC_IMAGE})`, backgroundSize: "cover", backgroundPosition: "left center" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -3040,7 +3118,7 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints }) {
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -3068,15 +3146,13 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
         {/* Rectangle 2: Streak */}
         <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden" }}>
-          <span style={{ fontSize: 20, lineHeight: 1 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+          <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? "drop-shadow(0 0 6px rgba(255,107,0,0.5))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
           <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
           <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
         </button>
 
-        {/* Rectangle 3: Dynamic slider */}
-        <div className="rounded-xl" style={{ background: "#141414", border: "1px solid #262626", overflow: "hidden", position: "relative", minWidth: 0 }}>
-          <DynamicSlider predictions={predictions} T={T} />
-        </div>
+        {/* Rectangle 3: Rank badge */}
+        <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} />
       </div>
 
       <div className="flex items-center justify-between mb-3">
@@ -3576,6 +3652,9 @@ function BracketPage({ vlrEvents, onBack, T }) {
   const [historyData, setHistoryData] = useState(null);
   const [historyEvent, setHistoryEvent] = useState(null);
   const accent = region ? (REGIONS.find((r) => r.key === region) || {}).accent || "#C4F000" : "#C4F000";
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [stage, phase, region]);
 
   const goBack = () => {
     if (region) setRegion(null);
@@ -3670,9 +3749,9 @@ function BracketPage({ vlrEvents, onBack, T }) {
   };
   const backBtn = (fn) => (
     <button onClick={fn || goBack} style={{
-      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-      color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px",
-      borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center",
+      background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+      color: "#aaa", fontSize: 20, cursor: "pointer", padding: "8px 12px",
+      borderRadius: 8, lineHeight: 1, display: "flex", alignItems: "center",
     }}>←</button>
   );
   const titleSpan = (text, color) => (
@@ -3981,6 +4060,8 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   const [bracketData, setBracketData] = useState({});
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase]);
+
   const goBack = () => {
     if (phase) setPhase(null);
     else if (comp) { setComp(null); setSerie(null); }
@@ -4023,9 +4104,9 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   };
   const backBtn = (fn) => (
     <button onClick={fn || goBack} style={{
-      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-      color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px",
-      borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center",
+      background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+      color: "#aaa", fontSize: 20, cursor: "pointer", padding: "8px 12px",
+      borderRadius: 8, lineHeight: 1, display: "flex", alignItems: "center",
     }}>←</button>
   );
   const titleSpan = (text, color) => (
@@ -4904,17 +4985,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {profile.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{profile.bio}</p>}
 
+        {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
+          <div className="mb-3">
+            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
+            <div className="flex gap-2 flex-wrap">
+              {profile.favTeams.valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {profile.favTeams.valo}</span>}
+              {profile.favTeams.cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {profile.favTeams.cs2}</span>}
+              {profile.favTeams.rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {profile.favTeams.rl}</span>}
+            </div>
+          </div>
+        )}
+
         <button onClick={onEditProfile} className="w-full rounded-xl py-2.5 mb-4 font-bold" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ccc", fontSize: "13px" }}>
           {T.profileModify}
         </button>
-
-        {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
-          <div className="flex gap-2 mb-5 flex-wrap">
-            {profile.favTeams.valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>Valo : {profile.favTeams.valo}</span>}
-            {profile.favTeams.cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>Cs2 : {profile.favTeams.cs2}</span>}
-            {profile.favTeams.rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#aaa", fontSize: "11px", fontWeight: 600 }}>RL : {profile.favTeams.rl}</span>}
-          </div>
-        )}
 
         <div className="rounded-2xl px-4 py-3 mb-5 flex justify-around text-center" style={{ background: "#141414", border: "1px solid #262626" }}>
           <div>
@@ -4955,13 +5039,24 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     <div className="px-4 pt-6 pb-6">
       <div className="flex items-center justify-between mb-1">
         <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
-        <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
-          {profile?.avatar ? (
-            <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
-          ) : (
-            <User size={18} color="#ccc" />
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          {(() => {
+            const rank = getUserRank(userPoints || 0);
+            return (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
+                <span style={{ fontSize: 12 }}>{rank.icon}</span>
+                <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
+              </div>
+            );
+          })()}
+          <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
+            {profile?.avatar ? (
+              <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
+            ) : (
+              <User size={18} color="#ccc" />
+            )}
+          </button>
+        </div>
       </div>
       <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
@@ -5485,7 +5580,7 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
       <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? "#444" : "#ccc"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
         </svg>
       </button>
     </div>
@@ -6276,10 +6371,10 @@ export default function ClutchApp() {
                 return updated;
               });
               setShowNexiumBox(true);
-            }} T={T} />
+            }} onOpenNexium={() => { setShowQuestModal(false); setShowNexiumBox(true); }} T={T} />
           ) : (
           <>
-          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} />}
+          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} />}
           {activeTab === "valorant" && (
             <ValorantTab
               selectedRegions={selectedRegions}
@@ -6449,6 +6544,8 @@ export default function ClutchApp() {
         @keyframes nexiumReveal { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes streakSlide { 0% { transform: translateX(-50%) translateY(-30px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
         @keyframes streakFade { 0% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes flameGlow { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,107,0,0.4)); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,107,0,0.7)); } }
+        @keyframes scoreReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
       `}</style>
     </div>
   );
