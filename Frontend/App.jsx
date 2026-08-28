@@ -1055,6 +1055,19 @@ const NAME_CODE_OVERRIDES = {
   "Grayhound Gaming": "GH",
   "Mindfreak": "MFR",
   "Encore": "ENC",
+  "Acend": "ACE",
+  "UNiTY": "UNI",
+  "UNiTY Esports": "UNI",
+  "Phantom Esports": "PHT",
+  "Phantom": "PHT",
+  "Leo": "LEO",
+  "SINNERS": "SIN",
+  "SINNERS Esports": "SIN",
+  "Bushido Wildcats": "BWC",
+  "Inner Circle Prospect": "ICP",
+  "INOX Division": "INOX",
+  "Misa Esports": "MISA",
+  "Vitality Academy": "VITA",
 };
 
 function teamCode(opp) {

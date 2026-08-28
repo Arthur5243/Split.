@@ -1,5 +1,88 @@
 [
   {
+    "date": "2026-08-27",
+    "team1": "MOUZ",
+    "team2": "9z",
+    "score": "2-0",
+    "maps": [
+      { "map": "Cache", "score1": 13, "score2": 4 },
+      { "map": "Nuke", "score1": 13, "score2": 7 }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "team1": "Legacy",
+    "team2": "FUT Esports",
+    "score": "2-0",
+    "maps": [
+      { "map": "Ancient", "score1": 13, "score2": 10 },
+      { "map": "Dust2", "score1": 13, "score2": 11 }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "team1": "Falcons",
+    "team2": "Lynn Vision",
+    "score": "2-1",
+    "maps": [
+      { "map": "Inferno", "score1": 13, "score2": 4 },
+      { "map": "Ancient", "score1": 10, "score2": 13 },
+      { "map": "Dust2", "score1": 13, "score2": 9 }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "team1": "Acend",
+    "team2": "UNiTY",
+    "score": "2-0",
+    "maps": [
+      { "map": "Ancient", "score1": 16, "score2": 14 },
+      { "map": "Inferno", "score1": 13, "score2": 10 }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "team1": "Natus Vincere",
+    "team2": "paiN Gaming",
+    "score": "2-0",
+    "maps": [
+      { "map": "Nuke", "score1": 13, "score2": 9 },
+      { "map": "Mirage", "score1": 13, "score2": 11 }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "team1": "Phantom",
+    "team2": "Leo",
+    "score": "2-1",
+    "maps": [
+      { "map": "Nuke", "score1": 10, "score2": 13 },
+      { "map": "Ancient", "score1": 13, "score2": 0 },
+      { "map": "Anubis", "score1": 13, "score2": 11 }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "team1": "SINNERS",
+    "team2": "Bushido Wildcats",
+    "score": "2-1",
+    "maps": [
+      { "map": "Dust2", "score1": 10, "score2": 13 },
+      { "map": "Inferno", "score1": 13, "score2": 9 },
+      { "map": "Mirage", "score1": 13, "score2": 3 }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "team1": "M80",
+    "team2": "FURIA",
+    "score": "0-2",
+    "maps": [
+      { "map": "Cache", "score1": 13, "score2": 16 },
+      { "map": "Dust2", "score1": 5, "score2": 13 }
+    ]
+  },
+  {
     "date": "2026-08-20",
     "team1": "Team Falcons",
     "team2": "TheMongolz",
