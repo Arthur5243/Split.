@@ -14,6 +14,7 @@ import {
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
+import { getRL_ScrapedScores } from "./liquipedia-rl-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -176,7 +177,18 @@ router.get("/api/rl-live", async (req, res) => {
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
-    res.json(visible.map(attachTeamRegions));
+    res.json(visible.map((m) => {
+      const enriched = attachTeamRegions(m);
+      if (m.status === "running") {
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        if (t1 && t2) {
+          const scraped = getRL_ScrapedScores(t1, t2);
+          if (scraped) enriched.live_game_scores = scraped;
+        }
+      }
+      return enriched;
+    }));
   } catch (e) {
     console.error("rl-live error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs RL en direct." });
@@ -218,9 +230,10 @@ router.get("/api/rl-results", async (req, res) => {
       const t2 = m.opponents?.[1]?.opponent?.name;
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
-      const manual = findManualGameScores(t1, t2, dateStr);
+      const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2) : null;
+      const manual = scraped || findManualGameScores(t1, t2, dateStr);
       if (!manual && t1 && t2) {
-        console.log(`[rl] no manual scores for "${t1}" vs "${t2}" (${dateStr}) → fallback`);
+        console.log(`[rl] no scores for "${t1}" vs "${t2}" (${dateStr}) → fallback`);
       }
       m.game_scores = manual || buildFallbackGameScores(m);
     }

@@ -41,6 +41,7 @@ import {
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg } from "./bo3gg-scores.js";
+import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ADMIN_KEY = process.env.ADMIN_KEY;
@@ -269,7 +270,18 @@ router.get("/api/cs2-live", async (req, res) => {
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
-    const withRegions = visible.map(attachTeamRegions);
+    const withRegions = visible.map((m) => {
+      const enriched = attachTeamRegions(m);
+      if (m.status === "running") {
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        if (t1 && t2) {
+          const scraped = getHltvScrapedScores(t1, t2);
+          if (scraped) enriched.live_map_scores = scraped;
+        }
+      }
+      return enriched;
+    });
     res.json(withRegions);
   } catch (e) {
     console.error("cs2-live error:", e.message);
@@ -399,7 +411,17 @@ async function processOneMatch(m, data) {
     const serieName = m.serie?.full_name || m.serie?.name || "";
     let source = null;
 
-    try {
+    const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
+    if (hltvScraped && hltvScraped.length > 0) {
+      if (isMapScoresConsistent(hltvScraped, s1, s2)) {
+        mapScores = hltvScraped;
+        source = "hltv-scraper";
+      } else {
+        console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — HLTV scraper incohérent, ignoré`);
+      }
+    }
+
+    if (!mapScores) try {
       mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName);
       if (mapScores) {
         if (isMapScoresConsistent(mapScores, s1, s2)) {

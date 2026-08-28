@@ -2225,13 +2225,21 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
         {finished ? (
           <div className="flex flex-col items-center">
-            <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900 }}>
-              {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
-            </span>
-            {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
-              <span style={{ color: "#777", fontSize: "9.5px", fontWeight: 700, marginTop: "1px" }}>
-                {T.yourBet} : {pred.seriesA}-{pred.seriesB}
-              </span>
+            {scoresRevealed ? (
+              <>
+                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
+                  {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
+                </span>
+                {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
+                  <span style={{ color: "#777", fontSize: "9.5px", fontWeight: 700, marginTop: "1px" }}>
+                    {T.yourBet} : {pred.seriesA}-{pred.seriesB}
+                  </span>
+                )}
+              </>
+            ) : (
+              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); }} style={{ background: "#333", border: "none", borderRadius: 6, padding: "4px 16px", cursor: "pointer" }}>
+                <span style={{ color: "#555", fontSize: "16px", fontWeight: 900 }}>?</span>
+              </button>
             )}
           </div>
         ) : (
@@ -2335,16 +2343,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           )}
                         </div>
                         <div className="flex flex-col items-end" style={{ position: "relative" }}>
-                          {scoresRevealed ? (
-                            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800, animation: "scoreReveal 0.3s ease-out" }}>
-                              {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                            </span>
-                          ) : (
-                            <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); }} style={{ background: "#333", border: "none", borderRadius: 4, padding: "2px 12px", cursor: "pointer", minWidth: 50 }}>
-                              <span style={{ color: "#555", fontSize: "13px", fontWeight: 800 }}>? - ?</span>
-                            </button>
-                          )}
-                          {scoresRevealed && gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                            {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                          </span>
+                          {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
                             <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
                               {T.yourBet} : {gamePred.a}-{gamePred.b}
                             </span>
@@ -4796,7 +4798,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
   );
 }
 
-function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T }) {
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T }) {
   const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatar, setAvatar] = useState(profile?.avatar || null);
@@ -4858,10 +4860,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, T })
           </div>
           <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
           <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileFavRl}</label>
-            <input value={favRl} onChange={(e) => setFavRl(e.target.value)} maxLength={30} placeholder="ex: Vitality" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
-          </div>
+          <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
           <button onClick={handleSave} disabled={!canSave} className="rounded-xl font-bold w-full py-3 mt-2" style={{ background: canSave ? "#CCF71D" : "#333", color: canSave ? "#000" : "#666", fontSize: "14px" }}>
             {T.profileSave}
           </button>
@@ -6038,6 +6037,16 @@ export default function ClutchApp() {
     return set.sort();
   }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
 
+  const rlAllTeams = React.useMemo(() => {
+    const set = [];
+    [...rlUpcomingMatches, ...rlLiveMatches, ...rlResultsMatches].forEach((m) => {
+      [m.team1, m.team2].forEach((t) => {
+        if (t && t !== "TBD" && set.indexOf(t) === -1) set.push(t);
+      });
+    });
+    return set.sort();
+  }, [rlUpcomingMatches, rlLiveMatches, rlResultsMatches]);
+
   const profileStats = React.useMemo(() => {
     let exact = 0, bon = 0, parie = 0;
     const history = [];
@@ -6493,6 +6502,7 @@ export default function ClutchApp() {
             profile={profile}
             valoTeams={allTeams}
             cs2Teams={cs2AllTeams}
+            rlTeams={rlAllTeams}
             T={T}
           />
         )}

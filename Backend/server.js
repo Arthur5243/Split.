@@ -21,6 +21,8 @@ import {
   resetInconsistentMapScores,
 } from "./match-history-store.js";
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
+import { startHltvScraper } from "./hltv-live-scraper.js";
+import { startRlScraper } from "./liquipedia-rl-scraper.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -1690,6 +1692,8 @@ app.get("/api/live-scraped", (req, res) => {
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
   startScraper();
+  startHltvScraper();
+  startRlScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
   // définitif (backoff plafonné à 4h), ce reset ne sert que pour les anciens
