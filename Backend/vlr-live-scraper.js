@@ -79,8 +79,8 @@ async function findLiveMatches() {
     const isLive = $item.find(".h-match-eta.mod-live").length > 0;
     if (!isLive) return;
 
-    const href = $item.attr("href") || "";
-    const matchUrl = href.startsWith("http") ? href : `${VLR_BASE_URL}${href}`;
+    const href = ($item.attr("href") || "").trim();
+    const matchUrl = href.startsWith("http") ? href : `${VLR_BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
 
     const teams = $item
       .find(".h-match-team-name")
