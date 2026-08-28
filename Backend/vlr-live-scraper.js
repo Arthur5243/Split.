@@ -10,7 +10,7 @@
  * que vlrggapi (ou PandaScore) n'ait le score — gain de temps de 5-15 min.
  */
 
-import * as cheerio from "cheerio";
+import { load } from "cheerio";
 
 const VLR_BASE_URL = "https://www.vlr.gg";
 
@@ -70,7 +70,7 @@ async function fetchHtml(url) {
 
 async function findLiveMatches() {
   const html = await fetchHtml(VLR_BASE_URL);
-  const $ = cheerio.load(html);
+  const $ = load(html);
 
   const liveMatches = [];
 
@@ -99,7 +99,7 @@ async function findLiveMatches() {
 
 async function scrapeMapScores(matchUrl) {
   const html = await fetchHtml(matchUrl);
-  const $ = cheerio.load(html);
+  const $ = load(html);
 
   const maps = [];
 
