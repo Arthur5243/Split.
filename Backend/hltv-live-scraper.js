@@ -1,12 +1,11 @@
 /**
- * HLTV live scraper — ESM backend worker for CS2 map scores.
- * Same pattern as vlr-live-scraper.js: background polling, in-memory cache,
- * exported getHltvScrapedScores() for enrichment pipeline fallback.
+ * HLTV scraper — ESM backend worker for CS2 map scores.
+ * Scrapes BOTH live matches (/matches) AND recently finished (/results)
+ * so the enrichment pipeline can fill in map scores for matches that
+ * Liquipedia/bo3.gg missed.
  *
  * WARNING: HLTV uses Cloudflare protection. Datacenter IPs (Railway) will
- * likely get blocked. Works best from residential IPs. On block, the scraper
- * backs off exponentially and retries — it won't crash, just won't produce
- * data until CF lets it through.
+ * likely get blocked. On block, the scraper backs off exponentially.
  */
 
 import { load } from "cheerio";
@@ -22,7 +21,8 @@ const HEADERS = {
 };
 
 const hltvScrapedScores = new Map();
-const SCRAPED_TTL_MS = 15 * 60 * 1000;
+const LIVE_TTL_MS = 15 * 60 * 1000;
+const FINISHED_TTL_MS = 2 * 60 * 60 * 1000;
 
 let consecutiveErrors = 0;
 const MAX_BACKOFF_MS = 10 * 60 * 1000;
@@ -39,7 +39,8 @@ function normalize(s) {
 function getHltvScrapedScores(team1Name, team2Name) {
   const now = Date.now();
   for (const [, entry] of hltvScrapedScores) {
-    if (now - entry.scrapedAt > SCRAPED_TTL_MS) continue;
+    const ttl = entry.finished ? FINISHED_TTL_MS : LIVE_TTL_MS;
+    if (now - entry.scrapedAt > ttl) continue;
     const t1 = normalize(entry.team1);
     const t2 = normalize(entry.team2);
     const q1 = normalize(team1Name);
@@ -92,11 +93,42 @@ async function findLiveMatches() {
       const href = link.startsWith("http")
         ? link
         : `${HLTV_BASE}${link.startsWith("/") ? "" : "/"}${link}`;
-      matches.push({ matchUrl: href, team1, team2 });
+      matches.push({ matchUrl: href, team1, team2, finished: false });
     }
   });
 
   return matches;
+}
+
+async function findRecentlyFinished() {
+  const html = await fetchHtml(`${HLTV_BASE}/results`);
+  const $ = load(html);
+  const matches = [];
+
+  $("a.a-reset[href*='/matches/']").each((_, el) => {
+    const $el = $(el);
+    const href = ($el.attr("href") || "").trim();
+    if (!href || href === "#") return;
+
+    const team1 = $el.find(".team-cell .team").eq(0).text().trim() ||
+                  $el.find(".team1 .team").text().trim() ||
+                  $el.find(".line-align.team1 .gtSmartphone-only").text().trim();
+    const team2 = $el.find(".team-cell .team").eq(1).text().trim() ||
+                  $el.find(".team2 .team").text().trim() ||
+                  $el.find(".line-align.team2 .gtSmartphone-only").text().trim();
+
+    if (!team1 || !team2) return;
+
+    const key = normalize(team1) + ":" + normalize(team2);
+    if (hltvScrapedScores.has(key)) return;
+
+    const matchUrl = href.startsWith("http")
+      ? href
+      : `${HLTV_BASE}${href.startsWith("/") ? "" : "/"}${href}`;
+    matches.push({ matchUrl, team1, team2, finished: true });
+  });
+
+  return matches.slice(0, 15);
 }
 
 async function scrapeMapScores(matchUrl) {
@@ -127,11 +159,8 @@ async function scrapeMapScores(matchUrl) {
   return maps;
 }
 
-async function runOnce() {
-  const liveMatches = await findLiveMatches();
-  console.log(`[hltv-scraper] ${liveMatches.length} match(s) live`);
-
-  for (const match of liveMatches) {
+async function processMatches(matches, label) {
+  for (const match of matches) {
     try {
       const maps = await scrapeMapScores(match.matchUrl);
       if (maps.length > 0) {
@@ -141,10 +170,11 @@ async function runOnce() {
           team2: match.team2,
           matchUrl: match.matchUrl,
           maps,
+          finished: match.finished,
           scrapedAt: Date.now(),
         });
         console.log(
-          `[hltv-scraper] ${match.team1} vs ${match.team2} →`,
+          `[hltv-scraper] [${label}] ${match.team1} vs ${match.team2} →`,
           maps.map((m) => `${m.map}: ${m.score1}-${m.score2}`).join(" | ")
         );
       }
@@ -152,10 +182,25 @@ async function runOnce() {
       console.error(`[hltv-scraper] erreur ${match.matchUrl}:`, err.message);
     }
   }
+}
+
+async function runOnce() {
+  const liveMatches = await findLiveMatches();
+  console.log(`[hltv-scraper] ${liveMatches.length} match(s) live`);
+  await processMatches(liveMatches, "live");
+
+  try {
+    const finishedMatches = await findRecentlyFinished();
+    console.log(`[hltv-scraper] ${finishedMatches.length} match(s) finis à scraper`);
+    await processMatches(finishedMatches, "finished");
+  } catch (err) {
+    console.error("[hltv-scraper] erreur /results:", err.message);
+  }
 
   const now = Date.now();
   for (const [key, entry] of hltvScrapedScores) {
-    if (now - entry.scrapedAt > SCRAPED_TTL_MS) {
+    const ttl = entry.finished ? FINISHED_TTL_MS : LIVE_TTL_MS;
+    if (now - entry.scrapedAt > ttl) {
       hltvScrapedScores.delete(key);
     }
   }
@@ -171,7 +216,7 @@ function getNextInterval() {
 
 function startHltvScraper() {
   console.log(
-    "[hltv-scraper] démarrage, poll ~90s (backoff si Cloudflare/rate-limited)"
+    "[hltv-scraper] démarrage, poll ~90s (live + results, backoff si Cloudflare)"
   );
 
   async function loop() {

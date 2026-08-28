@@ -245,6 +245,12 @@ router.get("/api/cs2-upcoming", async (req, res) => {
         const t = new Date(m.begin_at).getTime();
         return Number.isNaN(t) || t > now;
       })
+      .filter((m) => {
+        const t1 = m.opponents?.[0]?.opponent?.name;
+        const t2 = m.opponents?.[1]?.opponent?.name;
+        if (!t1 || !t2) return true;
+        return !getHltvScrapedScores(t1, t2);
+      })
       .map(attachTeamRegions);
     res.json(data);
   } catch (e) {

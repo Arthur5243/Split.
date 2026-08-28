@@ -1026,6 +1026,7 @@ const NAME_CODE_OVERRIDES = {
   "BIG": "BIG",
   "Monte": "MNT",
   "Falcons Esports": "FALC",
+  "Team Falcons": "FALC",
   "9 Pandas": "9PD",
   "9INE": "9INE",
   "Virtus.pro": "VP",
@@ -5892,7 +5893,9 @@ export default function ClutchApp() {
         // apparaître, même si PandaScore le renvoie encore sur cet endpoint.
         const now = Date.now();
         const upFuture = dedupeByIdCS2(upT).filter((m) => {
-          if (!m.beginAt) return true; // pas de date connue -> on ne le cache pas à tort
+          if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false;
+          if (m.status === "finished" || m.status === "canceled") return false;
+          if (!m.beginAt) return true;
           const t = new Date(m.beginAt).getTime();
           return Number.isNaN(t) || t > now;
         });
@@ -5960,6 +5963,8 @@ export default function ClutchApp() {
         }
         const now = Date.now();
         const upFuture = dedupeByIdRL(upT).filter((m) => {
+          if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false;
+          if (m.status === "finished" || m.status === "canceled") return false;
           if (!m.beginAt) return true;
           const t = new Date(m.beginAt).getTime();
           return Number.isNaN(t) || t > now;
