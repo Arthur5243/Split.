@@ -180,7 +180,7 @@ function toHistoryRow(m) {
 // terminé ne changent jamais, donc une fenêtre large (10 min) ne coûte rien
 // en fraîcheur perçue.
 let enrichedResultsCache = null; // { data, time }
-const ENRICHED_RESULTS_TTL_MS = 10 * 60 * 1000;
+const ENRICHED_RESULTS_TTL_MS = 3 * 60 * 1000;
 // Empêche deux sweeps d'enrichissement de tourner en parallèle si plusieurs
 // requêtes arrivent pendant que le cache est en train d'être recalculé.
 let enrichInProgress = false;
@@ -211,7 +211,7 @@ async function mapWithConcurrency(items, limit, fn) {
 // tel chez eux — décalage assez fréquent). Sous ce seuil, on ne vérifie rien
 // : le match est probablement encore réellement en cours, pas la peine de
 // solliciter vlr.gg pour rien.
-const STALE_LIVE_THRESHOLD_MS = 90 * 60 * 1000; // 1h30
+const STALE_LIVE_THRESHOLD_MS = 30 * 60 * 1000; // 30 min
 
 // Filet de sécurité ABSOLU, indépendant de vlr.gg : au-delà de 4h, aucun Bo3
 // Valorant n'est réellement encore en cours. Si vlr.gg n'a jamais pu
@@ -660,7 +660,7 @@ app.get("/api/valorant-results", async (req, res) => {
 // 10 min et un intervalle de 5 min, la tâche de fond tombait toujours sur
 // "cache encore frais" et ne faisait jamais de vrai travail après le 1er
 // passage) — `enrichInProgress` protège quand même contre le chevauchement.
-const BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const BACKGROUND_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 setInterval(() => {
   refreshValorantResults(true).catch((e) => console.error("[valorant background refresh]", e.message));
 }, BACKGROUND_REFRESH_INTERVAL_MS);
@@ -1409,6 +1409,17 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
     for (const m of allMatches) {
       if (m.team1?.name && m.team1.name !== "TBD") teamsList.add(m.team1.name);
       if (m.team2?.name && m.team2.name !== "TBD") teamsList.add(m.team2.name);
+    }
+
+    const LOSER_BONUS_POINTS = {
+      "lower round 3": 4,
+      "lower final": 5,
+    };
+    for (const m of playoff) {
+      const roundKey = (m.round_normalized || "").toLowerCase();
+      if (LOSER_BONUS_POINTS[roundKey]) {
+        m.loser_bonus_pts = LOSER_BONUS_POINTS[roundKey];
+      }
     }
 
     const result = {

@@ -26,6 +26,13 @@ import {
   Eye,
   EyeOff,
   Gift,
+  UserPlus,
+  Info,
+  Zap,
+  Award,
+  ListChecks,
+  CheckCircle,
+  Crosshair,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -294,10 +301,13 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
     nexiumBox: "Nexium Box", nexiumOpen: "Ouvrir", nexiumRare: "Rare", nexiumEpic: "Épique", nexiumLegendary: "Légendaire", nexiumUltra: "Ultra", nexiumNew: "Nouveau !", nexiumOwned: "Possédé",
     cashprizeTitle: "Cashprize", cashprizeRules: "Top 1, 2 et 3 gagnent un cashprize !", cashprizeUnlock: "Disponible à partir de 1 000 installations", cashprizeInstalls: "installations", cashprizeWinners: "Gagnants",
-    predLimit: "Limite atteinte", predRemaining: "pronos restants",
+    predLimit: "Limite atteinte", predRemaining: "pronos restants", predActive: "pronos actifs",
     slideMatchDay: "Match du jour", slideCommunity: "ont parié sur", slideCountdown: "Compte à rebours",
     rewardsFree: "Récompenses", rewardsCash: "Cashprize",
     inventoryTitle: "Inventaire", inventoryEmpty: "Aucun objet pour le moment",
+    streakExplain: "Fais au moins 1 pronostic par jour pour entretenir ta flamme. Si tu rates un jour, ta streak repart à 0 !",
+    notifTitle: "Notifications", notifEmpty: "Aucune notification pour le moment", notifFriendReq: "Demande d'ami", notifBigMatch: "Match important", notifTeamQualified: "Équipe qualifiée",
+    questProgressLabel: "Progression",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
@@ -367,10 +377,13 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
     nexiumBox: "Nexium Box", nexiumOpen: "Open", nexiumRare: "Rare", nexiumEpic: "Epic", nexiumLegendary: "Legendary", nexiumUltra: "Ultra", nexiumNew: "New!", nexiumOwned: "Owned",
     cashprizeTitle: "Cash Prize", cashprizeRules: "Top 1, 2, and 3 win a cash prize!", cashprizeUnlock: "Available from 1,000 installs", cashprizeInstalls: "installs", cashprizeWinners: "Winners",
-    predLimit: "Limit reached", predRemaining: "predictions left",
+    predLimit: "Limit reached", predRemaining: "predictions left", predActive: "active predictions",
     slideMatchDay: "Match of the day", slideCommunity: "bet on", slideCountdown: "Countdown",
     rewardsFree: "Rewards", rewardsCash: "Cash Prize",
     inventoryTitle: "Inventory", inventoryEmpty: "No items yet",
+    streakExplain: "Make at least 1 prediction per day to keep your flame. Miss a day and your streak resets to 0!",
+    notifTitle: "Notifications", notifEmpty: "No notifications yet", notifFriendReq: "Friend request", notifBigMatch: "Big match", notifTeamQualified: "Team qualified",
+    questProgressLabel: "Progress",
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Clasificación",
@@ -2553,14 +2566,6 @@ function updateStreak() {
   return { ...next, earned: true };
 }
 
-function loadDailyBets() {
-  try {
-    const d = JSON.parse(localStorage.getItem("split_daily_bets"));
-    if (d && d.date === todayStr()) return d;
-    return { date: todayStr(), count: 0 };
-  } catch { return { date: todayStr(), count: 0 }; }
-}
-function saveDailyBets(d) { localStorage.setItem("split_daily_bets", JSON.stringify(d)); }
 
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -2671,43 +2676,73 @@ function NexiumBoxModal({ onClose, T }) {
   );
 }
 
+const QUEST_KIT_ICONS = {
+  pronostic: (done) => <Crosshair size={16} color={done ? "#4CAF50" : "#CCF71D"} />,
+  engagement: (done) => <Trophy size={16} color={done ? "#4CAF50" : "#F59E0B"} />,
+  profile: (done) => <User size={16} color={done ? "#4CAF50" : "#3B82F6"} />,
+  social: (done) => <UserPlus size={16} color={done ? "#4CAF50" : "#8B5CF6"} />,
+  discovery: (done) => <Search size={16} color={done ? "#4CAF50" : "#06B6D4"} />,
+  precision: (done) => <Target size={16} color={done ? "#4CAF50" : "#EF4444"} />,
+  weekly: (done) => <Award size={16} color={done ? "#4CAF50" : "#FFD700"} />,
+};
+
 function QuestModal({ quests, onClose, onClaim, T }) {
   if (!quests) return null;
   const { daily, weekly } = quests;
+  const allQuests = [...(daily || []), ...(weekly ? [weekly] : [])];
+  const completedCount = allQuests.filter(q => q.completed).length;
+  const totalCount = allQuests.length;
+  const overallPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
   const renderQuest = (q, idx, isWeekly) => {
     const pct = Math.min(100, (q.progress / q.target) * 100);
     const done = q.completed;
+    const kitIcon = QUEST_KIT_ICONS[q.kit] || QUEST_KIT_ICONS.pronostic;
     return (
-      <div key={q.id + idx} style={{ background: done ? "rgba(76,175,80,0.08)" : "#141414", border: `1px solid ${done ? "rgba(76,175,80,0.2)" : "#262626"}`, borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: done ? "rgba(76,175,80,0.15)" : "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>
-          {done ? "✓" : isWeekly ? "🏆" : "⚔"}
+      <div key={q.id + idx} style={{ background: done ? "rgba(76,175,80,0.06)" : "#111", border: `1px solid ${done ? "rgba(76,175,80,0.15)" : "#222"}`, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: done ? "rgba(76,175,80,0.12)" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {done ? <CheckCircle size={18} color="#4CAF50" /> : kitIcon(false)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: done ? "#4CAF50" : "#ddd", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{T[q.titleKey] || q.titleKey}</p>
-          <div style={{ height: 4, borderRadius: 2, background: "#262626", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.3s" }} />
+          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{T[q.titleKey] || q.titleKey}</p>
+          <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.4s ease" }} />
           </div>
-          <p style={{ color: "#666", fontSize: 10, marginTop: 4 }}>{q.progress}/{q.target}</p>
+          <p style={{ color: "#555", fontSize: 10, marginTop: 4, fontWeight: 600 }}>{q.progress}/{q.target} {isWeekly && <span style={{ color: "#FFD700" }}>({T.questWeekly})</span>}</p>
         </div>
         {done && !q.claimed && (
-          <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 10, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
+          <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
         )}
-        {q.claimed && <span style={{ color: "#4CAF50", fontSize: 10, fontWeight: 700 }}>✓</span>}
+        {q.claimed && <CheckCircle size={16} color="#4CAF50" />}
       </div>
     );
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "min(390px, 100%)", maxHeight: "75vh", background: "#0a0a0a", borderRadius: "20px 20px 0 0", padding: "20px 16px 32px", overflowY: "auto" }}>
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: "#333", margin: "0 auto 16px" }} />
-        <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 16 }}>{T.questTitle}</p>
-        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.questDaily}</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 20 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "#000", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
+        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.questTitle}</p>
+        <div style={{ width: 20 }} />
+      </div>
+
+      <div style={{ padding: "20px 16px", borderBottom: "1px solid #1a1a1a" }}>
+        <div className="flex items-center justify-between mb-2">
+          <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
+          <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
+        </div>
+        <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
           {(daily || []).map((q, i) => renderQuest(q, i, false))}
         </div>
         {weekly && (
           <>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.questWeekly}</p>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
             {renderQuest(weekly, 0, true)}
           </>
         )}
@@ -2937,58 +2972,69 @@ function NewsCarousel({ T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, dailyBets, streak, quests, onOpenQuests, onOpenRewards }) {
+function NotificationsPanel({ onClose, T }) {
+  const notifTypes = [
+    { type: "friend", icon: <UserPlus size={16} color="#3B82F6" />, label: T.notifFriendReq, bg: "rgba(59,130,246,0.1)", border: "rgba(59,130,246,0.2)" },
+    { type: "match", icon: <Zap size={16} color="#F59E0B" />, label: T.notifBigMatch, bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.2)" },
+    { type: "qualified", icon: <Award size={16} color="#10B981" />, label: T.notifTeamQualified, bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.2)" },
+  ];
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 80 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(360px, 90%)", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 16, padding: "20px 16px", maxHeight: "60vh", overflowY: "auto" }}>
+        <div className="flex items-center justify-between mb-4">
+          <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.notifTitle}</p>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><X size={18} color="#666" /></button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+          {notifTypes.map(n => (
+            <div key={n.type} style={{ display: "flex", alignItems: "center", gap: 12, background: n.bg, border: `1px solid ${n.border}`, borderRadius: 12, padding: "12px 14px" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{n.icon}</div>
+              <span style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>{n.label}</span>
+            </div>
+          ))}
+        </div>
+        <p style={{ color: "#555", fontSize: 11, textAlign: "center" }}>{T.notifEmpty}</p>
+      </div>
+    </div>
+  );
+}
+
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs }) {
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <button style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
             <Bell size={14} color="#888" />
-            <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#EF4444", border: "2px solid #000" }} />
           </button>
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
         </div>
         <button onClick={onOpenQuests} style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, rgba(204,247,29,0.1), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
-          <Target size={14} color="#CCF71D" />
+          <ListChecks size={14} color="#CCF71D" />
           {quests?.daily?.some(q => q.completed && !q.claimed) && <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#4CAF50", border: "2px solid #000" }} />}
         </button>
       </div>
       <NewsCarousel T={T} />
 
       {/* 3 rectangles row */}
-      <div className="flex gap-2 mb-6" style={{ height: 80 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 80 }}>
         {/* Rectangle 1: Rewards */}
-        <button onClick={onOpenRewards} className="flex-1 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.2)", cursor: "pointer", padding: "12px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 4 }}>
+        <button onClick={onOpenRewards} className="rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.2)", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 4, minWidth: 0, overflow: "hidden" }}>
           <Gift size={18} color="#A855F7" />
-          <span style={{ color: "#c084fc", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>{T.rewardsFree}</span>
+          <span style={{ color: "#c084fc", fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{T.rewardsFree}</span>
         </button>
 
         {/* Rectangle 2: Streak */}
-        <div className="flex-1 rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "10px 12px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2 }}>
-          <span style={{ fontSize: 22, lineHeight: 1 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
-          <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
+        <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden" }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+          <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
           <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
-        </div>
+        </button>
 
         {/* Rectangle 3: Dynamic slider */}
-        <div className="flex-1 rounded-xl" style={{ background: "#141414", border: "1px solid #262626", overflow: "hidden", position: "relative" }}>
+        <div className="rounded-xl" style={{ background: "#141414", border: "1px solid #262626", overflow: "hidden", position: "relative", minWidth: 0 }}>
           <DynamicSlider predictions={predictions} T={T} />
-        </div>
-      </div>
-
-      {/* Daily prediction counter */}
-      <div className="flex items-center justify-between rounded-xl px-4 py-3 mb-6" style={{ background: dailyBets.count >= DAILY_BET_LIMIT ? "rgba(239,68,68,0.08)" : "rgba(204,247,29,0.05)", border: `1px solid ${dailyBets.count >= DAILY_BET_LIMIT ? "rgba(239,68,68,0.15)" : "rgba(204,247,29,0.1)"}` }}>
-        <div className="flex items-center gap-2">
-          <Target size={14} color={dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D"} />
-          <span style={{ color: dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D", fontSize: 12, fontWeight: 700 }}>
-            {dailyBets.count >= DAILY_BET_LIMIT ? T.predLimit : `${DAILY_BET_LIMIT - dailyBets.count} ${T.predRemaining}`}
-          </span>
-        </div>
-        <div className="flex gap-1">
-          {Array.from({ length: DAILY_BET_LIMIT }, (_, i) => (
-            <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: i < dailyBets.count ? (dailyBets.count >= DAILY_BET_LIMIT ? "#EF4444" : "#CCF71D") : "#333" }} />
-          ))}
         </div>
       </div>
 
@@ -4185,9 +4231,8 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
       <div className="px-4 pb-2">
         <button
           onClick={() => setShowBracketPage(true)}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#C4F000", fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#C4F000", fontSize: 15, fontWeight: 700, padding: 0 }}
         >
-          <span style={{ fontSize: 13 }}>▶</span>
           {T.bracketShow}
         </button>
       </div>
@@ -4380,9 +4425,8 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
       <div className="px-4 pb-2">
         <button
           onClick={() => setShowCs2BracketPage(true)}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#FFD700", fontSize: 12, fontWeight: 600, padding: 0, display: "flex", alignItems: "center", gap: 5 }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "#FFD700", fontSize: 15, fontWeight: 700, padding: 0 }}
         >
-          <span style={{ fontSize: 13 }}>▶</span>
           {T.cs2BracketShow}
         </button>
       </div>
@@ -5473,15 +5517,25 @@ export default function ClutchApp() {
 
   const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
   const [streak, setStreak] = useState(() => loadStreak());
-  const [dailyBets, setDailyBets] = useState(() => loadDailyBets());
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [showNexiumBox, setShowNexiumBox] = useState(false);
   const [streakPopup, setStreakPopup] = useState(null);
+  const [showStreakInfo, setShowStreakInfo] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("split_predictions", JSON.stringify(predictions));
   }, [predictions]);
+
+  let activePredCount = 0;
+  for (const [id, p] of Object.entries(predictions)) {
+    if (!p || p.seriesA === "" || p.seriesB === "") continue;
+    if (settledMatchIds.has(id)) continue;
+    activePredCount++;
+  }
+  const remainingPreds = Math.max(0, DAILY_BET_LIMIT - activePredCount);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
@@ -5993,7 +6047,8 @@ export default function ClutchApp() {
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
-      const isNewBet = !cur.seriesA && !cur.seriesB;
+      const hadCompleteBet = cur.seriesA !== "" && cur.seriesB !== "" &&
+        [[2,0],[2,1],[1,2],[0,2]].some(([x,y]) => parseInt(cur.seriesA) === x && parseInt(cur.seriesB) === y);
       const next = { ...cur, [team]: digit };
       const a = next.seriesA;
       const b = next.seriesB;
@@ -6003,21 +6058,25 @@ export default function ClutchApp() {
         const validPairs = [[2, 0], [2, 1], [1, 2], [0, 2]];
         const ok = validPairs.some(([x, y]) => x === an && y === bn);
         if (ok) {
-          const db = loadDailyBets();
-          if (isNewBet && db.count >= DAILY_BET_LIMIT) return prev;
-          if (isNewBet) {
-            const newDb = { ...db, count: db.count + 1 };
-            saveDailyBets(newDb);
-            setDailyBets(newDb);
+          const isFirstComplete = !hadCompleteBet;
+          if (isFirstComplete) {
+            let activeCount = 0;
+            for (const [id, p] of Object.entries(prev)) {
+              if (!p || p.seriesA === "" || p.seriesB === "") continue;
+              if (settledMatchIds.has(id)) continue;
+              activeCount++;
+            }
+            if (activeCount >= DAILY_BET_LIMIT) return prev;
             const streakResult = updateStreak();
             setStreak(streakResult);
             if (streakResult.earned) setStreakPopup(streakResult);
             setQuestState(qs => {
               if (!qs) return qs;
+              const newCount = activeCount + 1;
               const updated = { ...qs, daily: qs.daily.map(q => {
                 if (q.completed) return q;
                 if (q.id === "bet_today") return { ...q, progress: Math.min(q.progress + 1, q.target), completed: q.progress + 1 >= q.target };
-                if (q.id === "use_all_slots") return { ...q, progress: newDb.count, completed: newDb.count >= q.target };
+                if (q.id === "use_all_slots") return { ...q, progress: newCount, completed: newCount >= q.target };
                 return q;
               }), weekly: qs.weekly ? { ...qs.weekly, progress: qs.weekly.id === "weekly_5_wins" ? qs.weekly.progress : qs.weekly.progress } : qs.weekly };
               saveQuests(updated);
@@ -6153,8 +6212,20 @@ export default function ClutchApp() {
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
+        {/* Prediction badge top-right */}
+        <div style={{ position: "absolute", top: 52, right: 20, zIndex: 30, display: "flex", alignItems: "center", gap: 6, background: remainingPreds > 0 ? "rgba(204,247,29,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${remainingPreds > 0 ? "rgba(204,247,29,0.2)" : "rgba(239,68,68,0.2)"}`, borderRadius: 20, padding: "4px 10px" }}>
+          <span style={{ color: remainingPreds > 0 ? "#CCF71D" : "#EF4444", fontSize: 10, fontWeight: 700 }}>
+            {remainingPreds > 0 ? `${remainingPreds} ${T.predRemaining}` : T.predLimit}
+          </span>
+          <div style={{ display: "flex", gap: 3 }}>
+            {Array.from({ length: DAILY_BET_LIMIT }, (_, i) => (
+              <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: i < remainingPreds ? "#CCF71D" : "#333" }} />
+            ))}
+          </div>
+        </div>
+
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
-          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} dailyBets={dailyBets} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} />}
+          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} />}
           {activeTab === "valorant" && (
             <ValorantTab
               selectedRegions={selectedRegions}
@@ -6293,6 +6364,18 @@ export default function ClutchApp() {
         {showRewardsModal && <RewardsModal onClose={() => setShowRewardsModal(false)} onOpenNexium={() => { setShowRewardsModal(false); setShowNexiumBox(true); }} T={T} />}
         {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
+        {showStreakInfo && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowStreakInfo(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(320px, 85%)", background: "#141414", border: "1px solid #262626", borderRadius: 20, padding: "28px 24px", textAlign: "center" }}>
+              <span style={{ fontSize: 48, display: "block", marginBottom: 12 }}>🔥</span>
+              <p style={{ color: "#FF9500", fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{streak.current} {T.streakDays}</p>
+              <p style={{ color: "#666", fontSize: 11, fontWeight: 600, marginBottom: 16 }}>{T.streakBest}: {streak.best} {T.streakDays}</p>
+              <p style={{ color: "#aaa", fontSize: 12, lineHeight: 1.5 }}>{T.streakExplain}</p>
+              <button onClick={() => setShowStreakInfo(false)} style={{ marginTop: 20, background: "linear-gradient(135deg, #FF6B00, #FF9500)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 32px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>OK</button>
+            </div>
+          </div>
+        )}
+        {showNotifs && <NotificationsPanel onClose={() => setShowNotifs(false)} T={T} />}
       </div>
 
       <style>{`

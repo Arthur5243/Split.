@@ -280,7 +280,7 @@ router.get("/api/cs2-live", async (req, res) => {
 // --- Enrichissement score par map + accumulation, même principe que server.js ---
 
 let enrichedResultsCache = null; // { data, time }
-const ENRICHED_RESULTS_TTL_MS = 10 * 60 * 1000;
+const ENRICHED_RESULTS_TTL_MS = 3 * 60 * 1000;
 let enrichInProgress = false;
 
 function toHistoryRow(m) {
@@ -351,7 +351,7 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
   const forced = finished.filter((m) => forceRecheckIds.has(String(m.id)) && !gated.includes(m));
   const toFetch = [...gated, ...forced];
 
-  await mapWithConcurrency(toFetch, 1, async (m) => {
+  await mapWithConcurrency(toFetch, 2, async (m) => {
     try {
       await processOneMatch(m, data);
     } catch (e) {
@@ -577,7 +577,7 @@ router.get("/api/cs2-results", async (req, res) => {
 // l'app ouverte. `force=true` : garantit un vrai travail à chaque passage
 // (cf commentaire sur refreshCS2Results) ; `enrichInProgress` protège quand
 // même contre le chevauchement.
-const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const CS2_BACKGROUND_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 setInterval(() => {
   refreshCS2Results(true).catch((e) => console.error("[cs2 background refresh]", e.message));
 }, CS2_BACKGROUND_REFRESH_INTERVAL_MS);
