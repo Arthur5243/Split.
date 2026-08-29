@@ -2967,38 +2967,51 @@ function PredBadge({ remainingPreds, T }) {
 }
 
 const RANK_TIERS = [
-  { name: "Recrue",   sub: 3, minPts: 0,   color: "#8B8B8B", icon: "🛡️",  bg: "rgba(139,139,139,0.1)", border: "rgba(139,139,139,0.2)" },
-  { name: "Analyste", sub: 3, minPts: 20,  color: "#4CAF50", icon: "📊",  bg: "rgba(76,175,80,0.1)",  border: "rgba(76,175,80,0.2)" },
-  { name: "Stratège", sub: 3, minPts: 60,  color: "#2196F3", icon: "🧠",  bg: "rgba(33,150,243,0.1)", border: "rgba(33,150,243,0.2)" },
-  { name: "Expert",   sub: 3, minPts: 120, color: "#9C27B0", icon: "🎯",  bg: "rgba(156,39,176,0.1)", border: "rgba(156,39,176,0.2)" },
-  { name: "Maître",   sub: 3, minPts: 250, color: "#FF9800", icon: "👑",  bg: "rgba(255,152,0,0.1)",  border: "rgba(255,152,0,0.2)" },
-  { name: "Oracle",   sub: 1, minPts: 500, color: "#FFD700", icon: "🔮",  bg: "linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,107,0,0.1))", border: "rgba(255,215,0,0.35)" },
+  { name: "Unranked",      minPts: 0,    color: "#666",    logo: null,                bg: "rgba(100,100,100,0.1)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
+  { name: "Override",      minPts: 100,  color: "#CD7F32", logo: "/bronze.png",       bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.12)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
+  { name: "Infinite",      minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.12)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05 },
 ];
 
-function getUserRank(points) {
+function getUserRank(points, allUsersPoints) {
   let tier = RANK_TIERS[0];
   for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
     if (points >= RANK_TIERS[i].minPts) { tier = RANK_TIERS[i]; break; }
   }
-  const nextTier = RANK_TIERS[RANK_TIERS.indexOf(tier) + 1];
-  let subTier = "";
-  if (tier.sub > 1 && nextTier) {
-    const range = nextTier.minPts - tier.minPts;
-    const progress = points - tier.minPts;
-    const subIdx = Math.min(Math.floor((progress / range) * tier.sub), tier.sub - 1);
-    subTier = " " + ["I", "II", "III"][subIdx];
+  if (allUsersPoints && allUsersPoints.length >= 50 && RANK_TIERS.indexOf(tier) >= 2) {
+    const sorted = [...allUsersPoints].sort((a, b) => b - a);
+    const total = sorted.length;
+    let effectiveTier = tier;
+    for (let i = RANK_TIERS.length - 1; i >= 2; i--) {
+      const t = RANK_TIERS[i];
+      const countAtOrAbove = sorted.filter(p => p >= t.minPts).length;
+      const pct = countAtOrAbove / total;
+      const maxAllowed = RANK_TIERS.slice(i).reduce((s, r) => s + r.maxPct, 0);
+      if (pct > maxAllowed && points < sorted[Math.floor(maxAllowed * total)]) {
+        effectiveTier = RANK_TIERS[i - 1];
+      } else break;
+    }
+    tier = effectiveTier;
   }
+  const idx = RANK_TIERS.indexOf(tier);
+  const nextTier = RANK_TIERS[idx + 1] || null;
   const nextPts = nextTier ? nextTier.minPts : null;
   const progress = nextPts ? Math.min((points - tier.minPts) / (nextPts - tier.minPts), 1) : 1;
-  return { ...tier, subTier, label: tier.name + subTier, progress, nextPts };
+  return { ...tier, label: tier.name, progress, nextPts };
 }
 
 function RankBadgeCompact({ points, onClick }) {
   const rank = getUserRank(points);
-  const isOracle = rank.name === "Oracle";
+  const isTop = rank.name === "Infinite";
   return (
-    <button onClick={onClick} className="rounded-xl" style={{ background: isOracle ? rank.bg : rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
-      <span style={{ fontSize: 18, lineHeight: 1, filter: isOracle ? "drop-shadow(0 0 4px rgba(255,215,0,0.6))" : "none" }}>{rank.icon}</span>
+    <button onClick={onClick} className="rounded-xl" style={{ background: rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
+      {rank.logo ? (
+        <img src={rank.logo} alt={rank.name} style={{ width: 22, height: 22, objectFit: "contain", filter: isTop ? "drop-shadow(0 0 6px rgba(56,189,248,0.6))" : "none" }} />
+      ) : (
+        <Shield size={18} color="#666" />
+      )}
       <span style={{ color: rank.color, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{rank.label}</span>
       {rank.nextPts && (
         <div style={{ width: "80%", height: 3, background: "#262626", borderRadius: 2, overflow: "hidden" }}>
@@ -5548,7 +5561,7 @@ function MessagesScreen({ onClose, T, profile }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, onOpenSettings }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
@@ -5643,6 +5656,30 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         </div>
 
+        {(() => {
+          const allPts = leaderboard.map(u => u.points);
+          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
+          const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
+          return (
+            <div className="rounded-2xl px-4 py-3 mb-5 flex items-center gap-3" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
+              {rank.logo ? (
+                <img src={rank.logo} alt={rank.name} style={{ width: 36, height: 36, objectFit: "contain" }} />
+              ) : (
+                <Shield size={28} color="#666" />
+              )}
+              <div className="flex-1">
+                <p className="font-black" style={{ color: rank.color, fontSize: "14px" }}>{rank.label}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div style={{ flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 2 }} />
+                  </div>
+                  <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{nextLabel}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         <p className="font-bold text-white mb-3" style={{ fontSize: "14px" }}>{T.profileHistory}</p>
         <div className="flex flex-col gap-2">
           {history.length === 0 && <p style={{ color: "#555", fontSize: "12px" }}>—</p>}
@@ -5692,20 +5729,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div className="px-4 pt-2 pb-6">
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
-              <div className="flex items-center gap-2">
-                {(() => {
-                  const rank = getUserRank(userPoints || 0);
-                  return (
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
-                      <span style={{ fontSize: 12 }}>{rank.icon}</span>
-                      <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
-                    </div>
-                  );
-                })()}
-                <button onClick={onOpenSettings} className="rounded-full p-2" style={{ background: "#181818" }}>
-                  <Settings size={18} color="#ccc" />
-                </button>
-              </div>
+              {(() => {
+                const allPts = leaderboard.map(u => u.points);
+                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
+                    {rank.logo ? (
+                      <img src={rank.logo} alt={rank.name} style={{ width: 16, height: 16, objectFit: "contain" }} />
+                    ) : (
+                      <Shield size={12} color="#666" />
+                    )}
+                    <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
+                  </div>
+                );
+              })()}
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
@@ -5766,6 +5803,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                      {(() => { const r = getUserRank(u.points); return r.logo ? <img src={r.logo} alt={r.name} style={{ width: 18, height: 18, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
                       <div className="text-right shrink-0">
                         <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
                         <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
@@ -6297,9 +6335,7 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
       </button>
       <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isLight ? "#444" : "#ccc"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-        </svg>
+        <Settings size={16} color={isLight ? "#444" : "#ccc"} />
       </button>
     </div>
   );
@@ -7202,7 +7238,7 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} onOpenSettings={() => setShowSettings(true)} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
           </>
           )}
         </div>
