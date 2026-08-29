@@ -34,6 +34,10 @@ import {
   ListChecks,
   CheckCircle,
   Crosshair,
+  MessageCircle,
+  Share2,
+  Send,
+  Shield,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -263,6 +267,8 @@ const STR = {
     teamsTbc: "Équipes à confirmer",
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
     liveReveal: "Voir",
+    createPost: "Créer un post", postWrite: "Écrire", postHistory: "Historique", postPlaceholder: "Partagez vos résultats, analyses...", postPublish: "Publier", postEmpty: "Aucun post", postFeed: "Fil d'actualité",
+    messagesTitle: "Discussion", msgCommunity: "Communauté", msgDms: "Messages", msgEmpty: "Aucun message", msgNoDms: "Aucune conversation", msgPlaceholder: "Message...", msgDmPlaceholder: "Message chiffré...",
     scoreInvalid: "13 pts min, 2 pts d'écart après 12",
     alreadyWonSuffix: "aurait déjà gagné si tu mets ce score",
     mustWinLastMap: "doit gagner la dernière map",
@@ -270,7 +276,7 @@ const STR = {
     betLocked: "Pari verrouillé",
     myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
-    classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
+    classementTitle: "Nexus", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
     classementEmptySub: "Personne n'a encore fait de pronostic. Sois le premier à grimper au classement !",
     catFilterLabel: "Catégories",
     profileTitle: "Mon profil", profilePseudo: "Pseudo", profileBio: "Bio", profileAvatar: "Avatar",
@@ -339,6 +345,8 @@ const STR = {
     teamsTbc: "Teams TBC",
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
     liveReveal: "Reveal",
+    createPost: "Create a post", postWrite: "Write", postHistory: "History", postPlaceholder: "Share your results, insights...", postPublish: "Publish", postEmpty: "No posts", postFeed: "Feed",
+    messagesTitle: "Discussion", msgCommunity: "Community", msgDms: "Messages", msgEmpty: "No messages", msgNoDms: "No conversations", msgPlaceholder: "Message...", msgDmPlaceholder: "Encrypted message...",
     scoreInvalid: "13 pts min, 2 pt gap after 12",
     alreadyWonSuffix: "would have already won with this score",
     mustWinLastMap: "must win the last map",
@@ -346,7 +354,7 @@ const STR = {
     betLocked: "Bet locked",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
-    classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
+    classementTitle: "Nexus", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
     classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
     catFilterLabel: "Categories",
     profileTitle: "My profile", profilePseudo: "Username", profileBio: "Bio", profileAvatar: "Avatar",
@@ -415,12 +423,14 @@ const STR = {
     teamsTbc: "Equipos por confirmar",
     seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
     liveReveal: "Ver",
+    createPost: "Crear un post", postWrite: "Escribir", postHistory: "Historial", postPlaceholder: "Comparte tus resultados...", postPublish: "Publicar", postEmpty: "Sin posts", postFeed: "Feed",
+    messagesTitle: "Discusión", msgCommunity: "Comunidad", msgDms: "Mensajes", msgEmpty: "Sin mensajes", msgNoDms: "Sin conversaciones", msgPlaceholder: "Mensaje...", msgDmPlaceholder: "Mensaje cifrado...",
     scoreInvalid: "13 pts mín, 2 pts de diferencia tras 12",
     alreadyWonSuffix: "ya habría ganado con este marcador",
     mustWinLastMap: "debe ganar el último mapa",
     mustWinAllMaps: "debe ganar este mapa en un 2-0",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
-    classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
+    classementTitle: "Nexus", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
     catFilterLabel: "Categorías",
     profileTitle: "Mi perfil", profilePseudo: "Apodo", profileBio: "Bio", profileAvatar: "Avatar",
@@ -477,12 +487,14 @@ const STR = {
     teamsTbc: "Squadre da confermare",
     seriesHint: "Inserisci un punteggio di serie valido sopra (es. 2-0, 2-1).",
     liveReveal: "Rivela",
+    createPost: "Crea un post", postWrite: "Scrivi", postHistory: "Cronologia", postPlaceholder: "Condividi i tuoi risultati...", postPublish: "Pubblica", postEmpty: "Nessun post", postFeed: "Feed",
+    messagesTitle: "Discussione", msgCommunity: "Comunità", msgDms: "Messaggi", msgEmpty: "Nessun messaggio", msgNoDms: "Nessuna conversazione", msgPlaceholder: "Messaggio...", msgDmPlaceholder: "Messaggio cifrato...",
     scoreInvalid: "13 pt min, 2 pt di scarto dopo il 12",
     alreadyWonSuffix: "avrebbe già vinto con questo punteggio",
     mustWinLastMap: "deve vincere l'ultima mappa",
     mustWinAllMaps: "deve vincere questa mappa in un 2-0",
     placeholderSoon: "Presto disponibile. Stiamo preparando i pronostici {label}, torna a trovarci!",
-    classementTitle: "Classifica", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
+    classementTitle: "Nexus", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
     catFilterLabel: "Categorie",
     profileTitle: "Il mio profilo", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -539,12 +551,14 @@ const STR = {
     teamsTbc: "対戦カード未定",
     seriesHint: "上のボックスに有効なシリーズスコアを入力してください(例: 2-0、2-1)。",
     liveReveal: "表示",
+    createPost: "投稿する", postWrite: "書く", postHistory: "履歴", postPlaceholder: "結果や分析をシェア...", postPublish: "投稿", postEmpty: "投稿なし", postFeed: "フィード",
+    messagesTitle: "ディスカッション", msgCommunity: "コミュニティ", msgDms: "メッセージ", msgEmpty: "メッセージなし", msgNoDms: "会話なし", msgPlaceholder: "メッセージ...", msgDmPlaceholder: "暗号化メッセージ...",
     scoreInvalid: "13点先取、12点以降は2点差が必要",
     alreadyWonSuffix: "はこのスコアだと既に勝利しています",
     mustWinLastMap: "が最終マップを勝たなければなりません",
     mustWinAllMaps: "が2-0でこのマップを勝たなければなりません",
     placeholderSoon: "近日公開。{label}の予想機能を準備中です、お楽しみに!",
-    classementTitle: "ランキング", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
+    classementTitle: "Nexus", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
     catFilterLabel: "カテゴリー",
     profileTitle: "マイプロフィール", profilePseudo: "ニックネーム", profileBio: "自己紹介", profileAvatar: "アバター",
@@ -601,12 +615,14 @@ const STR = {
     teamsTbc: "Teams noch offen",
     seriesHint: "Gib oben einen gültigen Serien-Score ein (z. B. 2-0, 2-1).",
     liveReveal: "Anzeigen",
+    createPost: "Post erstellen", postWrite: "Schreiben", postHistory: "Verlauf", postPlaceholder: "Teile deine Ergebnisse...", postPublish: "Veröffentlichen", postEmpty: "Keine Posts", postFeed: "Feed",
+    messagesTitle: "Diskussion", msgCommunity: "Community", msgDms: "Nachrichten", msgEmpty: "Keine Nachrichten", msgNoDms: "Keine Gespräche", msgPlaceholder: "Nachricht...", msgDmPlaceholder: "Verschlüsselte Nachricht...",
     scoreInvalid: "Mind. 13 Punkte, 2 Punkte Vorsprung nach 12",
     alreadyWonSuffix: "hätte mit diesem Ergebnis bereits gewonnen",
     mustWinLastMap: "muss die letzte Map gewinnen",
     mustWinAllMaps: "muss diese Map bei einem 2-0 gewinnen",
     placeholderSoon: "Bald verfügbar. Wir bereiten die {label}-Tipps vor, schau bald wieder vorbei!",
-    classementTitle: "Rangliste", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
+    classementTitle: "Nexus", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
     catFilterLabel: "Kategorien",
     profileTitle: "Mein Profil", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -663,12 +679,14 @@ const STR = {
     teamsTbc: "对阵尚未确定",
     seriesHint: "请在上方输入有效的系列赛比分(如2-0、2-1)。",
     liveReveal: "查看",
+    createPost: "创建帖子", postWrite: "写", postHistory: "历史", postPlaceholder: "分享你的结果...", postPublish: "发布", postEmpty: "暂无帖子", postFeed: "动态",
+    messagesTitle: "讨论", msgCommunity: "社区", msgDms: "私信", msgEmpty: "暂无消息", msgNoDms: "暂无对话", msgPlaceholder: "消息...", msgDmPlaceholder: "加密消息...",
     scoreInvalid: "先得13分，12平后须净胜2分",
     alreadyWonSuffix: "按这个比分已经提前获胜了",
     mustWinLastMap: "必须赢得最后一张地图",
     mustWinAllMaps: "在2-0中必须赢得此地图",
     placeholderSoon: "敬请期待。{label}竞猜功能筹备中，请稍后再来查看!",
-    classementTitle: "排行榜", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
+    classementTitle: "Nexus", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
     catFilterLabel: "分类",
     profileTitle: "我的资料", profilePseudo: "昵称", profileBio: "简介", profileAvatar: "头像",
@@ -5117,6 +5135,410 @@ function FriendModal({ onClose, T, profile, userPoints }) {
   );
 }
 
+function CreatePostScreen({ onClose, T, profile }) {
+  const [content, setContent] = useState("");
+  const [matchData, setMatchData] = useState(null);
+  const [posting, setPosting] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [tab, setTab] = useState("write");
+
+  useEffect(() => {
+    if (!profile?.userId) return;
+    fetch(API_BASE + "/api/posts/user/" + profile.userId).then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setHistory(d);
+    }).catch(() => {});
+  }, [profile?.userId]);
+
+  function handlePost() {
+    if (!profile?.userId || (!content.trim() && !matchData)) return;
+    setPosting(true);
+    fetch(API_BASE + "/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId, type: matchData ? "result" : "text", content: content.trim(), matchData }),
+    }).then(r => r.json()).then(() => {
+      setContent("");
+      setMatchData(null);
+      setTab("history");
+      fetch(API_BASE + "/api/posts/user/" + profile.userId).then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setHistory(d);
+      });
+    }).catch(() => {}).finally(() => setPosting(false));
+  }
+
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+          <ArrowLeft size={18} color="#ccc" />
+        </button>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
+        <div style={{ width: 34 }} />
+      </div>
+
+      <div className="flex gap-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postWrite || "Écrire"}</button>
+        <button onClick={() => setTab("history")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postHistory || "Historique"}</button>
+      </div>
+
+      {tab === "write" && (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value.slice(0, 500))}
+            placeholder={T.postPlaceholder || "Partagez vos résultats, analyses..."}
+            className="w-full rounded-xl p-3 resize-none"
+            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "14px", minHeight: "120px", outline: "none" }}
+          />
+          <p style={{ color: "#555", fontSize: "10px", textAlign: "right", marginTop: 4 }}>{content.length}/500</p>
+
+          <button
+            onClick={handlePost}
+            disabled={posting || (!content.trim() && !matchData)}
+            className="w-full rounded-xl py-3 mt-4 font-bold"
+            style={{ background: content.trim() || matchData ? "#CCF71D" : "#222", color: content.trim() || matchData ? "#000" : "#555", fontSize: "14px", transition: "all 0.2s" }}
+          >
+            {posting ? "..." : (T.postPublish || "Publier")}
+          </button>
+        </div>
+      )}
+
+      {tab === "history" && (
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
+          {history.map(p => (
+            <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+              <p style={{ color: "#fff", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>
+              {p.match_data && (
+                <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
+                  <span style={{ color: "#888", fontSize: "11px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-2">
+                <span style={{ color: "#444", fontSize: "10px" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                <span style={{ color: "#666", fontSize: "10px" }}>{p.likes || 0} likes</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostsFeedScreen({ onClose, T, profile }) {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(API_BASE + "/api/posts/feed?limit=50&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setPosts(d);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  function toggleLike(post) {
+    if (!profile?.userId) return;
+    const action = post.liked ? "unlike" : "like";
+    fetch(API_BASE + `/api/posts/${post.id}/${action}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId }),
+    }).then(() => {
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, liked: !p.liked, likes: p.likes + (p.liked ? -1 : 1) } : p));
+    });
+  }
+
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+          <ArrowLeft size={18} color="#ccc" />
+        </button>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.postFeed || "Fil d'actualité"}</h2>
+        <div style={{ width: 34 }} />
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        {loading && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>...</p>}
+        {!loading && posts.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
+        {posts.map(p => (
+          <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
+                {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+              </div>
+              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
+              <span style={{ color: "#444", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+            </div>
+            {p.content && <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>}
+            {p.match_data && (
+              <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
+                <span style={{ color: "#888", fontSize: "11px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-4 mt-2">
+              <button onClick={() => toggleLike(p)} className="flex items-center gap-1">
+                <span style={{ color: p.liked ? "#CCF71D" : "#555", fontSize: "18px" }}>{p.liked ? "♥" : "♡"}</span>
+                <span style={{ color: "#666", fontSize: "11px" }}>{p.likes || 0}</span>
+              </button>
+              <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }}>
+                <Share2 size={14} color="#555" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MessagesScreen({ onClose, T, profile }) {
+  const [tab, setTab] = useState("community");
+  const [conversations, setConversations] = useState([]);
+  const [communityMessages, setCommunityMessages] = useState([]);
+  const [activeDm, setActiveDm] = useState(null);
+  const [dmMessages, setDmMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [cryptoKeys, setCryptoKeys] = useState(null);
+  const communityPollRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    initCrypto();
+    loadConversations();
+    loadCommunity();
+    return () => { if (communityPollRef.current) clearInterval(communityPollRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (tab === "community") {
+      communityPollRef.current = setInterval(pollCommunity, 5000);
+      return () => clearInterval(communityPollRef.current);
+    }
+  }, [tab, communityMessages]);
+
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [communityMessages, dmMessages]);
+
+  async function initCrypto() {
+    if (!profile?.userId) return;
+    const stored = localStorage.getItem("split_crypto_keys_" + profile.userId);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const privKey = await crypto.subtle.importKey("jwk", parsed.privateKey, { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey"]);
+        const pubKey = await crypto.subtle.importKey("jwk", parsed.publicKey, { name: "ECDH", namedCurve: "P-256" }, true, []);
+        setCryptoKeys({ privateKey: privKey, publicKey: pubKey, publicKeyJwk: parsed.publicKey });
+        await fetch(API_BASE + "/api/messages/keys", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: profile.userId, publicKey: JSON.stringify(parsed.publicKey) }),
+        });
+        return;
+      } catch(e) { /* regenerate */ }
+    }
+    const keyPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey"]);
+    const pubJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+    const privJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    localStorage.setItem("split_crypto_keys_" + profile.userId, JSON.stringify({ publicKey: pubJwk, privateKey: privJwk }));
+    setCryptoKeys({ privateKey: keyPair.privateKey, publicKey: keyPair.publicKey, publicKeyJwk: pubJwk });
+    await fetch(API_BASE + "/api/messages/keys", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId, publicKey: JSON.stringify(pubJwk) }),
+    });
+  }
+
+  async function deriveSharedKey(theirPublicKeyJwk) {
+    if (!cryptoKeys) return null;
+    const theirKey = await crypto.subtle.importKey("jwk", theirPublicKeyJwk, { name: "ECDH", namedCurve: "P-256" }, false, []);
+    return crypto.subtle.deriveKey({ name: "ECDH", public: theirKey }, cryptoKeys.privateKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+
+  async function encryptMessage(text, sharedKey) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(text);
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, sharedKey, encoded);
+    return { ciphertext: btoa(String.fromCharCode(...new Uint8Array(ciphertext))), iv: btoa(String.fromCharCode(...iv)) };
+  }
+
+  async function decryptMessage(ciphertextB64, ivB64, sharedKey) {
+    try {
+      const ciphertext = Uint8Array.from(atob(ciphertextB64), c => c.charCodeAt(0));
+      const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, sharedKey, ciphertext);
+      return new TextDecoder().decode(decrypted);
+    } catch { return "[Message chiffré]"; }
+  }
+
+  function loadConversations() {
+    if (!profile?.userId) return;
+    fetch(API_BASE + "/api/messages/conversations/" + profile.userId).then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setConversations(d);
+    }).catch(() => {});
+  }
+
+  function loadCommunity() {
+    fetch(API_BASE + "/api/messages/community?limit=100").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setCommunityMessages(d.reverse());
+    }).catch(() => {});
+  }
+
+  function pollCommunity() {
+    const lastId = communityMessages.length > 0 ? communityMessages[communityMessages.length - 1].id : 0;
+    fetch(API_BASE + "/api/messages/community/poll?after=" + lastId).then(r => r.json()).then(d => {
+      if (Array.isArray(d) && d.length > 0) setCommunityMessages(prev => [...prev, ...d]);
+    }).catch(() => {});
+  }
+
+  async function openDm(partner) {
+    setActiveDm(partner);
+    setTab("dm");
+    if (!profile?.userId) return;
+    const msgs = await fetch(API_BASE + "/api/messages/dm/" + profile.userId + "/" + partner.partnerId).then(r => r.json());
+    if (!Array.isArray(msgs)) { setDmMessages([]); return; }
+    const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json()).catch(() => null);
+    if (!keyResp?.publicKey || !cryptoKeys) { setDmMessages(msgs.reverse().map(m => ({ ...m, text: "[Clé manquante]" }))); return; }
+    const theirKeyJwk = JSON.parse(keyResp.publicKey);
+    const sharedKey = await deriveSharedKey(theirKeyJwk);
+    const decrypted = await Promise.all(msgs.reverse().map(async m => {
+      const isMe = m.sender_id === profile.userId;
+      const text = await decryptMessage(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
+      return { ...m, text, isMe };
+    }));
+    setDmMessages(decrypted);
+  }
+
+  async function sendDm() {
+    if (!input.trim() || !activeDm || !profile?.userId || !cryptoKeys) return;
+    setSending(true);
+    try {
+      const keyResp = await fetch(API_BASE + "/api/messages/keys/" + activeDm.partnerId).then(r => r.json());
+      if (!keyResp?.publicKey) { setSending(false); return; }
+      const theirKeyJwk = JSON.parse(keyResp.publicKey);
+      const sharedKey = await deriveSharedKey(theirKeyJwk);
+      const { ciphertext, iv } = await encryptMessage(input.trim(), sharedKey);
+      const { ciphertext: senderCopy, iv: senderIv } = await encryptMessage(input.trim(), sharedKey);
+      await fetch(API_BASE + "/api/messages/dm", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senderId: profile.userId, receiverId: activeDm.partnerId, ciphertext, iv, senderCopy, senderIv }),
+      });
+      setDmMessages(prev => [...prev, { text: input.trim(), isMe: true, created_at: new Date().toISOString() }]);
+      setInput("");
+    } catch {} finally { setSending(false); }
+  }
+
+  function sendCommunity() {
+    if (!input.trim() || !profile?.userId) return;
+    setSending(true);
+    fetch(API_BASE + "/api/messages/community", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId, content: input.trim() }),
+    }).then(r => r.json()).then(d => {
+      if (d.id) setCommunityMessages(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: input.trim(), created_at: new Date().toISOString() }]);
+      setInput("");
+    }).catch(() => {}).finally(() => setSending(false));
+  }
+
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={activeDm ? () => { setActiveDm(null); setTab("dms"); } : onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+          <ArrowLeft size={18} color="#ccc" />
+        </button>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>
+          {activeDm ? activeDm.pseudo : (T.messagesTitle || "Discussion")}
+        </h2>
+        {activeDm && (
+          <div className="flex items-center gap-1">
+            <Shield size={12} color="#22c55e" />
+            <span style={{ color: "#22c55e", fontSize: "9px", fontWeight: 700 }}>E2E</span>
+          </div>
+        )}
+        {!activeDm && <div style={{ width: 34 }} />}
+      </div>
+
+      {!activeDm && (
+        <div className="flex gap-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+          <button onClick={() => setTab("community")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "community" ? "#CCF71D" : "#666", borderBottom: tab === "community" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgCommunity || "Communauté"}</button>
+          <button onClick={() => setTab("dms")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "dms" ? "#CCF71D" : "#666", borderBottom: tab === "dms" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgDms || "Messages"}</button>
+        </div>
+      )}
+
+      {tab === "community" && !activeDm && (
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col">
+          <div className="flex-1">
+            {communityMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
+            {communityMessages.map(m => (
+              <div key={m.id} className="flex gap-2 mb-3">
+                <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
+                  {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{m.pseudo || "?"}</span>
+                  <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.content}</p>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      )}
+
+      {tab === "dms" && !activeDm && (
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {conversations.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgNoDms || "Aucune conversation"}</p>}
+          {conversations.map(c => (
+            <button key={c.partnerId} onClick={() => openDm(c)} className="w-full flex items-center gap-3 py-3 rounded-xl px-2" style={{ background: "transparent" }}>
+              <div className="rounded-full overflow-hidden shrink-0" style={{ width: 40, height: 40, background: "#1a1a1a" }}>
+                {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
+              </div>
+              <div className="flex-1 text-left">
+                <p style={{ color: "#fff", fontSize: "14px", fontWeight: 700 }}>{c.pseudo}</p>
+                <p style={{ color: "#555", fontSize: "11px" }}>{c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleDateString() : ""}</p>
+              </div>
+              <Shield size={12} color="#22c55e" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeDm && (
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col">
+          <div className="flex-1">
+            {dmMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
+            {dmMessages.map((m, i) => (
+              <div key={i} className={`flex mb-2 ${m.isMe ? "justify-end" : "justify-start"}`}>
+                <div className="rounded-xl px-3 py-2 max-w-[75%]" style={{ background: m.isMe ? "#1a3a1a" : "#1a1a1a", border: m.isMe ? "1px solid #2a4a2a" : "1px solid #2a2a2a" }}>
+                  <p style={{ color: "#eee", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.text}</p>
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
+      )}
+
+      {(tab === "community" || activeDm) && (
+        <div className="px-4 py-3 flex gap-2" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value.slice(0, 500))}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); activeDm ? sendDm() : sendCommunity(); } }}
+            placeholder={activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message...")}
+            className="flex-1 rounded-xl px-4 py-2.5"
+            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none" }}
+          />
+          <button
+            onClick={activeDm ? sendDm : sendCommunity}
+            disabled={sending || !input.trim()}
+            className="rounded-xl px-3"
+            style={{ background: input.trim() ? "#CCF71D" : "#222", transition: "all 0.2s" }}
+          >
+            <Send size={16} color={input.trim() ? "#000" : "#555"} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
@@ -5126,6 +5548,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
   const registeredCount = leaderboard.length;
+  const [showMessages, setShowMessages] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showPostsFeed, setShowPostsFeed] = useState(false);
 
   useEffect(() => {
     if (profile?.userId) {
@@ -5263,6 +5688,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
               <div className="flex items-center gap-2">
+                <button onClick={() => setShowCreatePost(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+                  <Plus size={16} color="#CCF71D" />
+                </button>
+                <button onClick={() => setShowMessages(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+                  <MessageCircle size={16} color="#ccc" />
+                </button>
                 {(() => {
                   const rank = getUserRank(userPoints || 0);
                   return (
@@ -5350,10 +5781,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               })()}
             </div>
 
-            {/* Swipe arrow hint */}
+            {/* Share + Swipe arrow hint */}
             {carouselSlide === 0 && (
-              <div style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", opacity: 0.25, pointerEvents: "none" }}>
-                <ChevronRight size={20} color="#fff" />
+              <div style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: "Mes résultats sur Split !", url: window.location.href }); }} className="rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                  <Share2 size={13} color="#ccc" />
+                </button>
+                <div style={{ opacity: 0.25, pointerEvents: "none" }}>
+                  <ChevronRight size={20} color="#fff" />
+                </div>
               </div>
             )}
           </div>
@@ -5362,16 +5798,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {/* SLIDE 2: Communauté */}
         <div style={{ width: "50%", flexShrink: 0 }}>
           <div className="px-4 pt-2 pb-6">
-            <h2 className="font-black text-white mb-4" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.friendTabFollowing || "Communauté"}</h2>
+            <h2 className="font-black text-white mb-4" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.msgCommunity || "Communauté"}</h2>
             <div className="flex items-start gap-3">
-              {/* User's own photo */}
               <div className="flex flex-col items-center shrink-0">
                 <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
                   {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={24} color="#555" />}
                 </div>
                 <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, marginTop: 4 }}>{profile?.pseudo || "Toi"}</span>
               </div>
-              {/* Friends list horizontal scroll */}
               <div className="flex gap-3 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
                 {friendsList.length === 0 && (
                   <p style={{ color: "#555", fontSize: "12px", alignSelf: "center", padding: "12px 0" }}>{T.friendEmpty}</p>
@@ -5386,11 +5820,19 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 ))}
               </div>
             </div>
+            <button onClick={() => setShowPostsFeed(true)} className="w-full mt-4 rounded-xl py-2.5 flex items-center justify-center gap-2" style={{ background: "#141414", border: "1px solid #2a2a2a" }}>
+              <Zap size={14} color="#CCF71D" />
+              <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{T.postFeed || "Fil d'actualité"}</span>
+            </button>
           </div>
         </div>
       </div>
 
       {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
+
+      {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
+      {showCreatePost && <CreatePostScreen onClose={() => setShowCreatePost(false)} T={T} profile={profile} />}
+      {showPostsFeed && <PostsFeedScreen onClose={() => setShowPostsFeed(false)} T={T} profile={profile} />}
 
       {showRewards && (
         <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>

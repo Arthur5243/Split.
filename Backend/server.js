@@ -24,6 +24,8 @@ import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-sc
 import { startHltvScraper } from "./hltv-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import socialRouter from "./social-routes.js";
+import postsRouter from "./posts-routes.js";
+import messagesRouter from "./messages-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -39,6 +41,8 @@ app.use(cs2Router);
 app.use(rlRouter);
 app.use(youtubeRouter);
 app.use(socialRouter);
+app.use(postsRouter);
+app.use(messagesRouter);
 
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
