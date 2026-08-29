@@ -130,10 +130,17 @@ async function scrapeMapScores(matchUrl) {
 
     if (!score1 && !score2) return;
 
+    const s1 = Number(score1) || 0;
+    const s2 = Number(score2) || 0;
+
+    // Skip entries that look like series scores (2-1, 2-0) rather than round scores.
+    // Valid Valorant round scores always have at least one team >= 5.
+    if (s1 < 5 && s2 < 5) return;
+
     maps.push({
       map: mapName || `Map ${maps.length + 1}`,
-      score1: Number(score1) || 0,
-      score2: Number(score2) || 0,
+      score1: s1,
+      score2: s2,
     });
   });
 

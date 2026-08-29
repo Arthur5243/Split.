@@ -38,6 +38,7 @@ import {
   Share2,
   Send,
   Shield,
+  Settings,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -1110,14 +1111,21 @@ function teamCode(opp) {
 // pas le cas, on préfère n'afficher AUCUN score par map plutôt qu'un faux.
 function isMapScoresConsistent(mapScores, score1, score2) {
   if (!Array.isArray(mapScores) || mapScores.length === 0) return true;
-  if (score1 == null || score2 == null) return true; // pas de score de série à comparer
+  if (score1 == null || score2 == null) return true;
   let wins1 = 0;
   let wins2 = 0;
   for (const mp of mapScores) {
     if (mp.score1 > mp.score2) wins1++;
     else if (mp.score2 > mp.score1) wins2++;
   }
-  return wins1 === score1 && wins2 === score2;
+  if (wins1 === score1 && wins2 === score2) return true;
+  if (wins1 === score2 && wins2 === score1) {
+    for (const mp of mapScores) {
+      const tmp = mp.score1; mp.score1 = mp.score2; mp.score2 = tmp;
+    }
+    return true;
+  }
+  return false;
 }
 
 function transformMatch(m) {
@@ -1163,7 +1171,7 @@ function transformMatch(m) {
     // Passée au garde-fou de cohérence (cf isMapScoresConsistent) avant
     // d'être acceptée.
     map_scores: isMapScoresConsistent(m.map_scores, score1, score2) ? m.map_scores || null : null,
-    live_map_scores: m.live_map_scores || null,
+    live_map_scores: m.status === "running" ? (m.live_map_scores || null) : null,
   };
 }
 
@@ -2383,7 +2391,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {(() => {
                   const mapsList = match.map_scores && match.map_scores.length > 0
                     ? match.map_scores
-                    : [{ map: null, score1: 0, score2: 0 }];
+                    : null;
+                  if (!mapsList) return <p style={{ color: "#555", fontSize: "11px", textAlign: "center" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>;
                   return mapsList.map((g, i) => {
                     const gamePred = (pred && pred.games && pred.games[i]) || null;
                     return (
@@ -5539,7 +5548,7 @@ function MessagesScreen({ onClose, T, profile }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, onOpenSettings }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
@@ -5697,12 +5706,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     </div>
                   );
                 })()}
-                <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
-                  {profile?.avatar ? (
-                    <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
-                  ) : (
-                    <User size={18} color="#ccc" />
-                  )}
+                <button onClick={onOpenSettings} className="rounded-full p-2" style={{ background: "#181818" }}>
+                  <Settings size={18} color="#ccc" />
                 </button>
               </div>
             </div>
@@ -5804,12 +5809,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex flex-col items-center shrink-0">
+              <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="flex flex-col items-center shrink-0">
                 <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
                   {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={24} color="#555" />}
                 </div>
                 <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, marginTop: 4 }}>{profile?.pseudo || "Toi"}</span>
-              </div>
+              </button>
               <div className="flex gap-3 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
                 {friendsList.length === 0 && (
                   <p style={{ color: "#555", fontSize: "12px", alignSelf: "center", padding: "12px 0" }}>{T.friendEmpty}</p>
@@ -7201,7 +7206,7 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} onOpenSettings={() => setShowSettings(true)} />}
           </>
           )}
         </div>
