@@ -265,7 +265,7 @@ const STR = {
     alreadyWonSuffix: "aurait déjà gagné si tu mets ce score",
     mustWinLastMap: "doit gagner la dernière map",
     mustWinAllMaps: "doit gagner cette map dans un 2-0",
-    betLocked: "Pari verrouillé — le match a commencé",
+    betLocked: "Pari verrouillé",
     myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
     classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
@@ -341,7 +341,7 @@ const STR = {
     alreadyWonSuffix: "would have already won with this score",
     mustWinLastMap: "must win the last map",
     mustWinAllMaps: "must win this map in a 2-0",
-    betLocked: "Bet locked — match has started",
+    betLocked: "Bet locked",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
     classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
@@ -2008,7 +2008,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 4 }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5 }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -2023,10 +2023,15 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesB = (pred && pred.seriesB) || "";
   const expanded = pred && pred.expanded;
   const games = (pred && pred.games) || [];
-  // Dès que le match a démarré (live) ou est terminé, le pari est figé :
-  // impossible de changer le score série pronostiqué ni les scores par map.
   const hasCompleteBet = seriesA !== "" && seriesB !== "" && [[2,0],[2,1],[1,2],[0,2]].some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
-  const betLocked = running || finished || (remainingPreds <= 0 && !hasCompleteBet);
+  const LOCK_HOURS = 6;
+  const lockedByTime = (() => {
+    if (running || finished) return true;
+    if (!match.beginAt) return false;
+    const t = new Date(match.beginAt).getTime();
+    return !isNaN(t) && Date.now() >= t - LOCK_HOURS * 3600000;
+  })();
+  const betLocked = lockedByTime || (remainingPreds <= 0 && !hasCompleteBet);
 
   // Refs pour l'auto-avancement (façon code OTP) : dès qu'une case a une
   // saisie "complète", le focus bascule direct sur l'autre case du même
@@ -2301,7 +2306,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           </div>
         </div>
       )}
-      {running && !tbd && (
+      {lockedByTime && !finished && !tbd && (
         <div className="px-4 pb-2 flex items-center justify-center gap-1.5">
           <Lock size={11} color="#666" />
           <span style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>{T.betLocked || "Pari verrouillé"}</span>
@@ -2536,7 +2541,7 @@ const QUEST_WEEKLY_POOL = [
   { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly" },
 ];
 const PRECISION_IDS = new Set(["exact_score"]);
-const DAILY_BET_LIMIT = 4;
+const DAILY_BET_LIMIT = 5;
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
 function weekStartStr() { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().slice(0, 10); }
@@ -2888,7 +2893,7 @@ function StreakPopup({ streak, onClose, T }) {
 }
 
 function PredBadge({ remainingPreds, T }) {
-  const DAILY_LIMIT = 4;
+  const DAILY_LIMIT = DAILY_BET_LIMIT;
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "6px 16px 0" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 5, background: remainingPreds > 0 ? "rgba(204,247,29,0.08)" : "rgba(239,68,68,0.08)", border: `1px solid ${remainingPreds > 0 ? "rgba(204,247,29,0.15)" : "rgba(239,68,68,0.15)"}`, borderRadius: 16, padding: "3px 8px" }}>
@@ -3658,6 +3663,37 @@ function RegionStandings({ regionKey, accent, T }) {
   );
 }
 
+function countBracketProgress(bracket) {
+  if (!bracket) return { total: 0, done: 0 };
+  let total = 0, done = 0;
+  for (const section of [bracket.upper, bracket.lower, bracket.grand_final]) {
+    if (!section) continue;
+    for (const round of section) {
+      for (const m of (round.matches || [])) {
+        const hasTwoTeams = m.team1?.name && m.team1.name !== "TBD" && m.team2?.name && m.team2.name !== "TBD";
+        if (!hasTwoTeams) continue;
+        total++;
+        const st = (m.status || "").toLowerCase();
+        if (st === "completed" || st === "finished") done++;
+      }
+    }
+  }
+  return { total, done };
+}
+
+function BracketProgressBar({ bracket, accentColor }) {
+  const { total, done } = countBracketProgress(bracket);
+  if (total === 0) return null;
+  return (
+    <div style={{ padding: "8px 16px 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#1a1a1a", overflow: "hidden" }}>
+        <div style={{ width: `${(done / total) * 100}%`, height: "100%", background: accentColor, borderRadius: 2, transition: "width 0.4s ease" }} />
+      </div>
+      <span style={{ color: "#666", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{done}/{total}</span>
+    </div>
+  );
+}
+
 function BracketPage({ vlrEvents, onBack, T }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
@@ -3776,11 +3812,14 @@ function BracketPage({ vlrEvents, onBack, T }) {
 
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
-    return <DragScroll>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
-    </DragScroll>;
+    return <>
+      <BracketProgressBar bracket={bracket} accentColor={accentColor} />
+      <DragScroll>
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
+      </DragScroll>
+    </>;
   };
 
   // --- History views ---
@@ -4103,11 +4142,14 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
 
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
-    return <DragScroll>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
-    </DragScroll>;
+    return <>
+      <BracketProgressBar bracket={bracket} accentColor={accentColor} />
+      <DragScroll>
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
+      </DragScroll>
+    </>;
   };
 
   const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
@@ -4263,7 +4305,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
   }
@@ -4328,6 +4370,13 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
             <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.valorantTitle}</h1>
             <p style={{ color: "#888", fontSize: "12px" }}>{T.valorantSubtitle}</p>
           </div>
+          {gamePoints > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.15)", borderRadius: 10, padding: "4px 10px" }}>
+              <Trophy size={12} color="#CCF71D" />
+              <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{gamePoints}</span>
+              <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>pts</span>
+            </div>
+          )}
         </div>
       </div>
       <PredBadge remainingPreds={remainingPreds} T={T} />
@@ -4448,7 +4497,7 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
   if (showCs2BracketPage) {
     return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} />;
   }
@@ -4522,8 +4571,19 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
     <div className="relative">
       <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + CS2_ACCENT + "22, transparent 70%)" }} />
       <div className="relative px-4 pt-4 pb-2">
-        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
-        <p style={{ color: "#888", fontSize: "12px" }}>{T.cs2Subtitle}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.cs2Title}</h1>
+            <p style={{ color: "#888", fontSize: "12px" }}>{T.cs2Subtitle}</p>
+          </div>
+          {gamePoints > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: 10, padding: "4px 10px" }}>
+              <Trophy size={12} color="#3B82F6" />
+              <span style={{ color: "#3B82F6", fontSize: 13, fontWeight: 900 }}>{gamePoints}</span>
+              <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>pts</span>
+            </div>
+          )}
+        </div>
       </div>
       <PredBadge remainingPreds={remainingPreds} T={T} />
 
@@ -4619,7 +4679,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds, gamePoints }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -4647,8 +4707,19 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
     <div className="relative">
       <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + RL_ACCENT + "22, transparent 70%)" }} />
       <div className="relative px-4 pt-4 pb-2">
-        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.rlTitle}</h1>
-        <p style={{ color: "#888", fontSize: "12px" }}>{T.rlSubtitle}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.rlTitle}</h1>
+            <p style={{ color: "#888", fontSize: "12px" }}>{T.rlSubtitle}</p>
+          </div>
+          {gamePoints > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(74,144,217,0.08)", border: "1px solid rgba(74,144,217,0.15)", borderRadius: 10, padding: "4px 10px" }}>
+              <Trophy size={12} color="#4A90D9" />
+              <span style={{ color: "#4A90D9", fontSize: 13, fontWeight: 900 }}>{gamePoints}</span>
+              <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>pts</span>
+            </div>
+          )}
+        </div>
       </div>
       <PredBadge remainingPreds={remainingPreds} T={T} />
 
@@ -6425,6 +6496,7 @@ export default function ClutchApp() {
               showBracketPage={showBracketPage}
               setShowBracketPage={setShowBracketPage}
               remainingPreds={remainingPreds}
+              gamePoints={pointsPerGame.valo || 0}
             />
           )}
           {activeTab === "csgo" && (
@@ -6450,6 +6522,7 @@ export default function ClutchApp() {
               showCs2BracketPage={showCs2BracketPage}
               setShowCs2BracketPage={setShowCs2BracketPage}
               remainingPreds={remainingPreds}
+              gamePoints={pointsPerGame.cs2 || 0}
             />
           )}
           {activeTab === "rocketleague" && (
@@ -6470,6 +6543,7 @@ export default function ClutchApp() {
               teamLogoCache={teamLogoCache}
               predictions={predictions}
               remainingPreds={remainingPreds}
+              gamePoints={pointsPerGame.rl || 0}
             />
           )}
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
@@ -6487,11 +6561,16 @@ export default function ClutchApp() {
                 if (active) { setShowBracketPage(false); setShowCs2BracketPage(false); }
                 setActiveTab(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
-                <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {item.img ? (
                     <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
                   ) : (
                     <item.Icon size={24} color={labelColor} strokeWidth={2.2} />
+                  )}
+                  {item.key === "home" && streak.current > 0 && (
+                    <span style={{ position: "absolute", top: -4, right: -12, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
+                      <span style={{ fontSize: 8 }}>&#x1F525;</span>{streak.current}
+                    </span>
                   )}
                 </div>
                 <span style={{ color: labelColor, fontSize: "10px", fontWeight: active ? 700 : 500 }}>{item.label}</span>
