@@ -262,6 +262,7 @@ const STR = {
     today: "Aujourd'hui", tomorrow: "Demain",
     teamsTbc: "Équipes à confirmer",
     seriesHint: "Saisis un score de série valide ci-dessus (ex. 2-0, 2-1).",
+    liveReveal: "Voir",
     scoreInvalid: "13 pts min, 2 pts d'écart après 12",
     alreadyWonSuffix: "aurait déjà gagné si tu mets ce score",
     mustWinLastMap: "doit gagner la dernière map",
@@ -337,6 +338,7 @@ const STR = {
     today: "Today", tomorrow: "Tomorrow",
     teamsTbc: "Teams TBC",
     seriesHint: "Enter a valid series score above (e.g. 2-0, 2-1).",
+    liveReveal: "Reveal",
     scoreInvalid: "13 pts min, 2 pt gap after 12",
     alreadyWonSuffix: "would have already won with this score",
     mustWinLastMap: "must win the last map",
@@ -412,6 +414,7 @@ const STR = {
     today: "Hoy", tomorrow: "Mañana",
     teamsTbc: "Equipos por confirmar",
     seriesHint: "Introduce un marcador de serie válido arriba (ej. 2-0, 2-1).",
+    liveReveal: "Ver",
     scoreInvalid: "13 pts mín, 2 pts de diferencia tras 12",
     alreadyWonSuffix: "ya habría ganado con este marcador",
     mustWinLastMap: "debe ganar el último mapa",
@@ -473,6 +476,7 @@ const STR = {
     today: "Oggi", tomorrow: "Domani",
     teamsTbc: "Squadre da confermare",
     seriesHint: "Inserisci un punteggio di serie valido sopra (es. 2-0, 2-1).",
+    liveReveal: "Rivela",
     scoreInvalid: "13 pt min, 2 pt di scarto dopo il 12",
     alreadyWonSuffix: "avrebbe già vinto con questo punteggio",
     mustWinLastMap: "deve vincere l'ultima mappa",
@@ -534,6 +538,7 @@ const STR = {
     today: "今日", tomorrow: "明日",
     teamsTbc: "対戦カード未定",
     seriesHint: "上のボックスに有効なシリーズスコアを入力してください(例: 2-0、2-1)。",
+    liveReveal: "表示",
     scoreInvalid: "13点先取、12点以降は2点差が必要",
     alreadyWonSuffix: "はこのスコアだと既に勝利しています",
     mustWinLastMap: "が最終マップを勝たなければなりません",
@@ -595,6 +600,7 @@ const STR = {
     today: "Heute", tomorrow: "Morgen",
     teamsTbc: "Teams noch offen",
     seriesHint: "Gib oben einen gültigen Serien-Score ein (z. B. 2-0, 2-1).",
+    liveReveal: "Anzeigen",
     scoreInvalid: "Mind. 13 Punkte, 2 Punkte Vorsprung nach 12",
     alreadyWonSuffix: "hätte mit diesem Ergebnis bereits gewonnen",
     mustWinLastMap: "muss die letzte Map gewinnen",
@@ -656,6 +662,7 @@ const STR = {
     today: "今天", tomorrow: "明天",
     teamsTbc: "对阵尚未确定",
     seriesHint: "请在上方输入有效的系列赛比分(如2-0、2-1)。",
+    liveReveal: "查看",
     scoreInvalid: "先得13分，12平后须净胜2分",
     alreadyWonSuffix: "按这个比分已经提前获胜了",
     mustWinLastMap: "必须赢得最后一张地图",
@@ -2072,6 +2079,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
   const [scoresRevealed, setScoresRevealed] = useState(false);
+  const [liveRevealed, setLiveRevealed] = useState(false);
+  const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
   const replayUrl = _ytCache.get(replayCacheKey) || "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
   const onReplayClick = () => {
@@ -2252,6 +2261,22 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             ) : (
               <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); }} style={{ background: "#333", border: "none", borderRadius: 6, padding: "4px 16px", cursor: "pointer" }}>
                 <span style={{ color: "#555", fontSize: "16px", fontWeight: 900 }}>?</span>
+              </button>
+            )}
+          </div>
+        ) : hasLiveScores ? (
+          <div className="flex flex-col items-center">
+            {liveRevealed ? (() => {
+              let s1 = 0, s2 = 0;
+              for (const m of match.live_map_scores) { if (m.score1 > m.score2) s1++; else if (m.score2 > m.score1) s2++; }
+              return (
+                <span style={{ color: "#ff3b3b", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
+                  {s1} - {s2}
+                </span>
+              );
+            })() : (
+              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); }} style={{ background: "rgba(255,59,59,0.1)", border: "1px solid rgba(255,59,59,0.3)", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+                <span style={{ color: "#ff3b3b", fontSize: "9px", fontWeight: 800, textTransform: "uppercase" }}>{T.liveReveal || "Voir"}</span>
               </button>
             )}
           </div>
@@ -2443,6 +2468,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
           {expanded && !tbd && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
+              {hasLiveScores && liveRevealed && (
+                <div className="mb-3 pb-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+                  {match.live_map_scores.map((lm, li) => (
+                    <div key={li} className="flex items-center justify-between py-1">
+                      <span style={{ color: "#888", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {li + 1}{lm.map ? ` · ${lm.map}` : ""}</span>
+                      <span style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 800 }}>{lm.score1} - {lm.score2}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {games.length === 0 ? (
                 <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.seriesHint}</p>
               ) : (
@@ -5087,12 +5122,18 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
   const [leaderboard, setLeaderboard] = useState([]);
+  const [friendsList, setFriendsList] = useState([]);
+  const [carouselSlide, setCarouselSlide] = useState(0);
+  const carouselDragX = useRef(null);
   const registeredCount = leaderboard.length;
 
   useEffect(() => {
     if (profile?.userId) {
       fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
         if (d.following !== undefined) setSocialStats(d);
+      }).catch(() => {});
+      fetch(API_BASE + "/api/social/following/" + profile.userId).then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setFriendsList(d);
       }).catch(() => {});
     }
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
@@ -5192,106 +5233,161 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     );
   }
 
+  function onCarouselDown(e) { carouselDragX.current = e.clientX ?? e.touches?.[0]?.clientX ?? null; }
+  function onCarouselUp(e) {
+    if (carouselDragX.current === null) return;
+    const endX = e.clientX ?? e.changedTouches?.[0]?.clientX ?? 0;
+    const dx = endX - carouselDragX.current;
+    if (Math.abs(dx) > 40) setCarouselSlide(s => dx < 0 ? Math.min(1, s + 1) : Math.max(0, s - 1));
+    carouselDragX.current = null;
+  }
+
   return (
-    <div className="px-4 pt-6 pb-6">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
-        <div className="flex items-center gap-2">
-          {(() => {
-            const rank = getUserRank(userPoints || 0);
-            return (
-              <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
-                <span style={{ fontSize: 12 }}>{rank.icon}</span>
-                <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      {/* Dots */}
+      <div className="flex items-center justify-center gap-1.5 pt-3 pb-1">
+        {[0, 1].map(i => (
+          <span key={i} className="rounded-full" style={{ width: carouselSlide === i ? 16 : 6, height: 6, background: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.3)", transition: "all 0.25s" }} />
+        ))}
+      </div>
+
+      {/* Carousel track */}
+      <div
+        style={{ display: "flex", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: "transform 0.35s ease", touchAction: "pan-y" }}
+        onPointerDown={onCarouselDown}
+        onPointerUp={onCarouselUp}
+      >
+        {/* SLIDE 1: Classement */}
+        <div style={{ width: "50%", flexShrink: 0 }}>
+          <div className="px-4 pt-2 pb-6">
+            <div className="flex items-center justify-between mb-1">
+              <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const rank = getUserRank(userPoints || 0);
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
+                      <span style={{ fontSize: 12 }}>{rank.icon}</span>
+                      <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
+                    </div>
+                  );
+                })()}
+                <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
+                  {profile?.avatar ? (
+                    <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
+                  ) : (
+                    <User size={18} color="#ccc" />
+                  )}
+                </button>
               </div>
-            );
-          })()}
-          {profile && (
-            <button onClick={() => setShowFriendModal(true)} className="rounded-full p-2" style={{ background: "#181818" }}>
-              <Users size={18} color="#ccc" />
-            </button>
-          )}
-          <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
-            {profile?.avatar ? (
-              <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
-            ) : (
-              <User size={18} color="#ccc" />
-            )}
-          </button>
-        </div>
-      </div>
-      <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
-
-      <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.3)", display: "block" }}>
-        <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.7) 100%)" }} />
-        <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
-          <Trophy size={16} color="#bf9b30" />
-          <span style={{ color: "#bf9b30", fontSize: "12px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{T.settingsRewards}</span>
-          <ChevronRight size={14} color="#bf9b30" />
-        </div>
-      </button>
-
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
-        {SCORE_CATS.map((c) => {
-          const active = scoreCats.includes(c);
-          return (
-            <button
-              key={c}
-              onClick={() => toggleScoreCat(c)}
-              className="shrink-0 rounded-full transition-all"
-              style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "1px solid transparent" : "1px solid #2a2a2a" }}
-            >
-              {T[SCORE_CAT_KEYS[c]] || c}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        {!profile && (
-          <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
-            <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
-              <User size={26} color="#444" />
             </div>
-            <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
-            <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "260px" }} className="mt-2">{T.profileCreateSub}</p>
-            <button onClick={onOpenProfile} className="rounded-xl font-bold px-6 py-2.5 mt-4" style={{ background: "#CCF71D", color: "#000", fontSize: "13px" }}>
-              {T.profileCreate}
+            <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
+
+            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.3)", display: "block" }}>
+              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.7) 100%)" }} />
+              <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
+                <Trophy size={16} color="#bf9b30" />
+                <span style={{ color: "#bf9b30", fontSize: "12px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{T.settingsRewards}</span>
+                <ChevronRight size={14} color="#bf9b30" />
+              </div>
             </button>
+
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
+              {SCORE_CATS.map((c) => {
+                const active = scoreCats.includes(c);
+                return (
+                  <button key={c} onClick={() => toggleScoreCat(c)} className="shrink-0 rounded-full transition-all" style={{ padding: "8px 16px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", background: active ? "#fff" : "#161616", color: active ? "#000" : "#888", border: active ? "1px solid transparent" : "1px solid #2a2a2a" }}>
+                    {T[SCORE_CAT_KEYS[c]] || c}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {!profile && (
+                <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
+                  <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
+                    <User size={26} color="#444" />
+                  </div>
+                  <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
+                  <p style={{ color: "#777", fontSize: "12.5px", maxWidth: "260px" }} className="mt-2">{T.profileCreateSub}</p>
+                  <button onClick={onOpenProfile} className="rounded-xl font-bold px-6 py-2.5 mt-4" style={{ background: "#CCF71D", color: "#000", fontSize: "13px" }}>
+                    {T.profileCreate}
+                  </button>
+                </div>
+              )}
+              {profile && leaderboard.length === 0 && score === 0 && (
+                <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
+              )}
+              {profile && (() => {
+                const merged = [...leaderboard];
+                const myIdx = merged.findIndex(u => u.id === profile.userId);
+                if (myIdx === -1 && score > 0) {
+                  merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score });
+                  merged.sort((a, b) => b.points - a.points);
+                } else if (myIdx >= 0) {
+                  merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points, score) };
+                  merged.sort((a, b) => b.points - a.points);
+                }
+                if (merged.length === 0) return null;
+                return merged.slice(0, 50).map((u, i) => {
+                  const isMe = u.id === profile.userId;
+                  return (
+                    <button key={u.id} onClick={() => { if (isMe) setProfileView(true); }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
+                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
+                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1a1a1a", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
+                        {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                      </div>
+                      <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                      <div className="text-right shrink-0">
+                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
+                        <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Swipe arrow hint */}
+            {carouselSlide === 0 && (
+              <div style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", opacity: 0.25, pointerEvents: "none" }}>
+                <ChevronRight size={20} color="#fff" />
+              </div>
+            )}
           </div>
-        )}
-        {profile && leaderboard.length === 0 && score === 0 && (
-          <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
-        )}
-        {profile && (() => {
-          const merged = [...leaderboard];
-          const myIdx = merged.findIndex(u => u.id === profile.userId);
-          if (myIdx === -1 && score > 0) {
-            merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score });
-            merged.sort((a, b) => b.points - a.points);
-          } else if (myIdx >= 0) {
-            merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points, score) };
-            merged.sort((a, b) => b.points - a.points);
-          }
-          if (merged.length === 0) return null;
-          return merged.slice(0, 50).map((u, i) => {
-            const isMe = u.id === profile.userId;
-            return (
-              <button key={u.id} onClick={() => { if (isMe) setProfileView(true); }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
-                <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
-                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1a1a1a", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
-                  {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+        </div>
+
+        {/* SLIDE 2: Communauté */}
+        <div style={{ width: "50%", flexShrink: 0 }}>
+          <div className="px-4 pt-2 pb-6">
+            <h2 className="font-black text-white mb-4" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.friendTabFollowing || "Communauté"}</h2>
+            <div className="flex items-start gap-3">
+              {/* User's own photo */}
+              <div className="flex flex-col items-center shrink-0">
+                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
+                  {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={24} color="#555" />}
                 </div>
-                <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                <div className="text-right shrink-0">
-                  <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
-                  <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
-                </div>
-              </button>
-            );
-          });
-        })()}
+                <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, marginTop: 4 }}>{profile?.pseudo || "Toi"}</span>
+              </div>
+              {/* Friends list horizontal scroll */}
+              <div className="flex gap-3 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
+                {friendsList.length === 0 && (
+                  <p style={{ color: "#555", fontSize: "12px", alignSelf: "center", padding: "12px 0" }}>{T.friendEmpty}</p>
+                )}
+                {friendsList.map(f => (
+                  <div key={f.id} className="flex flex-col items-center shrink-0">
+                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 50, height: 50, background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                      {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
+                    </div>
+                    <span className="truncate" style={{ color: "#aaa", fontSize: "9px", fontWeight: 600, marginTop: 3, maxWidth: 50, textAlign: "center" }}>{f.pseudo}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
