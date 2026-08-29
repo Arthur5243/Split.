@@ -976,5 +976,29 @@
         "pick": null
       }
     ]
+  },
+  {
+    "date": "2026-08-29",
+    "region": "Pacific",
+    "team1": "VARREL",
+    "team2": "Paper Rex",
+    "score": "2-1",
+    "maps": [
+      { "map": "Lotus", "score1": 13, "score2": 6, "pick": "Paper Rex" },
+      { "map": "Split", "score1": 13, "score2": 15, "pick": "VARREL" },
+      { "map": "Sunset", "score1": 13, "score2": 10, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-29",
+    "region": "EMEA",
+    "team1": "FUT Esports",
+    "team2": "Team Liquid",
+    "score": "0-3",
+    "maps": [
+      { "map": "Split", "score1": 5, "score2": 13, "pick": "FUT Esports" },
+      { "map": "Ascent", "score1": 8, "score2": 13, "pick": "Team Liquid" },
+      { "map": "Lotus", "score1": 10, "score2": 13, "pick": "FUT Esports" }
+    ]
   }
 ]
