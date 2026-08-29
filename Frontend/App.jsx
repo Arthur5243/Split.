@@ -39,6 +39,8 @@ import {
   Send,
   Shield,
   Settings,
+  Mic,
+  Square,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -4374,7 +4376,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
   }
@@ -4514,9 +4516,22 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
           );
         })}
         {combined.length === 0 && (
-          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
-            {loading ? "…" : "—"}
-          </p>
+          <div className="text-center pt-10 pb-4">
+            {loading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 28, border: "3px solid #333", borderTopColor: "#C4F000", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <span style={{ color: "#888", fontSize: "12px", fontWeight: 600 }}>Chargement...</span>
+              </div>
+            ) : error ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <AlertCircle size={24} color="#ef4444" />
+                <p style={{ color: "#ef4444", fontSize: "12px", fontWeight: 700 }}>Connexion impossible</p>
+                <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
+              </div>
+            ) : (
+              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -4566,7 +4581,7 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
   if (showCs2BracketPage) {
     return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} />;
   }
@@ -4739,16 +4754,29 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
           );
         })}
         {combined.length === 0 && (
-          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
-            {loading ? "…" : "—"}
-          </p>
+          <div className="text-center pt-10 pb-4">
+            {loading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 28, border: "3px solid #333", borderTopColor: "#3B82F6", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <span style={{ color: "#888", fontSize: "12px", fontWeight: 600 }}>Chargement...</span>
+              </div>
+            ) : error ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <AlertCircle size={24} color="#ef4444" />
+                <p style={{ color: "#ef4444", fontSize: "12px", fontWeight: 700 }}>Connexion impossible</p>
+                <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
+              </div>
+            ) : (
+              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds, gamePoints }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds, gamePoints }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -4864,9 +4892,22 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
           );
         })}
         {combined.length === 0 && (
-          <p className="text-center pt-10" style={{ color: "#555", fontSize: "12px" }}>
-            {loading ? "…" : "—"}
-          </p>
+          <div className="text-center pt-10 pb-4">
+            {loading ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 28, height: 28, border: "3px solid #333", borderTopColor: "#4A90D9", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <span style={{ color: "#888", fontSize: "12px", fontWeight: 600 }}>Chargement...</span>
+              </div>
+            ) : error ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <AlertCircle size={24} color="#ef4444" />
+                <p style={{ color: "#ef4444", fontSize: "12px", fontWeight: 700 }}>Connexion impossible</p>
+                <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
+              </div>
+            ) : (
+              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -5312,6 +5353,21 @@ function PostsFeedScreen({ onClose, T, profile }) {
   );
 }
 
+function VoiceMessage({ src }) {
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef(null);
+  return (
+    <button onClick={() => {
+      if (!audioRef.current) { audioRef.current = new Audio(src); audioRef.current.onended = () => setPlaying(false); }
+      if (playing) { audioRef.current.pause(); audioRef.current.currentTime = 0; setPlaying(false); }
+      else { audioRef.current.play(); setPlaying(true); }
+    }} className="flex items-center gap-2 rounded-lg px-3 py-1.5" style={{ background: "rgba(204,247,29,0.1)", border: "1px solid rgba(204,247,29,0.2)" }}>
+      {playing ? <Square size={12} color="#CCF71D" /> : <Play size={12} color="#CCF71D" />}
+      <span style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{playing ? "Stop" : "Vocal"}</span>
+    </button>
+  );
+}
+
 function MessagesScreen({ onClose, T, profile }) {
   const [tab, setTab] = useState("community");
   const [conversations, setConversations] = useState([]);
@@ -5321,6 +5377,9 @@ function MessagesScreen({ onClose, T, profile }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [cryptoKeys, setCryptoKeys] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const communityPollRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -5458,6 +5517,43 @@ function MessagesScreen({ onClose, T, profile }) {
     }).catch(() => {}).finally(() => setSending(false));
   }
 
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
+      audioChunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size > 3 * 1024 * 1024) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const b64 = reader.result;
+          const content = "[VOICE]" + b64;
+          setSending(true);
+          fetch(API_BASE + "/api/messages/community", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: profile.userId, content }),
+          }).then(r => r.json()).then(d => {
+            if (d.id) setCommunityMessages(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content, created_at: new Date().toISOString() }]);
+          }).catch(() => {}).finally(() => setSending(false));
+        };
+        reader.readAsDataURL(blob);
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+    } catch {}
+  }
+
+  function stopRecording() {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setRecording(false);
+  }
+
   return (
     <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
@@ -5487,17 +5583,20 @@ function MessagesScreen({ onClose, T, profile }) {
         <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col">
           <div className="flex-1">
             {communityMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
-            {communityMessages.map(m => (
-              <div key={m.id} className="flex gap-2 mb-3">
-                <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
-                  {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+            {communityMessages.map(m => {
+              const isVoice = m.content?.startsWith("[VOICE]");
+              return (
+                <div key={m.id} className="flex gap-2 mb-3">
+                  <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
+                    {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{m.pseudo || "?"}</span>
+                    {isVoice ? <VoiceMessage src={m.content.slice(7)} /> : <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.content}</p>}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{m.pseudo || "?"}</span>
-                  <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.content}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -5538,22 +5637,32 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-4 py-3 flex gap-2" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+        <div className="px-4 py-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+          {tab === "community" && !activeDm && (
+            <button
+              onClick={recording ? stopRecording : startRecording}
+              className="rounded-xl px-3 py-2.5 shrink-0"
+              style={{ background: recording ? "#ef4444" : "#181818", border: recording ? "1px solid #f87171" : "1px solid #2a2a2a", transition: "all 0.2s" }}
+            >
+              {recording ? <Square size={16} color="#fff" /> : <Mic size={16} color="#ccc" />}
+            </button>
+          )}
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); activeDm ? sendDm() : sendCommunity(); } }}
-            placeholder={activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message...")}
+            placeholder={recording ? "Enregistrement..." : (activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message..."))}
+            disabled={recording}
             className="flex-1 rounded-xl px-4 py-2.5"
-            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none" }}
+            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none", opacity: recording ? 0.5 : 1 }}
           />
           <button
             onClick={activeDm ? sendDm : sendCommunity}
-            disabled={sending || !input.trim()}
-            className="rounded-xl px-3"
-            style={{ background: input.trim() ? "#CCF71D" : "#222", transition: "all 0.2s" }}
+            disabled={sending || !input.trim() || recording}
+            className="rounded-xl px-3 py-2.5 shrink-0"
+            style={{ background: input.trim() && !recording ? "#CCF71D" : "#222", transition: "all 0.2s" }}
           >
-            <Send size={16} color={input.trim() ? "#000" : "#555"} />
+            <Send size={16} color={input.trim() && !recording ? "#000" : "#555"} />
           </button>
         </div>
       )}
@@ -5572,7 +5681,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const registeredCount = leaderboard.length;
   const [showMessages, setShowMessages] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
-  const [showPostsFeed, setShowPostsFeed] = useState(false);
+  const [nexusPosts, setNexusPosts] = useState([]);
 
   useEffect(() => {
     if (profile?.userId) {
@@ -5585,6 +5694,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     }
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) setLeaderboard(d);
+    }).catch(() => {});
+    fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setNexusPosts(d);
     }).catch(() => {});
   }, [profile?.userId, profileView]);
 
@@ -5863,10 +5975,40 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 ))}
               </div>
             </div>
-            <button onClick={() => setShowPostsFeed(true)} className="w-full mt-4 rounded-xl py-2.5 flex items-center justify-center gap-2" style={{ background: "#141414", border: "1px solid #2a2a2a" }}>
-              <Zap size={14} color="#CCF71D" />
-              <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{T.postFeed || "Fil d'actualité"}</span>
-            </button>
+            <div className="mt-4 flex flex-col gap-3">
+              {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
+              {nexusPosts.map(p => (
+                <div key={p.id} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="rounded-full overflow-hidden" style={{ width: 24, height: 24, background: "#1a1a1a" }}>
+                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                    </div>
+                    <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
+                    <span style={{ color: "#444", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                  </div>
+                  {p.content && <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}>{p.content}</p>}
+                  {p.match_data && (
+                    <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
+                      <span style={{ color: "#888", fontSize: "10px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 mt-2">
+                    <button onClick={() => {
+                      if (!profile?.userId) return;
+                      const action = p.liked ? "unlike" : "like";
+                      fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+                        .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
+                    }} className="flex items-center gap-1">
+                      <span style={{ color: p.liked ? "#CCF71D" : "#555", fontSize: "16px" }}>{p.liked ? "♥" : "♡"}</span>
+                      <span style={{ color: "#666", fontSize: "10px" }}>{p.likes || 0}</span>
+                    </button>
+                    <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }}>
+                      <Share2 size={12} color="#555" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -5874,8 +6016,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
 
       {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
-      {showCreatePost && <CreatePostScreen onClose={() => setShowCreatePost(false)} T={T} profile={profile} />}
-      {showPostsFeed && <PostsFeedScreen onClose={() => setShowPostsFeed(false)} T={T} profile={profile} />}
+      {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} />}
 
       {showRewards && (
         <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
@@ -6515,19 +6656,19 @@ export default function ClutchApp() {
   const [liveMatches, setLiveMatches] = useState([]);
   const [resultsMatches, setResultsMatches] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState(false);
 
-  // Même chose côté CS2, dans des états séparés : les deux jeux sont
-  // récupérés/rafraîchis indépendamment (cf effect dédié plus bas), jamais
-  // mélangés dans les mêmes tableaux.
   const [cs2UpcomingMatches, setCs2UpcomingMatches] = useState([]);
   const [cs2LiveMatches, setCs2LiveMatches] = useState([]);
   const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
   const [cs2DataLoading, setCs2DataLoading] = useState(true);
+  const [cs2DataError, setCs2DataError] = useState(false);
 
   const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
   const [rlLiveMatches, setRlLiveMatches] = useState([]);
   const [rlResultsMatches, setRlResultsMatches] = useState([]);
   const [rlDataLoading, setRlDataLoading] = useState(true);
+  const [rlDataError, setRlDataError] = useState(false);
 
   const [vlrEvents, setVlrEvents] = useState({});
   const [showBracketPage, setShowBracketPage] = useState(false);
@@ -6563,30 +6704,17 @@ export default function ClutchApp() {
           fetchJson("/api/valorant-upcoming"),
           fetchJson("/api/valorant-live"),
           fetchJson("/api/valorant-results"),
-          // Historique complet accumulé côté backend (mini base de données qui
-          // grossit à chaque nouveau résultat). Pas encore déployé -> on ne
-          // bloque jamais dessus, on retombe simplement sur les résultats
-          // récents (paT) ci-dessous. Jamais de donnée inventée dans les deux cas.
           fetchJson("/api/match-history").catch(() => null),
         ]);
         if (cancelled) return;
+        setDataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatch).filter((m) => m.region) : [];
         const liT = Array.isArray(li) ? li.map(transformMatch).filter((m) => m.region) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatch).filter((m) => m.region) : [];
         const historyT = Array.isArray(history) ? history.map(transformMatch).filter((m) => m.region) : [];
-        // On prend la source qui a le plus de matchs exploitables : dès que le
-        // backend expose l'historique accumulé (/api/match-history), il devient
-        // naturellement plus riche que la fenêtre récente et prend le relais.
         const finishedMatches = historyT.length > paT.length ? historyT : paT;
         setUpcomingMatches(attachComputedOdds(upT, finishedMatches));
         setLiveMatches(attachComputedOdds(liT, finishedMatches));
-        // Avant : les matchs terminés (onglet "Match terminé") ne passaient
-        // jamais par attachComputedOdds -> match.odds1/odds2 restaient
-        // `undefined`, et le repli d'affichage (`match.odds1 != null ? ... : 0`)
-        // faisait donc afficher 0% / 0% sur TOUS les matchs déjà joués.
-        // On calcule les cotes de la même façon que pour upcoming/live, à
-        // partir de l'historique qui EXCLUT le match lui-même (sinon son
-        // propre résultat biaiserait sa propre cote).
         setResultsMatches(
           (() => {
             const eloDataResults = computeEloRatings(finishedMatches, tierWeight);
@@ -6598,7 +6726,7 @@ export default function ClutchApp() {
           })()
         );
       } catch (e) {
-        // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
+        if (!cancelled) setDataError(true);
       } finally {
         if (!cancelled) setDataLoading(false);
       }
@@ -6641,11 +6769,11 @@ export default function ClutchApp() {
           fetchJson("/api/cs2-match-history").catch(() => null),
         ]);
         if (cancelled) return;
+        setCs2DataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
         const historyT = Array.isArray(history) ? history.map(transformMatchCS2) : [];
-        // Même règle que Valorant : on prend la source la plus riche.
         const finishedMatchesCS2 = historyT.length > paT.length ? historyT : paT;
 
         // Déduplique par id (garde la 1ère occurrence) — sinon un même match
@@ -6689,7 +6817,7 @@ export default function ClutchApp() {
           })()
         );
       } catch (e) {
-        // API indisponible : on garde ce qu'on a déjà, pas de données statiques de secours.
+        if (!cancelled) setCs2DataError(true);
       } finally {
         if (!cancelled) setCs2DataLoading(false);
       }
@@ -6719,6 +6847,7 @@ export default function ClutchApp() {
           fetchJson("/api/rl-match-history").catch(() => null),
         ]);
         if (cancelled) return;
+        setRlDataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
@@ -6759,7 +6888,7 @@ export default function ClutchApp() {
           })()
         );
       } catch (e) {
-        // API indisponible
+        if (!cancelled) setRlDataError(true);
       } finally {
         if (!cancelled) setRlDataLoading(false);
       }
@@ -7150,20 +7279,21 @@ export default function ClutchApp() {
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
         <div ref={scrollRef} onScroll={handleContentScroll} className="flex-1 overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000" }}>
-          {showQuestModal ? (
-            <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
-              setQuestState(qs => {
-                if (!qs) return qs;
-                const updated = isWeekly
-                  ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
-                  : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
-                saveQuests(updated);
-                return updated;
-              });
-              setShowNexiumBox(true);
-            }} onOpenNexium={() => { setShowQuestModal(false); setShowNexiumBox(true); }} T={T} />
-          ) : (
-          <>
+          {showQuestModal && (
+            <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
+              <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
+                setQuestState(qs => {
+                  if (!qs) return qs;
+                  const updated = isWeekly
+                    ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
+                    : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
+                  saveQuests(updated);
+                  return updated;
+                });
+                setShowNexiumBox(true);
+              }} onOpenNexium={() => { setShowQuestModal(false); setShowNexiumBox(true); }} T={T} />
+            </div>
+          )}
           {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} />}
           {activeTab === "valorant" && (
             <ValorantTab
@@ -7182,6 +7312,7 @@ export default function ClutchApp() {
               results={resultsMatches}
               teamLogoCache={teamLogoCache}
               loading={dataLoading}
+              error={dataError}
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "valorant", region)}
               toggleMatchNotif={toggleMatchNotif}
               vlrEvents={vlrEvents}
@@ -7208,6 +7339,7 @@ export default function ClutchApp() {
               results={cs2ResultsMatches}
               teamLogoCache={cs2TeamLogoCache}
               loading={cs2DataLoading}
+              error={cs2DataError}
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "cs2", region)}
               toggleMatchNotif={toggleMatchNotif}
               cs2Events={cs2Events}
@@ -7229,6 +7361,7 @@ export default function ClutchApp() {
               live={rlLiveMatches}
               results={rlResultsMatches}
               loading={rlDataLoading}
+              error={rlDataError}
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "rl", region)}
               toggleMatchNotif={toggleMatchNotif}
               toggleExpand={toggleExpand}
@@ -7239,8 +7372,6 @@ export default function ClutchApp() {
             />
           )}
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
-          </>
-          )}
         </div>
 
 
@@ -7251,6 +7382,7 @@ export default function ClutchApp() {
             return (
               <button key={item.key} onClick={() => {
                 if (active) { setShowBracketPage(false); setShowCs2BracketPage(false); }
+                setShowFriendModal(false);
                 setActiveTab(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -7345,6 +7477,7 @@ export default function ClutchApp() {
         @keyframes streakFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes flameGlow { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,107,0,0.4)); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,107,0,0.7)); } }
         @keyframes scoreReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

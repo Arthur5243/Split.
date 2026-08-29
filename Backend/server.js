@@ -32,7 +32,7 @@ const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(oddsRouter);
 // Endpoints CS2 (/api/cs2-upcoming, /api/cs2-live, /api/cs2-results) : même
 // backend PandaScore, route dédiée dans cs2-routes.js (voir ce fichier pour

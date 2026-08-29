@@ -43,6 +43,12 @@ router.get("/api/messages/conversations/:userId", (req, res) => {
 router.post("/api/messages/community", (req, res) => {
   const { userId, content } = req.body;
   if (!userId || !content) return res.status(400).json({ error: "userId and content required" });
+  const isVoice = content.startsWith("[VOICE]");
+  if (isVoice) {
+    if (content.length > 4 * 1024 * 1024) return res.status(400).json({ error: "voice_too_large" });
+    const id = sendCommunityMessage(userId, content);
+    return res.json({ id });
+  }
   const safe = sanitizeMessage(content);
   if (!safe) return res.status(400).json({ error: "empty" });
   if (containsBlockedWord(safe)) return res.status(400).json({ error: "blocked_content" });
