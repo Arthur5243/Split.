@@ -5628,10 +5628,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         )}
 
-        <button onClick={onEditProfile} className="w-full rounded-xl py-2.5 mb-4 font-bold" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#ccc", fontSize: "13px" }}>
-          {T.profileModify}
-        </button>
-
         <div className="rounded-2xl px-4 py-3 mb-5 flex justify-around text-center" style={{ background: "#141414", border: "1px solid #262626" }}>
           <div>
             <p className="font-black text-white" style={{ fontSize: "18px" }}>{exact}</p>
