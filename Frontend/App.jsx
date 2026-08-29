@@ -276,7 +276,7 @@ const STR = {
     betLocked: "Pari verrouillé",
     myPoints: "Mes points", myPointsSub: "Pronostics corrects, en attendant la connexion",
     placeholderSoon: "Bientôt disponible. On prépare les pronostics {label}, reviens vite !",
-    classementTitle: "Nexus", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
+    classementTitle: "Classement", classementSubtitle: "Meilleurs pronostiqueurs de la saison", classementEmptyTitle: "0 utilisateur classé",
     classementEmptySub: "Personne n'a encore fait de pronostic. Sois le premier à grimper au classement !",
     catFilterLabel: "Catégories",
     profileTitle: "Mon profil", profilePseudo: "Pseudo", profileBio: "Bio", profileAvatar: "Avatar",
@@ -354,7 +354,7 @@ const STR = {
     betLocked: "Bet locked",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
-    classementTitle: "Nexus", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
+    classementTitle: "Classement", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
     classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
     catFilterLabel: "Categories",
     profileTitle: "My profile", profilePseudo: "Username", profileBio: "Bio", profileAvatar: "Avatar",
@@ -430,7 +430,7 @@ const STR = {
     mustWinLastMap: "debe ganar el último mapa",
     mustWinAllMaps: "debe ganar este mapa en un 2-0",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
-    classementTitle: "Nexus", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
+    classementTitle: "Classement", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
     catFilterLabel: "Categorías",
     profileTitle: "Mi perfil", profilePseudo: "Apodo", profileBio: "Bio", profileAvatar: "Avatar",
@@ -494,7 +494,7 @@ const STR = {
     mustWinLastMap: "deve vincere l'ultima mappa",
     mustWinAllMaps: "deve vincere questa mappa in un 2-0",
     placeholderSoon: "Presto disponibile. Stiamo preparando i pronostici {label}, torna a trovarci!",
-    classementTitle: "Nexus", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
+    classementTitle: "Classement", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
     catFilterLabel: "Categorie",
     profileTitle: "Il mio profilo", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -558,7 +558,7 @@ const STR = {
     mustWinLastMap: "が最終マップを勝たなければなりません",
     mustWinAllMaps: "が2-0でこのマップを勝たなければなりません",
     placeholderSoon: "近日公開。{label}の予想機能を準備中です、お楽しみに!",
-    classementTitle: "Nexus", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
+    classementTitle: "Classement", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
     catFilterLabel: "カテゴリー",
     profileTitle: "マイプロフィール", profilePseudo: "ニックネーム", profileBio: "自己紹介", profileAvatar: "アバター",
@@ -622,7 +622,7 @@ const STR = {
     mustWinLastMap: "muss die letzte Map gewinnen",
     mustWinAllMaps: "muss diese Map bei einem 2-0 gewinnen",
     placeholderSoon: "Bald verfügbar. Wir bereiten die {label}-Tipps vor, schau bald wieder vorbei!",
-    classementTitle: "Nexus", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
+    classementTitle: "Classement", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
     catFilterLabel: "Kategorien",
     profileTitle: "Mein Profil", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -686,7 +686,7 @@ const STR = {
     mustWinLastMap: "必须赢得最后一张地图",
     mustWinAllMaps: "在2-0中必须赢得此地图",
     placeholderSoon: "敬请期待。{label}竞猜功能筹备中，请稍后再来查看!",
-    classementTitle: "Nexus", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
+    classementTitle: "Classement", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
     catFilterLabel: "分类",
     profileTitle: "我的资料", profilePseudo: "昵称", profileBio: "简介", profileAvatar: "头像",
@@ -5688,12 +5688,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowCreatePost(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-                  <Plus size={16} color="#CCF71D" />
-                </button>
-                <button onClick={() => setShowMessages(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-                  <MessageCircle size={16} color="#ccc" />
-                </button>
                 {(() => {
                   const rank = getUserRank(userPoints || 0);
                   return (
@@ -5795,10 +5789,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         </div>
 
-        {/* SLIDE 2: Communauté */}
+        {/* SLIDE 2: Nexus */}
         <div style={{ width: "50%", flexShrink: 0 }}>
           <div className="px-4 pt-2 pb-6">
-            <h2 className="font-black text-white mb-4" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.msgCommunity || "Communauté"}</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-black text-white" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>Nexus</h2>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowCreatePost(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+                  <Plus size={16} color="#CCF71D" />
+                </button>
+                <button onClick={() => setShowMessages(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+                  <MessageCircle size={16} color="#ccc" />
+                </button>
+              </div>
+            </div>
             <div className="flex items-start gap-3">
               <div className="flex flex-col items-center shrink-0">
                 <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
