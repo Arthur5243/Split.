@@ -27,6 +27,7 @@ import {
   EyeOff,
   Gift,
   UserPlus,
+  Users,
   Info,
   Zap,
   Award,
@@ -281,11 +282,10 @@ const STR = {
     profileModify: "Modifier le profil", profileHistory: "Historique :", profileFavLabel: "Équipes préférées",
     profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
     profileVoir: "voir", profileAddFriend: "Ajouter un ami",
-    friendTabAdd: "Ajouter", friendTabRequests: "Demandes",
-    friendSearchPlaceholder: "Pseudo du joueur...", friendSend: "Envoyer",
-    friendSent: "Envoyée !", friendCooldown: "Attends 20 min",
-    friendNoRequests: "Aucune demande en attente.", friendNotFound: "Joueur introuvable.",
-    friendAccept: "Accepter", friendRefuse: "Refuser",
+    friendTabSearch: "Rechercher", friendTabFollowing: "Abonnements", friendTabFollowers: "Abonnés",
+    friendSearchPlaceholder: "Pseudo du joueur...", friendFollow: "Suivre", friendUnfollow: "Suivi",
+    friendNoResults: "Aucun résultat.", friendNotFound: "Joueur introuvable.",
+    friendEmpty: "Personne pour l'instant.", friendViewers: "Ont vu ton profil",
     profileBlock: "Bloquer",
     settingsTitle: "Réglages", settingsNotifGames: "Notifications par jeu",
     settingsNotifRegions: "Régions",
@@ -357,11 +357,10 @@ const STR = {
     profileModify: "Edit profile", profileHistory: "History:", profileFavLabel: "Favorite teams",
     profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
     profileVoir: "view", profileAddFriend: "Add friend",
-    friendTabAdd: "Add", friendTabRequests: "Requests",
-    friendSearchPlaceholder: "Player username...", friendSend: "Send",
-    friendSent: "Sent!", friendCooldown: "Wait 20 min",
-    friendNoRequests: "No pending requests.", friendNotFound: "Player not found.",
-    friendAccept: "Accept", friendRefuse: "Decline",
+    friendTabSearch: "Search", friendTabFollowing: "Following", friendTabFollowers: "Followers",
+    friendSearchPlaceholder: "Player username...", friendFollow: "Follow", friendUnfollow: "Following",
+    friendNoResults: "No results.", friendNotFound: "Player not found.",
+    friendEmpty: "Nobody yet.", friendViewers: "Viewed your profile",
     profileBlock: "Block",
     settingsTitle: "Settings", settingsNotifGames: "Notifications by game",
     settingsNotifRegions: "Regions",
@@ -431,11 +430,10 @@ const STR = {
     profileModify: "Editar perfil", profileHistory: "Historial:", profileFavLabel: "Equipos favoritos",
     profileExact: "Exacto", profileBon: "Correcto", profileParie: "Apostado",
     profileVoir: "ver", profileAddFriend: "Añadir amigo",
-    friendTabAdd: "Añadir", friendTabRequests: "Solicitudes",
-    friendSearchPlaceholder: "Pseudo del jugador...", friendSend: "Enviar",
-    friendSent: "¡Enviada!", friendCooldown: "Espera 20 min",
-    friendNoRequests: "Sin solicitudes pendientes.", friendNotFound: "Jugador no encontrado.",
-    friendAccept: "Aceptar", friendRefuse: "Rechazar",
+    friendTabSearch: "Buscar", friendTabFollowing: "Siguiendo", friendTabFollowers: "Seguidores",
+    friendSearchPlaceholder: "Pseudo del jugador...", friendFollow: "Seguir", friendUnfollow: "Siguiendo",
+    friendNoResults: "Sin resultados.", friendNotFound: "Jugador no encontrado.",
+    friendEmpty: "Nadie por ahora.", friendViewers: "Vieron tu perfil",
     profileBlock: "Bloquear",
     settingsTitle: "Ajustes", settingsNotifGames: "Notificaciones por juego",
     settingsNotifRegions: "Regiones",
@@ -493,11 +491,10 @@ const STR = {
     profileModify: "Modifica profilo", profileHistory: "Storico:", profileFavLabel: "Squadre preferite",
     profileExact: "Esatto", profileBon: "Giusto", profileParie: "Scommesso",
     profileVoir: "vedi", profileAddFriend: "Aggiungi amico",
-    friendTabAdd: "Aggiungi", friendTabRequests: "Richieste",
-    friendSearchPlaceholder: "Nickname del giocatore...", friendSend: "Invia",
-    friendSent: "Inviata!", friendCooldown: "Aspetta 20 min",
-    friendNoRequests: "Nessuna richiesta in sospeso.", friendNotFound: "Giocatore non trovato.",
-    friendAccept: "Accetta", friendRefuse: "Rifiuta",
+    friendTabSearch: "Cerca", friendTabFollowing: "Seguiti", friendTabFollowers: "Follower",
+    friendSearchPlaceholder: "Nickname del giocatore...", friendFollow: "Segui", friendUnfollow: "Seguito",
+    friendNoResults: "Nessun risultato.", friendNotFound: "Giocatore non trovato.",
+    friendEmpty: "Nessuno per ora.", friendViewers: "Hanno visto il tuo profilo",
     profileBlock: "Blocca",
     settingsTitle: "Impostazioni", settingsNotifGames: "Notifiche per gioco",
     settingsNotifRegions: "Regioni",
@@ -555,11 +552,10 @@ const STR = {
     profileModify: "プロフィール編集", profileHistory: "履歴：", profileFavLabel: "お気に入りチーム",
     profileExact: "完全一致", profileBon: "的中", profileParie: "予想数",
     profileVoir: "見る", profileAddFriend: "フレンド追加",
-    friendTabAdd: "追加", friendTabRequests: "申請",
-    friendSearchPlaceholder: "プレイヤー名...", friendSend: "送信",
-    friendSent: "送信済み!", friendCooldown: "20分待ってね",
-    friendNoRequests: "保留中の申請はありません。", friendNotFound: "プレイヤーが見つかりません。",
-    friendAccept: "承認", friendRefuse: "拒否",
+    friendTabSearch: "検索", friendTabFollowing: "フォロー中", friendTabFollowers: "フォロワー",
+    friendSearchPlaceholder: "プレイヤー名...", friendFollow: "フォロー", friendUnfollow: "フォロー中",
+    friendNoResults: "結果なし。", friendNotFound: "プレイヤーが見つかりません。",
+    friendEmpty: "まだ誰もいません。", friendViewers: "プロフィールを見た人",
     profileBlock: "ブロック",
     settingsTitle: "設定", settingsNotifGames: "ゲーム別通知",
     settingsNotifRegions: "地域",
@@ -617,11 +613,10 @@ const STR = {
     profileModify: "Profil bearbeiten", profileHistory: "Verlauf:", profileFavLabel: "Lieblingsteams",
     profileExact: "Exakt", profileBon: "Richtig", profileParie: "Gewettet",
     profileVoir: "ansehen", profileAddFriend: "Freund hinzufügen",
-    friendTabAdd: "Hinzufügen", friendTabRequests: "Anfragen",
-    friendSearchPlaceholder: "Spieler-Nickname...", friendSend: "Senden",
-    friendSent: "Gesendet!", friendCooldown: "Warte 20 Min",
-    friendNoRequests: "Keine ausstehenden Anfragen.", friendNotFound: "Spieler nicht gefunden.",
-    friendAccept: "Annehmen", friendRefuse: "Ablehnen",
+    friendTabSearch: "Suchen", friendTabFollowing: "Folge ich", friendTabFollowers: "Follower",
+    friendSearchPlaceholder: "Spieler-Nickname...", friendFollow: "Folgen", friendUnfollow: "Gefolgt",
+    friendNoResults: "Keine Ergebnisse.", friendNotFound: "Spieler nicht gefunden.",
+    friendEmpty: "Noch niemand.", friendViewers: "Haben dein Profil gesehen",
     profileBlock: "Blockieren",
     settingsTitle: "Einstellungen", settingsNotifGames: "Benachrichtigungen nach Spiel",
     settingsNotifRegions: "Regionen",
@@ -679,11 +674,10 @@ const STR = {
     profileModify: "编辑资料", profileHistory: "历史记录：", profileFavLabel: "最爱战队",
     profileExact: "精准", profileBon: "正确", profileParie: "已竞猜",
     profileVoir: "查看", profileAddFriend: "添加好友",
-    friendTabAdd: "添加", friendTabRequests: "请求",
-    friendSearchPlaceholder: "玩家昵称...", friendSend: "发送",
-    friendSent: "已发送!", friendCooldown: "等待20分钟",
-    friendNoRequests: "暂无好友请求。", friendNotFound: "未找到该玩家。",
-    friendAccept: "接受", friendRefuse: "拒绝",
+    friendTabSearch: "搜索", friendTabFollowing: "关注", friendTabFollowers: "粉丝",
+    friendSearchPlaceholder: "玩家昵称...", friendFollow: "关注", friendUnfollow: "已关注",
+    friendNoResults: "无结果。", friendNotFound: "未找到该玩家。",
+    friendEmpty: "暂无。", friendViewers: "查看了你的资料",
     profileBlock: "屏蔽",
     settingsTitle: "设置", settingsNotifGames: "按游戏通知",
     settingsNotifRegions: "地区",
@@ -4955,65 +4949,131 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   );
 }
 
-function FriendModal({ onClose, T }) {
-  const [tab, setTab] = useState("add");
-  const [pseudo, setPseudo] = useState("");
-  const [sent, setSent] = useState(false);
-  const [cooldown, setCooldown] = useState(false);
-  const [notFound, setNotFound] = useState(false);
-  const [requests] = useState([]);
+function FriendModal({ onClose, T, profile, userPoints }) {
+  const [tab, setTab] = useState("search");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [followingSet, setFollowingSet] = useState(new Set());
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const searchTimer = useRef(null);
 
-  function handleSend() {
-    if (!pseudo.trim() || cooldown) return;
-    setNotFound(true);
-    setCooldown(true);
-    setTimeout(() => setCooldown(false), 20 * 60 * 1000);
-    setTimeout(() => setNotFound(false), 3000);
-    setPseudo("");
+  const userId = profile?.userId;
+
+  useEffect(() => {
+    if (userId) loadSocial();
+  }, [userId]);
+
+  async function loadSocial() {
+    if (!userId) return;
+    try {
+      const [fing, fers] = await Promise.all([
+        fetch(API_BASE + "/api/social/following/" + userId).then(r => r.json()),
+        fetch(API_BASE + "/api/social/followers/" + userId).then(r => r.json()),
+      ]);
+      setFollowing(fing);
+      setFollowers(fers);
+      setFollowingSet(new Set(fing.map(u => u.id)));
+    } catch {}
   }
 
-  const tabStyle = (active) => ({ padding: "8px 0", fontSize: "13px", fontWeight: 700, color: active ? "#fff" : "#666", borderBottom: active ? "2px solid #CCF71D" : "2px solid transparent", flex: 1, textAlign: "center", background: "none" });
+  function handleSearch(val) {
+    setQuery(val);
+    setSearched(false);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (val.trim().length < 2) { setResults([]); return; }
+    searchTimer.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(API_BASE + "/api/social/search?q=" + encodeURIComponent(val.trim()) + "&userId=" + (userId || ""));
+        const data = await r.json();
+        setResults(data);
+      } catch { setResults([]); }
+      setLoading(false);
+      setSearched(true);
+    }, 400);
+  }
+
+  async function handleFollow(targetId) {
+    if (!userId) return;
+    setFollowingSet(s => new Set([...s, targetId]));
+    try {
+      await fetch(API_BASE + "/api/social/follow", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ followerId: userId, followedId: targetId }) });
+      loadSocial();
+    } catch {}
+  }
+
+  async function handleUnfollow(targetId) {
+    if (!userId) return;
+    setFollowingSet(s => { const n = new Set(s); n.delete(targetId); return n; });
+    try {
+      await fetch(API_BASE + "/api/social/unfollow", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ followerId: userId, followedId: targetId }) });
+      loadSocial();
+    } catch {}
+  }
+
+  const tabStyle = (active) => ({ padding: "8px 0", fontSize: "12px", fontWeight: 700, color: active ? "#fff" : "#666", borderBottom: active ? "2px solid #CCF71D" : "2px solid transparent", flex: 1, textAlign: "center", background: "none" });
+
+  function UserRow({ user }) {
+    const iFollow = followingSet.has(user.id);
+    return (
+      <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <div className="rounded-full overflow-hidden shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          {user.avatar ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-white truncate" style={{ fontSize: "13px" }}>{user.pseudo}</p>
+          <p style={{ color: "#666", fontSize: "11px" }}>{user.points || 0} pts</p>
+        </div>
+        {user.id !== userId && (
+          iFollow ? (
+            <button onClick={() => handleUnfollow(user.id)} className="rounded-lg px-3 py-1.5 font-bold" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px" }}>{T.friendUnfollow}</button>
+          ) : (
+            <button onClick={() => handleFollow(user.id)} className="rounded-lg px-3 py-1.5 font-bold" style={{ background: "#CCF71D", color: "#000", fontSize: "11px" }}>{T.friendFollow}</button>
+          )
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "80%", minHeight: "50%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
-          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileAddFriend}</h2>
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileAddFriend || "Social"}</h2>
           <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
             <X size={18} color="#888" />
           </button>
         </div>
         <div className="flex px-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
-          <button onClick={() => setTab("add")} style={tabStyle(tab === "add")}>{T.friendTabAdd}</button>
-          <button onClick={() => setTab("requests")} style={tabStyle(tab === "requests")}>{T.friendTabRequests}</button>
+          <button onClick={() => setTab("search")} style={tabStyle(tab === "search")}>{T.friendTabSearch}</button>
+          <button onClick={() => setTab("following")} style={tabStyle(tab === "following")}>{T.friendTabFollowing} ({following.length})</button>
+          <button onClick={() => setTab("followers")} style={tabStyle(tab === "followers")}>{T.friendTabFollowers} ({followers.length})</button>
         </div>
-        <div className="px-5 py-4 flex-1">
-          {tab === "add" && (
+        <div className="px-5 py-4 flex-1 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+          {tab === "search" && (
             <div>
-              <div className="flex gap-2">
-                <div className="flex items-center gap-2 flex-1 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-                  <Search size={14} color="#666" />
-                  <input value={pseudo} onChange={(e) => { setPseudo(e.target.value); setNotFound(false); }} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
-                </div>
-                <button onClick={handleSend} disabled={!pseudo.trim() || cooldown} className="rounded-xl px-4 font-bold shrink-0" style={{ background: sent ? "#2ecc71" : cooldown ? "#333" : "#CCF71D", color: sent ? "#fff" : cooldown ? "#666" : "#000", fontSize: "12px" }}>
-                  {sent ? T.friendSent : cooldown ? T.friendCooldown : T.friendSend}
-                </button>
+              <div className="flex items-center gap-2 rounded-xl px-3 mb-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                <Search size={14} color="#666" />
+                <input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
               </div>
-              {notFound && <p style={{ color: "#ff4444", fontSize: "12px", marginTop: 8 }}>{T.friendNotFound}</p>}
+              {loading && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "12px 0" }}>...</p>}
+              {!loading && searched && results.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "12px 0" }}>{T.friendNoResults}</p>}
+              {results.map(u => <UserRow key={u.id} user={u} />)}
             </div>
           )}
-          {tab === "requests" && (
+          {tab === "following" && (
             <div>
-              {requests.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>{T.friendNoRequests}</p>}
-              {requests.map((r, i) => (
-                <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid #1e1e1e" }}>
-                  <span style={{ color: "#ccc", fontSize: "13px" }}>{r.pseudo}</span>
-                  <div className="flex gap-2">
-                    <button className="rounded-lg px-3 py-1 font-bold" style={{ background: "#CCF71D", color: "#000", fontSize: "11px" }}>{T.friendAccept}</button>
-                    <button className="rounded-lg px-3 py-1 font-bold" style={{ background: "#222", color: "#888", fontSize: "11px" }}>{T.friendRefuse}</button>
-                  </div>
-                </div>
-              ))}
+              {following.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>{T.friendEmpty}</p>}
+              {following.map(u => <UserRow key={u.id} user={u} />)}
+            </div>
+          )}
+          {tab === "followers" && (
+            <div>
+              {followers.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "20px 0" }}>{T.friendEmpty}</p>}
+              {followers.map(u => <UserRow key={u.id} user={u} />)}
             </div>
           )}
         </div>
@@ -5025,7 +5085,20 @@ function FriendModal({ onClose, T }) {
 function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
-  const registeredCount = 0;
+  const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
+  const [leaderboard, setLeaderboard] = useState([]);
+  const registeredCount = leaderboard.length;
+
+  useEffect(() => {
+    if (profile?.userId) {
+      fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
+        if (d.following !== undefined) setSocialStats(d);
+      }).catch(() => {});
+    }
+    fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setLeaderboard(d);
+    }).catch(() => {});
+  }, [profile?.userId, profileView]);
 
   if (profileView && profile) {
     const { exact, bon, parie, history } = profileStats;
@@ -5053,12 +5126,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
           <div className="flex-1 flex justify-around text-center">
             <div>
-              <p className="font-black text-white" style={{ fontSize: "18px" }}>0</p>
-              <p style={{ color: "#888", fontSize: "10px" }}>{T.profileAmis}</p>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.followers}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
             </div>
             <div>
-              <p className="font-black text-white" style={{ fontSize: "18px" }}>—</p>
-              <p style={{ color: "#888", fontSize: "10px" }}>{T.profileTop}</p>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.following}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowing}</p>
             </div>
             <div>
               <p className="font-black" style={{ fontSize: "18px", color: "#CCF71D" }}>{userPoints}</p>
@@ -5114,7 +5187,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           ))}
         </div>
 
-        {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} />}
+        {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
       </div>
     );
   }
@@ -5133,6 +5206,11 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               </div>
             );
           })()}
+          {profile && (
+            <button onClick={() => setShowFriendModal(true)} className="rounded-full p-2" style={{ background: "#181818" }}>
+              <Users size={18} color="#ccc" />
+            </button>
+          )}
           <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="rounded-full p-2" style={{ background: "#181818" }}>
             {profile?.avatar ? (
               <img src={profile.avatar} alt="" className="rounded-full" style={{ width: 24, height: 24, objectFit: "cover" }} />
@@ -5171,23 +5249,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       </div>
 
       <div className="flex flex-col gap-2">
-        {profile && score > 0 && (
-          <button onClick={() => setProfileView(true)} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "#141414", border: "1px solid #262626", textAlign: "left" }}>
-            <span className="font-black shrink-0" style={{ color: "#CCF71D", fontSize: "16px", width: 24, textAlign: "center" }}>1</span>
-            <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 40, height: 40, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
-              {profile.avatar ? (
-                <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <User size={18} color="#555" />
-              )}
-            </div>
-            <span className="font-bold text-white flex-1 truncate" style={{ fontSize: "14px" }}>{profile.pseudo || T.profilePseudo}</span>
-            <div className="text-right shrink-0">
-              <span style={{ color: "#CCF71D", fontSize: "18px", fontWeight: 900 }}>{score}</span>
-              <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
-            </div>
-          </button>
-        )}
         {!profile && (
           <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
             <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
@@ -5200,10 +5261,40 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </button>
           </div>
         )}
-        {profile && score === 0 && (
+        {profile && leaderboard.length === 0 && score === 0 && (
           <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
         )}
+        {profile && (() => {
+          const merged = [...leaderboard];
+          const myIdx = merged.findIndex(u => u.id === profile.userId);
+          if (myIdx === -1 && score > 0) {
+            merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score });
+            merged.sort((a, b) => b.points - a.points);
+          } else if (myIdx >= 0) {
+            merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points, score) };
+            merged.sort((a, b) => b.points - a.points);
+          }
+          if (merged.length === 0) return null;
+          return merged.slice(0, 50).map((u, i) => {
+            const isMe = u.id === profile.userId;
+            return (
+              <button key={u.id} onClick={() => { if (isMe) setProfileView(true); }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
+                <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
+                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1a1a1a", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
+                  {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                </div>
+                <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                <div className="text-right shrink-0">
+                  <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
+                  <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                </div>
+              </button>
+            );
+          });
+        })()}
       </div>
+
+      {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
 
       {showRewards && (
         <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
@@ -5788,6 +5879,27 @@ export default function ClutchApp() {
   const [showProfile, setShowProfile] = useState(false);
   const [profileView, setProfileView] = useState(false);
   const [showFriendModal, setShowFriendModal] = useState(false);
+
+  function syncProfileToBackend(p, pts) {
+    if (!p?.userId) return;
+    fetch(API_BASE + "/api/social/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0 }),
+    }).catch(() => {});
+  }
+  useEffect(() => {
+    if (!profile) return;
+    if (!profile.userId) {
+      const updated = { ...profile, userId: crypto.randomUUID() };
+      setProfile(updated);
+      localStorage.setItem("split_profile", JSON.stringify(updated));
+      syncProfileToBackend(updated, userPoints);
+    } else {
+      syncProfileToBackend(profile, userPoints);
+    }
+  }, []);
+
   const [scoreCats, setScoreCats] = useState(["tout"]);
 
   const scrollRef = useRef(null);
@@ -6383,6 +6495,7 @@ export default function ClutchApp() {
       setUserPoints((prev) => {
         const next = prev + pointsToAdd;
         localStorage.setItem("split_points_total", String(next));
+        syncProfileToBackend(profile, next);
         return next;
       });
       if (game) {
@@ -6595,7 +6708,7 @@ export default function ClutchApp() {
         {showProfile && (
           <ProfileSetupModal
             onClose={() => setShowProfile(false)}
-            onSave={(p) => { setProfile(p); localStorage.setItem("split_profile", JSON.stringify(p)); setShowProfile(false); }}
+            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints); setShowProfile(false); }}
             profile={profile}
             valoTeams={allTeams}
             cs2Teams={cs2AllTeams}

@@ -420,13 +420,39 @@ async function processOneMatch(m, data) {
     const serieName = m.serie?.full_name || m.serie?.name || "";
     let source = null;
 
-    const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
-    if (hltvScraped && hltvScraped.length > 0) {
-      if (isMapScoresConsistent(hltvScraped, s1, s2)) {
-        mapScores = hltvScraped;
-        source = "hltv-scraper";
-      } else {
-        console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — HLTV scraper incohérent, ignoré`);
+    // PandaScore games array — fastest source, available directly from the match object
+    if (Array.isArray(m.games) && m.games.length > 0) {
+      const pandaMapScores = m.games
+        .filter(g => g.status === "finished" && !g.forfeit && g.winner)
+        .map(g => {
+          const mapName = g.map?.name || g.map || "Unknown";
+          const winnerId = g.winner?.id || g.winner_id;
+          const isT1Winner = winnerId === t1.id;
+          let sc1 = isT1Winner ? 13 : 0, sc2 = isT1Winner ? 0 : 13;
+          if (Array.isArray(g.teams) && g.teams.length === 2) {
+            const gt1 = g.teams.find(t => t.team_id === t1.id);
+            const gt2 = g.teams.find(t => t.team_id === t2.id);
+            if (gt1 && gt2 && typeof gt1.score === "number" && typeof gt2.score === "number") {
+              sc1 = gt1.score; sc2 = gt2.score;
+            }
+          }
+          return { map: mapName, score1: sc1, score2: sc2 };
+        });
+      if (pandaMapScores.length > 0 && isMapScoresConsistent(pandaMapScores, s1, s2)) {
+        mapScores = pandaMapScores;
+        source = "pandascore-games";
+      }
+    }
+
+    if (!mapScores) {
+      const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
+      if (hltvScraped && hltvScraped.length > 0) {
+        if (isMapScoresConsistent(hltvScraped, s1, s2)) {
+          mapScores = hltvScraped;
+          source = "hltv-scraper";
+        } else {
+          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — HLTV scraper incohérent, ignoré`);
+        }
       }
     }
 
@@ -472,7 +498,7 @@ async function processOneMatch(m, data) {
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni PandaScore games, ni HLTV, ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
     );
 
     if (mapScores) {

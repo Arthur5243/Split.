@@ -23,6 +23,7 @@ import {
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 import { startHltvScraper } from "./hltv-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
+import socialRouter from "./social-routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -37,6 +38,7 @@ app.use(oddsRouter);
 app.use(cs2Router);
 app.use(rlRouter);
 app.use(youtubeRouter);
+app.use(socialRouter);
 
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
