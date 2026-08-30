@@ -5548,8 +5548,8 @@ function MessagesScreen({ onClose, T, profile }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
-      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={activeDm ? () => { setActiveDm(null); setTab("dms"); } : onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -5573,8 +5573,8 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {tab === "community" && !activeDm && (
-        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col">
-          <div className="flex-1">
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col justify-end" style={{ minHeight: 0 }}>
+          <div>
             {communityMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
             {communityMessages.map(m => {
               const isVoice = m.content?.startsWith("[VOICE]");
@@ -5624,8 +5624,8 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {activeDm && (
-        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col">
-          <div className="flex-1">
+        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col justify-end" style={{ minHeight: 0 }}>
+          <div>
             {dmMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
             {dmMessages.map((m, i) => (
               <div key={m.id || i} className={`flex mb-2 ${m.isMe ? "justify-end" : "justify-start"}`}>
