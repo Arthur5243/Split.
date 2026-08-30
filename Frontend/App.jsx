@@ -5673,7 +5673,7 @@ function MessagesScreen({ onClose, T, profile }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
@@ -5682,7 +5682,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
   const registeredCount = leaderboard.length;
-  const [showMessages, setShowMessages] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [nexusPosts, setNexusPosts] = useState([]);
 
@@ -6016,7 +6015,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
       {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
 
-      {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
       {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} />}
 
       {showRewards && (
@@ -6600,6 +6598,7 @@ export default function ClutchApp() {
   const [showProfile, setShowProfile] = useState(false);
   const [profileView, setProfileView] = useState(false);
   const [showFriendModal, setShowFriendModal] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
 
   function syncProfileToBackend(p, pts) {
     if (!p?.userId) return;
@@ -7372,8 +7371,10 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} />}
         </div>
+
+        {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
 
 
         <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
