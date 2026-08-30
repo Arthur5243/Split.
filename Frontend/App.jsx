@@ -39,7 +39,6 @@ import {
   Send,
   Shield,
   Settings,
-  Mic,
   Square,
 } from "lucide-react";
 
@@ -5396,10 +5395,10 @@ function MessagesScreen({ onClose, T, profile }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [cryptoKeys, setCryptoKeys] = useState(null);
-  const [recording, setRecording] = useState(false);
-  const recognitionRef = useRef(null);
   const communityPollRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const longPressRef = useRef(null);
 
   useEffect(() => {
     initCrypto();
@@ -5523,6 +5522,16 @@ function MessagesScreen({ onClose, T, profile }) {
     } catch {} finally { setSending(false); }
   }
 
+  function deleteCommunityMsg(msgId) {
+    fetch(API_BASE + "/api/messages/community/" + msgId, {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId }),
+    }).then(r => r.json()).then(d => {
+      if (d.ok) setCommunityMessages(prev => prev.filter(m => m.id !== msgId));
+    }).catch(() => {});
+    setDeletingId(null);
+  }
+
   function sendCommunity() {
     if (!input.trim() || !profile?.userId) return;
     setSending(true);
@@ -5533,34 +5542,6 @@ function MessagesScreen({ onClose, T, profile }) {
       if (d.id) setCommunityMessages(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: input.trim(), created_at: new Date().toISOString() }]);
       setInput("");
     }).catch(() => {}).finally(() => setSending(false));
-  }
-
-  function startRecording() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return;
-    const rec = new SR();
-    rec.lang = "fr-FR";
-    rec.continuous = true;
-    rec.interimResults = true;
-    let finalText = "";
-    rec.onresult = (e) => {
-      let interim = "";
-      for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
-        else interim += e.results[i][0].transcript;
-      }
-      setInput((finalText + interim).trim());
-    };
-    rec.onerror = () => setRecording(false);
-    rec.onend = () => setRecording(false);
-    rec.start();
-    recognitionRef.current = rec;
-    setRecording(true);
-  }
-
-  function stopRecording() {
-    if (recognitionRef.current) recognitionRef.current.stop();
-    setRecording(false);
   }
 
   return (
@@ -5594,14 +5575,25 @@ function MessagesScreen({ onClose, T, profile }) {
             {communityMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
             {communityMessages.map(m => {
               const isVoice = m.content?.startsWith("[VOICE]");
+              const isOwn = m.user_id === profile?.userId;
               return (
-                <div key={m.id} className="flex gap-2 mb-3">
+                <div key={m.id} className="flex gap-2 mb-3"
+                  onTouchStart={() => { if (isOwn) longPressRef.current = setTimeout(() => setDeletingId(m.id), 500); }}
+                  onTouchEnd={() => clearTimeout(longPressRef.current)}
+                  onContextMenu={e => { if (isOwn) { e.preventDefault(); setDeletingId(m.id); } }}
+                >
                   <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
                     {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <span style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{m.pseudo || "?"}</span>
                     {isVoice ? <VoiceMessage src={m.content.slice(7)} /> : <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.content}</p>}
+                    {deletingId === m.id && (
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={() => deleteCommunityMsg(m.id)} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
+                        <button onClick={() => setDeletingId(null)} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -5646,31 +5638,22 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-4 py-2 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
-          {tab === "community" && !activeDm && (
-            <button
-              onClick={recording ? stopRecording : startRecording}
-              className="rounded-full shrink-0 flex items-center justify-center"
-              style={{ width: 36, height: 36, background: recording ? "#ef4444" : "#181818", border: recording ? "1px solid #f87171" : "1px solid #2a2a2a", transition: "all 0.2s", animation: recording ? "pulseLive 1.5s ease-in-out infinite" : "none" }}
-            >
-              <Mic size={16} color={recording ? "#fff" : "#ccc"} />
-            </button>
-          )}
+        <div className="px-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); activeDm ? sendDm() : sendCommunity(); } }}
-            placeholder={recording ? "Parle..." : (activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message..."))}
-            className="flex-1 rounded-xl px-4 py-2.5"
-            style={{ background: "#141414", border: recording ? "1px solid #ef4444" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none" }}
+            placeholder={activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message...")}
+            className="flex-1 rounded-xl px-4 py-2"
+            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none" }}
           />
           <button
             onClick={activeDm ? sendDm : sendCommunity}
-            disabled={sending || !input.trim() || recording}
-            className="rounded-xl px-3 py-2.5 shrink-0"
-            style={{ background: input.trim() && !recording ? "#CCF71D" : "#222", transition: "all 0.2s" }}
+            disabled={sending || !input.trim()}
+            className="rounded-xl px-3 py-2 shrink-0"
+            style={{ background: input.trim() ? "#CCF71D" : "#222", transition: "all 0.2s" }}
           >
-            <Send size={16} color={input.trim() && !recording ? "#000" : "#555"} />
+            <Send size={16} color={input.trim() ? "#000" : "#555"} />
           </button>
         </div>
       )}
@@ -5781,15 +5764,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
-            <div className="rounded-2xl py-5 mb-5 flex flex-col items-center gap-2" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
+            <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
               {rank.logo ? (
-                <img src={rank.logo} alt={rank.name} style={{ width: 72, height: 72, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 12px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 10px rgba(234,179,8,0.4))" : "none" }} />
+                <img src={rank.logo} alt={rank.name} style={{ width: 120, height: 120, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
               ) : (
-                <Shield size={56} color="#666" />
+                <Shield size={80} color="#666" />
               )}
-              <p className="font-black" style={{ color: rank.color, fontSize: "18px", letterSpacing: "-0.01em" }}>{rank.label}</p>
-              <div className="flex items-center gap-2 px-8 w-full">
-                <div style={{ flex: 1, height: 5, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+              <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px", letterSpacing: "-0.02em" }}>{rank.label}</p>
+              <div className="flex items-center gap-2 px-8 w-full mt-1">
+                <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
                 <span style={{ color: "#888", fontSize: "10px", fontWeight: 700 }}>{nextLabel}</span>

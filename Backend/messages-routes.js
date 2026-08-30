@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   setPublicKey, getPublicKey, sendDm, getDmConversation,
-  getConversations, sendCommunityMessage, getCommunityMessages, getCommunityAfter
+  getConversations, sendCommunityMessage, deleteCommunityMessage, getCommunityMessages, getCommunityAfter
 } from "./messages-store.js";
 import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
 
@@ -60,6 +60,15 @@ router.get("/api/messages/community", (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 50, 200);
   const offset = parseInt(req.query.offset) || 0;
   res.json(getCommunityMessages(limit, offset));
+});
+
+router.delete("/api/messages/community/:id", (req, res) => {
+  const { userId } = req.body;
+  const id = parseInt(req.params.id);
+  if (!userId || !id) return res.status(400).json({ error: "userId and id required" });
+  const deleted = deleteCommunityMessage(id, userId);
+  if (!deleted) return res.status(403).json({ error: "not_found_or_not_owner" });
+  res.json({ ok: true });
 });
 
 router.get("/api/messages/community/poll", (req, res) => {

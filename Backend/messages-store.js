@@ -67,6 +67,7 @@ const stmts = {
     ON CONFLICT(user1, user2) DO UPDATE SET last_message_at = datetime('now')
   `),
 
+  deleteCommunity: db.prepare(`DELETE FROM community_messages WHERE id = ? AND user_id = ?`),
   sendCommunity: db.prepare(`INSERT INTO community_messages (user_id, content) VALUES (?, ?)`),
   getCommunity: db.prepare(`
     SELECT cm.*, u.pseudo, u.avatar FROM community_messages cm
@@ -108,6 +109,11 @@ export function getConversations(userId) {
     avatar: c.avatar,
     lastMessageAt: c.last_message_at,
   }));
+}
+
+export function deleteCommunityMessage(messageId, userId) {
+  const r = stmts.deleteCommunity.run(messageId, userId);
+  return r.changes > 0;
 }
 
 export function sendCommunityMessage(userId, content) {
