@@ -5650,7 +5650,7 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}>
+        <div className="px-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)", marginTop: "auto", flexShrink: 0 }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
@@ -5846,13 +5846,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 const allPts = leaderboard.map(u => u.points);
                 const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
                 return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 12, padding: "4px 8px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
                     {rank.logo ? (
-                      <img src={rank.logo} alt={rank.name} style={{ width: 16, height: 16, objectFit: "contain" }} />
+                      <img src={rank.logo} alt={rank.name} style={{ width: 48, height: 48, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
                     ) : (
-                      <Shield size={12} color="#666" />
+                      <Shield size={32} color="#666" />
                     )}
-                    <span style={{ color: rank.color, fontSize: 10, fontWeight: 800 }}>{rank.label}</span>
+                    <span style={{ color: rank.color, fontSize: 11, fontWeight: 800 }}>{rank.label}</span>
                   </div>
                 );
               })()}
@@ -5916,7 +5916,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                      {(() => { const r = getUserRank(u.points); return r.logo ? <img src={r.logo} alt={r.name} style={{ width: 18, height: 18, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
+                      {(() => { const r = getUserRank(u.points); return r.logo ? <img src={r.logo} alt={r.name} style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
                       <div className="text-right shrink-0">
                         <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
                         <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
