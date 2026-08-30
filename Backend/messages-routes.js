@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  setPublicKey, getPublicKey, sendDm, getDmConversation,
+  setPublicKey, getPublicKey, sendDm, deleteDmMessage, getDmConversation,
   getConversations, sendCommunityMessage, deleteCommunityMessage, getCommunityMessages, getCommunityAfter
 } from "./messages-store.js";
 import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
@@ -38,6 +38,15 @@ router.get("/api/messages/dm/:userId/:partnerId", (req, res) => {
 
 router.get("/api/messages/conversations/:userId", (req, res) => {
   res.json(getConversations(req.params.userId));
+});
+
+router.delete("/api/messages/dm/:id", (req, res) => {
+  const { userId } = req.body;
+  const id = parseInt(req.params.id);
+  if (!userId || !id) return res.status(400).json({ error: "userId and id required" });
+  const deleted = deleteDmMessage(id, userId);
+  if (!deleted) return res.status(403).json({ error: "not_found_or_not_sender" });
+  res.json({ ok: true });
 });
 
 router.post("/api/messages/community", (req, res) => {

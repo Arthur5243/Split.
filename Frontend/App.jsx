@@ -5398,7 +5398,6 @@ function MessagesScreen({ onClose, T, profile }) {
   const communityPollRef = useRef(null);
   const messagesEndRef = useRef(null);
   const [deletingId, setDeletingId] = useState(null);
-  const longPressRef = useRef(null);
 
   useEffect(() => {
     initCrypto();
@@ -5522,12 +5521,16 @@ function MessagesScreen({ onClose, T, profile }) {
     } catch {} finally { setSending(false); }
   }
 
-  function deleteCommunityMsg(msgId) {
-    fetch(API_BASE + "/api/messages/community/" + msgId, {
+  function deleteMsg(msgId, type) {
+    const url = type === "dm" ? API_BASE + "/api/messages/dm/" + msgId : API_BASE + "/api/messages/community/" + msgId;
+    fetch(url, {
       method: "DELETE", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: profile.userId }),
     }).then(r => r.json()).then(d => {
-      if (d.ok) setCommunityMessages(prev => prev.filter(m => m.id !== msgId));
+      if (d.ok) {
+        if (type === "dm") setDmMessages(prev => prev.filter(m => m.id !== msgId));
+        else setCommunityMessages(prev => prev.filter(m => m.id !== msgId));
+      }
     }).catch(() => {});
     setDeletingId(null);
   }
@@ -5578,9 +5581,8 @@ function MessagesScreen({ onClose, T, profile }) {
               const isOwn = m.user_id === profile?.userId;
               return (
                 <div key={m.id} className="flex gap-2 mb-3"
-                  onTouchStart={() => { if (isOwn) longPressRef.current = setTimeout(() => setDeletingId(m.id), 500); }}
-                  onTouchEnd={() => clearTimeout(longPressRef.current)}
-                  onContextMenu={e => { if (isOwn) { e.preventDefault(); setDeletingId(m.id); } }}
+                  onClick={() => { if (isOwn) setDeletingId(deletingId === m.id ? null : m.id); }}
+                  style={{ cursor: isOwn ? "pointer" : "default" }}
                 >
                   <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
                     {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
@@ -5590,8 +5592,8 @@ function MessagesScreen({ onClose, T, profile }) {
                     {isVoice ? <VoiceMessage src={m.content.slice(7)} /> : <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.content}</p>}
                     {deletingId === m.id && (
                       <div className="flex gap-2 mt-1">
-                        <button onClick={() => deleteCommunityMsg(m.id)} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
-                        <button onClick={() => setDeletingId(null)} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
+                        <button onClick={e => { e.stopPropagation(); deleteMsg(m.id, "community"); }} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
+                        <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
                       </div>
                     )}
                   </div>
@@ -5626,9 +5628,19 @@ function MessagesScreen({ onClose, T, profile }) {
           <div className="flex-1">
             {dmMessages.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgEmpty || "Aucun message"}</p>}
             {dmMessages.map((m, i) => (
-              <div key={i} className={`flex mb-2 ${m.isMe ? "justify-end" : "justify-start"}`}>
-                <div className="rounded-xl px-3 py-2 max-w-[75%]" style={{ background: m.isMe ? "#1a3a1a" : "#1a1a1a", border: m.isMe ? "1px solid #2a4a2a" : "1px solid #2a2a2a" }}>
+              <div key={m.id || i} className={`flex mb-2 ${m.isMe ? "justify-end" : "justify-start"}`}>
+                <div
+                  className="rounded-xl px-3 py-2 max-w-[75%]"
+                  style={{ background: m.isMe ? "#1a3a1a" : "#1a1a1a", border: m.isMe ? "1px solid #2a4a2a" : "1px solid #2a2a2a", cursor: m.isMe ? "pointer" : "default" }}
+                  onClick={() => { if (m.isMe && m.id) setDeletingId(deletingId === ("dm-" + m.id) ? null : "dm-" + m.id); }}
+                >
                   <p style={{ color: "#eee", fontSize: "13px", lineHeight: 1.4, wordBreak: "break-word" }}>{m.text}</p>
+                  {deletingId === ("dm-" + m.id) && (
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={e => { e.stopPropagation(); deleteMsg(m.id, "dm"); }} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
+                      <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
