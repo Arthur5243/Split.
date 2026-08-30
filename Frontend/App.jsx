@@ -5548,8 +5548,8 @@ function MessagesScreen({ onClose, T, profile }) {
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={activeDm ? () => { setActiveDm(null); setTab("dms"); } : onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -5566,7 +5566,7 @@ function MessagesScreen({ onClose, T, profile }) {
       </div>
 
       {!activeDm && (
-        <div className="flex gap-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <div className="flex gap-0 shrink-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
           <button onClick={() => setTab("community")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "community" ? "#CCF71D" : "#666", borderBottom: tab === "community" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgCommunity || "Communauté"}</button>
           <button onClick={() => setTab("dms")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "dms" ? "#CCF71D" : "#666", borderBottom: tab === "dms" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgDms || "Messages"}</button>
         </div>
@@ -5650,7 +5650,7 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)", marginTop: "auto", flexShrink: 0 }}>
+        <div className="px-3 flex gap-2 items-center shrink-0" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
