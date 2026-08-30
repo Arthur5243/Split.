@@ -45,7 +45,9 @@ function getScrapedScores(team1Name, team2Name) {
     const q2 = normalize(team2Name);
     if ((t1 === q1 && t2 === q2) || (t1 === q2 && t2 === q1)) {
       const swap = t1 === q2;
-      return entry.maps.map((m) => ({
+      const completeMaps = entry.maps.filter((m) => m.complete);
+      if (completeMaps.length === 0) return null;
+      return completeMaps.map((m) => ({
         map: m.map,
         score1: swap ? m.score2 : m.score1,
         score2: swap ? m.score1 : m.score2,
@@ -133,14 +135,15 @@ async function scrapeMapScores(matchUrl) {
     const s1 = Number(score1) || 0;
     const s2 = Number(score2) || 0;
 
-    // Skip entries that look like series scores (2-1, 2-0) rather than round scores.
-    // Valid Valorant round scores always have at least one team >= 5.
     if (s1 < 5 && s2 < 5) return;
+
+    const isComplete = s1 >= 13 || s2 >= 13;
 
     maps.push({
       map: mapName || `Map ${maps.length + 1}`,
       score1: s1,
       score2: s2,
+      complete: isComplete,
     });
   });
 

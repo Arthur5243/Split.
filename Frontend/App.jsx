@@ -3293,11 +3293,12 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
   );
 }
 
-function BracketMatchCard({ match, accent }) {
+function BracketMatchCard({ match, accent, prediction }) {
   const st = (match.status || "").toLowerCase();
   const isCompleted = st === "completed" || st === "finished";
   const isLive = st.includes("live") || st === "running";
   const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
+  const predTeam = prediction?.winner;
   return (
     <div style={{
       width: "100%", borderRadius: 8, overflow: "hidden", position: "relative",
@@ -3309,6 +3310,7 @@ function BracketMatchCard({ match, accent }) {
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
         const lost = isCompleted && !team.is_winner;
+        const isPredicted = predTeam && team.name && predTeam === team.name;
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
@@ -3331,8 +3333,11 @@ function BracketMatchCard({ match, accent }) {
               }}>
                 {team.name || "TBD"}
               </span>
+              {isPredicted && (
+                <span style={{ fontSize: 8, fontWeight: 800, color: "#CCF71D", background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.2)", padding: "1px 5px", borderRadius: 4, marginLeft: 4, flexShrink: 0 }}>PARI</span>
+              )}
               <span style={{
-                fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 10,
+                fontSize: 15, fontWeight: 800, minWidth: 20, textAlign: "center", marginLeft: 6,
                 color: won ? accent : "#555",
                 fontVariantNumeric: "tabular-nums",
               }}>
@@ -3355,7 +3360,7 @@ function BracketMatchCard({ match, accent }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
@@ -3474,7 +3479,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             </div>
             {round.matches.map((m, mi) => (
               <div key={m.match_id || mi} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
-                <BracketMatchCard match={m} accent={accent} />
+                <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} />
               </div>
             ))}
           </React.Fragment>
@@ -3488,22 +3493,34 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             }}>
               {qualifiedLabel}
             </div>
-            {lastRound.matches.map((m, mi) => (
-              <div key={"q" + mi} style={{
-                position: "absolute",
-                left: rounds.length * (CARD_W + COL_GAP),
-                top: yPositions[rounds.length - 1][mi] + LABEL_H,
-                width: CARD_W, height: CARD_H,
-                display: "flex", flexDirection: "column", justifyContent: "center", gap: 2, paddingLeft: 10,
-              }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {m.team1?.name || "TBD"}
-                </span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {m.team2?.name || "TBD"}
-                </span>
-              </div>
-            ))}
+            {lastRound.matches.map((m, mi) => {
+              const st = (m.status || "").toLowerCase();
+              const done = st === "completed" || st === "finished";
+              const winner = done && m.team1?.is_winner ? m.team1 : done && m.team2?.is_winner ? m.team2 : null;
+              return (
+                <div key={"q" + mi} style={{
+                  position: "absolute",
+                  left: rounds.length * (CARD_W + COL_GAP),
+                  top: yPositions[rounds.length - 1][mi] + LABEL_H,
+                  width: CARD_W, height: CARD_H,
+                  display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, paddingLeft: 8,
+                }}>
+                  {[m.team1, m.team2].map((team, ti) => {
+                    const isWinner = done && team?.is_winner;
+                    return (
+                      <div key={ti} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: isWinner ? "#fff" : "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                          {team?.name || "TBD"}
+                        </span>
+                        {isWinner && (
+                          <span style={{ background: "#CCF71D", color: "#000", fontSize: 8, fontWeight: 800, padding: "2px 8px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>QUALIFIED</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </>
         )}
         {showQ && !qualifiedIsLabel && (
@@ -3523,17 +3540,17 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
                   left: rounds.length * (CARD_W + COL_GAP),
                   top: yPositions[rounds.length - 1][mi] + (CARD_H - QUAL_H) / 2 + LABEL_H,
                   width: CARD_W, height: QUAL_H,
-                  borderRadius: 8, overflow: "hidden",
-                  background: isActive ? `linear-gradient(90deg, ${accent}20 0%, #161616 100%)` : "#161616",
-                  border: `1px solid ${isActive ? accent + "40" : "rgba(255,255,255,0.08)"}`,
-                  display: "flex", alignItems: "center",
+                  display: "flex", alignItems: "center", gap: 8,
                 }}>
-                  <div style={{ width: 3, alignSelf: "stretch", background: isActive ? accent : "transparent" }} />
                   <span style={{
-                    flex: 1, padding: "0 12px", fontSize: 12, fontWeight: 700,
+                    fontSize: 12, fontWeight: 700,
                     color: isActive ? "#fff" : "#555",
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    flex: 1,
                   }}>{winner?.name || "TBD"}</span>
+                  {isActive && (
+                    <span style={{ background: "#CCF71D", color: "#000", fontSize: 8, fontWeight: 800, padding: "3px 10px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>QUALIFIED</span>
+                  )}
                 </div>
               );
             })}
@@ -3765,7 +3782,7 @@ function BracketProgressBar({ bracket, accentColor }) {
   );
 }
 
-function BracketPage({ vlrEvents, onBack, T }) {
+function BracketPage({ vlrEvents, onBack, T, predictions }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
   const [region, setRegion] = useState(null);
@@ -3872,10 +3889,11 @@ function BracketPage({ vlrEvents, onBack, T }) {
   };
   const backBtn = (fn) => (
     <button onClick={fn || goBack} style={{
-      background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-      color: "#aaa", fontSize: 20, cursor: "pointer", padding: "8px 12px",
-      borderRadius: 8, lineHeight: 1, display: "flex", alignItems: "center",
-    }}>←</button>
+      background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+      color: "#999", cursor: "pointer", padding: 6,
+      borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+      width: 32, height: 32, flexShrink: 0,
+    }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
   );
   const titleSpan = (text, color) => (
     <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
@@ -3886,9 +3904,9 @@ function BracketPage({ vlrEvents, onBack, T }) {
     return <>
       <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} />}
       </DragScroll>
     </>;
   };
@@ -4179,7 +4197,7 @@ function matchPhaseToTournament(phase, tournament) {
   return false;
 }
 
-function CS2BracketPage({ cs2Events, onBack, T }) {
+function CS2BracketPage({ cs2Events, onBack, T, predictions }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
   const [phase, setPhase] = useState(null);
@@ -4216,9 +4234,9 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
     return <>
       <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} />}
       </DragScroll>
     </>;
   };
@@ -4233,10 +4251,11 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
   };
   const backBtn = (fn) => (
     <button onClick={fn || goBack} style={{
-      background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-      color: "#aaa", fontSize: 20, cursor: "pointer", padding: "8px 12px",
-      borderRadius: 8, lineHeight: 1, display: "flex", alignItems: "center",
-    }}>←</button>
+      background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+      color: "#999", cursor: "pointer", padding: 6,
+      borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
+      width: 32, height: 32, flexShrink: 0,
+    }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
   );
   const titleSpan = (text, color) => (
     <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
@@ -4378,7 +4397,7 @@ function CS2BracketPage({ cs2Events, onBack, T }) {
 
 function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
   if (showBracketPage) {
-    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} />;
+    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} />;
   }
 
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
@@ -4583,7 +4602,7 @@ function regionCodeRL(key) {
 
 function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
   if (showCs2BracketPage) {
-    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} />;
+    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} />;
   }
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
@@ -5378,8 +5397,7 @@ function MessagesScreen({ onClose, T, profile }) {
   const [sending, setSending] = useState(false);
   const [cryptoKeys, setCryptoKeys] = useState(null);
   const [recording, setRecording] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+  const recognitionRef = useRef(null);
   const communityPollRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -5517,40 +5535,31 @@ function MessagesScreen({ onClose, T, profile }) {
     }).catch(() => {}).finally(() => setSending(false));
   }
 
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm" });
-      audioChunksRef.current = [];
-      mr.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (blob.size > 3 * 1024 * 1024) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const b64 = reader.result;
-          const content = "[VOICE]" + b64;
-          setSending(true);
-          fetch(API_BASE + "/api/messages/community", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: profile.userId, content }),
-          }).then(r => r.json()).then(d => {
-            if (d.id) setCommunityMessages(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content, created_at: new Date().toISOString() }]);
-          }).catch(() => {}).finally(() => setSending(false));
-        };
-        reader.readAsDataURL(blob);
-      };
-      mr.start();
-      mediaRecorderRef.current = mr;
-      setRecording(true);
-    } catch {}
+  function startRecording() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "fr-FR";
+    rec.continuous = true;
+    rec.interimResults = true;
+    let finalText = "";
+    rec.onresult = (e) => {
+      let interim = "";
+      for (let i = 0; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalText += e.results[i][0].transcript + " ";
+        else interim += e.results[i][0].transcript;
+      }
+      setInput((finalText + interim).trim());
+    };
+    rec.onerror = () => setRecording(false);
+    rec.onend = () => setRecording(false);
+    rec.start();
+    recognitionRef.current = rec;
+    setRecording(true);
   }
 
   function stopRecording() {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
+    if (recognitionRef.current) recognitionRef.current.stop();
     setRecording(false);
   }
 
@@ -5637,24 +5646,23 @@ function MessagesScreen({ onClose, T, profile }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-4 py-3 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+        <div className="px-4 py-2 flex gap-2 items-center" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingBottom: "env(safe-area-inset-bottom, 8px)" }}>
           {tab === "community" && !activeDm && (
             <button
               onClick={recording ? stopRecording : startRecording}
-              className="rounded-xl px-3 py-2.5 shrink-0"
-              style={{ background: recording ? "#ef4444" : "#181818", border: recording ? "1px solid #f87171" : "1px solid #2a2a2a", transition: "all 0.2s" }}
+              className="rounded-full shrink-0 flex items-center justify-center"
+              style={{ width: 36, height: 36, background: recording ? "#ef4444" : "#181818", border: recording ? "1px solid #f87171" : "1px solid #2a2a2a", transition: "all 0.2s", animation: recording ? "pulseLive 1.5s ease-in-out infinite" : "none" }}
             >
-              {recording ? <Square size={16} color="#fff" /> : <Mic size={16} color="#ccc" />}
+              <Mic size={16} color={recording ? "#fff" : "#ccc"} />
             </button>
           )}
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); activeDm ? sendDm() : sendCommunity(); } }}
-            placeholder={recording ? "Enregistrement..." : (activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message..."))}
-            disabled={recording}
+            placeholder={recording ? "Parle..." : (activeDm ? (T.msgDmPlaceholder || "Message chiffré...") : (T.msgPlaceholder || "Message..."))}
             className="flex-1 rounded-xl px-4 py-2.5"
-            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none", opacity: recording ? 0.5 : 1 }}
+            style={{ background: "#141414", border: recording ? "1px solid #ef4444" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", outline: "none" }}
           />
           <button
             onClick={activeDm ? sendDm : sendCommunity}
@@ -5773,20 +5781,18 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
-            <div className="rounded-2xl px-4 py-3 mb-5 flex items-center gap-3" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
+            <div className="rounded-2xl py-5 mb-5 flex flex-col items-center gap-2" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
               {rank.logo ? (
-                <img src={rank.logo} alt={rank.name} style={{ width: 36, height: 36, objectFit: "contain" }} />
+                <img src={rank.logo} alt={rank.name} style={{ width: 72, height: 72, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 12px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 10px rgba(234,179,8,0.4))" : "none" }} />
               ) : (
-                <Shield size={28} color="#666" />
+                <Shield size={56} color="#666" />
               )}
-              <div className="flex-1">
-                <p className="font-black" style={{ color: rank.color, fontSize: "14px" }}>{rank.label}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div style={{ flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden" }}>
-                    <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 2 }} />
-                  </div>
-                  <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{nextLabel}</span>
+              <p className="font-black" style={{ color: rank.color, fontSize: "18px", letterSpacing: "-0.01em" }}>{rank.label}</p>
+              <div className="flex items-center gap-2 px-8 w-full">
+                <div style={{ flex: 1, height: 5, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
+                <span style={{ color: "#888", fontSize: "10px", fontWeight: 700 }}>{nextLabel}</span>
               </div>
             </div>
           );
