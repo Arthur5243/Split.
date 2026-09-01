@@ -672,6 +672,20 @@
     "match_id": 2601
   },
   {
+    "pandascore_id": 1661563,
+    "tournament_id": "PANDA_21810",
+    "tournament_name": "Playoffs",
+    "tier": "THE POKAL",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper bracket round 1 match 3: RZN.S vs GG",
+    "team1": "RIZON Sugar",
+    "team2": "Glacial Guardians",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2602
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
