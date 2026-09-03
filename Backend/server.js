@@ -1025,6 +1025,148 @@ app.get("/", (req, res) => {
 });
 
 // ==========================================================================
+// TEMPORARY: Database backup/restore for Railway migration
+// Remove these endpoints after migration is complete.
+// ==========================================================================
+
+function getDbFiles() {
+  const dirs = new Set();
+  const dbPaths = [];
+  for (const envVar of [process.env.DB_PATH, process.env.CS2_DB_PATH]) {
+    if (envVar && fs.existsSync(envVar)) {
+      dbPaths.push(envVar);
+      dirs.add(path.dirname(envVar));
+    }
+  }
+  for (const dir of dirs) {
+    try {
+      for (const f of fs.readdirSync(dir)) {
+        const full = path.join(dir, f);
+        if ((f.endsWith(".db") || f.endsWith(".db-wal") || f.endsWith(".db-shm")) && !dbPaths.includes(full)) {
+          dbPaths.push(full);
+        }
+      }
+    } catch {}
+  }
+  const dataDir = "/data";
+  if (fs.existsSync(dataDir)) {
+    try {
+      for (const f of fs.readdirSync(dataDir)) {
+        const full = path.join(dataDir, f);
+        if ((f.endsWith(".db") || f.endsWith(".db-wal") || f.endsWith(".db-shm") || f.endsWith(".json")) && !dbPaths.includes(full)) {
+          dbPaths.push(full);
+        }
+      }
+    } catch {}
+  }
+  return dbPaths;
+}
+
+app.get("/admin/backup-db", (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send("Accès refusé");
+  const files = getDbFiles();
+  const list = files.map(f => ({
+    name: path.basename(f),
+    path: f,
+    size: fs.statSync(f).size,
+    url: `/admin/backup-db/download?key=${encodeURIComponent(ADMIN_KEY)}&file=${encodeURIComponent(f)}`
+  }));
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Backup DB</title>
+<style>body{font-family:system-ui;background:#111;color:#eee;padding:20px}
+a{color:#7df;display:inline-block;margin:8px 0;font-size:18px}
+.size{color:#888;font-size:14px}</style></head><body>
+<h1>Database Files (${list.length})</h1>
+${list.map(f => `<div><a href="${f.url}" download="${f.name}">${f.name}</a> <span class="size">${(f.size/1024).toFixed(1)} KB</span></div>`).join("")}
+${list.length === 0 ? "<p>Aucun fichier trouvé.</p>" : ""}
+</body></html>`;
+  res.type("html").send(html);
+});
+
+app.get("/admin/backup-db/download", (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send("Accès refusé");
+  const filePath = req.query.file;
+  if (!filePath || !fs.existsSync(filePath)) return res.status(404).send("Fichier introuvable");
+  if (!filePath.endsWith(".db") && !filePath.endsWith(".db-wal") && !filePath.endsWith(".db-shm") && !filePath.endsWith(".json")) {
+    return res.status(400).send("Type de fichier non autorisé");
+  }
+  res.download(filePath, path.basename(filePath));
+});
+
+app.get("/admin/restore-db", (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send("Accès refusé");
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Restore DB</title>
+<style>body{font-family:system-ui;background:#111;color:#eee;padding:20px}
+input[type=file]{margin:10px 0;font-size:16px;color:#eee}
+button{background:#2d6;color:#000;border:none;padding:12px 24px;font-size:16px;border-radius:8px;cursor:pointer;margin-top:10px}
+button:disabled{opacity:0.5}
+.status{margin-top:12px;font-size:14px;color:#aaa}
+.ok{color:#2d6}.err{color:#f55}
+select{font-size:16px;padding:8px;margin:10px 0;background:#222;color:#eee;border:1px solid #444;border-radius:4px}
+</style></head><body>
+<h1>Restore Database File</h1>
+<p>Sélectionne le répertoire de destination et le fichier .db téléchargé depuis l'ancien Railway.</p>
+<label>Destination :</label><br>
+<select id="dest">
+  <option value="/data/">/data/ (volume Railway)</option>
+</select><br>
+<input type="file" id="fileInput" accept=".db,.db-wal,.db-shm,.json"><br>
+<button onclick="upload()" id="btn">Uploader</button>
+<div class="status" id="status"></div>
+<script>
+async function upload() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) { alert("Choisis un fichier"); return; }
+  const dest = document.getElementById("dest").value;
+  const btn = document.getElementById("btn");
+  const status = document.getElementById("status");
+  btn.disabled = true;
+  status.textContent = "Upload en cours...";
+  status.className = "status";
+  try {
+    const buf = await file.arrayBuffer();
+    const r = await fetch("/admin/restore-db/upload?key=${encodeURIComponent(ADMIN_KEY)}&dest=" + encodeURIComponent(dest) + "&name=" + encodeURIComponent(file.name), {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: buf
+    });
+    const j = await r.json();
+    if (r.ok) {
+      status.textContent = "OK : " + j.written + " (" + j.size + " bytes)";
+      status.className = "status ok";
+    } else {
+      status.textContent = "Erreur : " + (j.error || r.status);
+      status.className = "status err";
+    }
+  } catch(e) {
+    status.textContent = "Erreur : " + e.message;
+    status.className = "status err";
+  }
+  btn.disabled = false;
+}
+</script>
+</body></html>`;
+  res.type("html").send(html);
+});
+
+app.post("/admin/restore-db/upload", express.raw({ type: "application/octet-stream", limit: "200mb" }), (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "Accès refusé" });
+  const dest = req.query.dest || "/data/";
+  const name = req.query.name;
+  if (!name) return res.status(400).json({ error: "Nom de fichier manquant" });
+  if (!name.endsWith(".db") && !name.endsWith(".db-wal") && !name.endsWith(".db-shm") && !name.endsWith(".json")) {
+    return res.status(400).json({ error: "Type non autorisé" });
+  }
+  const target = path.join(dest, name);
+  try {
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    fs.writeFileSync(target, req.body);
+    res.json({ ok: true, written: target, size: req.body.length });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ==========================================================================
 // Debug : rejoue le pipeline complet (match terminé -> nom d'équipe -> id
 // vlr.gg de l'équipe -> id du match vlr.gg -> détails/scores par map) pas à
 // pas, uniquement pour les 3 derniers matchs terminés à l'instant présent.
