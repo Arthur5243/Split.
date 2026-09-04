@@ -21,11 +21,11 @@ const HEADERS = {
 };
 
 const liveScrapedScores = new Map();
-const SCRAPED_TTL_MS = 15 * 60 * 1000;
+const SCRAPED_TTL_MS = 30 * 60 * 1000;
 
 let consecutiveErrors = 0;
 const MAX_BACKOFF_MS = 10 * 60 * 1000;
-const BASE_INTERVAL_MS = 60_000;
+const BASE_INTERVAL_MS = 30_000;
 
 function normalize(s) {
   return (s || "")
@@ -150,6 +150,32 @@ async function scrapeMapScores(matchUrl) {
   return maps;
 }
 
+async function findRecentlyFinished() {
+  const html = await fetchHtml(`${VLR_BASE_URL}/matches/results`);
+  const $ = load(html);
+  const matches = [];
+
+  $("a.wf-module-item").each((_, el) => {
+    const $item = $(el);
+    const href = ($item.attr("href") || "").trim();
+    if (!href || !href.includes("/")) return;
+
+    const teams = $item
+      .find(".match-item-vs-team-name .text-of")
+      .map((__, t) => $(t).text().trim())
+      .get();
+    if (teams.length < 2 || !teams[0] || !teams[1]) return;
+
+    const key = normalize(teams[0]) + ":" + normalize(teams[1]);
+    if (liveScrapedScores.has(key)) return;
+
+    const matchUrl = href.startsWith("http") ? href : `${VLR_BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
+    matches.push({ matchUrl, team1: teams[0], team2: teams[1], finished: true });
+  });
+
+  return matches.slice(0, 10);
+}
+
 async function runOnce() {
   const liveMatches = await findLiveMatches();
   console.log(
@@ -185,6 +211,37 @@ async function runOnce() {
     }
   }
 
+  try {
+    const finishedMatches = await findRecentlyFinished();
+    if (finishedMatches.length > 0) {
+      console.log(`[vlr-scraper] ${finishedMatches.length} match(s) finis à scraper`);
+    }
+    for (const match of finishedMatches) {
+      try {
+        const maps = await scrapeMapScores(match.matchUrl);
+        const completeMaps = maps.filter((m) => m.complete);
+        if (completeMaps.length > 0) {
+          const key = normalize(match.team1) + ":" + normalize(match.team2);
+          liveScrapedScores.set(key, {
+            team1: match.team1,
+            team2: match.team2,
+            matchUrl: match.matchUrl,
+            maps: completeMaps,
+            scrapedAt: Date.now(),
+          });
+          console.log(
+            `[vlr-scraper] [finished] ${match.team1} vs ${match.team2} →`,
+            completeMaps.map((m) => `${m.map}: ${m.score1}-${m.score2}`).join(" | ")
+          );
+        }
+      } catch (err) {
+        console.error(`[vlr-scraper] erreur finished ${match.matchUrl}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error("[vlr-scraper] erreur /matches/results:", err.message);
+  }
+
   const now = Date.now();
   for (const [key, entry] of liveScrapedScores) {
     if (now - entry.scrapedAt > SCRAPED_TTL_MS) {
@@ -203,7 +260,7 @@ function getNextInterval() {
 }
 
 function startScraper() {
-  console.log("[vlr-scraper] démarrage, poll ~60s (backoff si rate-limited)");
+  console.log("[vlr-scraper] démarrage, poll ~30s (live + results, backoff si rate-limited)");
 
   async function loop() {
     try {

@@ -80,7 +80,7 @@ const cache = new Map();
 async function cachedFetch(key, path) {
   const hit = cache.get(key);
   const now = Date.now();
-  if (hit && now - hit.time < 60_000) return hit.data;
+  if (hit && now - hit.time < 30_000) return hit.data;
   const data = await pandaFetch(path);
   cache.set(key, { data, time: now });
   return data;
@@ -200,7 +200,7 @@ function toHistoryRow(m) {
 // terminé ne changent jamais, donc une fenêtre large (10 min) ne coûte rien
 // en fraîcheur perçue.
 let enrichedResultsCache = null; // { data, time }
-const ENRICHED_RESULTS_TTL_MS = 3 * 60 * 1000;
+const ENRICHED_RESULTS_TTL_MS = 45 * 1000;
 // Empêche deux sweeps d'enrichissement de tourner en parallèle si plusieurs
 // requêtes arrivent pendant que le cache est en train d'être recalculé.
 let enrichInProgress = false;
@@ -489,7 +489,7 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
     // (plus de limite à 8), il faut laisser plus de marge au rate-limiter de
     // vlrggapi entre chaque match, sinon seul le 1er passe et les suivants
     // se prennent des 429 en cascade.
-    await sleep(900);
+    await sleep(500);
   });
 }
 
@@ -698,7 +698,7 @@ app.get("/api/valorant-results", async (req, res) => {
 // 10 min et un intervalle de 5 min, la tâche de fond tombait toujours sur
 // "cache encore frais" et ne faisait jamais de vrai travail après le 1er
 // passage) — `enrichInProgress` protège quand même contre le chevauchement.
-const BACKGROUND_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+const BACKGROUND_REFRESH_INTERVAL_MS = 45 * 1000;
 setInterval(() => {
   refreshValorantResults(true).catch((e) => console.error("[valorant background refresh]", e.message));
 }, BACKGROUND_REFRESH_INTERVAL_MS);
