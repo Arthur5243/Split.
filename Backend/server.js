@@ -1266,7 +1266,7 @@ app.get("/admin/force-map-scores", async (req, res) => {
 // d'un ID direct : équipe1 -> recherche vlr.gg -> ID équipe -> historique de
 // l'équipe -> trouve le match contre équipe2 à la bonne date -> ID du match
 // -> détails complets (score par map).
-const VLRGGAPI_BASE = process.env.VLRGGAPI_BASE || "https://vlrggapi-production-b3a0.up.railway.app";
+const VLRGGAPI_BASE = process.env.VLRGGAPI_BASE || "https://vlrggapi-production-6b82.up.railway.app";
 
 async function vlrFetch(path) {
   const res = await fetch(VLRGGAPI_BASE + path);
