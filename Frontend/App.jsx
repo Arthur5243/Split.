@@ -6519,7 +6519,9 @@ export default function ClutchApp() {
   const [preAllRegionsCS2, setPreAllRegionsCS2] = useState(REGIONS_CS2.map((r) => r.key));
   const [selectedRegionsRL, setSelectedRegionsRL] = useState(REGIONS_RL.map((r) => r.key));
   const [preAllRegionsRL, setPreAllRegionsRL] = useState(REGIONS_RL.map((r) => r.key));
-  const [selectedStatuses, setSelectedStatuses] = useState(["upcoming"]);
+  const [valoStatus, setValoStatus] = useState(["upcoming"]);
+  const [cs2Status, setCs2Status] = useState(["upcoming"]);
+  const [rlStatus, setRlStatus] = useState(["upcoming"]);
   const [selectedCats, setSelectedCats] = useState(["VALORANT"]);
   const [preAllCats, setPreAllCats] = useState(["VALORANT"]);
   // Prédictions + points persistés en local (localStorage) : pas encore de
@@ -7071,9 +7073,9 @@ export default function ClutchApp() {
     }
   }
 
-  function toggleStatus(key) {
-    setSelectedStatuses([key]);
-  }
+  function toggleValoStatus(key) { setValoStatus([key]); }
+  function toggleCs2Status(key) { setCs2Status([key]); }
+  function toggleRlStatus(key) { setRlStatus([key]); }
 
   function toggleCat(key) {
     if (key === "ALL") {
@@ -7300,8 +7302,8 @@ export default function ClutchApp() {
             <ValorantTab
               selectedRegions={selectedRegions}
               toggleRegion={toggleRegion}
-              selectedStatuses={selectedStatuses}
-              toggleStatus={toggleStatus}
+              selectedStatuses={valoStatus}
+              toggleStatus={toggleValoStatus}
               predictions={predictions}
               onSeriesChange={onSeriesChange}
               toggleExpand={toggleExpand}
@@ -7327,8 +7329,8 @@ export default function ClutchApp() {
             <Cs2Tab
               selectedRegions={selectedRegionsCS2}
               toggleRegion={toggleRegionCS2}
-              selectedStatuses={selectedStatuses}
-              toggleStatus={toggleStatus}
+              selectedStatuses={cs2Status}
+              toggleStatus={toggleCs2Status}
               predictions={predictions}
               onSeriesChange={onSeriesChange}
               toggleExpand={toggleExpand}
@@ -7354,8 +7356,8 @@ export default function ClutchApp() {
             <RlTab
               selectedRegions={selectedRegionsRL}
               toggleRegion={toggleRegionRL}
-              selectedStatuses={selectedStatuses}
-              toggleStatus={toggleStatus}
+              selectedStatuses={rlStatus}
+              toggleStatus={toggleRlStatus}
               T={T}
               lang={currentLang}
               upcoming={rlUpcomingMatches}
@@ -7372,7 +7374,7 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setActiveTab(game === "valo" ? "valorant" : "csgo"); setSelectedStatuses(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
         </div>
