@@ -3292,19 +3292,20 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
   );
 }
 
-function BracketMatchCard({ match, accent, prediction }) {
+function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   const st = (match.status || "").toLowerCase();
   const isCompleted = st === "completed" || st === "finished";
   const isLive = st.includes("live") || st === "running";
   const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
   const predTeam = prediction?.winner;
   return (
-    <div style={{
+    <div onClick={isLive && onLiveClick ? () => onLiveClick() : undefined} style={{
       width: "100%", borderRadius: 8, overflow: "hidden", position: "relative",
       background: "linear-gradient(135deg, #161616 0%, #111 100%)",
       border: isLive ? "1px solid #ff4655" : "1px solid rgba(255,255,255,0.08)",
       boxShadow: isLive ? "0 0 16px rgba(255,70,85,0.3)" : "0 3px 12px rgba(0,0,0,0.5)",
       opacity: isTBD ? 0.4 : 1,
+      cursor: isLive ? "pointer" : "default",
     }}>
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
@@ -3359,7 +3360,7 @@ function BracketMatchCard({ match, accent, prediction }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions, onLiveClick }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
@@ -3478,7 +3479,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             </div>
             {round.matches.map((m, mi) => (
               <div key={m.match_id || mi} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
-                <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} />
+                <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} onLiveClick={onLiveClick} />
               </div>
             ))}
           </React.Fragment>
@@ -3781,7 +3782,7 @@ function BracketProgressBar({ bracket, accentColor }) {
   );
 }
 
-function BracketPage({ vlrEvents, onBack, T, predictions }) {
+function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
   const [region, setRegion] = useState(null);
@@ -3903,9 +3904,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions }) {
     return <>
       <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
       </DragScroll>
     </>;
   };
@@ -4196,7 +4197,7 @@ function matchPhaseToTournament(phase, tournament) {
   return false;
 }
 
-function CS2BracketPage({ cs2Events, onBack, T, predictions }) {
+function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
   const [phase, setPhase] = useState(null);
@@ -4233,9 +4234,9 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions }) {
     return <>
       <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
       </DragScroll>
     </>;
   };
@@ -4396,7 +4397,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions }) {
 
 function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
   if (showBracketPage) {
-    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} />;
+    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} />;
   }
 
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
@@ -4601,7 +4602,7 @@ function regionCodeRL(key) {
 
 function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
   if (showCs2BracketPage) {
-    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} />;
+    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} />;
   }
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
