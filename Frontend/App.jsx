@@ -3815,6 +3815,16 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
     return vlrEvents[stage] && !!vlrEvents[stage][rKey];
   };
 
+  const fetchBracket = async (eventId) => {
+    try {
+      const res = await fetch(API_BASE + "/api/vlr-bracket/" + eventId);
+      if (res.ok) {
+        const data = await res.json();
+        setBracketData((prev) => ({ ...prev, [eventId + ":all"]: data }));
+      }
+    } catch (e) { /* silent */ }
+  };
+
   const selectRegion = async (rKey) => {
     setRegion(rKey);
     let ev;
@@ -3824,15 +3834,18 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
     const cacheKey = ev.event_id + ":all";
     if (bracketData[cacheKey]) return;
     setLoading(true);
-    try {
-      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id);
-      if (res.ok) {
-        const data = await res.json();
-        setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
-      }
-    } catch (e) { /* silent */ }
-    finally { setLoading(false); }
+    try { await fetchBracket(ev.event_id); } finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    if (!stage || !region || !vlrEvents) return;
+    let ev;
+    if (stage === "masters") ev = vlrEvents.masters;
+    else ev = vlrEvents[stage] && vlrEvents[stage][region];
+    if (!ev) return;
+    const id = setInterval(() => fetchBracket(ev.event_id), 45000);
+    return () => clearInterval(id);
+  }, [stage, region, vlrEvents]);
 
   const currentData = React.useMemo(() => {
     if (!stage || !region || !vlrEvents) return null;
@@ -4212,20 +4225,29 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick }) {
     else onBack();
   };
 
+  const fetchCs2Bracket = async (serieId) => {
+    try {
+      const res = await fetch(API_BASE + "/api/cs2-bracket/" + serieId);
+      if (res.ok) {
+        const data = await res.json();
+        setBracketData((prev) => ({ ...prev, ["cs2:" + serieId]: data }));
+      }
+    } catch (e) { /* silent */ }
+  };
+
   const selectSerie = async (s) => {
     setSerie(s);
     const cacheKey = "cs2:" + s.serie_id;
     if (bracketData[cacheKey]) return;
     setLoading(true);
-    try {
-      const res = await fetch(API_BASE + "/api/cs2-bracket/" + s.serie_id);
-      if (res.ok) {
-        const data = await res.json();
-        setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
-      }
-    } catch (e) { /* silent */ }
-    finally { setLoading(false); }
+    try { await fetchCs2Bracket(s.serie_id); } finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    if (!serie) return;
+    const id = setInterval(() => fetchCs2Bracket(serie.serie_id), 45000);
+    return () => clearInterval(id);
+  }, [serie]);
 
   const currentData = serie ? bracketData["cs2:" + serie.serie_id] : null;
 

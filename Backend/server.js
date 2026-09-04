@@ -1421,7 +1421,7 @@ app.get("/api/vlr-history", async (req, res) => {
 });
 
 const bracketCache = new Map();
-const BRACKET_CACHE_TTL = 5 * 60 * 1000;
+const BRACKET_CACHE_TTL = 60 * 1000;
 
 const ROUND_ORDER = [
   "upper round 1", "upper quarterfinals", "upper semifinals", "upper final",
