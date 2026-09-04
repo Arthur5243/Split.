@@ -1,5 +1,117 @@
 [
   {
+    "date": "2026-08-28",
+    "region": "EMEA",
+    "team1": "FUT Esports",
+    "team2": "Karmine Corp",
+    "score": "0-2",
+    "maps": [
+      { "map": "Lotus", "score1": 6, "score2": 13, "pick": null },
+      { "map": "Haven", "score1": 8, "score2": 13, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "region": "EMEA",
+    "team1": "Team Liquid",
+    "team2": "Fire Flux Esports",
+    "score": "2-0",
+    "maps": [
+      { "map": "Haven", "score1": 13, "score2": 10, "pick": null },
+      { "map": "Lotus", "score1": 13, "score2": 10, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "region": "Pacific",
+    "team1": "KIWOOM DRX",
+    "team2": "T1",
+    "score": "0-2",
+    "maps": [
+      { "map": "Lotus", "score1": 10, "score2": 13, "pick": null },
+      { "map": "Abyss", "score1": 7, "score2": 13, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "region": "Pacific",
+    "team1": "Paper Rex",
+    "team2": "ONSIDE GAMING",
+    "score": "2-0",
+    "maps": [
+      { "map": "Abyss", "score1": 13, "score2": 11, "pick": null },
+      { "map": "Ascent", "score1": 13, "score2": 5, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "region": "Americas",
+    "team1": "Leviatán",
+    "team2": "MIBR",
+    "score": "2-0",
+    "maps": [
+      { "map": "Abyss", "score1": 13, "score2": 7, "pick": null },
+      { "map": "Haven", "score1": 13, "score2": 3, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "region": "Americas",
+    "team1": "LOUD",
+    "team2": "FURIA",
+    "score": "2-0",
+    "maps": [
+      { "map": "Haven", "score1": 13, "score2": 4, "pick": null },
+      { "map": "Summit", "score1": 13, "score2": 9, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "region": "Pacific",
+    "team1": "Gen.G",
+    "team2": "Nongshim RedForce",
+    "score": "1-2",
+    "maps": [
+      { "map": "Ascent", "score1": 8, "score2": 13, "pick": null },
+      { "map": "Summit", "score1": 13, "score2": 9, "pick": null },
+      { "map": "Sunset", "score1": 11, "score2": 13, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "region": "Pacific",
+    "team1": "VARREL",
+    "team2": "Global Esports",
+    "score": "0-2",
+    "maps": [
+      { "map": "Split", "score1": 10, "score2": 13, "pick": null },
+      { "map": "Summit", "score1": 5, "score2": 13, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-26",
+    "region": "Pacific",
+    "team1": "Global Esports",
+    "team2": "KIWOOM DRX",
+    "score": "2-1",
+    "maps": [
+      { "map": "Lotus", "score1": 13, "score2": 11, "pick": null },
+      { "map": "Ascent", "score1": 8, "score2": 13, "pick": null },
+      { "map": "Abyss", "score1": 13, "score2": 9, "pick": null }
+    ]
+  },
+  {
+    "date": "2026-08-26",
+    "region": "Pacific",
+    "team1": "Paper Rex",
+    "team2": "Nongshim RedForce",
+    "score": "0-2",
+    "maps": [
+      { "map": "Abyss", "score1": 7, "score2": 13, "pick": null },
+      { "map": "Split", "score1": 10, "score2": 13, "pick": null }
+    ]
+  },
+  {
     "date": "2026-08-20",
     "region": "China",
     "team1": "Nova Esports",
