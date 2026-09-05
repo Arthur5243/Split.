@@ -1191,5 +1191,17 @@
       { "map": "Ascent", "score1": 8, "score2": 13, "pick": "Team Liquid" },
       { "map": "Lotus", "score1": 10, "score2": 13, "pick": "FUT Esports" }
     ]
+  },
+  {
+    "date": "2026-09-05",
+    "region": "China",
+    "team1": "Nova Esports",
+    "team2": "EDward Gaming",
+    "score": "2-1",
+    "maps": [
+      { "map": "Haven", "score1": 13, "score2": 9, "pick": "Nova Esports" },
+      { "map": "Lotus", "score1": 11, "score2": 13, "pick": "EDward Gaming" },
+      { "map": "Ascent", "score1": 13, "score2": 7, "pick": null }
+    ]
   }
 ]

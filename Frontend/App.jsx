@@ -3223,6 +3223,13 @@ function NotificationsPanel({ notifications, onClose, T }) {
 }
 
 function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone }) {
+  const [homeLeaderboard, setHomeLeaderboard] = useState([]);
+  useEffect(() => {
+    fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setHomeLeaderboard(d);
+    }).catch(() => {});
+  }, []);
+  const top3 = homeLeaderboard.slice(0, 3);
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -3264,16 +3271,22 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
       <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#141414", border: "1px solid #262626" }}>
-        {[1, 2, 3].map((rank) => (
-          <div key={rank} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: rank < 3 ? "1px solid #1f1f1f" : "none" }}>
-            <div className="flex items-center gap-3">
-              <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: "#222", color: "#666", fontSize: "11px", fontWeight: 900 }}>{rank}</div>
-              <span style={{ color: "#555", fontSize: "13px", fontWeight: 600 }}>—</span>
+        {[0, 1, 2].map((i) => {
+          const user = top3[i];
+          const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+          return (
+            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #1f1f1f" : "none" }}>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
+                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? user.username : "—"}</span>
+              </div>
+              <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? `${user.points} pts` : "—"}</span>
             </div>
-            <span style={{ color: "#555", fontSize: "12px", fontWeight: 700 }}>0 pts</span>
-          </div>
-        ))}
-        <p className="text-center px-4 py-3" style={{ color: "#666", fontSize: "11px" }}>{T.classementEmptyHome}</p>
+          );
+        })}
+        {top3.length === 0 && (
+          <p className="text-center px-4 py-3" style={{ color: "#666", fontSize: "11px" }}>{T.classementEmptyHome}</p>
+        )}
       </div>
 
       <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-3">{T.calendarLabel}</p>
