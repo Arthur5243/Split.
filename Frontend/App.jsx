@@ -3895,7 +3895,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
   const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
-  const pageStyle = { minHeight: "100vh", background: "linear-gradient(rgba(10,10,10,0.82), rgba(10,10,10,0.88)), url(/DRAK.png) center top / 100% auto no-repeat scroll", backgroundColor: "#0a0a0a" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -3931,7 +3930,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
   if (showHistory) {
     if (historyEvent && historyBracketData) {
       return (
-        <div style={pageStyle}>
+        <div style={pageStylePlain}>
           <div style={headerStyle}>
             <button onClick={() => setHistoryEvent(null)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
             {titleSpan(historyEvent.title)}
@@ -3942,7 +3941,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
       );
     }
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>
           <button onClick={() => { setShowHistory(false); setHistoryEvent(null); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
           {titleSpan(T.bracketHistory)}
@@ -4054,7 +4053,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
       );
     }
     return (
-      <div style={pageStyle}>
+      <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketMasters, "#FFD700")}</div>
         {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
         {renderBracketSection(currentData?.playoffs?.bracket, "#FFD700")}
@@ -4144,7 +4143,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
   };
 
   return (
-    <div style={pageStyle}>
+    <div style={pageStylePlain}>
       <div style={headerStyle}>
         {backBtn()}
         {titleSpan(headerTitle, accent)}
@@ -6593,7 +6592,6 @@ export default function ClutchApp() {
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
-  const splashStartRef = React.useRef(Date.now());
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -6959,16 +6957,19 @@ export default function ClutchApp() {
 
   useEffect(() => {
     if (splashDone) return;
-    const allLoaded = !dataLoading && !cs2DataLoading && !rlDataLoading;
-    if (!allLoaded) return;
-    const elapsed = Date.now() - splashStartRef.current;
-    const remaining = Math.max(0, 2000 - elapsed);
+    let attempt = 0;
+    const retryNews = setInterval(() => {
+      attempt++;
+      const img = new Image();
+      img.src = NEWS_IMAGE + "&r=" + attempt;
+    }, 400);
     const t1 = setTimeout(() => {
+      clearInterval(retryNews);
       setSplashFading(true);
       setTimeout(() => setSplashDone(true), 500);
-    }, remaining);
-    return () => clearTimeout(t1);
-  }, [dataLoading, cs2DataLoading, rlDataLoading, splashDone]);
+    }, 2000);
+    return () => { clearTimeout(t1); clearInterval(retryNews); };
+  }, [splashDone]);
 
   const allTeams = React.useMemo(() => {
     const set = [];
