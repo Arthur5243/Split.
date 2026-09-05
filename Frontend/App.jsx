@@ -6962,20 +6962,23 @@ export default function ClutchApp() {
     return () => clearInterval(interval);
   }, []);
 
+  const [newsImageReady, setNewsImageReady] = useState(false);
   useEffect(() => {
     if (splashDone) return;
-    let attempt = 0;
-    const retryNews = setInterval(() => {
-      attempt++;
+    let done = false;
+    function tryLoad() {
       const img = new Image();
-      img.src = NEWS_IMAGE + "&r=" + attempt;
-    }, 400);
+      img.onload = () => { if (!done) { done = true; setNewsImageReady(true); } };
+      img.src = NEWS_IMAGE;
+    }
+    tryLoad();
+    const retry = setInterval(tryLoad, 500);
     const t1 = setTimeout(() => {
-      clearInterval(retryNews);
+      clearInterval(retry);
       setSplashFading(true);
       setTimeout(() => setSplashDone(true), 500);
     }, 2000);
-    return () => { clearTimeout(t1); clearInterval(retryNews); };
+    return () => { clearTimeout(t1); clearInterval(retry); };
   }, [splashDone]);
 
   useEffect(() => {
@@ -6991,7 +6994,7 @@ export default function ClutchApp() {
     }
     if (vlrEvents.masters?.event_id) ids.add(vlrEvents.masters.event_id);
     async function prefetchVlr() {
-      for (const id of ids) {
+      await Promise.all([...ids].map(async (id) => {
         try {
           const res = await fetch(API_BASE + "/api/vlr-bracket/" + id);
           if (res.ok) {
@@ -6999,7 +7002,7 @@ export default function ClutchApp() {
             setPrefetchedBrackets(prev => ({ ...prev, [id + ":all"]: data }));
           }
         } catch (e) { /* silent */ }
-      }
+      }));
     }
     prefetchVlr();
     const interval = setInterval(prefetchVlr, 45000);
@@ -7020,7 +7023,7 @@ export default function ClutchApp() {
     }
     if (allSeries.length === 0) return;
     async function prefetchCs2() {
-      for (const sid of allSeries) {
+      await Promise.all(allSeries.map(async (sid) => {
         try {
           const res = await fetch(API_BASE + "/api/cs2-bracket/" + sid);
           if (res.ok) {
@@ -7028,7 +7031,7 @@ export default function ClutchApp() {
             setPrefetchedBrackets(prev => ({ ...prev, ["cs2:" + sid]: data }));
           }
         } catch (e) { /* silent */ }
-      }
+      }));
     }
     prefetchCs2();
     const interval = setInterval(prefetchCs2, 45000);
@@ -7395,6 +7398,8 @@ export default function ClutchApp() {
             pointerEvents: splashFading ? "none" : "auto",
           }}>
             <img src={SPLIT_LOGO} alt="Split" style={{ width: 120, height: 120, objectFit: "contain", marginBottom: 32 }} />
+            <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+            <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               {[0, 1, 2, 3].map(i => (
                 <div key={i} style={{
