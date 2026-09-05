@@ -2968,8 +2968,8 @@ function PredBadge({ remainingPreds, T }) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#666",    logo: null,                bg: "rgba(100,100,100,0.1)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
-  { name: "Override",      minPts: 100,  color: "#CD7F32", logo: "/bronze.png",       bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
+  { name: "Unranked",      minPts: 0,    color: "#666",    logo: "unranked",          bg: "rgba(100,100,100,0.1)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/bronze.png",       bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
   { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.12)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
@@ -3008,7 +3008,13 @@ function RankBadgeCompact({ points, onClick }) {
   const isTop = rank.name === "Infinite";
   return (
     <button onClick={onClick} className="rounded-xl" style={{ background: rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
-      {rank.logo ? (
+      {rank.logo === "unranked" ? (
+        <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="2.5" strokeLinejoin="round"/>
+          <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)"/>
+          <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+        </svg>
+      ) : rank.logo ? (
         <img src={rank.logo} alt={rank.name} style={{ width: 22, height: 22, objectFit: "contain", filter: isTop ? "drop-shadow(0 0 6px rgba(56,189,248,0.6))" : "none" }} />
       ) : (
         <Shield size={18} color="#666" />
@@ -3348,7 +3354,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
                 color: won ? accent : "#555",
                 fontVariantNumeric: "tabular-nums",
               }}>
-                {team.score ?? "–"}
+                {isLive ? "•" : (team.score ?? "–")}
               </span>
             </div>
           </div>
@@ -5811,7 +5817,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
             <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
-              {rank.logo ? (
+              {rank.logo === "unranked" ? (
+                <svg width="120" height="120" viewBox="0 0 48 48" fill="none">
+                  <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)" stroke="#444" strokeWidth="0.5"/>
+                  <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+                </svg>
+              ) : rank.logo ? (
                 <img src={rank.logo} alt={rank.name} style={{ width: 120, height: 120, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
               ) : (
                 <Shield size={80} color="#666" />
@@ -5881,7 +5893,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
                 return (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
-                    {rank.logo ? (
+                    {rank.logo === "unranked" ? (
+                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                        <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="2" strokeLinejoin="round"/>
+                        <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)" stroke="#444" strokeWidth="1"/>
+                        <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+                      </svg>
+                    ) : rank.logo ? (
                       <img src={rank.logo} alt={rank.name} style={{ width: 48, height: 48, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
                     ) : (
                       <Shield size={32} color="#666" />
@@ -7212,17 +7230,7 @@ export default function ClutchApp() {
   }
 
   function toggleScoreCat(key) {
-    if (key === "tout") {
-      setScoreCats(["tout"]);
-    } else {
-      setScoreCats((prev) => {
-        const without = prev.filter((k) => k !== "tout");
-        const has = without.includes(key);
-        const next = has ? without.filter((k) => k !== key) : [...without, key];
-        if (next.length === 0 || next.length === 3) return ["tout"];
-        return next;
-      });
-    }
+    setScoreCats([key]);
   }
 
   function onSeriesChange(matchId, team, digit) {
