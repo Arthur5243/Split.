@@ -11,6 +11,12 @@
  */
 
 import { load } from "cheerio";
+import { readFileSync, writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PERSISTED_PATH = join(__dirname, "data", "scraped-map-scores.json");
 
 const VLR_BASE_URL = "https://www.vlr.gg";
 
@@ -21,7 +27,25 @@ const HEADERS = {
 };
 
 const liveScrapedScores = new Map();
-const SCRAPED_TTL_MS = 30 * 60 * 1000;
+const SCRAPED_TTL_MS = 4 * 60 * 60 * 1000; // 4h au lieu de 30min
+
+// Charger les scores persistés au démarrage
+try {
+  const raw = JSON.parse(readFileSync(PERSISTED_PATH, "utf8"));
+  for (const entry of raw) {
+    const key = normalize(entry.team1) + ":" + normalize(entry.team2);
+    liveScrapedScores.set(key, { ...entry, scrapedAt: Date.now() });
+  }
+  console.log(`[vlr-scraper] ${raw.length} score(s) persisté(s) rechargé(s)`);
+} catch {}
+
+function persistScores() {
+  const entries = [];
+  for (const [, entry] of liveScrapedScores) {
+    if (entry.persisted) entries.push(entry);
+  }
+  try { writeFileSync(PERSISTED_PATH, JSON.stringify(entries, null, 2)); } catch {}
+}
 
 let consecutiveErrors = 0;
 const MAX_BACKOFF_MS = 10 * 60 * 1000;
@@ -167,7 +191,8 @@ async function findRecentlyFinished() {
     if (teams.length < 2 || !teams[0] || !teams[1]) return;
 
     const key = normalize(teams[0]) + ":" + normalize(teams[1]);
-    if (liveScrapedScores.has(key)) return;
+    const existing = liveScrapedScores.get(key);
+    if (existing?.persisted) return; // déjà persisté avec maps complètes, skip
 
     const matchUrl = href.startsWith("http") ? href : `${VLR_BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
     matches.push({ matchUrl, team1: teams[0], team2: teams[1], finished: true });
@@ -188,19 +213,26 @@ async function runOnce() {
 
       if (maps.length > 0) {
         const key = normalize(match.team1) + ":" + normalize(match.team2);
+        const completeMaps = maps.filter((m) => m.complete);
+        let wins1 = 0, wins2 = 0;
+        for (const mp of completeMaps) { if (mp.score1 > mp.score2) wins1++; else wins2++; }
+        const seriesDecided = wins1 >= 2 || wins2 >= 2;
         liveScrapedScores.set(key, {
           team1: match.team1,
           team2: match.team2,
           matchUrl: match.matchUrl,
           maps,
           scrapedAt: Date.now(),
+          persisted: seriesDecided,
         });
+        if (seriesDecided) persistScores();
 
         console.log(
           `[vlr-scraper] ${match.team1} vs ${match.team2} →`,
           maps
             .map((m) => `${m.map}: ${m.score1}-${m.score2}`)
-            .join(" | ")
+            .join(" | "),
+          seriesDecided ? "(persisté)" : ""
         );
       }
     } catch (err) {
@@ -222,16 +254,22 @@ async function runOnce() {
         const completeMaps = maps.filter((m) => m.complete);
         if (completeMaps.length > 0) {
           const key = normalize(match.team1) + ":" + normalize(match.team2);
+          let wins1 = 0, wins2 = 0;
+          for (const mp of completeMaps) { if (mp.score1 > mp.score2) wins1++; else wins2++; }
+          const seriesDecided = wins1 >= 2 || wins2 >= 2;
           liveScrapedScores.set(key, {
             team1: match.team1,
             team2: match.team2,
             matchUrl: match.matchUrl,
             maps: completeMaps,
             scrapedAt: Date.now(),
+            persisted: seriesDecided,
           });
+          if (seriesDecided) persistScores();
           console.log(
             `[vlr-scraper] [finished] ${match.team1} vs ${match.team2} →`,
-            completeMaps.map((m) => `${m.map}: ${m.score1}-${m.score2}`).join(" | ")
+            completeMaps.map((m) => `${m.map}: ${m.score1}-${m.score2}`).join(" | "),
+            seriesDecided ? "(persisté)" : ""
           );
         }
       } catch (err) {
@@ -244,6 +282,7 @@ async function runOnce() {
 
   const now = Date.now();
   for (const [key, entry] of liveScrapedScores) {
+    if (entry.persisted) continue; // ne jamais expirer les scores persistés
     if (now - entry.scrapedAt > SCRAPED_TTL_MS) {
       liveScrapedScores.delete(key);
     }
