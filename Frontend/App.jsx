@@ -3075,7 +3075,7 @@ function DynamicSlider({ predictions, T }) {
   );
 }
 
-function NewsCarousel({ T }) {
+function NewsCarousel({ T, splashDone }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [ready, setReady] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(0);
@@ -3097,6 +3097,13 @@ function NewsCarousel({ T }) {
     });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (splashDone) return;
+    const t1 = setTimeout(() => setActiveSlide(1), 500);
+    const t2 = setTimeout(() => setActiveSlide(0), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [splashDone]);
 
   useEffect(() => {
     if (imagesLoaded >= 2) {
@@ -3212,7 +3219,7 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone }) {
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -3228,7 +3235,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           {quests?.daily?.some(q => q.completed && !q.claimed) && <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#4CAF50", border: "2px solid #000" }} />}
         </button>
       </div>
-      <NewsCarousel T={T} />
+      <NewsCarousel T={T} splashDone={splashDone} />
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 80 }}>
@@ -7437,7 +7444,7 @@ export default function ClutchApp() {
               }} onOpenNexium={() => { setShowQuestModal(false); setShowNexiumBox(true); }} T={T} />
             </div>
           )}
-          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} />}
+          {activeTab === "home" && <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} />}
           {activeTab === "valorant" && (
             <ValorantTab
               selectedRegions={selectedRegions}
