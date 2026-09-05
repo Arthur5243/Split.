@@ -1173,6 +1173,7 @@ function transformMatch(m) {
     // d'être acceptée.
     map_scores: isMapScoresConsistent(m.map_scores, score1, score2) ? m.map_scores || null : null,
     live_map_scores: m.status === "running" ? (m.live_map_scores || null) : null,
+    number_of_games: m.number_of_games || 3,
   };
 }
 
@@ -1914,6 +1915,7 @@ function computeMapErrors(games, seriesA, seriesB, team1Name, team2Name) {
   if (isNaN(sa) || isNaN(sb)) return games.map(() => null);
   const seriesWinner = sa > sb ? 1 : 2;
   const winnerName = seriesWinner === 1 ? team1Name : team2Name;
+  const winsNeeded = Math.max(sa, sb);
   const errors = games.map(() => null);
   const mapWinners = games.map((g) => {
     if (!g || g.a === "" || g.b === "") return null;
@@ -1923,19 +1925,24 @@ function computeMapErrors(games, seriesA, seriesB, team1Name, team2Name) {
     if (isNaN(a) || isNaN(b) || a === b) return null;
     return a > b ? 1 : 2;
   });
-  if (games.length === 2) {
-    for (let i = 0; i < 2; i++) {
+  if (sa + sb === winsNeeded) {
+    for (let i = 0; i < games.length; i++) {
       if (mapWinners[i] !== null && mapWinners[i] !== seriesWinner) {
         errors[i] = { name: winnerName, key: "mustWinAllMaps" };
       }
     }
-  } else if (games.length === 3) {
-    if (mapWinners[0] !== null && mapWinners[1] !== null && mapWinners[0] === mapWinners[1]) {
-      const overrunName = mapWinners[0] === 1 ? team1Name : team2Name;
-      errors[1] = { name: overrunName, key: "alreadyWonSuffix" };
+  } else {
+    let w1 = 0, w2 = 0;
+    for (let i = 0; i < games.length; i++) {
+      if (mapWinners[i] === 1) w1++;
+      if (mapWinners[i] === 2) w2++;
+      if (i < games.length - 1 && mapWinners[i] !== null && (w1 >= winsNeeded || w2 >= winsNeeded)) {
+        const overrunName = w1 >= winsNeeded ? team1Name : team2Name;
+        errors[i] = { name: overrunName, key: "alreadyWonSuffix" };
+      }
     }
-    if (mapWinners[2] !== null && mapWinners[2] !== seriesWinner) {
-      errors[2] = { name: winnerName, key: "mustWinLastMap" };
+    if (mapWinners[games.length - 1] !== null && mapWinners[games.length - 1] !== seriesWinner) {
+      errors[games.length - 1] = { name: winnerName, key: "mustWinLastMap" };
     }
   }
   return errors;
@@ -1980,14 +1987,16 @@ function isGameScoreComplete(v) {
 // l'autre case (onAdvance), comme un champ de code OTP. Si l'autre case du
 // même duel est déjà remplie, la saisie du duel est complète -> on ferme le
 // clavier numérique (blur) au lieu de rebasculer dessus.
-const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance, otherValue }, ref) {
+const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance, otherValue, maxDigit }, ref) {
+  const max = maxDigit || 2;
+  const re = max === 3 ? /[^0-3]/g : /[^0-2]/g;
   return (
     <input
       ref={ref}
       value={value}
       onChange={(e) => {
         if (disabled) return;
-        const v = e.target.value.replace(/[^0-2]/g, "").slice(-1);
+        const v = e.target.value.replace(re, "").slice(-1);
         onChange(v);
         if (v === "") return;
         if (isSeriesScoreComplete(otherValue)) {
@@ -2051,7 +2060,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesB = (pred && pred.seriesB) || "";
   const expanded = pred && pred.expanded;
   const games = (pred && pred.games) || [];
-  const hasCompleteBet = seriesA !== "" && seriesB !== "" && [[2,0],[2,1],[1,2],[0,2]].some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
+  const bo = match.number_of_games || 3;
+  const winsNeeded = bo === 5 ? 3 : 2;
+  const validBo = bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
+  const hasCompleteBet = seriesA !== "" && seriesB !== "" && validBo.some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
   const LOCK_HOURS = 6;
   const lockedByTime = (() => {
     if (running || finished) return true;
@@ -2140,6 +2152,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
+            {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
           </span>
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -2343,12 +2356,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="px-4 pb-3 flex items-center justify-center gap-3">
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
-            <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} />
+            <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
           </div>
           <span style={{ color: "#444", fontWeight: 900, fontSize: "18px" }}>–</span>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
-            <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} />
+            <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
         </div>
       )}
@@ -4477,14 +4490,9 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   // date du match — même délai que le règlement des pronostics plus bas —
   // passé laquelle on l'affiche quand même dans "Terminé" avec ce qu'on a,
   // plutôt que de le laisser coincé indéfiniment dans "à venir".
-  const now = Date.now();
-  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
-  const stillWithinGrace = (m) => {
-    const dayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
-    return dayMs != null && now - dayMs < 48 * 60 * 60 * 1000;
-  };
-  const resultsReady = results.filter((m) => hasRealMapScore(m) || !stillWithinGrace(m));
-  const resultsPending = results.filter((m) => !hasRealMapScore(m) && stillWithinGrace(m));
+  const hasSeriesScore = (m) => m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0);
+  const resultsReady = results.filter((m) => hasSeriesScore(m));
+  const resultsPending = results.filter((m) => !hasSeriesScore(m));
 
   // dédoublonne par id : un match tout juste terminé peut, le temps d'un
   // poll, apparaître à la fois dans `live` (PandaScore n'a pas encore
@@ -4672,14 +4680,9 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   // (retentative en cours côté backend, cf RETRY_DELAYS_MS dans
   // cs2-history-store.js) reste affiché dans "à venir" plutôt que "Terminé",
   // pour ne jamais montrer un faux 0-0.
-  const now = Date.now();
-  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
-  const stillWithinGrace = (m) => {
-    const dayMs = m.day ? new Date(m.day + "T00:00:00Z").getTime() : null;
-    return dayMs != null && now - dayMs < 48 * 60 * 60 * 1000;
-  };
-  const resultsReady = results.filter((m) => hasRealMapScore(m) || !stillWithinGrace(m));
-  const resultsPending = results.filter((m) => !hasRealMapScore(m) && stillWithinGrace(m));
+  const hasSeriesScore = (m) => m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0);
+  const resultsReady = results.filter((m) => hasSeriesScore(m));
+  const resultsPending = results.filter((m) => !hasSeriesScore(m));
 
   function dedupeById(list) {
     const seen = new Map();
@@ -7264,15 +7267,17 @@ export default function ClutchApp() {
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
+      const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
+      const bo = src?.number_of_games || 3;
+      const validPairs = bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
       const hadCompleteBet = cur.seriesA !== "" && cur.seriesB !== "" &&
-        [[2,0],[2,1],[1,2],[0,2]].some(([x,y]) => parseInt(cur.seriesA) === x && parseInt(cur.seriesB) === y);
+        validPairs.some(([x,y]) => parseInt(cur.seriesA) === x && parseInt(cur.seriesB) === y);
       const next = { ...cur, [team]: digit };
       const a = next.seriesA;
       const b = next.seriesB;
       if (a !== "" && b !== "") {
         const an = parseInt(a, 10);
         const bn = parseInt(b, 10);
-        const validPairs = [[2, 0], [2, 1], [1, 2], [0, 2]];
         const ok = validPairs.some(([x, y]) => x === an && y === bn);
         if (ok) {
           const isFirstComplete = !hadCompleteBet;
@@ -7302,7 +7307,6 @@ export default function ClutchApp() {
           }
           const count = an + bn;
           const games = Array.from({ length: count }, (_, i) => (cur.games && cur.games[i]) || { a: "", b: "" });
-          const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
           const odds1 = src ? src.odds1 : cur.odds1;
           const odds2 = src ? src.odds2 : cur.odds2;
           return { ...prev, [matchId]: { ...next, games, expanded: true, odds1, odds2 } };
