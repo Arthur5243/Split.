@@ -20,6 +20,9 @@ db.exec(`
     fav_cs2 TEXT,
     fav_rl TEXT,
     points INTEGER DEFAULT 0,
+    points_valo INTEGER DEFAULT 0,
+    points_cs2 INTEGER DEFAULT 0,
+    points_rl INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -32,6 +35,13 @@ db.exec(`
     PRIMARY KEY (follower_id, followed_id)
   );
   CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+`);
+
+try { db.exec(`ALTER TABLE users ADD COLUMN points_valo INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN points_cs2 INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN points_rl INTEGER DEFAULT 0`); } catch {}
+
+db.exec(`
   CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
 
   CREATE TABLE IF NOT EXISTS profile_views (
@@ -45,8 +55,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -56,6 +66,9 @@ const stmts = {
       fav_cs2 = @fav_cs2,
       fav_rl = @fav_rl,
       points = @points,
+      points_valo = @points_valo,
+      points_cs2 = @points_cs2,
+      points_rl = @points_rl,
       updated_at = datetime('now')
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
@@ -85,10 +98,10 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE points > 0 ORDER BY points DESC LIMIT 50`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl FROM users WHERE points > 0 ORDER BY points DESC LIMIT 50`),
 };
 
-export function upsertUser({ id, pseudo, avatar, bio, favTeams, points }) {
+export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame }) {
   stmts.upsertUser.run({
     id,
     pseudo: pseudo || "Joueur",
@@ -99,6 +112,9 @@ export function upsertUser({ id, pseudo, avatar, bio, favTeams, points }) {
     fav_cs2: favTeams?.cs2 || null,
     fav_rl: favTeams?.rl || null,
     points: points || 0,
+    points_valo: pointsPerGame?.valo || 0,
+    points_cs2: pointsPerGame?.cs2 || 0,
+    points_rl: pointsPerGame?.rl || 0,
   });
 }
 

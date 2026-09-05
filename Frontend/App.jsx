@@ -5920,7 +5920,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
                       </svg>
                     ) : rank.logo ? (
-                      <img src={rank.logo} alt={rank.name} style={{ width: 48, height: 48, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
+                      <img src={rank.logo} alt={rank.name} style={{ width: 38, height: 38, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
                     ) : (
                       <Shield size={32} color="#666" />
                     )}
@@ -5969,17 +5969,25 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
               )}
               {profile && (() => {
-                const merged = [...leaderboard];
+                function getUserPtsForFilter(u) {
+                  if (scoreCats.includes("tout")) return u.points;
+                  let t = 0;
+                  if (scoreCats.includes("valo")) t += u.points_valo || 0;
+                  if (scoreCats.includes("cs2")) t += u.points_cs2 || 0;
+                  if (scoreCats.includes("rl")) t += u.points_rl || 0;
+                  return t;
+                }
+                const merged = leaderboard.map(u => ({ ...u, displayPts: getUserPtsForFilter(u) }));
                 const myIdx = merged.findIndex(u => u.id === profile.userId);
                 if (myIdx === -1 && score > 0) {
-                  merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score });
-                  merged.sort((a, b) => b.points - a.points);
+                  merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score, points_valo: pointsPerGame.valo || 0, points_cs2: pointsPerGame.cs2 || 0, points_rl: pointsPerGame.rl || 0, displayPts: score });
                 } else if (myIdx >= 0) {
-                  merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points, score) };
-                  merged.sort((a, b) => b.points - a.points);
+                  merged[myIdx] = { ...merged[myIdx], displayPts: Math.max(merged[myIdx].displayPts, score) };
                 }
-                if (merged.length === 0) return null;
-                return merged.slice(0, 50).map((u, i) => {
+                const filtered = merged.filter(u => u.displayPts > 0);
+                filtered.sort((a, b) => b.displayPts - a.displayPts);
+                if (filtered.length === 0) return null;
+                return filtered.slice(0, 50).map((u, i) => {
                   const isMe = u.id === profile.userId;
                   return (
                     <button key={u.id} onClick={() => { if (isMe) setProfileView(true); }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
@@ -5988,9 +5996,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                      {(() => { const r = getUserRank(u.points); return r.logo ? <img src={r.logo} alt={r.name} style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
+                      {(() => { const r = getUserRank(u.displayPts); return r.logo && r.logo !== "unranked" ? <img src={r.logo} alt={r.name} style={{ width: 22, height: 22, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
                       <div className="text-right shrink-0">
-                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.points}</span>
+                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.displayPts}</span>
                         <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
@@ -6677,12 +6685,12 @@ export default function ClutchApp() {
   const [showFriendModal, setShowFriendModal] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
 
-  function syncProfileToBackend(p, pts) {
+  function syncProfileToBackend(p, pts, ppg) {
     if (!p?.userId) return;
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0 }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame }),
     }).catch(() => {});
   }
   useEffect(() => {
@@ -7344,18 +7352,21 @@ export default function ClutchApp() {
       return next;
     });
     if (pointsToAdd > 0) {
+      let newTotal;
       setUserPoints((prev) => {
-        const next = prev + pointsToAdd;
-        localStorage.setItem("split_points_total", String(next));
-        syncProfileToBackend(profile, next);
-        return next;
+        newTotal = prev + pointsToAdd;
+        localStorage.setItem("split_points_total", String(newTotal));
+        return newTotal;
       });
       if (game) {
         setPointsPerGame((prev) => {
           const next = { ...prev, [game]: (prev[game] || 0) + pointsToAdd };
           localStorage.setItem("split_points_per_game", JSON.stringify(next));
+          syncProfileToBackend(profile, newTotal, next);
           return next;
         });
+      } else {
+        syncProfileToBackend(profile, newTotal);
       }
     }
   }

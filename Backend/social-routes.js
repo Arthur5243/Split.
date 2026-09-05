@@ -18,9 +18,9 @@ import {
 const router = Router();
 
 router.post("/api/social/register", (req, res) => {
-  const { id, pseudo, avatar, bio, favTeams, points } = req.body;
+  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame } = req.body;
   if (!id || !pseudo) return res.status(400).json({ error: "id and pseudo required" });
-  upsertUser({ id, pseudo, avatar, bio, favTeams, points });
+  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame });
   res.json({ ok: true });
 });
 
