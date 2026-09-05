@@ -3143,7 +3143,7 @@ function NewsCarousel({ T }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
         <div className="absolute inset-0" style={{ backgroundImage: `url(${NEWS_IMAGE})`, backgroundSize: "cover", backgroundPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -3785,15 +3785,18 @@ function BracketProgressBar({ bracket, accentColor }) {
   );
 }
 
-function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick }) {
+function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
   const [region, setRegion] = useState(null);
-  const [bracketData, setBracketData] = useState({});
+  const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyData, setHistoryData] = useState(null);
   const [historyEvent, setHistoryEvent] = useState(null);
+  useEffect(() => {
+    if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
+  }, [prefetchedBrackets]);
   const accent = region ? (REGIONS.find((r) => r.key === region) || {}).accent || "#C4F000" : "#C4F000";
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -4212,12 +4215,15 @@ function matchPhaseToTournament(phase, tournament) {
   return false;
 }
 
-function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick }) {
+function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
   const [phase, setPhase] = useState(null);
-  const [bracketData, setBracketData] = useState({});
+  const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
+  }, [prefetchedBrackets]);
 
   useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase]);
 
@@ -4419,9 +4425,9 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick }) {
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
   if (showBracketPage) {
-    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} />;
+    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
 
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
@@ -4624,9 +4630,9 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
   if (showCs2BracketPage) {
-    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} />;
+    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
@@ -6703,6 +6709,7 @@ export default function ClutchApp() {
   const [showBracketPage, setShowBracketPage] = useState(false);
   const [cs2Events, setCs2Events] = useState(null);
   const [showCs2BracketPage, setShowCs2BracketPage] = useState(false);
+  const [prefetchedBrackets, setPrefetchedBrackets] = useState({});
 
   const T = currentLang === "fr" ? STR.fr : { ...STR.fr, ...(STR[currentLang] || {}) };
   const isLight = false;
@@ -6970,6 +6977,63 @@ export default function ClutchApp() {
     }, 2000);
     return () => { clearTimeout(t1); clearInterval(retryNews); };
   }, [splashDone]);
+
+  useEffect(() => {
+    if (!vlrEvents || Object.keys(vlrEvents).length === 0) return;
+    const ids = new Set();
+    for (const stageKey of ["kickoff", "stage1", "stage2"]) {
+      const stageData = vlrEvents[stageKey];
+      if (!stageData) continue;
+      for (const regionKey of Object.keys(stageData)) {
+        const ev = stageData[regionKey];
+        if (ev?.event_id) ids.add(ev.event_id);
+      }
+    }
+    if (vlrEvents.masters?.event_id) ids.add(vlrEvents.masters.event_id);
+    async function prefetchVlr() {
+      for (const id of ids) {
+        try {
+          const res = await fetch(API_BASE + "/api/vlr-bracket/" + id);
+          if (res.ok) {
+            const data = await res.json();
+            setPrefetchedBrackets(prev => ({ ...prev, [id + ":all"]: data }));
+          }
+        } catch (e) { /* silent */ }
+      }
+    }
+    prefetchVlr();
+    const interval = setInterval(prefetchVlr, 45000);
+    return () => clearInterval(interval);
+  }, [vlrEvents]);
+
+  useEffect(() => {
+    if (!cs2Events) return;
+    const allSeries = [];
+    for (const bucket of Object.values(cs2Events)) {
+      if (Array.isArray(bucket)) {
+        for (const s of bucket) {
+          if (s.serie_id && (s.status === "running" || s.status === "upcoming")) {
+            allSeries.push(s.serie_id);
+          }
+        }
+      }
+    }
+    if (allSeries.length === 0) return;
+    async function prefetchCs2() {
+      for (const sid of allSeries) {
+        try {
+          const res = await fetch(API_BASE + "/api/cs2-bracket/" + sid);
+          if (res.ok) {
+            const data = await res.json();
+            setPrefetchedBrackets(prev => ({ ...prev, ["cs2:" + sid]: data }));
+          }
+        } catch (e) { /* silent */ }
+      }
+    }
+    prefetchCs2();
+    const interval = setInterval(prefetchCs2, 45000);
+    return () => clearInterval(interval);
+  }, [cs2Events]);
 
   const allTeams = React.useMemo(() => {
     const set = [];
@@ -7394,6 +7458,7 @@ export default function ClutchApp() {
               setShowBracketPage={setShowBracketPage}
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.valo || 0}
+              prefetchedBrackets={prefetchedBrackets}
             />
           )}
           {activeTab === "csgo" && (
@@ -7421,6 +7486,7 @@ export default function ClutchApp() {
               setShowCs2BracketPage={setShowCs2BracketPage}
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.cs2 || 0}
+              prefetchedBrackets={prefetchedBrackets}
             />
           )}
           {activeTab === "rocketleague" && (
