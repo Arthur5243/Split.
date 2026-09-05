@@ -3278,7 +3278,14 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
             <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #1f1f1f" : "none" }}>
               <div className="flex items-center gap-3">
                 <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
-                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? user.username : "—"}</span>
+                {user && user.avatar ? (
+                  <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `2px solid ${rankColors[i]}33` }} />
+                ) : (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User size={14} color="#555" />
+                  </div>
+                )}
+                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
               </div>
               <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? `${user.points} pts` : "—"}</span>
             </div>
