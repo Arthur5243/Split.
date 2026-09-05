@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
-const NEWS_IMAGE = "/news-image.jpg";
+const NEWS_IMAGE = "/news-image.jpg?v=" + Math.floor(Date.now() / 3600000);
 const NEWS_EWC_IMAGE = "/news-ewc.png";
 const REWARDS_BANNER = "/rewards-banner.png";
 
@@ -53,7 +53,10 @@ const NAV_VALORANT_IMG = "/Valo(1).png";
 const NAV_CSGO_IMG = "/Cs2(2).png";
 const NAV_RL_IMG = "/Rl(1).png";
 
+// Preload aggressif images critiques (news + récompenses)
 [NEWS_IMAGE, NEWS_EWC_IMAGE, REWARDS_BANNER].forEach(src => { const img = new Image(); img.src = src; });
+// Force-preload news image via fetch pour contourner le cache cassé
+fetch(NEWS_IMAGE, { cache: "reload" }).then(r => r.blob()).catch(() => {});
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
@@ -6588,6 +6591,9 @@ export default function ClutchApp() {
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
+  const [splashFading, setSplashFading] = useState(false);
+  const splashStartRef = React.useRef(Date.now());
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -6951,6 +6957,19 @@ export default function ClutchApp() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (splashDone) return;
+    const allLoaded = !dataLoading && !cs2DataLoading && !rlDataLoading;
+    if (!allLoaded) return;
+    const elapsed = Date.now() - splashStartRef.current;
+    const remaining = Math.max(0, 2000 - elapsed);
+    const t1 = setTimeout(() => {
+      setSplashFading(true);
+      setTimeout(() => setSplashDone(true), 500);
+    }, remaining);
+    return () => clearTimeout(t1);
+  }, [dataLoading, cs2DataLoading, rlDataLoading, splashDone]);
+
   const allTeams = React.useMemo(() => {
     const set = [];
     [...upcomingMatches, ...liveMatches, ...resultsMatches].forEach((m) => {
@@ -7301,6 +7320,34 @@ export default function ClutchApp() {
   return (
     <div className="flex items-center justify-center p-4" style={{ background: "#000", minHeight: "700px" }}>
       <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
+
+        {!splashDone && (
+          <div style={{
+            position: "absolute", inset: 0, zIndex: 9999, background: "#000",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            paddingBottom: "60px",
+            opacity: splashFading ? 0 : 1, transition: "opacity 0.5s ease-out",
+            pointerEvents: splashFading ? "none" : "auto",
+          }}>
+            <img src={SPLIT_LOGO} alt="Split" style={{ width: 120, height: 120, objectFit: "contain", marginBottom: 32 }} />
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} style={{
+                  width: 8, height: 8, borderRadius: "50%", background: "#C4F000",
+                  animation: "splashPulse 1.2s ease-in-out infinite",
+                  animationDelay: `${i * 0.15}s`,
+                }} />
+              ))}
+            </div>
+            <style>{`
+              @keyframes splashPulse {
+                0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+                40% { opacity: 1; transform: scale(1.2); }
+              }
+            `}</style>
+          </div>
+        )}
+
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden" }}>
