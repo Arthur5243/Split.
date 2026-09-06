@@ -4850,6 +4850,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   // cs2-history-store.js) reste affiché dans "à venir" plutôt que "Terminé",
   // pour ne jamais montrer un faux 0-0.
   const hasSeriesScore = (m) => m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0);
+  const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
   const resultsReady = results.filter((m) => hasSeriesScore(m));
   const resultsPending = results.filter((m) => !hasSeriesScore(m));
 
