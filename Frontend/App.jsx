@@ -2610,26 +2610,71 @@ const QUEST_DAILY_POOL = [
   { id: "bet_3_matches", titleKey: "questBet3Matches", target: 3, kit: "pronostic", xp: 125 },
   { id: "bet_cs2", titleKey: "questBetCs2", target: 1, kit: "pronostic", xp: 75 },
   { id: "bet_valo", titleKey: "questBetValo", target: 1, kit: "pronostic", xp: 75 },
+  { id: "bet_4_matches", title: "Place 4 pronostics", target: 4, kit: "pronostic", xp: 150 },
+  { id: "bet_5_matches", title: "Place 5 pronostics", target: 5, kit: "pronostic", xp: 175 },
+  { id: "bet_both_games", title: "Parie sur Valo ET CS2", target: 2, kit: "pronostic", xp: 125 },
+  { id: "bet_rl", title: "Parie sur un match RL", target: 1, kit: "pronostic", xp: 75 },
+  { id: "bet_all_3_games", title: "Parie sur les 3 jeux", target: 3, kit: "pronostic", xp: 200 },
   { id: "view_bracket", titleKey: "questViewBracket", target: 1, kit: "engagement", xp: 50 },
   { id: "check_live", titleKey: "questCheckLive", target: 1, kit: "engagement", xp: 75 },
+  { id: "check_results", title: "Consulte les résultats", target: 1, kit: "engagement", xp: 50 },
+  { id: "scroll_leaderboard", title: "Consulte le classement", target: 1, kit: "engagement", xp: 50 },
+  { id: "open_calendar", title: "Ouvre le calendrier", target: 1, kit: "engagement", xp: 50 },
   { id: "add_avatar", titleKey: "questAddAvatar", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "add_bio", titleKey: "questAddBio", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "choose_fav", titleKey: "questChooseFav", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "invite_friend", titleKey: "questInviteFriend", target: 1, kit: "social", xp: 150 },
   { id: "follow_someone", titleKey: "questFollowSomeone", target: 1, kit: "social", xp: 100 },
+  { id: "follow_3", title: "Suis 3 joueurs", target: 3, kit: "social", xp: 175 },
   { id: "visit_profile", titleKey: "questVisitProfile", target: 1, kit: "social", xp: 50 },
+  { id: "visit_3_profiles", title: "Visite 3 profils", target: 3, kit: "social", xp: 100 },
   { id: "open_new_tab", titleKey: "questOpenNewTab", target: 1, kit: "discovery", oneTime: true, xp: 75 },
   { id: "view_classement", titleKey: "questViewClassement", target: 1, kit: "discovery", oneTime: true, xp: 50 },
   { id: "exact_score", titleKey: "questExactScore", target: 1, kit: "precision", xp: 200 },
+  { id: "exact_2", title: "2 scores exacts", target: 2, kit: "precision", xp: 300 },
   { id: "bet_underdog", titleKey: "questBetUnderdog", target: 1, kit: "precision", xp: 125 },
   { id: "share_app", titleKey: "questShareApp", target: 1, kit: "social", xp: 150 },
+  { id: "win_bet", title: "Gagne un pari", target: 1, kit: "pronostic", xp: 100 },
+  { id: "win_2_bets", title: "Gagne 2 paris", target: 2, kit: "pronostic", xp: 150 },
+  { id: "win_3_bets", title: "Gagne 3 paris", target: 3, kit: "pronostic", xp: 200 },
+  { id: "streak_2", title: "Atteins un streak de 2", target: 2, kit: "streak", xp: 125 },
+  { id: "streak_3", title: "Atteins un streak de 3", target: 3, kit: "streak", xp: 175 },
+  { id: "streak_5", title: "Atteins un streak de 5", target: 5, kit: "streak", xp: 250 },
+  { id: "post_nexus", title: "Publie un post Nexus", target: 1, kit: "social", xp: 75 },
+  { id: "like_post", title: "Like un post", target: 1, kit: "social", xp: 50 },
+  { id: "bet_map_score", title: "Pronostique un score de map", target: 1, kit: "precision", xp: 100 },
+  { id: "bet_2_map_scores", title: "Pronostique 2 scores de map", target: 2, kit: "precision", xp: 150 },
 ];
+function generateMatchQuests(upcoming, game) {
+  if (!upcoming || !upcoming.length) return [];
+  return upcoming.slice(0, 10).map(m => ({
+    id: `bet_match_${m.id}`,
+    title: `Parie sur ${m.opponents?.[0]?.name || m.team1 || "?"} vs ${m.opponents?.[1]?.name || m.team2 || "?"}`,
+    target: 1,
+    kit: "pronostic",
+    xp: 75,
+    matchId: String(m.id),
+    game,
+  }));
+}
 const QUEST_WEEKLY_POOL = [
   { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly", xp: 400 },
   { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly", xp: 500 },
   { id: "weekly_10_bets", titleKey: "questWeekly10Bets", target: 10, kit: "weekly", xp: 300 },
+  { id: "weekly_7_bets", title: "Place 7 pronostics cette semaine", target: 7, kit: "weekly", xp: 250 },
+  { id: "weekly_15_bets", title: "Place 15 pronostics cette semaine", target: 15, kit: "weekly", xp: 500 },
+  { id: "weekly_20_bets", title: "Place 20 pronostics cette semaine", target: 20, kit: "weekly", xp: 600 },
+  { id: "weekly_bet_all_games", title: "Parie sur les 3 jeux cette semaine", target: 3, kit: "weekly", xp: 350 },
+  { id: "weekly_5_exact", title: "5 scores exacts cette semaine", target: 5, kit: "weekly", xp: 700 },
+  { id: "weekly_streak_5", title: "Maintiens un streak de 5 jours", target: 5, kit: "weekly", xp: 450 },
+  { id: "weekly_streak_7", title: "Streak parfait (7 jours)", target: 7, kit: "weekly", xp: 600 },
+  { id: "weekly_10_wins", title: "Gagne 10 paris cette semaine", target: 10, kit: "weekly", xp: 500 },
+  { id: "weekly_follow_5", title: "Suis 5 joueurs cette semaine", target: 5, kit: "weekly", xp: 300 },
+  { id: "weekly_3_cs2", title: "3 paris CS2 cette semaine", target: 3, kit: "weekly", xp: 250 },
+  { id: "weekly_3_valo", title: "3 paris Valo cette semaine", target: 3, kit: "weekly", xp: 250 },
+  { id: "weekly_visit_5_profiles", title: "Visite 5 profils cette semaine", target: 5, kit: "weekly", xp: 200 },
 ];
-const PRECISION_IDS = new Set(["exact_score"]);
+const PRECISION_IDS = new Set(["exact_score", "exact_2"]);
 const DAILY_BET_LIMIT = 5;
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
@@ -2640,20 +2685,29 @@ function loadQuests() {
 }
 function saveQuests(q) { localStorage.setItem("split_quests", JSON.stringify(q)); }
 
-function assignDailyQuests(completedOneTimeIds) {
+function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
   const state = loadQuests();
   const today = todayStr();
   const ws = weekStartStr();
   if (state && state.lastAssigned === today) return state;
   const history = state?.history || [];
-  const avail = QUEST_DAILY_POOL.filter(q => {
+  const matchQuests = [];
+  if (upcomingMatches) {
+    if (upcomingMatches.valo) matchQuests.push(...generateMatchQuests(upcomingMatches.valo, "valo"));
+    if (upcomingMatches.cs2) matchQuests.push(...generateMatchQuests(upcomingMatches.cs2, "cs2"));
+    if (upcomingMatches.rl) matchQuests.push(...generateMatchQuests(upcomingMatches.rl, "rl"));
+  }
+  const fullPool = [...QUEST_DAILY_POOL, ...matchQuests];
+  const avail = fullPool.filter(q => {
     if (q.oneTime && completedOneTimeIds.has(q.id)) return false;
     if (PRECISION_IDS.has(q.id) && history.slice(-3).includes(q.id)) return false;
     if (history.slice(-1).includes(q.id)) return false;
     return true;
   });
   const shuffled = [...avail].sort(() => Math.random() - 0.5);
-  const daily = shuffled.slice(0, 3).map(q => ({ ...q, progress: 0, completed: false, claimed: false }));
+  const matchPick = shuffled.find(q => q.matchId);
+  const regularPicks = shuffled.filter(q => !q.matchId).slice(0, matchPick ? 2 : 3);
+  const daily = (matchPick ? [...regularPicks, matchPick] : regularPicks).map(q => ({ ...q, progress: 0, completed: false, claimed: false }));
   let weekly = state?.weekly;
   if (!weekly || state?.weekStart !== ws) {
     const wPool = [...QUEST_WEEKLY_POOL].sort(() => Math.random() - 0.5);
@@ -2724,33 +2778,14 @@ function totalXpForTier(tier) {
   for (let t = 2; t <= tier; t++) total += xpForTier(t);
   return total;
 }
-const TIER_MILESTONES = {
-  1: { icon: "🎁", label: "Pack de bienvenue" },
-  5: { icon: "🔥", label: "Emblème Flamme" },
-  10: { icon: "📦", label: "Nexium Box" },
-  15: { icon: "🎨", label: "Bordure Argent" },
-  20: { icon: "📦", label: "Nexium Box" },
-  25: { icon: "🛡️", label: "Badge Challenger" },
-  30: { icon: "📦", label: "Nexium Box" },
-  35: { icon: "🎭", label: "Emote Rare" },
-  40: { icon: "📦", label: "Nexium Box" },
-  45: { icon: "🎨", label: "Bordure Or" },
-  50: { icon: "👑", label: "Badge Légende" },
-  55: { icon: "📦", label: "Nexium Box" },
-  60: { icon: "🔮", label: "Effet Profil" },
-  65: { icon: "📦", label: "Nexium Box" },
-  70: { icon: "⚡", label: "Badge Master" },
-  75: { icon: "🎨", label: "Bordure Diamant" },
-  80: { icon: "📦", label: "Nexium Box" },
-  85: { icon: "🏅", label: "Badge Grand Master" },
-  90: { icon: "📦", label: "Nexium Box" },
-  95: { icon: "🔮", label: "Effet Épique" },
-  100: { icon: "💎", label: "Badge Ultime" },
-};
 function getTierReward(tier) {
-  if (TIER_MILESTONES[tier]) return TIER_MILESTONES[tier];
-  return { icon: "⭐", label: null };
+  if (tier === 1) return { icon: "🎁", label: "Pack de bienvenue", rarity: "free" };
+  if (tier <= 15) return { icon: "📦", label: "Coffre Bronze", rarity: "common" };
+  if (tier <= 45) return { icon: "📦", label: "Coffre Argent", rarity: "rare" };
+  if (tier <= 80) return { icon: "📦", label: "Coffre Or", rarity: "epic" };
+  return { icon: "📦", label: "Coffre Diamant", rarity: "legendary" };
 }
+const RARITY_COLORS = { free: "#4CAF50", common: "#CD7F32", rare: "#A855F7", epic: "#EAB308", legendary: "#38BDF8" };
 
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -2890,7 +2925,7 @@ function QuestModal({ quests, onClose, onClaim, T, userXp }) {
           {done ? <CheckCircle size={18} color="#4CAF50" /> : kitIcon(false)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{T[q.titleKey] || q.titleKey}</p>
+          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{q.title || T[q.titleKey] || q.titleKey}</p>
           <p style={{ color: "#A855F7", fontSize: 10, fontWeight: 800, marginBottom: 4 }}>+{q.xp || 50} {T.xpLabel}</p>
           <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden", width: "calc(100% - 28px)" }}>
             <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.4s ease" }} />
@@ -2956,6 +2991,9 @@ function RewardsModal({ onClose, T, userXp }) {
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [claimedTiers, setClaimedTiers] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
+  });
 
   useEffect(() => {
     if (currentRef.current && scrollRef.current) {
@@ -2985,77 +3023,77 @@ function RewardsModal({ onClose, T, userXp }) {
     }
   };
 
+  function claimTier(tier) {
+    const next = [...claimedTiers, tier];
+    setClaimedTiers(next);
+    localStorage.setItem("split_claimed_tiers", JSON.stringify(next));
+  }
+
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
 
   return (
-    <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%", position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+    <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", minHeight: "100%", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
-        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
+        <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "16px 20px", background: "linear-gradient(180deg, rgba(168,85,247,0.08) 0%, #000 100%)", borderBottom: "1px solid #1a1a1a" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ color: "#A855F7", fontSize: 22, fontWeight: 900 }}>{T.tierLabel} {currentTier}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <Zap size={14} color="#A855F7" />
-            <span style={{ color: "#c084fc", fontSize: 13, fontWeight: 800 }}>{userXp || 0} {T.xpLabel}</span>
-          </div>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ color: "#CCF71D", fontSize: 18, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
+          <span style={{ color: "#888", fontSize: 12, fontWeight: 700 }}>{currentTier}/100</span>
         </div>
         {currentTier < 100 && (
-          <>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-              <span style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel} {currentTier}</span>
-              <span style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel} {currentTier + 1}</span>
-            </div>
-            <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden", marginBottom: 4 }}>
-              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #A855F7, #6366F1)", transition: "width 0.5s ease" }} />
-            </div>
-            <p style={{ color: "#888", fontSize: 10, fontWeight: 600, textAlign: "right" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded} {T.xpLabel}</p>
-          </>
+          <div style={{ height: 6, borderRadius: 3, background: "#1a1a1a", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
+          </div>
         )}
-        {currentTier >= 100 && <p style={{ color: "#A855F7", fontSize: 12, fontWeight: 800, textAlign: "center", marginTop: 4 }}>MAX</p>}
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "8px 16px 80px" }}>
+      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 80px" }}>
         {Array.from({ length: 100 }, (_, i) => i + 1).map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
           const isNext = tier === currentTier + 1;
-          const special = !!TIER_MILESTONES[tier];
+          const claimed = claimedTiers.includes(tier);
+          const canClaim = unlocked && !claimed;
+          const rarityColor = RARITY_COLORS[reward.rarity] || "#666";
           return (
             <div key={tier} ref={isCurrent ? currentRef : undefined}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", position: "relative" }}>
-                <div style={{ width: 36, textAlign: "center", flexShrink: 0 }}>
-                  <span style={{ color: isCurrent ? "#A855F7" : unlocked ? "#4CAF50" : "#444", fontSize: 13, fontWeight: 900 }}>{tier}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
+                <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
+                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#666" : "#333", fontSize: 12, fontWeight: 900 }}>{tier}</span>
                 </div>
-                <div style={{ position: "relative", width: 4, alignSelf: "stretch", flexShrink: 0 }}>
-                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 1, width: 2, background: unlocked ? "#A855F730" : "#222" }} />
-                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -3, width: 10, height: 10, borderRadius: "50%", background: "#A855F7", transform: "translateY(-50%)", boxShadow: "0 0 8px #A855F7" }} />}
+                <div style={{ position: "relative", width: 3, alignSelf: "stretch", flexShrink: 0 }}>
+                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 3, borderRadius: 2, background: unlocked ? rarityColor + "40" : "#1a1a1a" }} />
+                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -4, width: 11, height: 11, borderRadius: "50%", background: "#CCF71D", transform: "translateY(-50%)", boxShadow: "0 0 10px rgba(204,247,29,0.5)" }} />}
                   {isNext && tierInfo.xpNeeded > 0 && (
-                    <div style={{ position: "absolute", top: 0, left: 1, width: 2, height: progressPct + "%", background: "#A855F750" }} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, width: 3, height: progressPct + "%", borderRadius: 2, background: "#CCF71D50" }} />
                   )}
                 </div>
-                <div style={{
-                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 12,
-                  background: isCurrent ? "rgba(168,85,247,0.1)" : special && unlocked ? "rgba(76,175,80,0.06)" : "#0a0a0a",
-                  border: `1px solid ${isCurrent ? "rgba(168,85,247,0.3)" : special ? "#222" : "#161616"}`,
-                  opacity: unlocked || isCurrent ? 1 : 0.5,
+                <button onClick={() => { if (canClaim) claimTier(tier); }} disabled={!canClaim && !claimed} style={{
+                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 14,
+                  background: canClaim ? "rgba(204,247,29,0.06)" : isCurrent ? "#141414" : "#0e0e0e",
+                  border: `1px solid ${canClaim ? "rgba(204,247,29,0.25)" : isCurrent ? "#2a2a2a" : "#181818"}`,
+                  opacity: unlocked || isCurrent ? 1 : 0.4,
+                  cursor: canClaim ? "pointer" : "default",
+                  textAlign: "left",
                 }}>
-                  <span style={{ fontSize: special ? 22 : 16 }}>{reward.icon}</span>
+                  <span style={{ fontSize: 24, filter: unlocked ? "none" : "grayscale(1)" }}>{reward.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {special && <p style={{ color: unlocked ? "#eee" : "#666", fontSize: 12, fontWeight: 700 }}>{reward.label}</p>}
-                    {!special && <p style={{ color: "#555", fontSize: 11, fontWeight: 600 }}>{xpForTier(tier + 1 <= 100 ? tier + 1 : 100)} {T.xpLabel}</p>}
-                    {tier === 1 && <span style={{ color: "#4CAF50", fontSize: 9, fontWeight: 800, textTransform: "uppercase" }}>{T.rewardsTierFree}</span>}
+                    <p style={{ color: canClaim ? "#CCF71D" : unlocked ? "#ccc" : "#555", fontSize: 12, fontWeight: 700 }}>{reward.label}</p>
+                    <p style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.8 }}>{reward.rarity === "free" ? "Gratuit" : "En cours..."}</p>
                   </div>
-                  {unlocked ? (
-                    <CheckCircle size={16} color="#4CAF50" />
+                  {claimed ? (
+                    <CheckCircle size={18} color="#4CAF50" />
+                  ) : canClaim ? (
+                    <span style={{ background: "#CCF71D", color: "#000", fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 8 }}>Ouvrir</span>
                   ) : (
-                    <Lock size={14} color="#444" />
+                    <Lock size={14} color="#333" />
                   )}
-                </div>
+                </button>
               </div>
             </div>
           );
@@ -3064,12 +3102,12 @@ function RewardsModal({ onClose, T, userXp }) {
 
       {showScrollBtn && (
         <button onClick={scrollToCurrent} style={{
-          position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)",
-          background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 20,
-          padding: "10px 20px", fontSize: 12, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
-          boxShadow: "0 4px 16px rgba(168,85,247,0.4)", zIndex: 10,
+          position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
+          background: "#CCF71D", color: "#000", border: "none", borderRadius: 20,
+          padding: "8px 18px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+          boxShadow: "0 4px 16px rgba(204,247,29,0.3)", zIndex: 10,
         }}>
-          <ArrowUp size={14} /> {T.tierScrollUp || "Remonter"}
+          <ArrowUp size={12} /> {T.tierScrollUp || "Remonter"}
         </button>
       )}
     </div>
@@ -5317,8 +5355,8 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   );
 }
 
-function FriendModal({ onClose, T, profile, userPoints }) {
-  const [tab, setTab] = useState("search");
+function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
+  const [tab, setTab] = useState(initialTab || "search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [following, setFollowing] = useState([]);
@@ -5416,9 +5454,14 @@ function FriendModal({ onClose, T, profile, userPoints }) {
           </button>
         </div>
         <div className="flex px-5" style={{ borderBottom: "1px solid #1e1e1e" }}>
-          <button onClick={() => setTab("search")} style={tabStyle(tab === "search")}>{T.friendTabSearch}</button>
-          <button onClick={() => setTab("following")} style={tabStyle(tab === "following")}>{T.friendTabFollowing} ({following.length})</button>
-          <button onClick={() => setTab("followers")} style={tabStyle(tab === "followers")}>{T.friendTabFollowers} ({followers.length})</button>
+          {(!initialTab || initialTab === "search") ? (
+            <button onClick={() => setTab("search")} style={{ ...tabStyle(true), flex: 1 }}>{T.friendTabSearch}</button>
+          ) : (
+            <>
+              <button onClick={() => setTab("followers")} style={tabStyle(tab === "followers")}>{T.friendTabFollowers} ({followers.length})</button>
+              <button onClick={() => setTab("following")} style={tabStyle(tab === "following")}>{T.friendTabFollowing} ({following.length})</button>
+            </>
+          )}
         </div>
         <div className="px-5 py-4 flex-1 overflow-y-auto" style={{ maxHeight: "60vh" }}>
           {tab === "search" && (
@@ -5920,6 +5963,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [nexusPosts, setNexusPosts] = useState([]);
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
+  const [friendModalTab, setFriendModalTab] = useState("search");
 
   useEffect(() => {
     if (profile?.userId) {
@@ -5949,8 +5993,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </button>
             <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
           </div>
-          <button onClick={() => setShowFriendModal(true)} className="rounded-full p-2" style={{ background: "#181818" }}>
-            <Plus size={18} color="#ccc" />
+          <button onClick={onEditProfile} className="rounded-lg px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit || "Modifier"}</span>
           </button>
         </div>
 
@@ -5963,14 +6007,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             )}
           </div>
           <div className="flex-1 flex justify-around text-center">
-            <div>
+            <button onClick={() => { setShowFriendModal(true); setFriendModalTab("followers"); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.followers}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
-            </div>
-            <div>
+            </button>
+            <button onClick={() => { setShowFriendModal(true); setFriendModalTab("following"); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.following}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowing}</p>
-            </div>
+            </button>
             <div>
               <p className="font-black" style={{ fontSize: "18px", color: "#CCF71D" }}>{userPoints}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.profilePoint}</p>
@@ -6049,7 +6093,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           ))}
         </div>
 
-        {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
+        {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
       </div>
     );
   }
@@ -6059,13 +6103,26 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     const ss = spectatorStats || {};
     const allPts = leaderboard.map(u => u.points);
     const rank = getUserRank(su.displayPts || su.points || 0, allPts.length >= 50 ? allPts : undefined);
+    let bellOn = !!ss.bellOn;
+    if (!bellOn) { try { bellOn = (JSON.parse(localStorage.getItem("split_notif_users") || "[]")).includes(su.id); } catch {} }
     return (
       <div className="px-4 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-5">
           <button onClick={() => { setSpectatorUser(null); setSpectatorStats(null); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
             <ArrowLeft size={18} color="#ccc" />
           </button>
-          <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{su.pseudo}</h1>
+          <h1 className="font-black text-white flex-1" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{su.pseudo}</h1>
+          <button onClick={() => {
+            try {
+              const list = JSON.parse(localStorage.getItem("split_notif_users") || "[]");
+              const has = list.includes(su.id);
+              const next = has ? list.filter(x => x !== su.id) : [...list, su.id];
+              localStorage.setItem("split_notif_users", JSON.stringify(next));
+              setSpectatorStats(prev => ({ ...prev, bellOn: !has }));
+            } catch {}
+          }} className="rounded-full p-1.5" style={{ background: bellOn ? "rgba(204,247,29,0.15)" : "#181818", border: "1px solid #2a2a2a" }}>
+            <Bell size={16} color={bellOn ? "#CCF71D" : "#666"} />
+          </button>
         </div>
         <div className="flex items-center gap-4 mb-4">
           <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1a1a1a", border: "2px solid #333", flexShrink: 0 }}>
@@ -6361,7 +6418,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
       </div>
 
-      {showFriendModal && <FriendModal onClose={() => setShowFriendModal(false)} T={T} profile={profile} userPoints={userPoints} />}
+      {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
 
       {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} />}
 
@@ -6905,6 +6962,7 @@ export default function ClutchApp() {
   });
 
   const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
+  const questMatchRefDone = useRef(false);
   const [streak, setStreak] = useState(() => {
     const checked = checkStreakExpiry();
     return checked;
@@ -7038,6 +7096,21 @@ export default function ClutchApp() {
   const [rlResultsMatches, setRlResultsMatches] = useState([]);
   const [rlDataLoading, setRlDataLoading] = useState(true);
   const [rlDataError, setRlDataError] = useState(false);
+
+  useEffect(() => {
+    if (questMatchRefDone.current) return;
+    const hasData = upcomingMatches.length || cs2UpcomingMatches.length || rlUpcomingMatches.length;
+    if (!hasData) return;
+    questMatchRefDone.current = true;
+    const saved = loadQuests();
+    const today = todayStr();
+    if (saved && saved.lastAssigned === today && saved.daily.some(q => q.matchId)) return;
+    if (saved && saved.lastAssigned === today) {
+      localStorage.removeItem("split_quests");
+    }
+    const fresh = assignDailyQuests(new Set(), { valo: upcomingMatches, cs2: cs2UpcomingMatches, rl: rlUpcomingMatches });
+    setQuestState(fresh);
+  }, [upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
 
   const [vlrEvents, setVlrEvents] = useState({});
   const [showBracketPage, setShowBracketPage] = useState(false);
@@ -7870,6 +7943,7 @@ export default function ClutchApp() {
               <button key={item.key} onClick={() => {
                 setShowBracketPage(false); setShowCs2BracketPage(false);
                 setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false);
+                setProfileView(false);
                 setActiveTab(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
