@@ -40,6 +40,8 @@ import {
   Shield,
   Settings,
   Square,
+  ArrowUp,
+  Clock,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -317,6 +319,10 @@ const STR = {
     streakExplain: "Fais au moins 1 pronostic par jour pour entretenir ta flamme. Si tu rates un jour, ta streak repart à 0 !",
     notifTitle: "Notifications", notifEmpty: "Aucune notification pour le moment", notifFriendReq: "Demande d'ami", notifBigMatch: "Match important", notifTeamQualified: "Équipe qualifiée",
     questProgressLabel: "Progression",
+    questBet3Matches: "Pronostique 3 matchs", questBetCs2: "Fais un prono CS2", questBetValo: "Fais un prono Valorant", questFollowSomeone: "Suis un joueur", questVisitProfile: "Visite un profil", questCheckLive: "Regarde un match live", questBetUnderdog: "Mise sur l'outsider", questShareApp: "Partage Split", questWeekly10Bets: "10 pronos cette semaine",
+    xpLabel: "XP", xpEarned: "XP gagnés !", tierLabel: "Palier", tierCurrent: "Palier actuel", tierScrollUp: "Remonter",
+    streakExpired: "Streak perdue !", streakExpiredDesc: "Tu n'as pas pronostiqué hier. Ta streak repart à 0.", streakExpiring: "Ta streak expire bientôt !",
+    rewardsTierFree: "GRATUIT", rewardsTierLocked: "Verrouillé",
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
@@ -395,6 +401,10 @@ const STR = {
     streakExplain: "Make at least 1 prediction per day to keep your flame. Miss a day and your streak resets to 0!",
     notifTitle: "Notifications", notifEmpty: "No notifications yet", notifFriendReq: "Friend request", notifBigMatch: "Big match", notifTeamQualified: "Team qualified",
     questProgressLabel: "Progress",
+    questBet3Matches: "Predict 3 matches", questBetCs2: "Make a CS2 prediction", questBetValo: "Make a Valorant prediction", questFollowSomeone: "Follow a player", questVisitProfile: "Visit a profile", questCheckLive: "Watch a live match", questBetUnderdog: "Bet on the underdog", questShareApp: "Share Split", questWeekly10Bets: "10 predictions this week",
+    xpLabel: "XP", xpEarned: "XP earned!", tierLabel: "Tier", tierCurrent: "Current tier", tierScrollUp: "Scroll up",
+    streakExpired: "Streak lost!", streakExpiredDesc: "You didn't predict yesterday. Your streak resets to 0.", streakExpiring: "Your streak expires soon!",
+    rewardsTierFree: "FREE", rewardsTierLocked: "Locked",
   },
   es: {
     navHome: "Inicio", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Clasificación",
@@ -2594,21 +2604,30 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 // ═══════════════════════════════════════════════════
 
 const QUEST_DAILY_POOL = [
-  { id: "bet_today", titleKey: "questBetToday", target: 1, kit: "pronostic" },
-  { id: "bet_2_games", titleKey: "questBet2Games", target: 1, kit: "pronostic" },
-  { id: "use_all_slots", titleKey: "questUseAllSlots", target: 4, kit: "pronostic" },
-  { id: "view_bracket", titleKey: "questViewBracket", target: 1, kit: "engagement" },
-  { id: "add_avatar", titleKey: "questAddAvatar", target: 1, kit: "profile", oneTime: true },
-  { id: "add_bio", titleKey: "questAddBio", target: 1, kit: "profile", oneTime: true },
-  { id: "choose_fav", titleKey: "questChooseFav", target: 1, kit: "profile", oneTime: true },
-  { id: "invite_friend", titleKey: "questInviteFriend", target: 1, kit: "social" },
-  { id: "open_new_tab", titleKey: "questOpenNewTab", target: 1, kit: "discovery", oneTime: true },
-  { id: "view_classement", titleKey: "questViewClassement", target: 1, kit: "discovery", oneTime: true },
-  { id: "exact_score", titleKey: "questExactScore", target: 1, kit: "precision" },
+  { id: "bet_today", titleKey: "questBetToday", target: 1, kit: "pronostic", xp: 75 },
+  { id: "bet_2_games", titleKey: "questBet2Games", target: 1, kit: "pronostic", xp: 100 },
+  { id: "use_all_slots", titleKey: "questUseAllSlots", target: 4, kit: "pronostic", xp: 150 },
+  { id: "bet_3_matches", titleKey: "questBet3Matches", target: 3, kit: "pronostic", xp: 125 },
+  { id: "bet_cs2", titleKey: "questBetCs2", target: 1, kit: "pronostic", xp: 75 },
+  { id: "bet_valo", titleKey: "questBetValo", target: 1, kit: "pronostic", xp: 75 },
+  { id: "view_bracket", titleKey: "questViewBracket", target: 1, kit: "engagement", xp: 50 },
+  { id: "check_live", titleKey: "questCheckLive", target: 1, kit: "engagement", xp: 75 },
+  { id: "add_avatar", titleKey: "questAddAvatar", target: 1, kit: "profile", oneTime: true, xp: 100 },
+  { id: "add_bio", titleKey: "questAddBio", target: 1, kit: "profile", oneTime: true, xp: 100 },
+  { id: "choose_fav", titleKey: "questChooseFav", target: 1, kit: "profile", oneTime: true, xp: 100 },
+  { id: "invite_friend", titleKey: "questInviteFriend", target: 1, kit: "social", xp: 150 },
+  { id: "follow_someone", titleKey: "questFollowSomeone", target: 1, kit: "social", xp: 100 },
+  { id: "visit_profile", titleKey: "questVisitProfile", target: 1, kit: "social", xp: 50 },
+  { id: "open_new_tab", titleKey: "questOpenNewTab", target: 1, kit: "discovery", oneTime: true, xp: 75 },
+  { id: "view_classement", titleKey: "questViewClassement", target: 1, kit: "discovery", oneTime: true, xp: 50 },
+  { id: "exact_score", titleKey: "questExactScore", target: 1, kit: "precision", xp: 200 },
+  { id: "bet_underdog", titleKey: "questBetUnderdog", target: 1, kit: "precision", xp: 125 },
+  { id: "share_app", titleKey: "questShareApp", target: 1, kit: "social", xp: 150 },
 ];
 const QUEST_WEEKLY_POOL = [
-  { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly" },
-  { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly" },
+  { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly", xp: 400 },
+  { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly", xp: 500 },
+  { id: "weekly_10_bets", titleKey: "questWeekly10Bets", target: 10, kit: "weekly", xp: 300 },
 ];
 const PRECISION_IDS = new Set(["exact_score"]);
 const DAILY_BET_LIMIT = 5;
@@ -2649,6 +2668,26 @@ function loadStreak() {
   try { return JSON.parse(localStorage.getItem("split_streak")) || { current: 0, best: 0, lastBetDate: null }; } catch { return { current: 0, best: 0, lastBetDate: null }; }
 }
 function saveStreak(s) { localStorage.setItem("split_streak", JSON.stringify(s)); }
+function checkStreakExpiry() {
+  const s = loadStreak();
+  if (s.current === 0 || !s.lastBetDate) return { ...s, justExpired: false };
+  const today = todayStr();
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+  if (s.lastBetDate === today || s.lastBetDate === yStr) return { ...s, justExpired: false };
+  const expired = { current: 0, best: s.best, lastBetDate: s.lastBetDate };
+  saveStreak(expired);
+  return { ...expired, justExpired: true, lostStreak: s.current };
+}
+function isStreakExpiring() {
+  const s = loadStreak();
+  if (s.current === 0 || !s.lastBetDate) return false;
+  const today = todayStr();
+  if (s.lastBetDate === today) return false;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+  return s.lastBetDate === yStr;
+}
 function updateStreak() {
   const s = loadStreak();
   const today = todayStr();
@@ -2662,6 +2701,56 @@ function updateStreak() {
   return { ...next, earned: true };
 }
 
+function loadXp() { try { return parseInt(localStorage.getItem("split_xp")) || 0; } catch { return 0; } }
+function saveXp(xp) { localStorage.setItem("split_xp", String(xp)); }
+function xpForTier(tier) {
+  if (tier <= 1) return 0;
+  if (tier <= 15) return 400;
+  if (tier <= 45) return 600;
+  if (tier <= 80) return 800;
+  return 1000;
+}
+function getTierFromXp(totalXp) {
+  let remaining = totalXp;
+  for (let t = 2; t <= 100; t++) {
+    const cost = xpForTier(t);
+    if (remaining < cost) return { tier: t - 1, xpInTier: remaining, xpNeeded: cost };
+    remaining -= cost;
+  }
+  return { tier: 100, xpInTier: 0, xpNeeded: 0 };
+}
+function totalXpForTier(tier) {
+  let total = 0;
+  for (let t = 2; t <= tier; t++) total += xpForTier(t);
+  return total;
+}
+const TIER_MILESTONES = {
+  1: { icon: "🎁", label: "Pack de bienvenue" },
+  5: { icon: "🔥", label: "Emblème Flamme" },
+  10: { icon: "📦", label: "Nexium Box" },
+  15: { icon: "🎨", label: "Bordure Argent" },
+  20: { icon: "📦", label: "Nexium Box" },
+  25: { icon: "🛡️", label: "Badge Challenger" },
+  30: { icon: "📦", label: "Nexium Box" },
+  35: { icon: "🎭", label: "Emote Rare" },
+  40: { icon: "📦", label: "Nexium Box" },
+  45: { icon: "🎨", label: "Bordure Or" },
+  50: { icon: "👑", label: "Badge Légende" },
+  55: { icon: "📦", label: "Nexium Box" },
+  60: { icon: "🔮", label: "Effet Profil" },
+  65: { icon: "📦", label: "Nexium Box" },
+  70: { icon: "⚡", label: "Badge Master" },
+  75: { icon: "🎨", label: "Bordure Diamant" },
+  80: { icon: "📦", label: "Nexium Box" },
+  85: { icon: "🏅", label: "Badge Grand Master" },
+  90: { icon: "📦", label: "Nexium Box" },
+  95: { icon: "🔮", label: "Effet Épique" },
+  100: { icon: "💎", label: "Badge Ultime" },
+};
+function getTierReward(tier) {
+  if (TIER_MILESTONES[tier]) return TIER_MILESTONES[tier];
+  return { icon: "⭐", label: null };
+}
 
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -2782,14 +2871,14 @@ const QUEST_KIT_ICONS = {
   weekly: (done) => <Award size={16} color={done ? "#4CAF50" : "#FFD700"} />,
 };
 
-function QuestModal({ quests, onClose, onClaim, onOpenNexium, T }) {
-  const [questTab, setQuestTab] = useState("quests");
+function QuestModal({ quests, onClose, onClaim, T, userXp }) {
   if (!quests) return null;
   const { daily, weekly } = quests;
   const allQuests = [...(daily || []), ...(weekly ? [weekly] : [])];
   const completedCount = allQuests.filter(q => q.completed).length;
   const totalCount = allQuests.length;
   const overallPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const tierInfo = getTierFromXp(userXp || 0);
 
   const renderQuest = (q, idx, isWeekly) => {
     const pct = Math.min(100, (q.progress / q.target) * 100);
@@ -2801,7 +2890,8 @@ function QuestModal({ quests, onClose, onClaim, onOpenNexium, T }) {
           {done ? <CheckCircle size={18} color="#4CAF50" /> : kitIcon(false)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{T[q.titleKey] || q.titleKey}</p>
+          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{T[q.titleKey] || q.titleKey}</p>
+          <p style={{ color: "#A855F7", fontSize: 10, fontWeight: 800, marginBottom: 4 }}>+{q.xp || 50} {T.xpLabel}</p>
           <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden", width: "calc(100% - 28px)" }}>
             <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.4s ease" }} />
           </div>
@@ -2809,11 +2899,11 @@ function QuestModal({ quests, onClose, onClaim, onOpenNexium, T }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
           {done && !q.claimed ? (
-            <button onClick={() => onClaim(q.id, isWeekly)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>{T.questClaim}</button>
+            <button onClick={() => onClaim(q.id, isWeekly, q.xp || 50)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>+{q.xp || 50} XP</button>
           ) : q.claimed ? (
             <CheckCircle size={16} color="#4CAF50" />
           ) : (
-            <Gift size={14} color="#A855F7" style={{ opacity: 0.5 }} />
+            <Zap size={14} color="#A855F7" style={{ opacity: 0.3 }} />
           )}
         </div>
       </div>
@@ -2823,128 +2913,165 @@ function QuestModal({ quests, onClose, onClaim, onOpenNexium, T }) {
     <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
-        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{questTab === "quests" ? T.questTitle : (T.rewardsTitle || "Récompenses")}</p>
+        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.questTitle}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ display: "flex", gap: 4, padding: "12px 16px", background: "#0a0a0a" }}>
-        <button onClick={() => setQuestTab("quests")} style={{ flex: 1, padding: "8px 0", background: questTab === "quests" ? "#1c1c1c" : "transparent", border: questTab === "quests" ? "1px solid #333" : "1px solid transparent", borderRadius: 8, color: questTab === "quests" ? "#fff" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-          <ListChecks size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />{T.questTitle}
-        </button>
-        <button onClick={() => setQuestTab("rewards")} style={{ flex: 1, padding: "8px 0", background: questTab === "rewards" ? "#1c1c1c" : "transparent", border: questTab === "rewards" ? "1px solid #333" : "1px solid transparent", borderRadius: 8, color: questTab === "rewards" ? "#A855F7" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-          <Gift size={14} style={{ display: "inline", verticalAlign: "middle", marginRight: 4 }} />{T.rewardsTitle || "Récompenses"}
-        </button>
+      <div style={{ padding: "16px 16px 8px", background: "#0a0a0a", borderBottom: "1px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Zap size={14} color="#A855F7" />
+            <span style={{ color: "#A855F7", fontSize: 14, fontWeight: 900 }}>{userXp || 0} {T.xpLabel}</span>
+          </div>
+          <span style={{ color: "#888", fontSize: 11, fontWeight: 700 }}>{T.tierLabel} {tierInfo.tier}</span>
+        </div>
+        <div className="flex items-center justify-between mb-2">
+          <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
+          <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
+        </div>
+        <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
+        </div>
       </div>
 
-      {questTab === "quests" ? (
-        <>
-          <div style={{ padding: "20px 16px", borderBottom: "1px solid #1a1a1a" }}>
-            <div className="flex items-center justify-between mb-2">
-              <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
-              <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
-            </div>
-            <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-              {(daily || []).map((q, i) => renderQuest(q, i, false))}
-            </div>
-            {weekly && (
-              <>
-                <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
-                {renderQuest(weekly, 0, true)}
-              </>
-            )}
-          </div>
-        </>
-      ) : (
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <div style={{ width: 80, height: 80, borderRadius: 20, background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.1))", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 20 }}>
-            <Gift size={36} color="#A855F7" />
-          </div>
-          <p style={{ color: "#ccc", fontSize: 14, fontWeight: 800, textAlign: "center" }}>{T.rewardsQuestLinked || "Complète des quêtes pour débloquer des récompenses !"}</p>
-          <p style={{ color: "#666", fontSize: 12, textAlign: "center", maxWidth: 280 }}>{T.rewardsQuestSub || "Chaque quête terminée te donne une chance d'ouvrir une Nexium Box."}</p>
-          {onOpenNexium && (
-            <button onClick={onOpenNexium} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer", marginTop: 8 }}>
-              {T.rewardsOpenBox || "Ouvrir une Box"}
-            </button>
-          )}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+          {(daily || []).map((q, i) => renderQuest(q, i, false))}
         </div>
-      )}
+        {weekly && (
+          <>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
+            {renderQuest(weekly, 0, true)}
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-function RewardsModal({ onClose, onOpenNexium, T }) {
-  const [tab, setTab] = useState("rewards");
-  const inventory = loadInventory();
-  const installCount = 3;
-  const installTarget = 1000;
-  const pct = Math.min(100, (installCount / installTarget) * 100);
-  const tabStyle = (active) => ({ flex: 1, padding: "10px 0", background: active ? "#1c1c1c" : "transparent", border: "none", borderRadius: 8, color: active ? "#fff" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer" });
+function RewardsModal({ onClose, T, userXp }) {
+  const tierInfo = getTierFromXp(userXp || 0);
+  const currentTier = tierInfo.tier;
+  const scrollRef = useRef(null);
+  const currentRef = useRef(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+  useEffect(() => {
+    if (currentRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const el = currentRef.current;
+      const top = el.offsetTop - container.offsetTop - 120;
+      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (!scrollRef.current || !currentRef.current) return;
+    const container = scrollRef.current;
+    const el = currentRef.current;
+    const elTop = el.offsetTop - container.offsetTop;
+    const visTop = container.scrollTop;
+    const visBottom = visTop + container.clientHeight;
+    setShowScrollBtn(elTop < visTop - 50 || elTop > visBottom + 50);
+  };
+
+  const scrollToCurrent = () => {
+    if (currentRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const el = currentRef.current;
+      const top = el.offsetTop - container.offsetTop - 120;
+      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+  };
+
+  const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
+
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "min(390px, 100%)", maxHeight: "80vh", background: "#0a0a0a", borderRadius: "20px 20px 0 0", padding: "20px 16px 32px", overflowY: "auto" }}>
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: "#333", margin: "0 auto 16px" }} />
-        <div style={{ display: "flex", gap: 4, background: "#111", borderRadius: 10, padding: 3, marginBottom: 20 }}>
-          <button onClick={() => setTab("rewards")} style={tabStyle(tab === "rewards")}>{T.rewardsFree}</button>
-          <button onClick={() => setTab("cashprize")} style={tabStyle(tab === "cashprize")}>{T.cashprizeTitle}</button>
+    <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+        <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
+        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
+        <div style={{ width: 20 }} />
+      </div>
+
+      <div style={{ padding: "16px 20px", background: "linear-gradient(180deg, rgba(168,85,247,0.08) 0%, #000 100%)", borderBottom: "1px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+          <span style={{ color: "#A855F7", fontSize: 22, fontWeight: 900 }}>{T.tierLabel} {currentTier}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Zap size={14} color="#A855F7" />
+            <span style={{ color: "#c084fc", fontSize: 13, fontWeight: 800 }}>{userXp || 0} {T.xpLabel}</span>
+          </div>
         </div>
-        {tab === "rewards" && (
+        {currentTier < 100 && (
           <>
-            <button onClick={onOpenNexium} style={{ width: "100%", background: "linear-gradient(135deg, rgba(168,85,247,0.15), rgba(99,102,241,0.1))", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 14, padding: "20px 16px", cursor: "pointer", textAlign: "center", marginBottom: 20 }}>
-              <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>📦</span>
-              <span style={{ color: "#c084fc", fontSize: 14, fontWeight: 900, display: "block" }}>{T.nexiumBox}</span>
-              <span style={{ color: "#888", fontSize: 11, display: "block", marginTop: 4 }}>{T.questCompleted} → {T.nexiumOpen}</span>
-            </button>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{T.inventoryTitle}</p>
-            {inventory.length === 0 && <p style={{ color: "#555", fontSize: 12, textAlign: "center", padding: 20 }}>{T.inventoryEmpty}</p>}
-            {inventory.length > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                {inventory.map((item, i) => (
-                  <div key={i} style={{ background: "#141414", border: `1px solid ${RARITY_COLORS[item.rarity]}30`, borderRadius: 10, padding: "12px 8px", textAlign: "center" }}>
-                    <div style={{ fontSize: 22, marginBottom: 4 }}>{item.icon}</div>
-                    <p style={{ color: "#ccc", fontSize: 10, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
-                    <span style={{ fontSize: 8, color: RARITY_COLORS[item.rarity], fontWeight: 800, textTransform: "uppercase" }}>{T[RARITY_LABELS[item.rarity]]}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel} {currentTier}</span>
+              <span style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel} {currentTier + 1}</span>
+            </div>
+            <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden", marginBottom: 4 }}>
+              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #A855F7, #6366F1)", transition: "width 0.5s ease" }} />
+            </div>
+            <p style={{ color: "#888", fontSize: 10, fontWeight: 600, textAlign: "right" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded} {T.xpLabel}</p>
           </>
         )}
-        {tab === "cashprize" && (
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🏆</div>
-            <p style={{ color: "#FFD700", fontSize: 15, fontWeight: 900, marginBottom: 8 }}>{T.cashprizeTitle}</p>
-            <p style={{ color: "#aaa", fontSize: 12, marginBottom: 20 }}>{T.cashprizeRules}</p>
-            <div style={{ background: "#141414", borderRadius: 12, padding: "16px", border: "1px solid #262626", marginBottom: 16 }}>
-              <p style={{ color: "#888", fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.cashprizeUnlock}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <div style={{ flex: 1, height: 6, borderRadius: 3, background: "#262626", overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: "linear-gradient(90deg, #FFD700, #F59E0B)" }} />
-                </div>
-                <span style={{ color: "#888", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{installCount}/{installTarget}</span>
-              </div>
-              <p style={{ color: "#555", fontSize: 10 }}>{T.cashprizeInstalls}</p>
-            </div>
-            <div style={{ background: "#141414", borderRadius: 12, padding: "16px", border: "1px solid #262626" }}>
-              <p style={{ color: "#888", fontSize: 10, fontWeight: 700, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.cashprizeWinners}</p>
-              {[1, 2, 3].map(r => (
-                <div key={r} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: r < 3 ? "1px solid #1f1f1f" : "none" }}>
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", background: r === 1 ? "#FFD70030" : r === 2 ? "#C0C0C030" : "#CD7F3230", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900, color: r === 1 ? "#FFD700" : r === 2 ? "#C0C0C0" : "#CD7F32" }}>
-                    {r}
-                  </div>
-                  <span style={{ color: "#555", fontSize: 12, fontWeight: 600 }}>—</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {currentTier >= 100 && <p style={{ color: "#A855F7", fontSize: 12, fontWeight: 800, textAlign: "center", marginTop: 4 }}>MAX</p>}
       </div>
+
+      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "8px 16px 80px" }}>
+        {Array.from({ length: 100 }, (_, i) => i + 1).map(tier => {
+          const reward = getTierReward(tier);
+          const unlocked = tier <= currentTier;
+          const isCurrent = tier === currentTier;
+          const isNext = tier === currentTier + 1;
+          const special = !!TIER_MILESTONES[tier];
+          return (
+            <div key={tier} ref={isCurrent ? currentRef : undefined}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", position: "relative" }}>
+                <div style={{ width: 36, textAlign: "center", flexShrink: 0 }}>
+                  <span style={{ color: isCurrent ? "#A855F7" : unlocked ? "#4CAF50" : "#444", fontSize: 13, fontWeight: 900 }}>{tier}</span>
+                </div>
+                <div style={{ position: "relative", width: 4, alignSelf: "stretch", flexShrink: 0 }}>
+                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 1, width: 2, background: unlocked ? "#A855F730" : "#222" }} />
+                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -3, width: 10, height: 10, borderRadius: "50%", background: "#A855F7", transform: "translateY(-50%)", boxShadow: "0 0 8px #A855F7" }} />}
+                  {isNext && tierInfo.xpNeeded > 0 && (
+                    <div style={{ position: "absolute", top: 0, left: 1, width: 2, height: progressPct + "%", background: "#A855F750" }} />
+                  )}
+                </div>
+                <div style={{
+                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 12,
+                  background: isCurrent ? "rgba(168,85,247,0.1)" : special && unlocked ? "rgba(76,175,80,0.06)" : "#0a0a0a",
+                  border: `1px solid ${isCurrent ? "rgba(168,85,247,0.3)" : special ? "#222" : "#161616"}`,
+                  opacity: unlocked || isCurrent ? 1 : 0.5,
+                }}>
+                  <span style={{ fontSize: special ? 22 : 16 }}>{reward.icon}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {special && <p style={{ color: unlocked ? "#eee" : "#666", fontSize: 12, fontWeight: 700 }}>{reward.label}</p>}
+                    {!special && <p style={{ color: "#555", fontSize: 11, fontWeight: 600 }}>{xpForTier(tier + 1 <= 100 ? tier + 1 : 100)} {T.xpLabel}</p>}
+                    {tier === 1 && <span style={{ color: "#4CAF50", fontSize: 9, fontWeight: 800, textTransform: "uppercase" }}>{T.rewardsTierFree}</span>}
+                  </div>
+                  {unlocked ? (
+                    <CheckCircle size={16} color="#4CAF50" />
+                  ) : (
+                    <Lock size={14} color="#444" />
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {showScrollBtn && (
+        <button onClick={scrollToCurrent} style={{
+          position: "absolute", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 20,
+          padding: "10px 20px", fontSize: 12, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+          boxShadow: "0 4px 16px rgba(168,85,247,0.4)", zIndex: 10,
+        }}>
+          <ArrowUp size={14} /> {T.tierScrollUp || "Remonter"}
+        </button>
+      )}
     </div>
   );
 }
@@ -2957,6 +3084,32 @@ function StreakPopup({ streak, onClose, T }) {
       <div>
         <p style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{T.streakEarned}</p>
         <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600 }}>{streak.current} {T.streakDays} 🔥</p>
+      </div>
+    </div>
+  );
+}
+
+function XpPopup({ xp, onClose, T }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #A855F7, #6366F1)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(168,85,247,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 2.5s forwards", cursor: "pointer" }}>
+      <Zap size={24} color="#fff" />
+      <div>
+        <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>+{xp} {T.xpLabel}</p>
+        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600 }}>{T.xpEarned}</p>
+      </div>
+    </div>
+  );
+}
+
+function StreakExpiredPopup({ lostStreak, onClose, T }) {
+  useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, [onClose]);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #EF4444, #DC2626)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(239,68,68,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3.5s forwards", cursor: "pointer" }}>
+      <span style={{ fontSize: 28 }}>💔</span>
+      <div>
+        <p style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{T.streakExpired}</p>
+        <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600 }}>{T.streakExpiredDesc}</p>
       </div>
     </div>
   );
@@ -3235,7 +3388,7 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp }) {
   const [homeLeaderboard, setHomeLeaderboard] = useState([]);
   useEffect(() => {
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
@@ -3262,18 +3415,34 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 80 }}>
-        {/* Rectangle 1: Rewards */}
-        <button onClick={onOpenRewards} className="rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.1) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.2)", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 4, minWidth: 0, overflow: "hidden" }}>
-          <Gift size={18} color="#A855F7" />
-          <span style={{ color: "#c084fc", fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{T.rewardsFree}</span>
-        </button>
+        {/* Rectangle 1: Rewards / Tier */}
+        {(() => {
+          const ti = getTierFromXp(userXp || 0);
+          const pct = ti.xpNeeded > 0 ? Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100) : 100;
+          return (
+            <button onClick={onOpenRewards} className="rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.25)", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, minWidth: 0, overflow: "hidden" }}>
+              <Zap size={16} color="#A855F7" />
+              <span style={{ color: "#A855F7", fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{ti.tier}</span>
+              <div style={{ width: "80%", height: 3, borderRadius: 2, background: "#262626", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: "#A855F7" }} />
+              </div>
+              <span style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.tierLabel}</span>
+            </button>
+          );
+        })()}
 
         {/* Rectangle 2: Streak */}
-        <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden" }}>
-          <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? "drop-shadow(0 0 6px rgba(255,107,0,0.5))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
-          <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
-          <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
-        </button>
+        {(() => {
+          const expiring = isStreakExpiring() && streak.current > 0;
+          return (
+            <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${expiring ? "rgba(239,68,68,0.4)" : streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", position: "relative" }}>
+              {expiring && <Clock size={10} color="#EF4444" style={{ position: "absolute", top: 4, right: 4 }} />}
+              <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? "drop-shadow(0 0 6px rgba(255,107,0,0.5))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+              <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
+              <span style={{ color: expiring ? "#EF4444" : "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{expiring ? T.streakExpiring : T.streakTitle}</span>
+            </button>
+          );
+        })()}
 
         {/* Rectangle 3: Rank badge */}
         <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} />
@@ -6641,13 +6810,25 @@ export default function ClutchApp() {
   });
 
   const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
-  const [streak, setStreak] = useState(() => loadStreak());
+  const [streak, setStreak] = useState(() => {
+    const checked = checkStreakExpiry();
+    return checked;
+  });
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [showNexiumBox, setShowNexiumBox] = useState(false);
   const [streakPopup, setStreakPopup] = useState(null);
+  const [userXp, setUserXp] = useState(() => loadXp());
+  const [xpPopup, setXpPopup] = useState(null);
+  const [streakExpiredNotif, setStreakExpiredNotif] = useState(null);
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  useEffect(() => {
+    if (streak.justExpired) {
+      const t = setTimeout(() => setStreakExpiredNotif({ lostStreak: streak.lostStreak }), 1500);
+      return () => clearTimeout(t);
+    }
+  }, []);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
@@ -7471,7 +7652,7 @@ export default function ClutchApp() {
         <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
           {showQuestModal && (
             <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
-              <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly) => {
+              <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly, xpAmount) => {
                 setQuestState(qs => {
                   if (!qs) return qs;
                   const updated = isWeekly
@@ -7480,12 +7661,14 @@ export default function ClutchApp() {
                   saveQuests(updated);
                   return updated;
                 });
-                setShowNexiumBox(true);
-              }} onOpenNexium={() => { setShowQuestModal(false); setShowNexiumBox(true); }} T={T} />
+                const gained = xpAmount || 50;
+                setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
+                setXpPopup(gained);
+              }} T={T} userXp={userXp} />
             </div>
           )}
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
-            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} />
+            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
           {activeTab === "valorant" && (
             <ValorantTab
@@ -7630,15 +7813,27 @@ export default function ClutchApp() {
             lang={currentLang}
           />
         )}
-        {showRewardsModal && <RewardsModal onClose={() => setShowRewardsModal(false)} onOpenNexium={() => { setShowRewardsModal(false); setShowNexiumBox(true); }} T={T} />}
+        {showRewardsModal && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "#0a0a0a" }}>
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
+          </div>
+        )}
         {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
+        {xpPopup && <XpPopup xp={xpPopup} onClose={() => setXpPopup(null)} T={T} />}
+        {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
         {showStreakInfo && (
           <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowStreakInfo(false)}>
             <div onClick={e => e.stopPropagation()} style={{ width: "min(320px, 85%)", background: "#141414", border: "1px solid #262626", borderRadius: 20, padding: "28px 24px", textAlign: "center" }}>
-              <span style={{ fontSize: 48, display: "block", marginBottom: 12 }}>🔥</span>
+              <span style={{ fontSize: 48, display: "block", marginBottom: 12 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
               <p style={{ color: "#FF9500", fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{streak.current} {T.streakDays}</p>
               <p style={{ color: "#666", fontSize: 11, fontWeight: 600, marginBottom: 16 }}>{T.streakBest}: {streak.best} {T.streakDays}</p>
+              {isStreakExpiring() && streak.current > 0 && (
+                <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Clock size={14} color="#EF4444" />
+                  <p style={{ color: "#EF4444", fontSize: 11, fontWeight: 700 }}>{T.streakExpiring}</p>
+                </div>
+              )}
               <p style={{ color: "#aaa", fontSize: 12, lineHeight: 1.5 }}>{T.streakExplain}</p>
               <button onClick={() => setShowStreakInfo(false)} style={{ marginTop: 20, background: "linear-gradient(135deg, #FF6B00, #FF9500)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 32px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>OK</button>
             </div>
