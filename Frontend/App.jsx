@@ -2785,7 +2785,7 @@ function getTierReward(tier) {
   if (tier <= 80) return { icon: "📦", label: "Coffre Or", rarity: "epic" };
   return { icon: "📦", label: "Coffre Diamant", rarity: "legendary" };
 }
-const RARITY_COLORS = { free: "#4CAF50", common: "#CD7F32", rare: "#A855F7", epic: "#EAB308", legendary: "#38BDF8" };
+const TIER_RARITY_COLORS = { free: "#4CAF50", common: "#CD7F32", rare: "#A855F7", epic: "#EAB308", legendary: "#38BDF8" };
 
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -3059,7 +3059,7 @@ function RewardsModal({ onClose, T, userXp }) {
           const isNext = tier === currentTier + 1;
           const claimed = claimedTiers.includes(tier);
           const canClaim = unlocked && !claimed;
-          const rarityColor = RARITY_COLORS[reward.rarity] || "#666";
+          const rarityColor = TIER_RARITY_COLORS[reward.rarity] || "#666";
           return (
             <div key={tier} ref={isCurrent ? currentRef : undefined}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
