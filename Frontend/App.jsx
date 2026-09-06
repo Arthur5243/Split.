@@ -5918,6 +5918,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const registeredCount = leaderboard.length;
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [nexusPosts, setNexusPosts] = useState([]);
+  const [spectatorUser, setSpectatorUser] = useState(null);
+  const [spectatorStats, setSpectatorStats] = useState(null);
 
   useEffect(() => {
     if (profile?.userId) {
@@ -6052,6 +6054,77 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     );
   }
 
+  if (spectatorUser) {
+    const su = spectatorUser;
+    const ss = spectatorStats || {};
+    const allPts = leaderboard.map(u => u.points);
+    const rank = getUserRank(su.displayPts || su.points || 0, allPts.length >= 50 ? allPts : undefined);
+    return (
+      <div className="px-4 pt-6 pb-6">
+        <div className="flex items-center gap-3 mb-5">
+          <button onClick={() => { setSpectatorUser(null); setSpectatorStats(null); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+            <ArrowLeft size={18} color="#ccc" />
+          </button>
+          <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{su.pseudo}</h1>
+        </div>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1a1a1a", border: "2px solid #333", flexShrink: 0 }}>
+            {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={32} color="#555" />}
+          </div>
+          <div className="flex-1 flex justify-around text-center">
+            <div>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{ss.followers || 0}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
+            </div>
+            <div>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{ss.following || 0}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowing}</p>
+            </div>
+            <div>
+              <p className="font-black" style={{ fontSize: "18px", color: "#CCF71D" }}>{su.displayPts || su.points || 0}</p>
+              <p style={{ color: "#888", fontSize: "10px" }}>{T.profilePoint}</p>
+            </div>
+          </div>
+        </div>
+        {su.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{su.bio}</p>}
+        {(su.fav_teams_valo || su.fav_teams_cs2 || su.fav_teams_rl) && (
+          <div className="mb-3">
+            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
+            <div className="flex gap-2 flex-wrap">
+              {su.fav_teams_valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {su.fav_teams_valo}</span>}
+              {su.fav_teams_cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {su.fav_teams_cs2}</span>}
+              {su.fav_teams_rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {su.fav_teams_rl}</span>}
+            </div>
+          </div>
+        )}
+        <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
+          {rank.logo === "unranked" ? (
+            <svg width="100" height="100" viewBox="0 0 48 48" fill="none">
+              <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="1.5" strokeLinejoin="round"/>
+              <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+            </svg>
+          ) : rank.logo ? (
+            <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
+          ) : (
+            <Shield size={80} color="#666" />
+          )}
+          <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px" }}>{rank.label}</p>
+        </div>
+        {profile && ss.iFollow !== undefined && (
+          <button onClick={() => {
+            const action = ss.iFollow ? "unfollow" : "follow";
+            const body = ss.iFollow ? { followerId: profile.userId, followedId: su.id } : { followerId: profile.userId, followedId: su.id };
+            fetch(API_BASE + `/api/social/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(() => {
+              setSpectatorStats(prev => ({ ...prev, iFollow: !prev.iFollow, followers: (prev.followers || 0) + (prev.iFollow ? -1 : 1) }));
+            });
+          }} className="w-full rounded-xl font-bold py-2.5 mb-4" style={{ background: ss.iFollow ? "#1a1a1a" : "#CCF71D", color: ss.iFollow ? "#aaa" : "#000", fontSize: "13px", border: ss.iFollow ? "1px solid #333" : "none" }}>
+            {ss.iFollow ? (T.friendUnfollow || "Ne plus suivre") : (T.friendFollow || "Suivre")}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   function onCarouselDown(e) { carouselDragX.current = e.clientX ?? e.touches?.[0]?.clientX ?? null; }
   function onCarouselUp(e) {
     if (carouselDragX.current === null) return;
@@ -6160,23 +6233,44 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 const filtered = merged.filter(u => u.displayPts > 0);
                 filtered.sort((a, b) => b.displayPts - a.displayPts);
                 if (filtered.length === 0) return null;
-                return filtered.slice(0, 50).map((u, i) => {
+                const top100 = filtered.slice(0, 100);
+                const myRankIdx = filtered.findIndex(u => u.id === profile.userId);
+                const meInTop = myRankIdx >= 0 && myRankIdx < 100;
+                function renderRow(u, i) {
                   const isMe = u.id === profile.userId;
+                  const rankLogo = getUserRank(u.displayPts);
+                  const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
                   return (
-                    <button key={u.id} onClick={() => { if (isMe) setProfileView(true); }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
+                    <button key={u.id} onClick={() => {
+                      if (isMe) { setProfileView(true); return; }
+                      fetch(API_BASE + "/api/social/profile/" + u.id + "?viewerId=" + (profile.userId || "")).then(r => r.json()).then(d => {
+                        setSpectatorUser({ ...u, ...d });
+                        setSpectatorStats(d);
+                      }).catch(() => { setSpectatorUser(u); });
+                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
                       <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1a1a1a", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                      {(() => { const r = getUserRank(u.displayPts); return r.logo && r.logo !== "unranked" ? <img src={r.logo} alt={r.name} style={{ width: 22, height: 22, objectFit: "contain", flexShrink: 0 }} /> : null; })()}
+                      {rankLogo.logo && rankLogo.logo !== "unranked" ? <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} /> : null}
                       <div className="text-right shrink-0">
                         <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.displayPts}</span>
                         <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
                   );
-                });
+                }
+                return (
+                  <>
+                    {!meInTop && score > 0 && (
+                      <div className="sticky top-0 z-10 mb-2" style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, paddingTop: 4, paddingBottom: 4, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}>
+                        {renderRow({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, displayPts: score }, myRankIdx >= 0 ? myRankIdx : filtered.length - 1)}
+                      </div>
+                    )}
+                    {top100.map((u, i) => renderRow(u, i))}
+                  </>
+                );
               })()}
             </div>
 
@@ -7593,6 +7687,10 @@ export default function ClutchApp() {
     }
     setPointsPerGame(perGame);
     localStorage.setItem("split_points_per_game", JSON.stringify(perGame));
+    const recomputedTotal = perGame.valo + perGame.cs2 + perGame.rl;
+    setUserPoints(recomputedTotal);
+    localStorage.setItem("split_points_total", String(recomputedTotal));
+    syncProfileToBackend(profile, recomputedTotal, perGame);
   }, [resultsMatches, cs2ResultsMatches, settledMatchIds]);
 
   function toggleExpand(matchId) {
@@ -7671,6 +7769,11 @@ export default function ClutchApp() {
                 setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
                 setXpPopup(gained);
               }} T={T} userXp={userXp} />
+            </div>
+          )}
+          {showRewardsModal && (
+            <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
+              <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
             </div>
           )}
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
@@ -7766,7 +7869,7 @@ export default function ClutchApp() {
             return (
               <button key={item.key} onClick={() => {
                 setShowBracketPage(false); setShowCs2BracketPage(false);
-                setShowFriendModal(false);
+                setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false);
                 setActiveTab(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -7818,11 +7921,6 @@ export default function ClutchApp() {
             T={T}
             lang={currentLang}
           />
-        )}
-        {showRewardsModal && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "#0a0a0a" }}>
-            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
-          </div>
         )}
         {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
