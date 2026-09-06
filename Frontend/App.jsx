@@ -6921,6 +6921,11 @@ export default function ClutchApp() {
     setShowScrollTop(false);
   }
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = 0;
+  }, [activeTab]);
+
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
   const [resultsMatches, setResultsMatches] = useState([]);
@@ -7759,7 +7764,7 @@ export default function ClutchApp() {
             const labelColor = active ? "#fff" : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => {
-                if (active) { setShowBracketPage(false); setShowCs2BracketPage(false); }
+                setShowBracketPage(false); setShowCs2BracketPage(false);
                 setShowFriendModal(false);
                 setActiveTab(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
