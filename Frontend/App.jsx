@@ -2802,12 +2802,11 @@ function totalXpForTier(tier) {
   return total;
 }
 function getTierReward(tier) {
-  const milestones = { 1: 100, 5: 250, 10: 400, 15: 500, 20: 600, 25: 750, 30: 800, 35: 900, 40: 1000, 45: 1200, 50: 1500, 55: 1600, 60: 1800, 65: 2000, 70: 2200, 75: 2500, 80: 3000, 85: 3500, 90: 4000, 95: 5000, 100: 10000 };
-  if (milestones[tier]) return { xp: milestones[tier], milestone: true };
-  if (tier <= 15) return { xp: 75 };
-  if (tier <= 45) return { xp: 100 };
-  if (tier <= 80) return { xp: 150 };
-  return { xp: 200 };
+  const milestone = tier % 5 === 0;
+  if (tier <= 15) return { chest: "bronze", milestone };
+  if (tier <= 45) return { chest: "silver", milestone };
+  if (tier <= 80) return { chest: "gold", milestone };
+  return { chest: "diamond", milestone };
 }
 
 function loadInventory() {
@@ -3051,12 +3050,7 @@ function RewardsModal({ onClose, T, userXp }) {
         <img src={activeSec?.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)" }} />
         <div style={{ position: "relative", padding: "14px 16px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <Zap size={16} color={activeSec?.color} />
-            <span style={{ color: "#fff", fontSize: 24, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{userXp || 0}</span>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontWeight: 700 }}>XP</span>
-            <span style={{ marginLeft: "auto", color: activeSec?.color, fontSize: 11, fontWeight: 800, background: "rgba(0,0,0,0.5)", padding: "3px 10px", borderRadius: 20, backdropFilter: "blur(4px)" }}>{T.tierLabel || "Palier"} {currentTier}</span>
-          </div>
+          <span style={{ color: activeSec?.color, fontSize: 13, fontWeight: 800, background: "rgba(0,0,0,0.5)", padding: "4px 12px", borderRadius: 20, backdropFilter: "blur(4px)", alignSelf: "flex-start", marginBottom: 10 }}>{T.tierLabel || "Palier"} {currentTier}</span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: activeSec?.color, transition: "width 0.4s ease", boxShadow: `0 0 8px ${activeSec?.color}60` }} />
@@ -3093,38 +3087,23 @@ function RewardsModal({ onClose, T, userXp }) {
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
           const claimed = claimedTiers.includes(tier);
-          const canClaim = unlocked && !claimed;
           const isMilestone = reward.milestone;
           const secColor = activeSec?.color || "#CCF71D";
+          const chestEmoji = reward.chest === "diamond" ? "💎" : reward.chest === "gold" ? "🏆" : reward.chest === "silver" ? "📦" : "🎁";
           return (
             <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 10 : 4 }}>
               <div style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 12,
-                padding: isMilestone ? "18px 16px" : "10px 12px",
-                borderRadius: isMilestone ? 18 : 12,
+                width: "100%", display: "flex", alignItems: "center", gap: 10,
+                padding: isMilestone ? "16px 14px" : "10px 12px",
+                borderRadius: isMilestone ? 16 : 12,
                 background: isCurrent ? `${secColor}10` : isMilestone && unlocked ? "#141414" : "#0d0d0d",
                 border: `1.5px solid ${isCurrent ? secColor + "50" : isMilestone ? "#262626" : "#1a1a1a"}`,
                 opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
-                position: "relative",
               }}>
-                <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
-                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#aaa" : "#444", fontSize: isMilestone ? 15 : 12, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
-                </div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ height: 3, flex: 1, borderRadius: 2, background: unlocked ? secColor : "#222", opacity: unlocked ? 0.6 : 1, transition: "background 0.3s" }} />
-                </div>
-                <span style={{
-                  color: isMilestone ? "#fff" : unlocked ? "#ccc" : "#555",
-                  fontSize: isMilestone ? 16 : 12,
-                  fontWeight: 900,
-                  fontVariantNumeric: "tabular-nums",
-                  background: isMilestone ? secColor + "20" : "transparent",
-                  padding: isMilestone ? "4px 12px" : "0",
-                  borderRadius: 8,
-                }}>
-                  {reward.xp} <span style={{ color: isMilestone ? secColor : "#888", fontSize: isMilestone ? 11 : 10, fontWeight: 700 }}>XP</span>
-                </span>
-                {unlocked && <CheckCircle size={isMilestone ? 18 : 14} color={claimed ? "#4CAF50" : secColor} style={{ opacity: claimed ? 1 : 0.4 }} />}
+                <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#aaa" : "#444", fontSize: isMilestone ? 14 : 11, fontWeight: 900, width: 24, textAlign: "center", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: unlocked ? secColor : "#222", opacity: unlocked ? 0.5 : 1, transition: "background 0.3s" }} />
+                <span style={{ fontSize: isMilestone ? 24 : 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chestEmoji}</span>
+                {unlocked && <CheckCircle size={isMilestone ? 16 : 13} color={claimed ? "#4CAF50" : secColor} style={{ opacity: claimed ? 1 : 0.35, flexShrink: 0 }} />}
               </div>
             </div>
           );
@@ -4190,7 +4169,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
     return <>
-      <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
         {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
@@ -4532,7 +4510,6 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
     return <>
-      <BracketProgressBar bracket={bracket} accentColor={accentColor} />
       <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
         {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
