@@ -2985,15 +2985,29 @@ function RewardsModal({ onClose, T, userXp }) {
   const [claimedTiers, setClaimedTiers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
+  const [activeSection, setActiveSection] = useState(() => {
+    if (currentTier <= 1) return "bronze";
+    if (currentTier <= 15) return "bronze";
+    if (currentTier <= 45) return "silver";
+    if (currentTier <= 80) return "gold";
+    return "diamond";
+  });
+
+  const sections = [
+    { key: "bronze", label: "Bronze", range: [1, 15], color: "#CD7F32", bg: "rgba(205,127,50,0.08)", icon: "🥉" },
+    { key: "silver", label: "Argent", range: [16, 45], color: "#A855F7", bg: "rgba(168,85,247,0.08)", icon: "🥈" },
+    { key: "gold", label: "Or", range: [46, 80], color: "#EAB308", bg: "rgba(234,179,8,0.08)", icon: "🥇" },
+    { key: "diamond", label: "Diamant", range: [81, 100], color: "#38BDF8", bg: "rgba(56,189,248,0.08)", icon: "💎" },
+  ];
 
   useEffect(() => {
     if (currentRef.current && scrollRef.current) {
       const container = scrollRef.current;
       const el = currentRef.current;
-      const top = el.offsetTop - container.offsetTop - 120;
+      const top = el.offsetTop - container.offsetTop - 80;
       container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
-  }, []);
+  }, [activeSection]);
 
   const handleScroll = () => {
     if (!scrollRef.current || !currentRef.current) return;
@@ -3009,7 +3023,7 @@ function RewardsModal({ onClose, T, userXp }) {
     if (currentRef.current && scrollRef.current) {
       const container = scrollRef.current;
       const el = currentRef.current;
-      const top = el.offsetTop - container.offsetTop - 120;
+      const top = el.offsetTop - container.offsetTop - 80;
       container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
   };
@@ -3021,29 +3035,60 @@ function RewardsModal({ onClose, T, userXp }) {
   }
 
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
+  const activeSec = sections.find(s => s.key === activeSection);
+  const tiersInSection = activeSec ? Array.from({ length: activeSec.range[1] - activeSec.range[0] + 1 }, (_, i) => activeSec.range[0] + i) : [];
 
   return (
-    <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", minHeight: "100%", position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid #1a1a1a" }}>
+    <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ color: "#CCF71D", fontSize: 18, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
-          <span style={{ color: "#888", fontSize: 12, fontWeight: 700 }}>{currentTier}/100</span>
-        </div>
-        {currentTier < 100 && (
-          <div style={{ height: 6, borderRadius: 3, background: "#1a1a1a", overflow: "hidden" }}>
-            <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
+      <div style={{ padding: "14px 16px 10px", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${activeSec?.color || "#A855F7"}22, ${activeSec?.color || "#A855F7"}08)`, border: `1.5px solid ${activeSec?.color || "#A855F7"}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Zap size={20} color={activeSec?.color || "#A855F7"} />
           </div>
-        )}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ color: "#fff", fontSize: 22, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{userXp || 0}</span>
+              <span style={{ color: "#666", fontSize: 11, fontWeight: 700 }}>XP</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+              <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#1a1a1a", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: progressPct + "%", borderRadius: 2, background: activeSec?.color || "#A855F7", transition: "width 0.4s ease" }} />
+              </div>
+              <span style={{ color: "#888", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          {sections.map(sec => {
+            const active = activeSection === sec.key;
+            const sectionDone = currentTier >= sec.range[1];
+            const sectionActive = currentTier >= sec.range[0] && currentTier <= sec.range[1];
+            return (
+              <button key={sec.key} onClick={() => setActiveSection(sec.key)} style={{
+                flex: 1, padding: "8px 4px", borderRadius: 10, cursor: "pointer",
+                background: active ? sec.bg : "transparent",
+                border: `1.5px solid ${active ? sec.color + "50" : "#1a1a1a"}`,
+                opacity: sectionDone || sectionActive || active ? 1 : 0.45,
+                transition: "all 0.2s ease",
+              }}>
+                <span style={{ display: "block", fontSize: 16, lineHeight: 1, marginBottom: 2 }}>{sec.icon}</span>
+                <span style={{ display: "block", color: active ? sec.color : "#888", fontSize: 9, fontWeight: 800, letterSpacing: "0.03em" }}>{sec.label}</span>
+                {sectionDone && <span style={{ display: "block", color: "#4CAF50", fontSize: 8, marginTop: 1 }}>&#10003;</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 80px" }}>
-        {Array.from({ length: 100 }, (_, i) => i + 1).map(tier => {
+      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "6px 12px 24px" }}>
+        {tiersInSection.map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
@@ -3051,38 +3096,42 @@ function RewardsModal({ onClose, T, userXp }) {
           const claimed = claimedTiers.includes(tier);
           const canClaim = unlocked && !claimed;
           const rarityColor = TIER_RARITY_COLORS[reward.rarity] || "#666";
+          const xpNeeded = totalXpForTier(tier);
           return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0" }}>
-                <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
-                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#666" : "#333", fontSize: 12, fontWeight: 900 }}>{tier}</span>
+            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "stretch", gap: 10, padding: "3px 0" }}>
+                <div style={{ width: 24, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 12, flexShrink: 0 }}>
+                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#666" : "#333", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
                 </div>
-                <div style={{ position: "relative", width: 3, alignSelf: "stretch", flexShrink: 0 }}>
-                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 3, borderRadius: 2, background: unlocked ? rarityColor + "40" : "#1a1a1a" }} />
-                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -4, width: 11, height: 11, borderRadius: "50%", background: "#CCF71D", transform: "translateY(-50%)", boxShadow: "0 0 10px rgba(204,247,29,0.5)" }} />}
+                <div style={{ position: "relative", width: 2, flexShrink: 0 }}>
+                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 2, background: unlocked ? rarityColor + "30" : "#151515" }} />
+                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -4, width: 10, height: 10, borderRadius: "50%", background: "#CCF71D", transform: "translateY(-50%)", boxShadow: "0 0 8px rgba(204,247,29,0.6)" }} />}
                   {isNext && tierInfo.xpNeeded > 0 && (
-                    <div style={{ position: "absolute", bottom: 0, left: 0, width: 3, height: progressPct + "%", borderRadius: 2, background: "#CCF71D50" }} />
+                    <div style={{ position: "absolute", top: 0, left: 0, width: 2, height: progressPct + "%", background: activeSec?.color || "#A855F7" }} />
                   )}
                 </div>
                 <button onClick={() => { if (canClaim) claimTier(tier); }} disabled={!canClaim && !claimed} style={{
-                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 14,
-                  background: canClaim ? "rgba(204,247,29,0.06)" : isCurrent ? "#141414" : "#0e0e0e",
-                  border: `1px solid ${canClaim ? "rgba(204,247,29,0.25)" : isCurrent ? "#2a2a2a" : "#181818"}`,
-                  opacity: unlocked || isCurrent ? 1 : 0.4,
+                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
+                  background: isCurrent ? "#141414" : canClaim ? `${rarityColor}08` : "#0d0d0d",
+                  border: `1px solid ${isCurrent ? rarityColor + "40" : canClaim ? rarityColor + "25" : "#161616"}`,
+                  opacity: unlocked || isNext ? 1 : 0.35,
                   cursor: canClaim ? "pointer" : "default",
                   textAlign: "left",
+                  transition: "opacity 0.2s",
                 }}>
-                  <span style={{ fontSize: 24, filter: unlocked ? "none" : "grayscale(1)" }}>{reward.icon}</span>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: unlocked ? `${rarityColor}15` : "#141414", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${unlocked ? rarityColor + "20" : "#1a1a1a"}` }}>
+                    <span style={{ fontSize: 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.5)" }}>{reward.icon}</span>
+                  </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ color: canClaim ? "#CCF71D" : unlocked ? "#ccc" : "#555", fontSize: 12, fontWeight: 700 }}>{reward.label}</p>
-                    <p style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", opacity: 0.8 }}>{reward.rarity === "free" ? "Gratuit" : "En cours..."}</p>
+                    <p style={{ color: canClaim ? "#fff" : unlocked ? "#bbb" : "#555", fontSize: 12, fontWeight: 700, margin: 0 }}>{reward.label}</p>
+                    <p style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", margin: "2px 0 0", opacity: 0.7 }}>{reward.rarity === "free" ? "Gratuit" : reward.rarity}</p>
                   </div>
                   {claimed ? (
                     <CheckCircle size={18} color="#4CAF50" />
                   ) : canClaim ? (
-                    <span style={{ background: "#CCF71D", color: "#000", fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 8 }}>Ouvrir</span>
+                    <span style={{ background: rarityColor, color: "#000", fontSize: 10, fontWeight: 800, padding: "5px 12px", borderRadius: 8 }}>Ouvrir</span>
                   ) : (
-                    <Lock size={14} color="#333" />
+                    <Lock size={13} color="#2a2a2a" />
                   )}
                 </button>
               </div>
@@ -3093,12 +3142,12 @@ function RewardsModal({ onClose, T, userXp }) {
 
       {showScrollBtn && (
         <button onClick={scrollToCurrent} style={{
-          position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
-          background: "#CCF71D", color: "#000", border: "none", borderRadius: 20,
-          padding: "8px 18px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-          boxShadow: "0 4px 16px rgba(204,247,29,0.3)", zIndex: 10,
+          position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
+          background: activeSec?.color || "#CCF71D", color: "#000", border: "none", borderRadius: 20,
+          padding: "7px 16px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+          boxShadow: `0 4px 16px ${activeSec?.color || "#CCF71D"}50`, zIndex: 10,
         }}>
-          <ArrowUp size={12} /> {T.tierScrollUp || "Remonter"}
+          <ArrowUp size={12} /> {T.tierScrollUp || "Mon palier"}
         </button>
       )}
     </div>
@@ -5057,7 +5106,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, remainingPreds, gamePoints }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -5155,7 +5204,9 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 match={m}
                 accent={RL_ACCENT}
                 pred={predictions[m.id]}
+                onSeriesChange={onSeriesChange}
                 onToggleExpand={toggleExpand}
+                onScoreChange={changeScore}
                 T={T}
                 lang={lang}
                 teamLogoCache={teamLogoCache}
@@ -7624,7 +7675,7 @@ export default function ClutchApp() {
   function onSeriesChange(matchId, team, digit) {
     setPredictions((prev) => {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
-      const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches].find((m) => String(m.id) === String(matchId));
+      const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches, ...rlUpcomingMatches, ...rlLiveMatches].find((m) => String(m.id) === String(matchId));
       const bo = src?.number_of_games || 3;
       const validPairs = bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
       const hadCompleteBet = cur.seriesA !== "" && cur.seriesB !== "" &&
@@ -7967,6 +8018,8 @@ export default function ClutchApp() {
               toggleExpand={toggleExpand}
               teamLogoCache={teamLogoCache}
               predictions={predictions}
+              onSeriesChange={onSeriesChange}
+              changeScore={changeScore}
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.rl || 0}
             />
