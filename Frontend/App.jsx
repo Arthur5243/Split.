@@ -1988,7 +1988,7 @@ function computeMapErrors(games, seriesA, seriesB, team1Name, team2Name) {
 
 function TeamLogo({ code, apiLogo, accent, tbd }) {
   const src = LOGOS[code] || apiLogo || null;
-  const pct = code === "NRG" ? "98%" : "70%";
+  const pct = code === "NRG" ? "98%" : code === "WC" ? "91%" : "70%";
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
@@ -2034,9 +2034,10 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
       value={value}
       onChange={(e) => {
         if (disabled) return;
-        const v = e.target.value.replace(re, "").slice(-1);
+        let v = e.target.value.replace(re, "").slice(-1);
+        if (v !== "" && parseInt(v) === max && otherValue !== "" && parseInt(otherValue) === max) v = "";
+        if (v === "") { onChange(v); return; }
         onChange(v);
-        if (v === "") return;
         if (isSeriesScoreComplete(otherValue)) {
           e.target.blur();
         } else if (onAdvance) {
@@ -2155,7 +2156,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const hasReplay = finished && match.team1Name && match.team2Name;
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
-  const [showSharePopup, setShowSharePopup] = useState(false);
   const [scoresRevealed, setScoresRevealed] = useState(false);
   const [liveRevealed, setLiveRevealed] = useState(false);
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
@@ -2412,16 +2412,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div style={{ position: "relative" }}>
-            <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center" style={{ background: "#1e1e1e", padding: "14px 0" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "10px 12px" }}>
+            <button onClick={(e) => { e.stopPropagation(); const text = `${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} | ${match.league || ""} — Split`; if (navigator.share) { navigator.share({ title: "Split", text }); } else { navigator.clipboard?.writeText(text); } }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
+              <Share2 size={13} /> Partager
+            </button>
+            <button onClick={() => onToggleExpand(match.id)} className="flex-1 flex items-center justify-center" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "4px 0" }}>
               <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
             </button>
             {pointsBreakdown && (
               <span
                 style={{
-                  position: "absolute",
-                  top: "8px",
-                  right: "12px",
                   background: pointsBreakdown.total > 0 ? "#CCF71D" : "#262626",
                   color: pointsBreakdown.total > 0 ? "#0d0d0d" : "#777",
                   fontSize: "15px",
@@ -2524,46 +2524,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 ) : (
                   <span />
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ position: "relative" }}>
-                    <button onClick={() => setShowSharePopup(v => !v)} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                      <Share2 size={12} /> Partager
-                    </button>
-                    {showSharePopup && (
-                      <>
-                        <div onClick={() => setShowSharePopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
-                        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 12, padding: 10, minWidth: 180, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                          <p style={{ color: "#aaa", fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>Partager sur</p>
-                          {[
-                            { name: "Instagram Story", url: `https://www.instagram.com/create/story`, color: "#E1306C", icon: "📸" },
-                            { name: "TikTok", url: `https://www.tiktok.com/upload`, color: "#00f2ea", icon: "🎵" },
-                            { name: "Snapchat", url: `https://www.snapchat.com/`, color: "#FFFC00", icon: "👻" },
-                            { name: "X (Twitter)", url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} ${match.league || ""} #Split`)}`, color: "#fff", icon: "𝕏" },
-                            { name: "Copier le lien", url: null, color: "#CCF71D", icon: "🔗" },
-                          ].map(s => (
-                            <button key={s.name} onClick={() => {
-                              if (s.url) { window.open(s.url, "_blank"); }
-                              else { navigator.clipboard?.writeText(`${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} | ${match.league || ""}  — Split App`); }
-                              setShowSharePopup(false);
-                            }} className="flex items-center gap-3 w-full" style={{ padding: "8px 10px", borderRadius: 8, background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
-                              <span style={{ fontSize: 16 }}>{s.icon}</span>
-                              <span style={{ color: s.color, fontSize: 12, fontWeight: 700 }}>{s.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {pointsBreakdown && pointsBreakdown.total > 0 ? (
-                    <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 700, textAlign: "right" }}>
-                      {pointsBreakdown.total} <span style={{ color: "#CCF71D", fontWeight: 900 }}>pts</span>
-                    </span>
-                  ) : (
-                    <span style={{ color: "#666", fontSize: "12px", fontWeight: 900 }}>
-                      {pointsBreakdown != null ? "0 pts" : ""}
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           )}
@@ -7186,17 +7146,15 @@ export default function ClutchApp() {
     const el = scrollRef.current;
     if (!el) return;
     const top = el.scrollTop;
-    const goingUp = top < lastScrollTopRef.current - 2;
-    const goingDown = top > lastScrollTopRef.current + 2;
     const farEnough = top > 400;
     lastScrollTopRef.current = top;
 
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
 
-    if (goingUp && farEnough) {
+    if (farEnough) {
       setShowScrollTop(true);
-      hideTimerRef.current = setTimeout(() => setShowScrollTop(false), 2000);
-    } else if (goingDown || !farEnough) {
+      hideTimerRef.current = setTimeout(() => setShowScrollTop(false), 3000);
+    } else {
       setShowScrollTop(false);
     }
   }
@@ -8129,6 +8087,8 @@ export default function ClutchApp() {
         </div>
         {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
         </div>
+
+        <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
