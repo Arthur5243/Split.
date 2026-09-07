@@ -2802,11 +2802,7 @@ function totalXpForTier(tier) {
   return total;
 }
 function getTierReward(tier) {
-  const milestone = tier % 5 === 0;
-  if (tier <= 15) return { chest: "bronze", milestone };
-  if (tier <= 45) return { chest: "silver", milestone };
-  if (tier <= 80) return { chest: "gold", milestone };
-  return { chest: "diamond", milestone };
+  return { milestone: tier % 5 === 0 };
 }
 
 function loadInventory() {
@@ -3005,19 +3001,9 @@ function RewardsModal({ onClose, T, userXp }) {
   const [claimedTiers, setClaimedTiers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
-  const [activeSection, setActiveSection] = useState(() => {
-    if (currentTier <= 15) return "bronze";
-    if (currentTier <= 45) return "silver";
-    if (currentTier <= 80) return "gold";
-    return "diamond";
-  });
 
-  const sections = [
-    { key: "bronze", label: "Bronze", range: [1, 15], color: "#CD7F32", gradient: "linear-gradient(135deg, #CD7F32, #8B4513)", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop" },
-    { key: "silver", label: "Argent", range: [16, 45], color: "#A855F7", gradient: "linear-gradient(135deg, #A855F7, #6D28D9)", img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=200&fit=crop" },
-    { key: "gold", label: "Or", range: [46, 80], color: "#EAB308", gradient: "linear-gradient(135deg, #EAB308, #CA8A04)", img: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=400&h=200&fit=crop" },
-    { key: "diamond", label: "Diamant", range: [81, 100], color: "#38BDF8", gradient: "linear-gradient(135deg, #38BDF8, #0EA5E9)", img: "https://images.unsplash.com/photo-1614294148960-9aa740632a87?w=400&h=200&fit=crop" },
-  ];
+  const allTiers = Array.from({ length: 100 }, (_, i) => i + 1);
+  const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
 
   useEffect(() => {
     if (currentRef.current && scrollRef.current) {
@@ -3026,17 +3012,13 @@ function RewardsModal({ onClose, T, userXp }) {
       const top = el.offsetTop - container.offsetTop - 80;
       container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
-  }, [activeSection]);
+  }, []);
 
   function claimTier(tier) {
     const next = [...claimedTiers, tier];
     setClaimedTiers(next);
     localStorage.setItem("split_claimed_tiers", JSON.stringify(next));
   }
-
-  const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
-  const activeSec = sections.find(s => s.key === activeSection);
-  const tiersInSection = activeSec ? Array.from({ length: activeSec.range[1] - activeSec.range[0] + 1 }, (_, i) => activeSec.range[0] + i) : [];
 
   return (
     <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
@@ -3046,64 +3028,37 @@ function RewardsModal({ onClose, T, userXp }) {
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ position: "relative", margin: "0 12px 10px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 110 }}>
-        <img src={activeSec?.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)" }} />
-        <div style={{ position: "relative", padding: "14px 16px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
-          <span style={{ color: activeSec?.color, fontSize: 13, fontWeight: 800, background: "rgba(0,0,0,0.5)", padding: "4px 12px", borderRadius: 20, backdropFilter: "blur(4px)", alignSelf: "flex-start", marginBottom: 10 }}>{T.tierLabel || "Palier"} {currentTier}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: activeSec?.color, transition: "width 0.4s ease", boxShadow: `0 0 8px ${activeSec?.color}60` }} />
-            </div>
-            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
-          </div>
+      <div style={{ padding: "0 16px 12px", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ color: "#CCF71D", fontSize: 14, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
+          <span style={{ color: "#666", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"} XP</span>
+        </div>
+        <div style={{ height: 6, borderRadius: 3, background: "#1e1e1e", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: "#CCF71D", transition: "width 0.4s ease" }} />
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 6, padding: "0 12px 8px", flexShrink: 0 }}>
-        {sections.map(sec => {
-          const active = activeSection === sec.key;
-          const sectionDone = currentTier >= sec.range[1];
-          const sectionActive = currentTier >= sec.range[0] && currentTier <= sec.range[1];
-          return (
-            <button key={sec.key} onClick={() => setActiveSection(sec.key)} style={{
-              flex: 1, padding: "10px 4px", borderRadius: 12, cursor: "pointer",
-              background: active ? sec.gradient : "#141414",
-              border: `1.5px solid ${active ? sec.color + "60" : "#262626"}`,
-              opacity: sectionDone || sectionActive || active ? 1 : 0.4,
-              transition: "all 0.2s ease",
-            }}>
-              <span style={{ display: "block", color: active ? "#fff" : "#aaa", fontSize: 11, fontWeight: 800, letterSpacing: "0.02em" }}>{sec.label}</span>
-              <span style={{ display: "block", color: active ? "rgba(255,255,255,0.7)" : "#555", fontSize: 9, fontWeight: 700, marginTop: 1 }}>{sec.range[0]}-{sec.range[1]}</span>
-              {sectionDone && <span style={{ display: "block", color: active ? "#fff" : "#4CAF50", fontSize: 8, marginTop: 1 }}>&#10003; Terminé</span>}
-            </button>
-          );
-        })}
-      </div>
-
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 24px" }}>
-        {tiersInSection.map(tier => {
+        {allTiers.map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
           const claimed = claimedTiers.includes(tier);
           const isMilestone = reward.milestone;
-          const secColor = activeSec?.color || "#CCF71D";
-          const chestEmoji = reward.chest === "diamond" ? "💎" : reward.chest === "gold" ? "🏆" : reward.chest === "silver" ? "📦" : "🎁";
           return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 10 : 4 }}>
+            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 8 : 3 }}>
               <div style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: isMilestone ? "16px 14px" : "10px 12px",
-                borderRadius: isMilestone ? 16 : 12,
-                background: isCurrent ? `${secColor}10` : isMilestone && unlocked ? "#141414" : "#0d0d0d",
-                border: `1.5px solid ${isCurrent ? secColor + "50" : isMilestone ? "#262626" : "#1a1a1a"}`,
+                padding: isMilestone ? "14px 12px" : "9px 12px",
+                borderRadius: isMilestone ? 14 : 10,
+                background: isCurrent ? "rgba(204,247,29,0.06)" : isMilestone ? "#111" : "#0d0d0d",
+                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#222" : "#181818"}`,
                 opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
               }}>
-                <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#aaa" : "#444", fontSize: isMilestone ? 14 : 11, fontWeight: 900, width: 24, textAlign: "center", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: unlocked ? secColor : "#222", opacity: unlocked ? 0.5 : 1, transition: "background 0.3s" }} />
-                <span style={{ fontSize: isMilestone ? 24 : 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chestEmoji}</span>
-                {unlocked && <CheckCircle size={isMilestone ? 16 : 13} color={claimed ? "#4CAF50" : secColor} style={{ opacity: claimed ? 1 : 0.35, flexShrink: 0 }} />}
+                <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#999" : "#444", fontSize: isMilestone ? 13 : 11, fontWeight: 900, width: 24, textAlign: "center", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
+                <div style={{ flex: 1, height: 3, borderRadius: 2, background: unlocked ? "#CCF71D" : "#222", opacity: unlocked ? 0.4 : 1 }} />
+                <span style={{ fontSize: isMilestone ? 22 : 16, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>📦</span>
+                {unlocked && <CheckCircle size={isMilestone ? 15 : 12} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
               </div>
             </div>
           );
