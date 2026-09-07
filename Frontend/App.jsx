@@ -2915,23 +2915,32 @@ function QuestModal({ quests, onClose, onClaim, T }) {
     const done = q.completed;
     const kitIcon = QUEST_KIT_ICONS[q.kit] || QUEST_KIT_ICONS.pronostic;
     const xp = q.xp || 50;
+    const pct = q.target > 0 ? Math.min(100, Math.round((q.progress / q.target) * 100)) : 0;
     return (
-      <div key={q.id + idx} style={{ background: done ? "rgba(204,247,29,0.04)" : "#111", border: `1px solid ${done ? "rgba(204,247,29,0.15)" : "#1a1a1a"}`, borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 14 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 14, background: done ? "rgba(204,247,29,0.1)" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: done ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222" }}>
+      <div key={q.id + idx} style={{ background: done ? "rgba(204,247,29,0.06)" : "#111", border: `1px solid ${done ? "rgba(204,247,29,0.25)" : "#1a1a1a"}`, borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 14, position: "relative", overflow: "hidden" }}>
+        {done && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(204,247,29,0.08) 0%, transparent 60%)", pointerEvents: "none" }} />}
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: done ? "rgba(204,247,29,0.15)" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: done ? "2px solid rgba(204,247,29,0.4)" : "1px solid #222" }}>
           {done ? <CheckCircle size={20} color="#CCF71D" /> : kitIcon(false)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: done ? "#CCF71D" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 3, lineHeight: 1.3 }}>{q.title || T[q.titleKey] || q.titleKey}</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <p style={{ color: done ? "#CCF71D" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.3 }}>{q.title || T[q.titleKey] || q.titleKey}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <span style={{ color: done ? "#CCF71D" : "#A855F7", fontSize: 11, fontWeight: 800 }}>+{xp} XP</span>
             {isWeekly && <span style={{ background: "rgba(255,215,0,0.12)", color: "#FFD700", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6 }}>{T.questWeekly}</span>}
+            {done && <span style={{ background: "rgba(204,247,29,0.15)", color: "#CCF71D", fontSize: 9, fontWeight: 900, padding: "2px 8px", borderRadius: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Terminé !</span>}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "#222", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#CCF71D" : "linear-gradient(90deg, #A855F7, #CCF71D)", transition: "width 0.4s ease", boxShadow: done ? "0 0 8px rgba(204,247,29,0.4)" : "none" }} />
+            </div>
+            <span style={{ color: done ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{q.progress}/{q.target}</span>
           </div>
         </div>
         <div style={{ flexShrink: 0 }}>
           {done && !q.claimed ? (
-            <button onClick={() => onClaim(q.id, isWeekly, xp)} style={{ background: "linear-gradient(135deg, #CCF71D, #A0D911)", color: "#000", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 12, fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(204,247,29,0.3)" }}>Claim</button>
+            <button onClick={() => onClaim(q.id, isWeekly, xp)} style={{ background: "linear-gradient(135deg, #CCF71D, #A0D911)", color: "#000", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 12, fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(204,247,29,0.3)", animation: "pulse 1.5s ease-in-out infinite" }}>Claim</button>
           ) : q.claimed ? (
-            <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(204,247,29,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(204,247,29,0.1)", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(204,247,29,0.2)" }}>
               <CheckCircle size={18} color="#CCF71D" />
             </div>
           ) : (
