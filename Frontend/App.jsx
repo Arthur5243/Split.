@@ -7924,23 +7924,6 @@ export default function ClutchApp() {
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden" }}>
         <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
-          {showQuestModal && (
-            <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
-              <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly, xpAmount) => {
-                setQuestState(qs => {
-                  if (!qs) return qs;
-                  const updated = isWeekly
-                    ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
-                    : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
-                  saveQuests(updated);
-                  return updated;
-                });
-                const gained = xpAmount || 50;
-                setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
-                setXpPopup(gained);
-              }} T={T} />
-            </div>
-          )}
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -8030,6 +8013,24 @@ export default function ClutchApp() {
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
+
+        {showQuestModal && (
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
+            <QuestModal quests={questState} onClose={() => setShowQuestModal(false)} onClaim={(qId, isWeekly, xpAmount) => {
+              setQuestState(qs => {
+                if (!qs) return qs;
+                const updated = isWeekly
+                  ? { ...qs, weekly: { ...qs.weekly, claimed: true } }
+                  : { ...qs, daily: qs.daily.map(q => q.id === qId ? { ...q, claimed: true } : q) };
+                saveQuests(updated);
+                return updated;
+              });
+              const gained = xpAmount || 50;
+              setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
+              setXpPopup(gained);
+            }} T={T} />
+          </div>
+        )}
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
