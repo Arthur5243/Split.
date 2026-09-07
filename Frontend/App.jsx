@@ -3153,7 +3153,7 @@ function PredBadge({ remainingPreds, T }) {
 
 const RANK_TIERS = [
   { name: "Unranked",      minPts: 0,    color: "#666",    logo: "unranked",          bg: "rgba(100,100,100,0.1)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/bronze.png",       bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
   { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.12)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
