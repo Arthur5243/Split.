@@ -2909,36 +2909,35 @@ const QUEST_KIT_ICONS = {
 function QuestModal({ quests, onClose, onClaim, T, userXp }) {
   if (!quests) return null;
   const { daily, weekly } = quests;
-  const allQuests = [...(daily || []), ...(weekly ? [weekly] : [])];
-  const completedCount = allQuests.filter(q => q.completed).length;
-  const totalCount = allQuests.length;
-  const overallPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const tierInfo = getTierFromXp(userXp || 0);
 
   const renderQuest = (q, idx, isWeekly) => {
-    const pct = Math.min(100, (q.progress / q.target) * 100);
     const done = q.completed;
     const kitIcon = QUEST_KIT_ICONS[q.kit] || QUEST_KIT_ICONS.pronostic;
+    const xp = q.xp || 50;
     return (
-      <div key={q.id + idx} style={{ background: done ? "rgba(76,175,80,0.06)" : "#111", border: `1px solid ${done ? "rgba(76,175,80,0.15)" : "#222"}`, borderRadius: 14, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 12, background: done ? "rgba(76,175,80,0.12)" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          {done ? <CheckCircle size={18} color="#4CAF50" /> : kitIcon(false)}
+      <div key={q.id + idx} style={{ background: done ? "rgba(204,247,29,0.04)" : "#111", border: `1px solid ${done ? "rgba(204,247,29,0.15)" : "#1a1a1a"}`, borderRadius: 16, padding: "16px", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: done ? "rgba(204,247,29,0.1)" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: done ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222" }}>
+          {done ? <CheckCircle size={20} color="#CCF71D" /> : kitIcon(false)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: done ? "#4CAF50" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{q.title || T[q.titleKey] || q.titleKey}</p>
-          <p style={{ color: "#A855F7", fontSize: 10, fontWeight: 800, marginBottom: 4 }}>+{q.xp || 50} {T.xpLabel}</p>
-          <div style={{ height: 5, borderRadius: 3, background: "#262626", overflow: "hidden", width: "calc(100% - 28px)" }}>
-            <div style={{ height: "100%", width: pct + "%", borderRadius: 3, background: done ? "#4CAF50" : "#CCF71D", transition: "width 0.4s ease" }} />
+          <p style={{ color: done ? "#CCF71D" : "#eee", fontSize: 13, fontWeight: 700, marginBottom: 3, lineHeight: 1.3 }}>{q.title || T[q.titleKey] || q.titleKey}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ color: done ? "#CCF71D" : "#A855F7", fontSize: 11, fontWeight: 800 }}>+{xp} XP</span>
+            {isWeekly && <span style={{ background: "rgba(255,215,0,0.12)", color: "#FFD700", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6 }}>{T.questWeekly}</span>}
           </div>
-          <p style={{ color: "#555", fontSize: 10, marginTop: 4, fontWeight: 600 }}>{q.progress}/{q.target} {isWeekly && <span style={{ color: "#FFD700" }}>({T.questWeekly})</span>}</p>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flexShrink: 0 }}>
+        <div style={{ flexShrink: 0 }}>
           {done && !q.claimed ? (
-            <button onClick={() => onClaim(q.id, isWeekly, q.xp || 50)} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>+{q.xp || 50} XP</button>
+            <button onClick={() => onClaim(q.id, isWeekly, xp)} style={{ background: "linear-gradient(135deg, #CCF71D, #A0D911)", color: "#000", border: "none", borderRadius: 12, padding: "10px 16px", fontSize: 12, fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(204,247,29,0.3)" }}>Claim</button>
           ) : q.claimed ? (
-            <CheckCircle size={16} color="#4CAF50" />
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: "rgba(204,247,29,0.08)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <CheckCircle size={18} color="#CCF71D" />
+            </div>
           ) : (
-            <Zap size={14} color="#A855F7" style={{ opacity: 0.3 }} />
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <ChevronRight size={16} color="#333" />
+            </div>
           )}
         </div>
       </div>
@@ -2946,37 +2945,42 @@ function QuestModal({ quests, onClose, onClaim, T, userXp }) {
   };
   return (
     <div style={{ background: "#000", display: "flex", flexDirection: "column", minHeight: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #1a1a1a" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px" }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
-        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900 }}>{T.questTitle}</p>
+        <p style={{ color: "#fff", fontSize: 17, fontWeight: 900, letterSpacing: "-0.02em" }}>{T.questTitle}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "16px 16px 8px", background: "#0a0a0a", borderBottom: "1px solid #1a1a1a" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <Zap size={14} color="#A855F7" />
-            <span style={{ color: "#A855F7", fontSize: 14, fontWeight: 900 }}>{userXp || 0} {T.xpLabel}</span>
+      <div style={{ margin: "0 16px 16px", background: "linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(204,247,29,0.06) 100%)", borderRadius: 18, padding: "20px", border: "1px solid rgba(168,85,247,0.15)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Zap size={18} color="#A855F7" />
+            </div>
+            <div>
+              <p style={{ color: "#A855F7", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{userXp || 0}</p>
+              <p style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>XP Total</p>
+            </div>
           </div>
-          <span style={{ color: "#888", fontSize: 11, fontWeight: 700 }}>{T.tierLabel} {tierInfo.tier}</span>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ color: "#CCF71D", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{tierInfo.tier}</p>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel}</p>
+          </div>
         </div>
-        <div className="flex items-center justify-between mb-2">
-          <span style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.questProgressLabel}</span>
-          <span style={{ color: "#CCF71D", fontSize: 13, fontWeight: 900 }}>{completedCount}/{totalCount}</span>
+        <div style={{ height: 6, borderRadius: 3, background: "#1a1a1a", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: (tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100) + "%", borderRadius: 3, background: "linear-gradient(90deg, #A855F7, #CCF71D)", transition: "width 0.5s ease" }} />
         </div>
-        <div style={{ height: 8, borderRadius: 4, background: "#1a1a1a", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: overallPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #4CAF50)", transition: "width 0.5s ease" }} />
-        </div>
+        <p style={{ color: "#555", fontSize: 10, fontWeight: 600, marginTop: 6, textAlign: "right" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded} XP</p>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 16px" }}>
+        <p style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
           {(daily || []).map((q, i) => renderQuest(q, i, false))}
         </div>
         {weekly && (
           <>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>{T.questWeekly}</p>
             {renderQuest(weekly, 0, true)}
           </>
         )}
@@ -7844,11 +7848,6 @@ export default function ClutchApp() {
               }} T={T} userXp={userXp} />
             </div>
           )}
-          {showRewardsModal && (
-            <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
-              <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
-            </div>
-          )}
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -7935,6 +7934,12 @@ export default function ClutchApp() {
         {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
         </div>
 
+        {showRewardsModal && (
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
+          </div>
+        )}
+
         <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
@@ -8001,19 +8006,33 @@ export default function ClutchApp() {
         {xpPopup && <XpPopup xp={xpPopup} onClose={() => setXpPopup(null)} T={T} />}
         {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
         {showStreakInfo && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowStreakInfo(false)}>
-            <div onClick={e => e.stopPropagation()} style={{ width: "min(320px, 85%)", background: "#141414", border: "1px solid #262626", borderRadius: 20, padding: "28px 24px", textAlign: "center" }}>
-              <span style={{ fontSize: 48, display: "block", marginBottom: 12 }}>{streak.current > 0 ? "🔥" : "💤"}</span>
-              <p style={{ color: "#FF9500", fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{streak.current} {T.streakDays}</p>
-              <p style={{ color: "#666", fontSize: 11, fontWeight: 600, marginBottom: 16 }}>{T.streakBest}: {streak.best} {T.streakDays}</p>
+          <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }} onClick={() => setShowStreakInfo(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(340px, 88%)", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 24, padding: "32px 24px 24px", textAlign: "center" }}>
+              <div style={{ width: 80, height: 80, borderRadius: 24, background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.2), rgba(255,149,0,0.08))" : "rgba(255,255,255,0.03)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", border: streak.current > 0 ? "1px solid rgba(255,149,0,0.2)" : "1px solid #222" }}>
+                <span style={{ fontSize: 40, filter: streak.current > 0 ? "drop-shadow(0 0 12px rgba(255,107,0,0.6))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+              </div>
+              <p style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 36, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>{streak.current}</p>
+              <p style={{ color: streak.current > 0 ? "rgba(255,149,0,0.7)" : "#555", fontSize: 13, fontWeight: 700, marginBottom: 20, textTransform: "uppercase", letterSpacing: "0.08em" }}>{T.streakDays}</p>
+              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #1a1a1a" }}>
+                  <p style={{ color: "#FFD700", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>{streak.best}</p>
+                  <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.streakBest}</p>
+                </div>
+                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #1a1a1a" }}>
+                  <p style={{ color: "#A855F7", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>x{Math.max(1, streak.current)}</p>
+                  <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bonus</p>
+                </div>
+              </div>
               {isStreakExpiring() && streak.current > 0 && (
-                <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                  <Clock size={14} color="#EF4444" />
-                  <p style={{ color: "#EF4444", fontSize: 11, fontWeight: 700 }}>{T.streakExpiring}</p>
+                <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Clock size={16} color="#EF4444" />
+                  </div>
+                  <p style={{ color: "#EF4444", fontSize: 12, fontWeight: 700, textAlign: "left" }}>{T.streakExpiring}</p>
                 </div>
               )}
-              <p style={{ color: "#aaa", fontSize: 12, lineHeight: 1.5 }}>{T.streakExplain}</p>
-              <button onClick={() => setShowStreakInfo(false)} style={{ marginTop: 20, background: "linear-gradient(135deg, #FF6B00, #FF9500)", color: "#fff", border: "none", borderRadius: 10, padding: "10px 32px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>OK</button>
+              <p style={{ color: "#666", fontSize: 12, lineHeight: 1.6, marginBottom: 20 }}>{T.streakExplain}</p>
+              <button onClick={() => setShowStreakInfo(false)} style={{ width: "100%", background: streak.current > 0 ? "linear-gradient(135deg, #FF6B00, #FF9500)" : "#222", color: streak.current > 0 ? "#fff" : "#888", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: streak.current > 0 ? "0 4px 16px rgba(255,107,0,0.3)" : "none" }}>OK</button>
             </div>
           </div>
         )}
