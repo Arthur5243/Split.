@@ -6309,8 +6309,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 } else if (myIdx >= 0) {
                   merged[myIdx] = { ...merged[myIdx], displayPts: Math.max(merged[myIdx].displayPts, score) };
                 }
-                const filtered = merged.filter(u => u.displayPts > 0);
-                filtered.sort((a, b) => b.displayPts - a.displayPts);
+                merged.sort((a, b) => b.displayPts - a.displayPts);
+                const filtered = merged;
                 if (filtered.length === 0) return null;
                 const top100 = filtered.slice(0, 100);
                 const myRankIdx = filtered.findIndex(u => u.id === profile.userId);
