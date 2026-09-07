@@ -98,7 +98,7 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl FROM users WHERE points > 0 ORDER BY points DESC LIMIT 100`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
 };
 
 export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame }) {

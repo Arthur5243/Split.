@@ -171,8 +171,8 @@ const LOGOS = {
   ICE: "/logos/ice.png",
   VIT: "/logos/vit.png",
   GM: "/logos/gm.png",
-  M8: "/logos/gm.png",
-  GENT: "/logos/gm.png",
+  M8: "/logos/m8.webp",
+  GENT: "/logos/m8.webp",
   NRG: "/logos/nrg.png",
   TSM: "/logos/tsm.png",
   NIP: "/logos/nip.png",
@@ -181,6 +181,10 @@ const LOGOS = {
   TSPIRIT: "/logos/tspirit.png",
   SPIR: "/logos/tspirit.png",
   NAVI: "/logos/envy.png",
+  "5S": "/logos/5s.png",
+  R8: "/logos/r8.png",
+  WC: "/logos/wc.png",
+  BIG: "/logos/big.png",
 };
 
 const VLR_LOGOS = {
@@ -204,7 +208,7 @@ const VLR_LOGOS = {
   "varrel": "/logos/varr.png",
   "kiwoom drx": "/logos/drx.png",
   "drx": "/logos/drx.png",
-  "gentle mates": "/logos/gm.png",
+  "gentle mates": "/logos/m8.webp",
   "nrg": "/logos/nrg.png",
   "nrg esports": "/logos/nrg.png",
   "natus vincere": "/logos/envy.png",
@@ -973,6 +977,18 @@ const TEAM_CODE_OVERRIDES = {
   AURO: "AUR",
   ECST: "ECST",
   APEK: "APKS",
+  NIPE: "NIP",
+  "NIP.": "NIP",
+  "NIP ": "NIP",
+  FIVE: "5S",
+  "5STA": "5S",
+  FALCO: "FALC",
+  FALCON: "FALC",
+  "FALC ": "FALC",
+  WILD: "WC",
+  "WILDC": "WC",
+  "R8 E": "R8",
+  GENT: "M8",
 };
 
 // Corrections par nom complet exact : utilisées quand PandaScore ne renvoie
@@ -1099,6 +1115,17 @@ const NAME_CODE_OVERRIDES = {
   "INOX Division": "INOX",
   "Misa Esports": "MISA",
   "Vitality Academy": "VITA",
+  "NIP Estar": "NIP",
+  "Ninjas in Pyjamas Estar": "NIP",
+  "M8 Esports": "M8",
+  "R8 Esports": "R8",
+  "R8": "R8",
+  "Five Star": "5S",
+  "5 Star": "5S",
+  "Wildcard": "WC",
+  "BIG Clan": "BIG",
+  "Dignitas": "DIG",
+  "Gentle Mates Alpine": "M8",
 };
 
 function teamCode(opp) {
@@ -2000,7 +2027,7 @@ function isGameScoreComplete(v) {
 // clavier numérique (blur) au lieu de rebasculer dessus.
 const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onChange, accent, disabled, onAdvance, otherValue, maxDigit }, ref) {
   const max = maxDigit || 2;
-  const re = max === 3 ? /[^0-3]/g : /[^0-2]/g;
+  const re = max >= 4 ? /[^0-4]/g : max === 3 ? /[^0-3]/g : /[^0-2]/g;
   return (
     <input
       ref={ref}
@@ -2128,6 +2155,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const hasReplay = finished && match.team1Name && match.team2Name;
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
   const [scoresRevealed, setScoresRevealed] = useState(false);
   const [liveRevealed, setLiveRevealed] = useState(false);
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
@@ -2496,18 +2524,46 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 ) : (
                   <span />
                 )}
-                {pointsBreakdown && pointsBreakdown.total > 0 ? (
-                  <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 700, textAlign: "right" }}>
-                    Score : {pointsBreakdown.score} pts
-                    {pointsBreakdown.bonus > 0 && <> + Bonus : {pointsBreakdown.bonus} pts</>}
-                    {" = "}
-                    <span style={{ color: "#CCF71D", fontWeight: 900 }}>{pointsBreakdown.total} pts</span>
-                  </span>
-                ) : (
-                  <span style={{ color: "#666", fontSize: "12px", fontWeight: 900 }}>
-                    {pointsBreakdown != null ? "0 pts" : ""}
-                  </span>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ position: "relative" }}>
+                    <button onClick={() => setShowSharePopup(v => !v)} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10.5px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                      <Share2 size={12} /> Partager
+                    </button>
+                    {showSharePopup && (
+                      <>
+                        <div onClick={() => setShowSharePopup(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+                        <div style={{ position: "absolute", bottom: "calc(100% + 8px)", right: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 12, padding: 10, minWidth: 180, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                          <p style={{ color: "#aaa", fontSize: 10, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>Partager sur</p>
+                          {[
+                            { name: "Instagram Story", url: `https://www.instagram.com/create/story`, color: "#E1306C", icon: "📸" },
+                            { name: "TikTok", url: `https://www.tiktok.com/upload`, color: "#00f2ea", icon: "🎵" },
+                            { name: "Snapchat", url: `https://www.snapchat.com/`, color: "#FFFC00", icon: "👻" },
+                            { name: "X (Twitter)", url: `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} ${match.league || ""} #Split`)}`, color: "#fff", icon: "𝕏" },
+                            { name: "Copier le lien", url: null, color: "#CCF71D", icon: "🔗" },
+                          ].map(s => (
+                            <button key={s.name} onClick={() => {
+                              if (s.url) { window.open(s.url, "_blank"); }
+                              else { navigator.clipboard?.writeText(`${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} | ${match.league || ""}  — Split App`); }
+                              setShowSharePopup(false);
+                            }} className="flex items-center gap-3 w-full" style={{ padding: "8px 10px", borderRadius: 8, background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+                              <span style={{ fontSize: 16 }}>{s.icon}</span>
+                              <span style={{ color: s.color, fontSize: 12, fontWeight: 700 }}>{s.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {pointsBreakdown && pointsBreakdown.total > 0 ? (
+                    <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 700, textAlign: "right" }}>
+                      {pointsBreakdown.total} <span style={{ color: "#CCF71D", fontWeight: 900 }}>pts</span>
+                    </span>
+                  ) : (
+                    <span style={{ color: "#666", fontSize: "12px", fontWeight: 900 }}>
+                      {pointsBreakdown != null ? "0 pts" : ""}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -2611,40 +2667,39 @@ const QUEST_DAILY_POOL = [
   { id: "bet_3_matches", titleKey: "questBet3Matches", target: 3, kit: "pronostic", xp: 125 },
   { id: "bet_cs2", titleKey: "questBetCs2", target: 1, kit: "pronostic", xp: 75 },
   { id: "bet_valo", titleKey: "questBetValo", target: 1, kit: "pronostic", xp: 75 },
-  { id: "bet_4_matches", title: "Place 4 pronostics", target: 4, kit: "pronostic", xp: 150 },
-  { id: "bet_5_matches", title: "Place 5 pronostics", target: 5, kit: "pronostic", xp: 175 },
-  { id: "bet_both_games", title: "Parie sur Valo ET CS2", target: 2, kit: "pronostic", xp: 125 },
-  { id: "bet_rl", title: "Parie sur un match RL", target: 1, kit: "pronostic", xp: 75 },
-  { id: "bet_all_3_games", title: "Parie sur les 3 jeux", target: 3, kit: "pronostic", xp: 200 },
+  { id: "bet_4_matches", title: "Place 4 pronostics aujourd'hui", target: 4, kit: "pronostic", xp: 150 },
+  { id: "bet_5_matches", title: "Place tes 5 pronostics du jour", target: 5, kit: "pronostic", xp: 175 },
+  { id: "bet_both_games", title: "Parie sur un match Valo et un match CS2", target: 2, kit: "pronostic", xp: 125 },
+  { id: "bet_rl", title: "Place un pronostic sur un match Rocket League", target: 1, kit: "pronostic", xp: 75 },
+  { id: "bet_all_3_games", title: "Parie sur les 3 jeux dans la même session", target: 3, kit: "pronostic", xp: 200 },
   { id: "view_bracket", titleKey: "questViewBracket", target: 1, kit: "engagement", xp: 50 },
   { id: "check_live", titleKey: "questCheckLive", target: 1, kit: "engagement", xp: 75 },
-  { id: "check_results", title: "Consulte les résultats", target: 1, kit: "engagement", xp: 50 },
-  { id: "scroll_leaderboard", title: "Consulte le classement", target: 1, kit: "engagement", xp: 50 },
-  { id: "open_calendar", title: "Ouvre le calendrier", target: 1, kit: "engagement", xp: 50 },
+  { id: "check_results", title: "Va voir les résultats d'un match terminé", target: 1, kit: "engagement", xp: 50 },
+  { id: "scroll_leaderboard", title: "Consulte le classement des joueurs", target: 1, kit: "engagement", xp: 50 },
   { id: "add_avatar", titleKey: "questAddAvatar", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "add_bio", titleKey: "questAddBio", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "choose_fav", titleKey: "questChooseFav", target: 1, kit: "profile", oneTime: true, xp: 100 },
   { id: "invite_friend", titleKey: "questInviteFriend", target: 1, kit: "social", xp: 150 },
   { id: "follow_someone", titleKey: "questFollowSomeone", target: 1, kit: "social", xp: 100 },
-  { id: "follow_3", title: "Suis 3 joueurs", target: 3, kit: "social", xp: 175 },
+  { id: "follow_3", title: "Suis 3 joueurs différents", target: 3, kit: "social", xp: 175 },
   { id: "visit_profile", titleKey: "questVisitProfile", target: 1, kit: "social", xp: 50 },
-  { id: "visit_3_profiles", title: "Visite 3 profils", target: 3, kit: "social", xp: 100 },
+  { id: "visit_3_profiles", title: "Visite le profil de 3 joueurs", target: 3, kit: "social", xp: 100 },
   { id: "open_new_tab", titleKey: "questOpenNewTab", target: 1, kit: "discovery", oneTime: true, xp: 75 },
   { id: "view_classement", titleKey: "questViewClassement", target: 1, kit: "discovery", oneTime: true, xp: 50 },
   { id: "exact_score", titleKey: "questExactScore", target: 1, kit: "precision", xp: 200 },
-  { id: "exact_2", title: "2 scores exacts", target: 2, kit: "precision", xp: 300 },
+  { id: "exact_2", title: "Devine le score exact de 2 matchs", target: 2, kit: "precision", xp: 300 },
   { id: "bet_underdog", titleKey: "questBetUnderdog", target: 1, kit: "precision", xp: 125 },
   { id: "share_app", titleKey: "questShareApp", target: 1, kit: "social", xp: 150 },
-  { id: "win_bet", title: "Gagne un pari", target: 1, kit: "pronostic", xp: 100 },
-  { id: "win_2_bets", title: "Gagne 2 paris", target: 2, kit: "pronostic", xp: 150 },
-  { id: "win_3_bets", title: "Gagne 3 paris", target: 3, kit: "pronostic", xp: 200 },
-  { id: "streak_2", title: "Atteins un streak de 2", target: 2, kit: "streak", xp: 125 },
-  { id: "streak_3", title: "Atteins un streak de 3", target: 3, kit: "streak", xp: 175 },
-  { id: "streak_5", title: "Atteins un streak de 5", target: 5, kit: "streak", xp: 250 },
-  { id: "post_nexus", title: "Publie un post Nexus", target: 1, kit: "social", xp: 75 },
-  { id: "like_post", title: "Like un post", target: 1, kit: "social", xp: 50 },
-  { id: "bet_map_score", title: "Pronostique un score de map", target: 1, kit: "precision", xp: 100 },
-  { id: "bet_2_map_scores", title: "Pronostique 2 scores de map", target: 2, kit: "precision", xp: 150 },
+  { id: "win_bet", title: "Remporte au moins un de tes pronostics", target: 1, kit: "pronostic", xp: 100 },
+  { id: "win_2_bets", title: "Remporte 2 pronostics dans la journée", target: 2, kit: "pronostic", xp: 150 },
+  { id: "win_3_bets", title: "Remporte 3 pronostics dans la journée", target: 3, kit: "pronostic", xp: 200 },
+  { id: "streak_2", title: "Maintiens ton streak pendant 2 jours", target: 2, kit: "streak", xp: 125 },
+  { id: "streak_3", title: "Atteins un streak de 3 jours d'affilée", target: 3, kit: "streak", xp: 175 },
+  { id: "streak_5", title: "Tiens un streak de 5 jours consécutifs", target: 5, kit: "streak", xp: 250 },
+  { id: "post_nexus", title: "Publie un post sur le fil Nexus", target: 1, kit: "social", xp: 75 },
+  { id: "like_post", title: "Like le post d'un autre joueur", target: 1, kit: "social", xp: 50 },
+  { id: "bet_map_score", title: "Pronostique le score d'au moins une map", target: 1, kit: "precision", xp: 100 },
+  { id: "bet_2_map_scores", title: "Pronostique le score de 2 maps différentes", target: 2, kit: "precision", xp: 150 },
 ];
 function generateMatchQuests(upcoming, game) {
   if (!upcoming || !upcoming.length) return [];
@@ -2662,18 +2717,18 @@ const QUEST_WEEKLY_POOL = [
   { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly", xp: 400 },
   { id: "weekly_3_exact", titleKey: "questWeekly3Exact", target: 3, kit: "weekly", xp: 500 },
   { id: "weekly_10_bets", titleKey: "questWeekly10Bets", target: 10, kit: "weekly", xp: 300 },
-  { id: "weekly_7_bets", title: "Place 7 pronostics cette semaine", target: 7, kit: "weekly", xp: 250 },
-  { id: "weekly_15_bets", title: "Place 15 pronostics cette semaine", target: 15, kit: "weekly", xp: 500 },
-  { id: "weekly_20_bets", title: "Place 20 pronostics cette semaine", target: 20, kit: "weekly", xp: 600 },
-  { id: "weekly_bet_all_games", title: "Parie sur les 3 jeux cette semaine", target: 3, kit: "weekly", xp: 350 },
-  { id: "weekly_5_exact", title: "5 scores exacts cette semaine", target: 5, kit: "weekly", xp: 700 },
-  { id: "weekly_streak_5", title: "Maintiens un streak de 5 jours", target: 5, kit: "weekly", xp: 450 },
-  { id: "weekly_streak_7", title: "Streak parfait (7 jours)", target: 7, kit: "weekly", xp: 600 },
-  { id: "weekly_10_wins", title: "Gagne 10 paris cette semaine", target: 10, kit: "weekly", xp: 500 },
-  { id: "weekly_follow_5", title: "Suis 5 joueurs cette semaine", target: 5, kit: "weekly", xp: 300 },
-  { id: "weekly_3_cs2", title: "3 paris CS2 cette semaine", target: 3, kit: "weekly", xp: 250 },
-  { id: "weekly_3_valo", title: "3 paris Valo cette semaine", target: 3, kit: "weekly", xp: 250 },
-  { id: "weekly_visit_5_profiles", title: "Visite 5 profils cette semaine", target: 5, kit: "weekly", xp: 200 },
+  { id: "weekly_7_bets", title: "Place au moins 7 pronostics cette semaine", target: 7, kit: "weekly", xp: 250 },
+  { id: "weekly_15_bets", title: "Atteins les 15 pronostics sur la semaine", target: 15, kit: "weekly", xp: 500 },
+  { id: "weekly_20_bets", title: "Place 20 pronostics avant la fin de semaine", target: 20, kit: "weekly", xp: 600 },
+  { id: "weekly_bet_all_games", title: "Parie sur Valo, CS2 et RL cette semaine", target: 3, kit: "weekly", xp: 350 },
+  { id: "weekly_5_exact", title: "Devine le score exact de 5 matchs cette semaine", target: 5, kit: "weekly", xp: 700 },
+  { id: "weekly_streak_5", title: "Garde ton streak actif pendant 5 jours", target: 5, kit: "weekly", xp: 450 },
+  { id: "weekly_streak_7", title: "Réalise un streak parfait de 7 jours", target: 7, kit: "weekly", xp: 600 },
+  { id: "weekly_10_wins", title: "Remporte 10 pronostics sur la semaine", target: 10, kit: "weekly", xp: 500 },
+  { id: "weekly_follow_5", title: "Suis 5 nouveaux joueurs cette semaine", target: 5, kit: "weekly", xp: 300 },
+  { id: "weekly_3_cs2", title: "Place 3 pronostics CS2 cette semaine", target: 3, kit: "weekly", xp: 250 },
+  { id: "weekly_3_valo", title: "Place 3 pronostics Valorant cette semaine", target: 3, kit: "weekly", xp: 250 },
+  { id: "weekly_visit_5_profiles", title: "Découvre le profil de 5 joueurs cette semaine", target: 5, kit: "weekly", xp: 200 },
 ];
 const PRECISION_IDS = new Set(["exact_score", "exact_2"]);
 const DAILY_BET_LIMIT = 5;
@@ -4211,7 +4266,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
-  const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
+  const pageStylePlain = { height: "100%", backgroundColor: "#0a0a0a", overflowY: "auto", overscrollBehavior: "contain" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -4585,7 +4640,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     </>;
   };
 
-  const pageStylePlain = { minHeight: "100vh", backgroundColor: "#0a0a0a" };
+  const pageStylePlain = { height: "100%", backgroundColor: "#0a0a0a", overflowY: "auto", overscrollBehavior: "contain" };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -5360,7 +5415,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   const fileRef = useRef(null);
 
   const bioOk = bio.trim() === "" || validateBio(bio);
-  const canSave = avatar && pseudo.trim().length >= 2 && bioOk;
+  const canSave = pseudo.trim().length >= 2 && bioOk;
 
   function handleBioChange(e) {
     const v = e.target.value;
@@ -7616,6 +7671,15 @@ export default function ClutchApp() {
     return map;
   }, [cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches]);
 
+  const rlTeamLogoCache = React.useMemo(() => {
+    const map = {};
+    for (const m of [...rlUpcomingMatches, ...rlLiveMatches, ...rlResultsMatches]) {
+      if (m.team1Logo && m.team1Name) map[normTeamName(m.team1Name)] = m.team1Logo;
+      if (m.team2Logo && m.team2Name) map[normTeamName(m.team2Name)] = m.team2Logo;
+    }
+    return map;
+  }, [rlUpcomingMatches, rlLiveMatches, rlResultsMatches]);
+
   function toggleRegion(key) {
     const allKeys = REGIONS.map((r) => r.key);
     if (key === "ALL") {
@@ -8053,7 +8117,7 @@ export default function ClutchApp() {
               isMatchNotifOn={(id, region) => isMatchNotifOn(id, "rl", region)}
               toggleMatchNotif={toggleMatchNotif}
               toggleExpand={toggleExpand}
-              teamLogoCache={teamLogoCache}
+              teamLogoCache={rlTeamLogoCache}
               predictions={predictions}
               onSeriesChange={onSeriesChange}
               changeScore={changeScore}
