@@ -686,6 +686,20 @@
     "match_id": 2602
   },
   {
+    "pandascore_id": 1661586,
+    "tournament_id": "PANDA_21810",
+    "tournament_name": "Playoffs",
+    "tier": "THE POKAL",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Lower bracket round 3 match 1: Catboys vs HK",
+    "team1": "Catboys",
+    "team2": "HooK Esport",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2603
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
