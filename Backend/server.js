@@ -313,7 +313,7 @@ async function reconcileStaleLiveMatches(data) {
       if (mp.score1 > mp.score2) wins1++;
       else if (mp.score2 > mp.score1) wins2++;
     }
-    const winsNeeded = (m.number_of_games === 5) ? 3 : 2;
+    const winsNeeded = m.number_of_games >= 7 ? 4 : (m.number_of_games === 5) ? 3 : 2;
     if (wins1 < winsNeeded && wins2 < winsNeeded) {
       // vlr.gg aussi le montre encore ouvert -> cohérent avec "running" en soi,
       // SAUF si ça dure depuis plus de 4h : à ce stade c'est probablement un

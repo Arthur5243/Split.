@@ -1335,6 +1335,7 @@ function transformMatchRL(m) {
     score2,
     tier: m.tier || (m.league && m.league.name) || null,
     map_scores: m.game_scores ? m.game_scores.map((g) => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
+    number_of_games: m.number_of_games || 5,
     streamUrl: m.stream_url || null,
   };
 }
@@ -2071,8 +2072,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const expanded = pred && pred.expanded;
   const games = (pred && pred.games) || [];
   const bo = match.number_of_games || 3;
-  const winsNeeded = bo === 5 ? 3 : 2;
-  const validBo = bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
+  const winsNeeded = bo >= 7 ? 4 : bo === 5 ? 3 : 2;
+  const validBo = bo >= 7 ? [[4,0],[4,1],[4,2],[4,3],[3,4],[2,4],[1,4],[0,4]] : bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
   const hasCompleteBet = seriesA !== "" && seriesB !== "" && validBo.some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
   const LOCK_HOURS = 6;
   const lockedByTime = (() => {
@@ -2384,7 +2385,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       {finished ? (
         <>
           <div style={{ position: "relative" }}>
-            <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center" style={{ background: "#1a1a1a", padding: "14px 0" }}>
+            <button onClick={() => onToggleExpand(match.id)} className="w-full flex items-center justify-center" style={{ background: "#1e1e1e", padding: "14px 0" }}>
               <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
             </button>
             {pointsBreakdown && (
@@ -2447,7 +2448,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 })()}
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #1f1f1f", position: "relative" }}>
+              <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: "1px solid #2a2a2a", position: "relative" }}>
                 {hasReplay ? (
                   cs2KickUrl ? (
                     <div style={{ position: "relative" }}>
@@ -2513,14 +2514,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </>
       ) : (
         <>
-          <button onClick={() => onToggleExpand(match.id)} disabled={tbd} className="w-full flex items-center justify-center py-1.5" style={{ background: "#1a1a1a", opacity: tbd ? 0.4 : 1 }}>
+          <button onClick={() => onToggleExpand(match.id)} disabled={tbd} className="w-full flex items-center justify-center py-1.5" style={{ background: "#1e1e1e", opacity: tbd ? 0.4 : 1 }}>
             <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
           </button>
 
           {expanded && !tbd && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
               {hasLiveScores && liveRevealed && (
-                <div className="mb-3 pb-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <div className="mb-3 pb-3" style={{ borderBottom: "1px solid #262626" }}>
                   {match.live_map_scores.map((lm, li) => (
                     <div key={li} className="flex items-center justify-between py-1">
                       <span style={{ color: "#888", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {li + 1}{lm.map ? ` · ${lm.map}` : ""}</span>
@@ -2780,11 +2781,31 @@ function totalXpForTier(tier) {
   return total;
 }
 function getTierReward(tier) {
-  if (tier === 1) return { icon: "🎁", label: "Pack de bienvenue", rarity: "free" };
-  if (tier <= 15) return { icon: "📦", label: "Coffre Bronze", rarity: "common" };
-  if (tier <= 45) return { icon: "📦", label: "Coffre Argent", rarity: "rare" };
-  if (tier <= 80) return { icon: "📦", label: "Coffre Or", rarity: "epic" };
-  return { icon: "📦", label: "Coffre Diamant", rarity: "legendary" };
+  if (tier === 1) return { icon: "🎁", label: "Pack de bienvenue", rarity: "free", desc: "Ton premier coffre" };
+  if (tier === 5) return { icon: "🏷️", label: "Titre : Rookie", rarity: "common", desc: "Titre de profil" };
+  if (tier === 10) return { icon: "⭐", label: "Badge Étoile", rarity: "common", desc: "Badge de profil" };
+  if (tier === 15) return { icon: "🎨", label: "Skin Neon", rarity: "common", desc: "Skin de carte" };
+  if (tier === 20) return { icon: "🏷️", label: "Titre : Analyste", rarity: "rare", desc: "Titre de profil" };
+  if (tier === 25) return { icon: "💜", label: "Bordure Améthyste", rarity: "rare", desc: "Bordure de profil" };
+  if (tier === 30) return { icon: "🎭", label: "Emote GG", rarity: "rare", desc: "Emote de chat" };
+  if (tier === 35) return { icon: "⚡", label: "Badge Bolt", rarity: "rare", desc: "Badge de profil" };
+  if (tier === 40) return { icon: "🎨", label: "Skin Glacier", rarity: "rare", desc: "Skin de carte" };
+  if (tier === 45) return { icon: "🏷️", label: "Titre : Stratège", rarity: "rare", desc: "Titre de profil" };
+  if (tier === 50) return { icon: "👑", label: "Badge Couronne", rarity: "epic", desc: "Badge de profil" };
+  if (tier === 55) return { icon: "🔥", label: "Skin Inferno", rarity: "epic", desc: "Skin de carte" };
+  if (tier === 60) return { icon: "💎", label: "Bordure Diamant", rarity: "epic", desc: "Bordure de profil" };
+  if (tier === 65) return { icon: "🎭", label: "Emote EZ", rarity: "epic", desc: "Emote de chat" };
+  if (tier === 70) return { icon: "🏷️", label: "Titre : Oracle", rarity: "epic", desc: "Titre de profil" };
+  if (tier === 75) return { icon: "🎨", label: "Skin Plasma", rarity: "epic", desc: "Skin de carte" };
+  if (tier === 80) return { icon: "✨", label: "Aura Dorée", rarity: "epic", desc: "Effet de profil" };
+  if (tier === 85) return { icon: "🏷️", label: "Titre : Légende", rarity: "legendary", desc: "Titre de profil" };
+  if (tier === 90) return { icon: "🎨", label: "Skin Holographique", rarity: "legendary", desc: "Skin de carte" };
+  if (tier === 95) return { icon: "💠", label: "Bordure Cosmique", rarity: "legendary", desc: "Bordure de profil" };
+  if (tier === 100) return { icon: "🏆", label: "Titre : Infinite", rarity: "legendary", desc: "Le titre ultime" };
+  if (tier <= 15) return { icon: "📦", label: "Coffre Bronze", rarity: "common", desc: "Objet aléatoire" };
+  if (tier <= 45) return { icon: "📦", label: "Coffre Argent", rarity: "rare", desc: "Objet aléatoire" };
+  if (tier <= 80) return { icon: "📦", label: "Coffre Or", rarity: "epic", desc: "Objet aléatoire" };
+  return { icon: "📦", label: "Coffre Diamant", rarity: "legendary", desc: "Objet aléatoire" };
 }
 const TIER_RARITY_COLORS = { free: "#4CAF50", common: "#CD7F32", rare: "#A855F7", epic: "#EAB308", legendary: "#38BDF8" };
 
@@ -2944,7 +2965,7 @@ function QuestModal({ quests, onClose, onClaim, T }) {
               <CheckCircle size={18} color="#CCF71D" />
             </div>
           ) : (
-            <div style={{ width: 36, height: 36, borderRadius: 12, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 12, background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ChevronRight size={16} color="#333" />
             </div>
           )}
@@ -2986,7 +3007,6 @@ function RewardsModal({ onClose, T, userXp }) {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
   const [activeSection, setActiveSection] = useState(() => {
-    if (currentTier <= 1) return "bronze";
     if (currentTier <= 15) return "bronze";
     if (currentTier <= 45) return "silver";
     if (currentTier <= 80) return "gold";
@@ -2994,10 +3014,10 @@ function RewardsModal({ onClose, T, userXp }) {
   });
 
   const sections = [
-    { key: "bronze", label: "Bronze", range: [1, 15], color: "#CD7F32", bg: "rgba(205,127,50,0.08)", icon: "🥉" },
-    { key: "silver", label: "Argent", range: [16, 45], color: "#A855F7", bg: "rgba(168,85,247,0.08)", icon: "🥈" },
-    { key: "gold", label: "Or", range: [46, 80], color: "#EAB308", bg: "rgba(234,179,8,0.08)", icon: "🥇" },
-    { key: "diamond", label: "Diamant", range: [81, 100], color: "#38BDF8", bg: "rgba(56,189,248,0.08)", icon: "💎" },
+    { key: "bronze", label: "Bronze", range: [1, 15], color: "#CD7F32", gradient: "linear-gradient(135deg, #CD7F32, #8B4513)", img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop" },
+    { key: "silver", label: "Argent", range: [16, 45], color: "#A855F7", gradient: "linear-gradient(135deg, #A855F7, #6D28D9)", img: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&h=200&fit=crop" },
+    { key: "gold", label: "Or", range: [46, 80], color: "#EAB308", gradient: "linear-gradient(135deg, #EAB308, #CA8A04)", img: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=400&h=200&fit=crop" },
+    { key: "diamond", label: "Diamant", range: [81, 100], color: "#38BDF8", gradient: "linear-gradient(135deg, #38BDF8, #0EA5E9)", img: "https://images.unsplash.com/photo-1614294148960-9aa740632a87?w=400&h=200&fit=crop" },
   ];
 
   useEffect(() => {
@@ -3040,101 +3060,105 @@ function RewardsModal({ onClose, T, userXp }) {
 
   return (
     <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", borderBottom: "1px solid #1a1a1a", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "14px 16px 10px", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: `linear-gradient(135deg, ${activeSec?.color || "#A855F7"}22, ${activeSec?.color || "#A855F7"}08)`, border: `1.5px solid ${activeSec?.color || "#A855F7"}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Zap size={20} color={activeSec?.color || "#A855F7"} />
+      <div style={{ position: "relative", margin: "0 12px 10px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 110 }}>
+        <img src={activeSec?.img} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)" }} />
+        <div style={{ position: "relative", padding: "14px 16px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <Zap size={16} color={activeSec?.color} />
+            <span style={{ color: "#fff", fontSize: 24, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{userXp || 0}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontWeight: 700 }}>XP</span>
+            <span style={{ marginLeft: "auto", color: activeSec?.color, fontSize: 11, fontWeight: 800, background: "rgba(0,0,0,0.5)", padding: "3px 10px", borderRadius: 20, backdropFilter: "blur(4px)" }}>{T.tierLabel || "Palier"} {currentTier}</span>
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ color: "#fff", fontSize: 22, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{userXp || 0}</span>
-              <span style={{ color: "#666", fontSize: 11, fontWeight: 700 }}>XP</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: activeSec?.color, transition: "width 0.4s ease", boxShadow: `0 0 8px ${activeSec?.color}60` }} />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-              <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#1a1a1a", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: progressPct + "%", borderRadius: 2, background: activeSec?.color || "#A855F7", transition: "width 0.4s ease" }} />
-              </div>
-              <span style={{ color: "#888", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
-            </div>
+            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
           </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 6 }}>
-          {sections.map(sec => {
-            const active = activeSection === sec.key;
-            const sectionDone = currentTier >= sec.range[1];
-            const sectionActive = currentTier >= sec.range[0] && currentTier <= sec.range[1];
-            return (
-              <button key={sec.key} onClick={() => setActiveSection(sec.key)} style={{
-                flex: 1, padding: "8px 4px", borderRadius: 10, cursor: "pointer",
-                background: active ? sec.bg : "transparent",
-                border: `1.5px solid ${active ? sec.color + "50" : "#1a1a1a"}`,
-                opacity: sectionDone || sectionActive || active ? 1 : 0.45,
-                transition: "all 0.2s ease",
-              }}>
-                <span style={{ display: "block", fontSize: 16, lineHeight: 1, marginBottom: 2 }}>{sec.icon}</span>
-                <span style={{ display: "block", color: active ? sec.color : "#888", fontSize: 9, fontWeight: 800, letterSpacing: "0.03em" }}>{sec.label}</span>
-                {sectionDone && <span style={{ display: "block", color: "#4CAF50", fontSize: 8, marginTop: 1 }}>&#10003;</span>}
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "6px 12px 24px" }}>
+      <div style={{ display: "flex", gap: 6, padding: "0 12px 8px", flexShrink: 0 }}>
+        {sections.map(sec => {
+          const active = activeSection === sec.key;
+          const sectionDone = currentTier >= sec.range[1];
+          const sectionActive = currentTier >= sec.range[0] && currentTier <= sec.range[1];
+          return (
+            <button key={sec.key} onClick={() => setActiveSection(sec.key)} style={{
+              flex: 1, padding: "10px 4px", borderRadius: 12, cursor: "pointer",
+              background: active ? sec.gradient : "#141414",
+              border: `1.5px solid ${active ? sec.color + "60" : "#262626"}`,
+              opacity: sectionDone || sectionActive || active ? 1 : 0.4,
+              transition: "all 0.2s ease",
+            }}>
+              <span style={{ display: "block", color: active ? "#fff" : "#aaa", fontSize: 11, fontWeight: 800, letterSpacing: "0.02em" }}>{sec.label}</span>
+              <span style={{ display: "block", color: active ? "rgba(255,255,255,0.7)" : "#555", fontSize: 9, fontWeight: 700, marginTop: 1 }}>{sec.range[0]}-{sec.range[1]}</span>
+              {sectionDone && <span style={{ display: "block", color: active ? "#fff" : "#4CAF50", fontSize: 8, marginTop: 1 }}>&#10003; Terminé</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 24px" }}>
         {tiersInSection.map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
-          const isNext = tier === currentTier + 1;
           const claimed = claimedTiers.includes(tier);
           const canClaim = unlocked && !claimed;
           const rarityColor = TIER_RARITY_COLORS[reward.rarity] || "#666";
-          const xpNeeded = totalXpForTier(tier);
+          const isMilestone = tier % 5 === 0;
           return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 4 }}>
-              <div style={{ display: "flex", alignItems: "stretch", gap: 10, padding: "3px 0" }}>
-                <div style={{ width: 24, display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 12, flexShrink: 0 }}>
-                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#666" : "#333", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
+            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 8 : 4 }}>
+              <button onClick={() => { if (canClaim) claimTier(tier); }} disabled={!canClaim && !claimed} style={{
+                width: "100%", display: "flex", alignItems: "center", gap: 12,
+                padding: isMilestone ? "14px 14px" : "10px 12px",
+                borderRadius: isMilestone ? 16 : 12,
+                background: isCurrent ? "#161616" : canClaim ? `${rarityColor}0a` : "#0d0d0d",
+                border: `1.5px solid ${isCurrent ? rarityColor + "50" : canClaim ? rarityColor + "30" : "#1e1e1e"}`,
+                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
+                cursor: canClaim ? "pointer" : "default",
+                textAlign: "left",
+                transition: "all 0.2s",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                {isMilestone && unlocked && <div style={{ position: "absolute", top: 0, right: 0, width: 60, height: "100%", background: `linear-gradient(90deg, transparent, ${rarityColor}08)` }} />}
+                <div style={{ width: 20, textAlign: "center", flexShrink: 0 }}>
+                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#888" : "#444", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
                 </div>
-                <div style={{ position: "relative", width: 2, flexShrink: 0 }}>
-                  <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 2, background: unlocked ? rarityColor + "30" : "#151515" }} />
-                  {isCurrent && <div style={{ position: "absolute", top: "50%", left: -4, width: 10, height: 10, borderRadius: "50%", background: "#CCF71D", transform: "translateY(-50%)", boxShadow: "0 0 8px rgba(204,247,29,0.6)" }} />}
-                  {isNext && tierInfo.xpNeeded > 0 && (
-                    <div style={{ position: "absolute", top: 0, left: 0, width: 2, height: progressPct + "%", background: activeSec?.color || "#A855F7" }} />
-                  )}
-                </div>
-                <button onClick={() => { if (canClaim) claimTier(tier); }} disabled={!canClaim && !claimed} style={{
-                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12,
-                  background: isCurrent ? "#141414" : canClaim ? `${rarityColor}08` : "#0d0d0d",
-                  border: `1px solid ${isCurrent ? rarityColor + "40" : canClaim ? rarityColor + "25" : "#161616"}`,
-                  opacity: unlocked || isNext ? 1 : 0.35,
-                  cursor: canClaim ? "pointer" : "default",
-                  textAlign: "left",
-                  transition: "opacity 0.2s",
+                <div style={{
+                  width: isMilestone ? 48 : 40, height: isMilestone ? 48 : 40,
+                  borderRadius: isMilestone ? 14 : 10,
+                  background: unlocked ? `${rarityColor}18` : "#141414",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  border: `1.5px solid ${unlocked ? rarityColor + "30" : "#222"}`,
+                  boxShadow: canClaim ? `0 0 12px ${rarityColor}20` : "none",
                 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: unlocked ? `${rarityColor}15` : "#141414", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${unlocked ? rarityColor + "20" : "#1a1a1a"}` }}>
-                    <span style={{ fontSize: 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.5)" }}>{reward.icon}</span>
+                  <span style={{ fontSize: isMilestone ? 22 : 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{reward.icon}</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ color: canClaim ? "#fff" : unlocked ? "#ccc" : "#555", fontSize: isMilestone ? 13 : 12, fontWeight: 700, margin: 0 }}>{reward.label}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                    <span style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.8 }}>{reward.rarity === "free" ? "Gratuit" : reward.rarity}</span>
+                    {reward.desc && <span style={{ color: "#555", fontSize: 9, fontWeight: 600 }}>{reward.desc}</span>}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ color: canClaim ? "#fff" : unlocked ? "#bbb" : "#555", fontSize: 12, fontWeight: 700, margin: 0 }}>{reward.label}</p>
-                    <p style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", margin: "2px 0 0", opacity: 0.7 }}>{reward.rarity === "free" ? "Gratuit" : reward.rarity}</p>
-                  </div>
-                  {claimed ? (
-                    <CheckCircle size={18} color="#4CAF50" />
-                  ) : canClaim ? (
-                    <span style={{ background: rarityColor, color: "#000", fontSize: 10, fontWeight: 800, padding: "5px 12px", borderRadius: 8 }}>Ouvrir</span>
-                  ) : (
-                    <Lock size={13} color="#2a2a2a" />
-                  )}
-                </button>
-              </div>
+                </div>
+                {claimed ? (
+                  <CheckCircle size={20} color="#4CAF50" />
+                ) : canClaim ? (
+                  <span style={{ background: activeSec?.gradient || rarityColor, color: "#fff", fontSize: 10, fontWeight: 800, padding: "6px 14px", borderRadius: 10, boxShadow: `0 2px 8px ${rarityColor}40` }}>Ouvrir</span>
+                ) : (
+                  <Lock size={14} color="#333" />
+                )}
+              </button>
             </div>
           );
         })}
@@ -3143,8 +3167,8 @@ function RewardsModal({ onClose, T, userXp }) {
       {showScrollBtn && (
         <button onClick={scrollToCurrent} style={{
           position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          background: activeSec?.color || "#CCF71D", color: "#000", border: "none", borderRadius: 20,
-          padding: "7px 16px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+          background: activeSec?.gradient || "#CCF71D", color: "#fff", border: "none", borderRadius: 20,
+          padding: "8px 18px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
           boxShadow: `0 4px 16px ${activeSec?.color || "#CCF71D"}50`, zIndex: 10,
         }}>
           <ArrowUp size={12} /> {T.tierScrollUp || "Mon palier"}
@@ -3448,8 +3472,8 @@ function NotificationsPanel({ notifications, onClose, T }) {
               const icon = n.type === "friend" ? <UserPlus size={16} color="#3B82F6" /> : n.type === "match" ? <Zap size={16} color="#F59E0B" /> : <Bell size={16} color="#888" />;
               const bg = n.type === "friend" ? "rgba(59,130,246,0.08)" : n.type === "match" ? "rgba(245,158,11,0.08)" : "#111";
               return (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: bg, border: "1px solid #1a1a1a", borderRadius: 12, padding: "12px 14px" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: bg, border: "1px solid #262626", borderRadius: 12, padding: "12px 14px" }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
                   <span style={{ color: "#ccc", fontSize: 12, fontWeight: 600 }}>{n.message}</span>
                 </div>
               );
@@ -3535,7 +3559,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           const user = top3[i];
           const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
           return (
-            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #1f1f1f" : "none" }}>
+            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #2a2a2a" : "none" }}>
               <div className="flex items-center gap-3">
                 <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
                 {user && user.avatar ? (
@@ -4067,7 +4091,7 @@ function BracketProgressBar({ bracket, accentColor }) {
   if (total === 0) return null;
   return (
     <div style={{ padding: "8px 16px 4px", display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#1a1a1a", overflow: "hidden" }}>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: "#1e1e1e", overflow: "hidden" }}>
         <div style={{ width: `${(done / total) * 100}%`, height: "100%", background: accentColor, borderRadius: 2, transition: "width 0.4s ease" }} />
       </div>
       <span style={{ color: "#666", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{done}/{total}</span>
@@ -5301,12 +5325,12 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
   return (
     <div>
       <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: value ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
+      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
         <span className="truncate">{value || "—"}</span>
         <ChevronDown size={14} color="#666" />
       </button>
       {open && (
-        <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+        <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #2a2a2a" }}>
             <Search size={14} color="#666" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." autoFocus style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", outline: "none", flex: 1 }} />
@@ -5367,7 +5391,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
         <div className="overflow-y-auto dark-scroll px-5 pb-6 flex flex-col gap-4">
           <div className="flex flex-col items-center">
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "flex-start" }}>{T.profileAvatar}</label>
-            <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1a1a1a", border: "2px solid #2a2a2a" }}>
+            <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1e1e1e", border: "2px solid #2a2a2a" }}>
               {avatar ? (
                 <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
@@ -5378,11 +5402,11 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
           </div>
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
-            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
+            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
           </div>
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
-            <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#1a1a1a", border: bioError ? "1px solid #e74c3c" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none", resize: "none" }} className="mt-1" />
+            <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#1e1e1e", border: bioError ? "1px solid #e74c3c" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none", resize: "none" }} className="mt-1" />
             {bioError && <p style={{ color: "#e74c3c", fontSize: "10px", marginTop: "4px" }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
           </div>
           <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
@@ -5467,8 +5491,8 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
   function UserRow({ user }) {
     const iFollow = followingSet.has(user.id);
     return (
-      <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "1px solid #1a1a1a" }}>
-        <div className="rounded-full overflow-hidden shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+      <div className="flex items-center gap-3 py-2.5" style={{ borderBottom: "1px solid #262626" }}>
+        <div className="rounded-full overflow-hidden shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
           {user.avatar ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
         </div>
         <div className="flex-1 min-w-0">
@@ -5477,7 +5501,7 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
         </div>
         {user.id !== userId && (
           iFollow ? (
-            <button onClick={() => handleUnfollow(user.id)} className="rounded-lg px-3 py-1.5 font-bold" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px" }}>{T.friendUnfollow}</button>
+            <button onClick={() => handleUnfollow(user.id)} className="rounded-lg px-3 py-1.5 font-bold" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px" }}>{T.friendUnfollow}</button>
           ) : (
             <button onClick={() => handleFollow(user.id)} className="rounded-lg px-3 py-1.5 font-bold" style={{ background: "#CCF71D", color: "#000", fontSize: "11px" }}>{T.friendFollow}</button>
           )
@@ -5508,7 +5532,7 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
         <div className="px-5 py-4 flex-1 overflow-y-auto" style={{ maxHeight: "60vh" }}>
           {tab === "search" && (
             <div>
-              <div className="flex items-center gap-2 rounded-xl px-3 mb-3" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+              <div className="flex items-center gap-2 rounded-xl px-3 mb-3" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
                 <Search size={14} color="#666" />
                 <input value={query} onChange={(e) => handleSearch(e.target.value)} placeholder={T.friendSearchPlaceholder} style={{ background: "transparent", border: "none", color: "#fff", fontSize: "13px", outline: "none", flex: 1, padding: "10px 0" }} />
               </div>
@@ -5568,7 +5592,7 @@ function CreatePostScreen({ onClose, T, profile }) {
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -5576,7 +5600,7 @@ function CreatePostScreen({ onClose, T, profile }) {
         <div style={{ width: 34 }} />
       </div>
 
-      <div className="flex gap-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+      <div className="flex gap-0" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postWrite || "Écrire"}</button>
         <button onClick={() => setTab("history")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postHistory || "Historique"}</button>
       </div>
@@ -5607,7 +5631,7 @@ function CreatePostScreen({ onClose, T, profile }) {
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
           {history.map(p => (
-            <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+            <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
               <p style={{ color: "#fff", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>
               {p.match_data && (
                 <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
@@ -5649,7 +5673,7 @@ function PostsFeedScreen({ onClose, T, profile }) {
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -5660,9 +5684,9 @@ function PostsFeedScreen({ onClose, T, profile }) {
         {loading && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>...</p>}
         {!loading && posts.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
         {posts.map(p => (
-          <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+          <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
             <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
+              <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
                 {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
               </div>
               <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
@@ -5868,7 +5892,7 @@ function MessagesScreen({ onClose, T, profile }) {
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #1a1a1a" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={activeDm ? () => { setActiveDm(null); setTab("dms"); } : onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -5885,7 +5909,7 @@ function MessagesScreen({ onClose, T, profile }) {
       </div>
 
       {!activeDm && (
-        <div className="flex gap-0 shrink-0" style={{ borderBottom: "1px solid #1a1a1a" }}>
+        <div className="flex gap-0 shrink-0" style={{ borderBottom: "1px solid #262626" }}>
           <button onClick={() => setTab("community")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "community" ? "#CCF71D" : "#666", borderBottom: tab === "community" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgCommunity || "Communauté"}</button>
           <button onClick={() => setTab("dms")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "dms" ? "#CCF71D" : "#666", borderBottom: tab === "dms" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.msgDms || "Messages"}</button>
         </div>
@@ -5903,7 +5927,7 @@ function MessagesScreen({ onClose, T, profile }) {
                   onClick={() => { if (isOwn) setDeletingId(deletingId === m.id ? null : m.id); }}
                   style={{ cursor: isOwn ? "pointer" : "default" }}
                 >
-                  <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1a1a1a" }}>
+                  <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
                     {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -5912,7 +5936,7 @@ function MessagesScreen({ onClose, T, profile }) {
                     {deletingId === m.id && (
                       <div className="flex gap-2 mt-1">
                         <button onClick={e => { e.stopPropagation(); deleteMsg(m.id, "community"); }} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
-                        <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
+                        <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
                       </div>
                     )}
                   </div>
@@ -5929,7 +5953,7 @@ function MessagesScreen({ onClose, T, profile }) {
           {conversations.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.msgNoDms || "Aucune conversation"}</p>}
           {conversations.map(c => (
             <button key={c.partnerId} onClick={() => openDm(c)} className="w-full flex items-center gap-3 py-3 rounded-xl px-2" style={{ background: "transparent" }}>
-              <div className="rounded-full overflow-hidden shrink-0" style={{ width: 40, height: 40, background: "#1a1a1a" }}>
+              <div className="rounded-full overflow-hidden shrink-0" style={{ width: 40, height: 40, background: "#1e1e1e" }}>
                 {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
               </div>
               <div className="flex-1 text-left">
@@ -5957,7 +5981,7 @@ function MessagesScreen({ onClose, T, profile }) {
                   {deletingId === ("dm-" + m.id) && (
                     <div className="flex gap-2 mt-1">
                       <button onClick={e => { e.stopPropagation(); deleteMsg(m.id, "dm"); }} className="rounded-lg px-3 py-1" style={{ background: "#3a1a1a", border: "1px solid #5a2a2a", color: "#ef4444", fontSize: "11px", fontWeight: 700 }}>Supprimer</button>
-                      <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
+                      <button onClick={e => { e.stopPropagation(); setDeletingId(null); }} className="rounded-lg px-3 py-1" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#888", fontSize: "11px", fontWeight: 700 }}>Annuler</button>
                     </div>
                   )}
                 </div>
@@ -6035,13 +6059,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </button>
             <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
           </div>
-          <button onClick={onEditProfile} className="rounded-lg px-3 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <button onClick={onEditProfile} className="rounded-lg px-3 py-1.5" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
             <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit || "Modifier"}</span>
           </button>
         </div>
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1a1a1a", border: "2px solid #333", flexShrink: 0 }}>
+          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1e1e1e", border: "2px solid #333", flexShrink: 0 }}>
             {profile.avatar ? (
               <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
@@ -6167,7 +6191,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </button>
         </div>
         <div className="flex items-center gap-4 mb-4">
-          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1a1a1a", border: "2px solid #333", flexShrink: 0 }}>
+          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1e1e1e", border: "2px solid #333", flexShrink: 0 }}>
             {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={32} color="#555" />}
           </div>
           <div className="flex-1 flex justify-around text-center">
@@ -6348,7 +6372,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       }).catch(() => { setSpectatorUser(u); });
                     }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
-                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1a1a1a", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
+                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
@@ -6403,7 +6427,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <div className="flex items-start gap-3">
               <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="flex flex-col items-center shrink-0">
-                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1a1a1a", border: "2px solid #CCF71D" }}>
+                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1e1e1e", border: "2px solid #CCF71D" }}>
                   {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={24} color="#555" />}
                 </div>
                 <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, marginTop: 4 }}>{profile?.pseudo || "Toi"}</span>
@@ -6414,7 +6438,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 )}
                 {friendsList.map(f => (
                   <div key={f.id} className="flex flex-col items-center shrink-0">
-                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 50, height: 50, background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 50, height: 50, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
                       {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
                     </div>
                     <span className="truncate" style={{ color: "#aaa", fontSize: "9px", fontWeight: 600, marginTop: 3, maxWidth: 50, textAlign: "center" }}>{f.pseudo}</span>
@@ -6425,9 +6449,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="mt-4 flex flex-col gap-3">
               {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
               {nexusPosts.map(p => (
-                <div key={p.id} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #1a1a1a" }}>
+                <div key={p.id} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #262626" }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="rounded-full overflow-hidden" style={{ width: 24, height: 24, background: "#1a1a1a" }}>
+                    <div className="rounded-full overflow-hidden" style={{ width: 24, height: 24, background: "#1e1e1e" }}>
                       {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
                     </div>
                     <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
@@ -6570,7 +6594,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                 </div>
                 <div className="mt-3">
                   <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsEmail}</p>
-                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#1e1e1e", border: "1px solid #222" }}>
                     <Mail size={14} color="#555" />
                     <input value="—" readOnly className="flex-1" style={{ background: "transparent", color: "#666", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
                   </div>
@@ -7443,6 +7467,19 @@ export default function ClutchApp() {
   }, [splashDone]);
 
   useEffect(() => {
+    const allMatches = [...upcomingMatches, ...liveMatches, ...resultsMatches, ...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches, ...rlUpcomingMatches, ...rlLiveMatches, ...rlResultsMatches];
+    const urls = new Set();
+    for (const m of allMatches) {
+      if (m.team1Logo) urls.add(m.team1Logo);
+      if (m.team2Logo) urls.add(m.team2Logo);
+    }
+    for (const url of urls) {
+      const img = new Image();
+      img.src = url;
+    }
+  }, [upcomingMatches, liveMatches, resultsMatches, cs2UpcomingMatches, cs2LiveMatches, cs2ResultsMatches, rlUpcomingMatches, rlLiveMatches, rlResultsMatches]);
+
+  useEffect(() => {
     if (!vlrEvents || Object.keys(vlrEvents).length === 0) return;
     const ids = new Set();
     for (const stageKey of ["kickoff", "stage1", "stage2"]) {
@@ -7677,7 +7714,7 @@ export default function ClutchApp() {
       const cur = prev[matchId] || { seriesA: "", seriesB: "", games: [], expanded: false };
       const src = [...upcomingMatches, ...liveMatches, ...cs2UpcomingMatches, ...cs2LiveMatches, ...rlUpcomingMatches, ...rlLiveMatches].find((m) => String(m.id) === String(matchId));
       const bo = src?.number_of_games || 3;
-      const validPairs = bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
+      const validPairs = bo >= 7 ? [[4,0],[4,1],[4,2],[4,3],[3,4],[2,4],[1,4],[0,4]] : bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
       const hadCompleteBet = cur.seriesA !== "" && cur.seriesB !== "" &&
         validPairs.some(([x,y]) => parseInt(cur.seriesA) === x && parseInt(cur.seriesB) === y);
       const next = { ...cur, [team]: digit };
@@ -8035,7 +8072,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#1f1f1f" }}>
+        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
@@ -8102,18 +8139,18 @@ export default function ClutchApp() {
         {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
         {showStreakInfo && (
           <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }} onClick={() => setShowStreakInfo(false)}>
-            <div onClick={e => e.stopPropagation()} style={{ width: "min(340px, 88%)", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 24, padding: "32px 24px 24px", textAlign: "center" }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: "min(340px, 88%)", background: "#0a0a0a", border: "1px solid #262626", borderRadius: 24, padding: "32px 24px 24px", textAlign: "center" }}>
               <div style={{ width: 80, height: 80, borderRadius: 24, background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.2), rgba(255,149,0,0.08))" : "rgba(255,255,255,0.03)", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", border: streak.current > 0 ? "1px solid rgba(255,149,0,0.2)" : "1px solid #222" }}>
                 <span style={{ fontSize: 40, filter: streak.current > 0 ? "drop-shadow(0 0 12px rgba(255,107,0,0.6))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
               </div>
               <p style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 36, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>{streak.current}</p>
               <p style={{ color: streak.current > 0 ? "rgba(255,149,0,0.7)" : "#555", fontSize: 13, fontWeight: 700, marginBottom: 20, textTransform: "uppercase", letterSpacing: "0.08em" }}>{T.streakDays}</p>
               <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #1a1a1a" }}>
+                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #262626" }}>
                   <p style={{ color: "#FFD700", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>{streak.best}</p>
                   <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.streakBest}</p>
                 </div>
-                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #1a1a1a" }}>
+                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #262626" }}>
                   <p style={{ color: "#A855F7", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>x{Math.max(1, streak.current)}</p>
                   <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bonus</p>
                 </div>
