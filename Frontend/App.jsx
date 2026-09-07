@@ -2697,8 +2697,14 @@ function todayStr() { return new Date().toISOString().slice(0, 10); }
 function halfDaySlot() { const h = new Date().getUTCHours(); return todayStr() + (h < 12 ? "_AM" : "_PM"); }
 function weekStartStr() { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().slice(0, 10); }
 
+const REMOVED_QUEST_IDS = new Set(["open_calendar"]);
 function loadQuests() {
-  try { return JSON.parse(localStorage.getItem("split_quests")) || null; } catch { return null; }
+  try {
+    const raw = JSON.parse(localStorage.getItem("split_quests"));
+    if (!raw) return null;
+    if (raw.daily) raw.daily = raw.daily.filter(q => !REMOVED_QUEST_IDS.has(q.id));
+    return raw;
+  } catch { return null; }
 }
 function saveQuests(q) { localStorage.setItem("split_quests", JSON.stringify(q)); }
 
@@ -2796,33 +2802,13 @@ function totalXpForTier(tier) {
   return total;
 }
 function getTierReward(tier) {
-  if (tier === 1) return { icon: "🎁", label: "Pack de bienvenue", rarity: "free", desc: "Ton premier coffre" };
-  if (tier === 5) return { icon: "🏷️", label: "Titre : Rookie", rarity: "common", desc: "Titre de profil" };
-  if (tier === 10) return { icon: "⭐", label: "Badge Étoile", rarity: "common", desc: "Badge de profil" };
-  if (tier === 15) return { icon: "🎨", label: "Skin Neon", rarity: "common", desc: "Skin de carte" };
-  if (tier === 20) return { icon: "🏷️", label: "Titre : Analyste", rarity: "rare", desc: "Titre de profil" };
-  if (tier === 25) return { icon: "💜", label: "Bordure Améthyste", rarity: "rare", desc: "Bordure de profil" };
-  if (tier === 30) return { icon: "🎭", label: "Emote GG", rarity: "rare", desc: "Emote de chat" };
-  if (tier === 35) return { icon: "⚡", label: "Badge Bolt", rarity: "rare", desc: "Badge de profil" };
-  if (tier === 40) return { icon: "🎨", label: "Skin Glacier", rarity: "rare", desc: "Skin de carte" };
-  if (tier === 45) return { icon: "🏷️", label: "Titre : Stratège", rarity: "rare", desc: "Titre de profil" };
-  if (tier === 50) return { icon: "👑", label: "Badge Couronne", rarity: "epic", desc: "Badge de profil" };
-  if (tier === 55) return { icon: "🔥", label: "Skin Inferno", rarity: "epic", desc: "Skin de carte" };
-  if (tier === 60) return { icon: "💎", label: "Bordure Diamant", rarity: "epic", desc: "Bordure de profil" };
-  if (tier === 65) return { icon: "🎭", label: "Emote EZ", rarity: "epic", desc: "Emote de chat" };
-  if (tier === 70) return { icon: "🏷️", label: "Titre : Oracle", rarity: "epic", desc: "Titre de profil" };
-  if (tier === 75) return { icon: "🎨", label: "Skin Plasma", rarity: "epic", desc: "Skin de carte" };
-  if (tier === 80) return { icon: "✨", label: "Aura Dorée", rarity: "epic", desc: "Effet de profil" };
-  if (tier === 85) return { icon: "🏷️", label: "Titre : Légende", rarity: "legendary", desc: "Titre de profil" };
-  if (tier === 90) return { icon: "🎨", label: "Skin Holographique", rarity: "legendary", desc: "Skin de carte" };
-  if (tier === 95) return { icon: "💠", label: "Bordure Cosmique", rarity: "legendary", desc: "Bordure de profil" };
-  if (tier === 100) return { icon: "🏆", label: "Titre : Infinite", rarity: "legendary", desc: "Le titre ultime" };
-  if (tier <= 15) return { icon: "📦", label: "Coffre Bronze", rarity: "common", desc: "Objet aléatoire" };
-  if (tier <= 45) return { icon: "📦", label: "Coffre Argent", rarity: "rare", desc: "Objet aléatoire" };
-  if (tier <= 80) return { icon: "📦", label: "Coffre Or", rarity: "epic", desc: "Objet aléatoire" };
-  return { icon: "📦", label: "Coffre Diamant", rarity: "legendary", desc: "Objet aléatoire" };
+  const milestones = { 1: 100, 5: 250, 10: 400, 15: 500, 20: 600, 25: 750, 30: 800, 35: 900, 40: 1000, 45: 1200, 50: 1500, 55: 1600, 60: 1800, 65: 2000, 70: 2200, 75: 2500, 80: 3000, 85: 3500, 90: 4000, 95: 5000, 100: 10000 };
+  if (milestones[tier]) return { xp: milestones[tier], milestone: true };
+  if (tier <= 15) return { xp: 75 };
+  if (tier <= 45) return { xp: 100 };
+  if (tier <= 80) return { xp: 150 };
+  return { xp: 200 };
 }
-const TIER_RARITY_COLORS = { free: "#4CAF50", common: "#CD7F32", rare: "#A855F7", epic: "#EAB308", legendary: "#38BDF8" };
 
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -3017,7 +3003,6 @@ function RewardsModal({ onClose, T, userXp }) {
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
   const [claimedTiers, setClaimedTiers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
@@ -3043,25 +3028,6 @@ function RewardsModal({ onClose, T, userXp }) {
       container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     }
   }, [activeSection]);
-
-  const handleScroll = () => {
-    if (!scrollRef.current || !currentRef.current) return;
-    const container = scrollRef.current;
-    const el = currentRef.current;
-    const elTop = el.offsetTop - container.offsetTop;
-    const visTop = container.scrollTop;
-    const visBottom = visTop + container.clientHeight;
-    setShowScrollBtn(elTop < visTop - 50 || elTop > visBottom + 50);
-  };
-
-  const scrollToCurrent = () => {
-    if (currentRef.current && scrollRef.current) {
-      const container = scrollRef.current;
-      const el = currentRef.current;
-      const top = el.offsetTop - container.offsetTop - 80;
-      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    }
-  };
 
   function claimTier(tier) {
     const next = [...claimedTiers, tier];
@@ -3121,74 +3087,49 @@ function RewardsModal({ onClose, T, userXp }) {
         })}
       </div>
 
-      <div ref={scrollRef} onScroll={handleScroll} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 24px" }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 24px" }}>
         {tiersInSection.map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
           const claimed = claimedTiers.includes(tier);
           const canClaim = unlocked && !claimed;
-          const rarityColor = TIER_RARITY_COLORS[reward.rarity] || "#666";
-          const isMilestone = tier % 5 === 0;
+          const isMilestone = reward.milestone;
+          const secColor = activeSec?.color || "#CCF71D";
           return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 8 : 4 }}>
-              <button onClick={() => { if (canClaim) claimTier(tier); }} disabled={!canClaim && !claimed} style={{
+            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 10 : 4 }}>
+              <div style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 12,
-                padding: isMilestone ? "14px 14px" : "10px 12px",
-                borderRadius: isMilestone ? 16 : 12,
-                background: isCurrent ? "#161616" : canClaim ? `${rarityColor}0a` : "#0d0d0d",
-                border: `1.5px solid ${isCurrent ? rarityColor + "50" : canClaim ? rarityColor + "30" : "#1e1e1e"}`,
+                padding: isMilestone ? "18px 16px" : "10px 12px",
+                borderRadius: isMilestone ? 18 : 12,
+                background: isCurrent ? `${secColor}10` : isMilestone && unlocked ? "#141414" : "#0d0d0d",
+                border: `1.5px solid ${isCurrent ? secColor + "50" : isMilestone ? "#262626" : "#1a1a1a"}`,
                 opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
-                cursor: canClaim ? "pointer" : "default",
-                textAlign: "left",
-                transition: "all 0.2s",
                 position: "relative",
-                overflow: "hidden",
               }}>
-                {isMilestone && unlocked && <div style={{ position: "absolute", top: 0, right: 0, width: 60, height: "100%", background: `linear-gradient(90deg, transparent, ${rarityColor}08)` }} />}
-                <div style={{ width: 20, textAlign: "center", flexShrink: 0 }}>
-                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#888" : "#444", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
+                <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
+                  <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#aaa" : "#444", fontSize: isMilestone ? 15 : 12, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
                 </div>
-                <div style={{
-                  width: isMilestone ? 48 : 40, height: isMilestone ? 48 : 40,
-                  borderRadius: isMilestone ? 14 : 10,
-                  background: unlocked ? `${rarityColor}18` : "#141414",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  border: `1.5px solid ${unlocked ? rarityColor + "30" : "#222"}`,
-                  boxShadow: canClaim ? `0 0 12px ${rarityColor}20` : "none",
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ height: 3, flex: 1, borderRadius: 2, background: unlocked ? secColor : "#222", opacity: unlocked ? 0.6 : 1, transition: "background 0.3s" }} />
+                </div>
+                <span style={{
+                  color: isMilestone ? "#fff" : unlocked ? "#ccc" : "#555",
+                  fontSize: isMilestone ? 16 : 12,
+                  fontWeight: 900,
+                  fontVariantNumeric: "tabular-nums",
+                  background: isMilestone ? secColor + "20" : "transparent",
+                  padding: isMilestone ? "4px 12px" : "0",
+                  borderRadius: 8,
                 }}>
-                  <span style={{ fontSize: isMilestone ? 22 : 18, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{reward.icon}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ color: canClaim ? "#fff" : unlocked ? "#ccc" : "#555", fontSize: isMilestone ? 13 : 12, fontWeight: 700, margin: 0 }}>{reward.label}</p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-                    <span style={{ color: rarityColor, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.8 }}>{reward.rarity === "free" ? "Gratuit" : reward.rarity}</span>
-                    {reward.desc && <span style={{ color: "#555", fontSize: 9, fontWeight: 600 }}>{reward.desc}</span>}
-                  </div>
-                </div>
-                {claimed ? (
-                  <CheckCircle size={20} color="#4CAF50" />
-                ) : canClaim ? (
-                  <span style={{ background: activeSec?.gradient || rarityColor, color: "#fff", fontSize: 10, fontWeight: 800, padding: "6px 14px", borderRadius: 10, boxShadow: `0 2px 8px ${rarityColor}40` }}>Ouvrir</span>
-                ) : (
-                  <Lock size={14} color="#333" />
-                )}
-              </button>
+                  {reward.xp} <span style={{ color: isMilestone ? secColor : "#888", fontSize: isMilestone ? 11 : 10, fontWeight: 700 }}>XP</span>
+                </span>
+                {unlocked && <CheckCircle size={isMilestone ? 18 : 14} color={claimed ? "#4CAF50" : secColor} style={{ opacity: claimed ? 1 : 0.4 }} />}
+              </div>
             </div>
           );
         })}
       </div>
-
-      {showScrollBtn && (
-        <button onClick={scrollToCurrent} style={{
-          position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
-          background: activeSec?.gradient || "#CCF71D", color: "#fff", border: "none", borderRadius: 20,
-          padding: "8px 18px", fontSize: 11, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-          boxShadow: `0 4px 16px ${activeSec?.color || "#CCF71D"}50`, zIndex: 10,
-        }}>
-          <ArrowUp size={12} /> {T.tierScrollUp || "Mon palier"}
-        </button>
-      )}
     </div>
   );
 }
@@ -3196,7 +3137,7 @@ function RewardsModal({ onClose, T, userXp }) {
 function StreakPopup({ streak, onClose, T }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(255,107,0,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3s forwards", cursor: "pointer" }}>
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 9990, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(255,107,0,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3s forwards", cursor: "pointer" }}>
       <span style={{ fontSize: 28 }}>🔥</span>
       <div>
         <p style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{T.streakEarned}</p>
@@ -3209,7 +3150,7 @@ function StreakPopup({ streak, onClose, T }) {
 function XpPopup({ xp, onClose, T }) {
   useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #A855F7, #6366F1)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(168,85,247,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 2.5s forwards", cursor: "pointer" }}>
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 9990, background: "linear-gradient(135deg, #A855F7, #6366F1)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(168,85,247,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 2.5s forwards", cursor: "pointer" }}>
       <Zap size={24} color="#fff" />
       <div>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>+{xp} {T.xpLabel}</p>
@@ -3222,7 +3163,7 @@ function XpPopup({ xp, onClose, T }) {
 function StreakExpiredPopup({ lostStreak, onClose, T }) {
   useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t); }, [onClose]);
   return (
-    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "linear-gradient(135deg, #EF4444, #DC2626)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(239,68,68,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3.5s forwards", cursor: "pointer" }}>
+    <div onClick={onClose} style={{ position: "fixed", top: 60, left: "50%", transform: "translateX(-50%)", zIndex: 9990, background: "linear-gradient(135deg, #EF4444, #DC2626)", borderRadius: 16, padding: "14px 24px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 32px rgba(239,68,68,0.4)", animation: "streakSlide 0.4s ease-out, streakFade 0.4s ease-in 3.5s forwards", cursor: "pointer" }}>
       <span style={{ fontSize: 28 }}>💔</span>
       <div>
         <p style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{T.streakExpired}</p>
