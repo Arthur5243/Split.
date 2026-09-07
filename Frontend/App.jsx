@@ -2678,6 +2678,7 @@ const PRECISION_IDS = new Set(["exact_score", "exact_2"]);
 const DAILY_BET_LIMIT = 5;
 
 function todayStr() { return new Date().toISOString().slice(0, 10); }
+function halfDaySlot() { const h = new Date().getUTCHours(); return todayStr() + (h < 12 ? "_AM" : "_PM"); }
 function weekStartStr() { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().slice(0, 10); }
 
 function loadQuests() {
@@ -2687,9 +2688,9 @@ function saveQuests(q) { localStorage.setItem("split_quests", JSON.stringify(q))
 
 function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
   const state = loadQuests();
-  const today = todayStr();
+  const slot = halfDaySlot();
   const ws = weekStartStr();
-  if (state && state.lastAssigned === today) return state;
+  if (state && state.lastAssigned === slot) return state;
   const history = state?.history || [];
   const matchQuests = [];
   if (upcomingMatches) {
@@ -2701,7 +2702,7 @@ function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
   const avail = fullPool.filter(q => {
     if (q.oneTime && completedOneTimeIds.has(q.id)) return false;
     if (PRECISION_IDS.has(q.id) && history.slice(-3).includes(q.id)) return false;
-    if (history.slice(-1).includes(q.id)) return false;
+    if (history.slice(-2).includes(q.id)) return false;
     return true;
   });
   const shuffled = [...avail].sort(() => Math.random() - 0.5);
@@ -2713,7 +2714,7 @@ function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
     const wPool = [...QUEST_WEEKLY_POOL].sort(() => Math.random() - 0.5);
     weekly = { ...wPool[0], progress: 0, completed: false, claimed: false };
   }
-  const newState = { daily, weekly, lastAssigned: today, weekStart: ws, history: [...history.slice(-10), ...daily.map(q => q.id)] };
+  const newState = { daily, weekly, lastAssigned: slot, weekStart: ws, history: [...history.slice(-10), ...daily.map(q => q.id)] };
   saveQuests(newState);
   return newState;
 }
@@ -2906,10 +2907,9 @@ const QUEST_KIT_ICONS = {
   weekly: (done) => <Award size={16} color={done ? "#4CAF50" : "#FFD700"} />,
 };
 
-function QuestModal({ quests, onClose, onClaim, T, userXp }) {
+function QuestModal({ quests, onClose, onClaim, T }) {
   if (!quests) return null;
   const { daily, weekly } = quests;
-  const tierInfo = getTierFromXp(userXp || 0);
 
   const renderQuest = (q, idx, isWeekly) => {
     const done = q.completed;
@@ -2949,28 +2949,6 @@ function QuestModal({ quests, onClose, onClaim, T, userXp }) {
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 17, fontWeight: 900, letterSpacing: "-0.02em" }}>{T.questTitle}</p>
         <div style={{ width: 20 }} />
-      </div>
-
-      <div style={{ margin: "0 16px 16px", background: "linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(204,247,29,0.06) 100%)", borderRadius: 18, padding: "20px", border: "1px solid rgba(168,85,247,0.15)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Zap size={18} color="#A855F7" />
-            </div>
-            <div>
-              <p style={{ color: "#A855F7", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{userXp || 0}</p>
-              <p style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>XP Total</p>
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ color: "#CCF71D", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>{tierInfo.tier}</p>
-            <p style={{ color: "#666", fontSize: 10, fontWeight: 700 }}>{T.tierLabel}</p>
-          </div>
-        </div>
-        <div style={{ height: 6, borderRadius: 3, background: "#1a1a1a", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: (tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100) + "%", borderRadius: 3, background: "linear-gradient(90deg, #A855F7, #CCF71D)", transition: "width 0.5s ease" }} />
-        </div>
-        <p style={{ color: "#555", fontSize: 10, fontWeight: 600, marginTop: 6, textAlign: "right" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded} XP</p>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 16px" }}>
@@ -6967,6 +6945,18 @@ export default function ClutchApp() {
 
   const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
   const questMatchRefDone = useRef(false);
+  const questSlotRef = useRef(halfDaySlot());
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const slot = halfDaySlot();
+      if (slot !== questSlotRef.current) {
+        questSlotRef.current = slot;
+        const fresh = assignDailyQuests(new Set());
+        setQuestState(fresh);
+      }
+    }, 5 * 60 * 1000);
+    return () => clearInterval(iv);
+  }, []);
   const [streak, setStreak] = useState(() => {
     const checked = checkStreakExpiry();
     return checked;
@@ -7107,9 +7097,9 @@ export default function ClutchApp() {
     if (!hasData) return;
     questMatchRefDone.current = true;
     const saved = loadQuests();
-    const today = todayStr();
-    if (saved && saved.lastAssigned === today && saved.daily.some(q => q.matchId)) return;
-    if (saved && saved.lastAssigned === today) {
+    const slot = halfDaySlot();
+    if (saved && saved.lastAssigned === slot && saved.daily.some(q => q.matchId)) return;
+    if (saved && saved.lastAssigned === slot) {
       localStorage.removeItem("split_quests");
     }
     const fresh = assignDailyQuests(new Set(), { valo: upcomingMatches, cs2: cs2UpcomingMatches, rl: rlUpcomingMatches });
@@ -7650,15 +7640,34 @@ export default function ClutchApp() {
             const streakResult = updateStreak();
             setStreak(streakResult);
             if (streakResult.earned) setStreakPopup(streakResult);
+            const isValo = upcomingMatches.some(m => String(m.id) === String(matchId)) || liveMatches.some(m => String(m.id) === String(matchId));
+            const isCs2 = cs2UpcomingMatches.some(m => String(m.id) === String(matchId)) || cs2LiveMatches.some(m => String(m.id) === String(matchId));
+            const isRl = rlUpcomingMatches.some(m => String(m.id) === String(matchId)) || rlLiveMatches.some(m => String(m.id) === String(matchId));
             setQuestState(qs => {
               if (!qs) return qs;
               const newCount = activeCount + 1;
+              const inc = (q) => ({ ...q, progress: Math.min(q.progress + 1, q.target), completed: q.progress + 1 >= q.target });
               const updated = { ...qs, daily: qs.daily.map(q => {
                 if (q.completed) return q;
-                if (q.id === "bet_today") return { ...q, progress: Math.min(q.progress + 1, q.target), completed: q.progress + 1 >= q.target };
+                if (q.id === "bet_today" || q.id === "bet_3_matches" || q.id === "bet_4_matches" || q.id === "bet_5_matches") return inc(q);
+                if (q.id === "bet_2_games" || q.id === "bet_both_games" || q.id === "bet_all_3_games") {
+                  const games = new Set();
+                  if (isValo) games.add("valo"); if (isCs2) games.add("cs2"); if (isRl) games.add("rl");
+                  return { ...q, progress: Math.min(games.size, q.target), completed: games.size >= q.target };
+                }
                 if (q.id === "use_all_slots") return { ...q, progress: newCount, completed: newCount >= q.target };
+                if (q.id === "bet_cs2" && isCs2) return inc(q);
+                if (q.id === "bet_valo" && isValo) return inc(q);
+                if (q.id === "bet_rl" && isRl) return inc(q);
+                if (q.matchId && String(q.matchId) === String(matchId)) return inc(q);
                 return q;
-              }), weekly: qs.weekly ? { ...qs.weekly, progress: qs.weekly.id === "weekly_5_wins" ? qs.weekly.progress : qs.weekly.progress } : qs.weekly };
+              }), weekly: qs.weekly && !qs.weekly.completed ? (() => {
+                const w = qs.weekly;
+                if (w.id === "weekly_10_bets" || w.id === "weekly_7_bets" || w.id === "weekly_15_bets" || w.id === "weekly_20_bets") return { ...w, progress: Math.min(w.progress + 1, w.target), completed: w.progress + 1 >= w.target };
+                if (w.id === "weekly_3_cs2" && isCs2) return { ...w, progress: Math.min(w.progress + 1, w.target), completed: w.progress + 1 >= w.target };
+                if (w.id === "weekly_3_valo" && isValo) return { ...w, progress: Math.min(w.progress + 1, w.target), completed: w.progress + 1 >= w.target };
+                return w;
+              })() : qs.weekly };
               saveQuests(updated);
               return updated;
             });
@@ -7707,6 +7716,7 @@ export default function ClutchApp() {
 
   function applySettlement(newlySettled, pointsToAdd, game) {
     if (newlySettled.length === 0) return;
+    const winsCount = newlySettled.length;
     setSettledMatchIds((prev) => {
       const next = new Set(prev);
       newlySettled.forEach((id) => next.add(id));
@@ -7730,6 +7740,29 @@ export default function ClutchApp() {
       } else {
         syncProfileToBackend(profile, newTotal);
       }
+      setQuestState(qs => {
+        if (!qs) return qs;
+        const updated = { ...qs, daily: qs.daily.map(q => {
+          if (q.completed) return q;
+          if (q.id === "win_bet" || q.id === "win_2_bets" || q.id === "win_3_bets") {
+            const np = Math.min(q.progress + winsCount, q.target);
+            return { ...q, progress: np, completed: np >= q.target };
+          }
+          if (q.id === "exact_score" || q.id === "exact_2") {
+            return q;
+          }
+          return q;
+        }), weekly: qs.weekly && !qs.weekly.completed ? (() => {
+          const w = qs.weekly;
+          if (w.id === "weekly_5_wins" || w.id === "weekly_10_wins") {
+            const np = Math.min(w.progress + winsCount, w.target);
+            return { ...w, progress: np, completed: np >= w.target };
+          }
+          return w;
+        })() : qs.weekly };
+        saveQuests(updated);
+        return updated;
+      });
     }
   }
 
@@ -7845,7 +7878,7 @@ export default function ClutchApp() {
                 const gained = xpAmount || 50;
                 setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
                 setXpPopup(gained);
-              }} T={T} userXp={userXp} />
+              }} T={T} />
             </div>
           )}
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
