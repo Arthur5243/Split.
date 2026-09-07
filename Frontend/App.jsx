@@ -3020,6 +3020,19 @@ function RewardsModal({ onClose, T, userXp }) {
     localStorage.setItem("split_claimed_tiers", JSON.stringify(next));
   }
 
+  const chestDescs = [
+    { name: "Coffre Standard", desc: "Récompense de progression", emoji: "📦" },
+    { name: "Coffre Rare", desc: "Contenu exclusif débloqué", emoji: "🎁" },
+    { name: "Coffre Épique", desc: "Récompense premium esport", emoji: "🏆" },
+    { name: "Coffre Légendaire", desc: "Le meilleur loot disponible", emoji: "💎" },
+  ];
+  function getChest(tier) {
+    if (tier % 10 === 0) return chestDescs[3];
+    if (tier % 5 === 0) return chestDescs[2];
+    if (tier % 3 === 0) return chestDescs[1];
+    return chestDescs[0];
+  }
+
   return (
     <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
@@ -3028,37 +3041,50 @@ function RewardsModal({ onClose, T, userXp }) {
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ padding: "0 16px 12px", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ color: "#CCF71D", fontSize: 14, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
-          <span style={{ color: "#666", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"} XP</span>
-        </div>
-        <div style={{ height: 6, borderRadius: 3, background: "#1e1e1e", overflow: "hidden" }}>
-          <div style={{ height: "100%", width: progressPct + "%", borderRadius: 3, background: "#CCF71D", transition: "width 0.4s ease" }} />
+      <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 120 }}>
+        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=240&fit=crop" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 100%)" }} />
+        <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 22 }}>🏆</span>
+            <span style={{ color: "#CCF71D", fontSize: 22, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, height: 7, borderRadius: 4, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "#CCF71D", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
+            </div>
+            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
+          </div>
         </div>
       </div>
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "4px 12px 24px" }}>
+      <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
         {allTiers.map(tier => {
           const reward = getTierReward(tier);
           const unlocked = tier <= currentTier;
           const isCurrent = tier === currentTier;
           const claimed = claimedTiers.includes(tier);
           const isMilestone = reward.milestone;
+          const chest = getChest(tier);
           return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: isMilestone ? 8 : 3 }}>
+            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 6 }}>
               <div style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 10,
-                padding: isMilestone ? "14px 12px" : "9px 12px",
-                borderRadius: isMilestone ? 14 : 10,
-                background: isCurrent ? "rgba(204,247,29,0.06)" : isMilestone ? "#111" : "#0d0d0d",
-                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#222" : "#181818"}`,
-                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
+                width: "100%", display: "flex", alignItems: "center", gap: 12,
+                padding: isMilestone ? "16px 14px" : "12px 14px",
+                borderRadius: 14,
+                background: isCurrent ? "rgba(204,247,29,0.06)" : "#0e0e0e",
+                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#252525" : "#1a1a1a"}`,
+                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.25,
               }}>
-                <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#999" : "#444", fontSize: isMilestone ? 13 : 11, fontWeight: 900, width: 24, textAlign: "center", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{tier}</span>
-                <div style={{ flex: 1, height: 3, borderRadius: 2, background: unlocked ? "#CCF71D" : "#222", opacity: unlocked ? 0.4 : 1 }} />
-                <span style={{ fontSize: isMilestone ? 22 : 16, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>📦</span>
-                {unlocked && <CheckCircle size={isMilestone ? 15 : 12} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
+                <span style={{ fontSize: isMilestone ? 28 : 22, flexShrink: 0, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#ddd" : "#555", fontSize: 13, fontWeight: 800 }}>{chest.name}</span>
+                    <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.1)" : "#161616", padding: "2px 7px", borderRadius: 6 }}>Lv.{tier}</span>
+                  </div>
+                  <p style={{ color: unlocked ? "#888" : "#444", fontSize: 11, fontWeight: 600, marginTop: 2 }}>{chest.desc}</p>
+                </div>
+                {unlocked && <CheckCircle size={18} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
               </div>
             </div>
           );
