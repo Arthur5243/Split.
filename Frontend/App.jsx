@@ -3265,7 +3265,7 @@ function RewardsModal({ onClose, T, userXp }) {
       </div>
 
       {tab === "rewards" ? (
-        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px" }}>
+        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px" }}>
           {allTiers.map(tier => {
             const reward = getTierReward(tier);
             const unlocked = tier <= currentTier;
