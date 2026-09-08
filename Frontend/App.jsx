@@ -3045,7 +3045,7 @@ function RewardsModal({ onClose, T, userXp }) {
     22: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Bannière animée pour ton pseudo" },
     23: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     24: { emoji: "🏅", name: "Badge Classement", desc: "Badge argent pour ton profil" },
-    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil" },
+    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", preview: "/bg-profile-1.png" },
     26: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     27: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     28: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
@@ -3065,7 +3065,7 @@ function RewardsModal({ onClose, T, userXp }) {
     42: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Bannière légendaire pour ton pseudo" },
     43: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     44: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil" },
+    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", preview: "/bg-profile-2.png" },
     46: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     47: { emoji: "✨", name: "Titre Graphique", desc: "Titre avec effets visuels uniques" },
     48: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
@@ -3080,7 +3080,7 @@ function RewardsModal({ onClose, T, userXp }) {
     57: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design épique pour tes matchs" },
     58: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     59: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire animé" },
+    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire animé", preview: "/bg-profile-3.png" },
     61: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     62: { emoji: "🏷️", name: "Titre Exclusif", desc: "Titre légendaire pour ta bio" },
     63: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
@@ -3125,6 +3125,9 @@ function RewardsModal({ onClose, T, userXp }) {
   const defaultChest = { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" };
   function getChest(tier) { return TIER_REWARDS[tier] || defaultChest; }
 
+  const [tab, setTab] = useState("rewards");
+  const inventory = claimedTiers.map(t => TIER_REWARDS[t] || defaultChest).filter(r => r.name !== "Coffre Standard");
+
   return (
     <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
@@ -3150,38 +3153,81 @@ function RewardsModal({ onClose, T, userXp }) {
         </div>
       </div>
 
-      <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
-        {allTiers.map(tier => {
-          const reward = getTierReward(tier);
-          const unlocked = tier <= currentTier;
-          const isCurrent = tier === currentTier;
-          const claimed = claimedTiers.includes(tier);
-          const isMilestone = reward.milestone;
-          const chest = getChest(tier);
-          return (
-            <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 6 }}>
-              <div style={{
-                width: "100%", display: "flex", alignItems: "center", gap: 12,
-                padding: isMilestone ? "16px 14px" : "12px 14px",
-                borderRadius: 14,
-                background: isCurrent ? "rgba(204,247,29,0.06)" : "#0e0e0e",
-                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#252525" : "#1a1a1a"}`,
-                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.25,
-              }}>
-                <span style={{ fontSize: isMilestone ? 28 : 22, flexShrink: 0, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#ddd" : "#555", fontSize: 13, fontWeight: 800 }}>{chest.name}</span>
-                    <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.1)" : "#161616", padding: "2px 7px", borderRadius: 6 }}>Lv.{tier}</span>
-                  </div>
-                  <p style={{ color: unlocked ? "#888" : "#444", fontSize: 11, fontWeight: 600, marginTop: 2 }}>{chest.desc}</p>
-                </div>
-                {unlocked && <CheckCircle size={18} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
-              </div>
-            </div>
-          );
-        })}
+      <div style={{ display: "flex", gap: 0, margin: "0 12px 10px", borderRadius: 12, overflow: "hidden", border: "1px solid #222", flexShrink: 0 }}>
+        {[{ key: "rewards", label: "Récompenses" }, { key: "inventory", label: "Inventaire" }].map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)} style={{
+            flex: 1, padding: "10px 0", background: tab === t.key ? "#CCF71D" : "#111",
+            color: tab === t.key ? "#000" : "#888", fontSize: 12, fontWeight: 800,
+            border: "none", cursor: "pointer", transition: "all 0.2s",
+          }}>{t.label} {t.key === "inventory" ? `(${inventory.length})` : ""}</button>
+        ))}
       </div>
+
+      {tab === "rewards" ? (
+        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
+          {allTiers.map(tier => {
+            const reward = getTierReward(tier);
+            const unlocked = tier <= currentTier;
+            const isCurrent = tier === currentTier;
+            const claimed = claimedTiers.includes(tier);
+            const isMilestone = reward.milestone;
+            const chest = getChest(tier);
+            const hasPreview = !!chest.preview;
+            return (
+              <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 8 }}>
+                {hasPreview && (
+                  <div style={{ borderRadius: "16px 16px 0 0", overflow: "hidden", height: 60, position: "relative" }}>
+                    <img src={chest.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
+                    {!unlocked && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />}
+                  </div>
+                )}
+                <div style={{
+                  width: "100%", display: "flex", alignItems: "center", gap: 14,
+                  padding: "16px 16px",
+                  borderRadius: hasPreview ? "0 0 16px 16px" : 16,
+                  background: isCurrent ? "rgba(204,247,29,0.06)" : "#0e0e0e",
+                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#252525" : "#1a1a1a"}`,
+                  borderTop: hasPreview ? "none" : undefined,
+                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.25,
+                }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: unlocked ? "rgba(204,247,29,0.08)" : "#141414", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${unlocked ? "rgba(204,247,29,0.15)" : "#1e1e1e"}` }}>
+                    <span style={{ fontSize: 24, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#eee" : "#555", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
+                      <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.1)" : "#161616", padding: "2px 8px", borderRadius: 6 }}>Lv.{tier}</span>
+                    </div>
+                    <p style={{ color: unlocked ? "#999" : "#444", fontSize: 12, fontWeight: 600 }}>{chest.desc}</p>
+                  </div>
+                  {unlocked && <CheckCircle size={20} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
+          {inventory.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 20px" }}>
+              <span style={{ fontSize: 40, display: "block", marginBottom: 12 }}>📦</span>
+              <p style={{ color: "#666", fontSize: 14, fontWeight: 700 }}>Inventaire vide</p>
+              <p style={{ color: "#444", fontSize: 12, marginTop: 4 }}>Réclame des récompenses pour remplir ton inventaire</p>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {inventory.map((item, i) => (
+                <div key={i} style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: "14px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", position: "relative" }}>
+                  {item.preview && <img src={item.preview} alt="" style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 8, marginBottom: 4 }} />}
+                  <span style={{ fontSize: 30 }}>{item.emoji}</span>
+                  <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center" }}>{item.name}</span>
+                  <span style={{ color: "#666", fontSize: 10, fontWeight: 600, textAlign: "center" }}>{item.desc}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
