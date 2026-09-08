@@ -3126,10 +3126,111 @@ function RewardsModal({ onClose, T, userXp }) {
   function getChest(tier) { return TIER_REWARDS[tier] || defaultChest; }
 
   const [tab, setTab] = useState("rewards");
+  const [openingChest, setOpeningChest] = useState(null);
+  const [chestPhase, setChestPhase] = useState("idle");
+  const [chestResult, setChestResult] = useState(null);
+  const [chestStrip, setChestStrip] = useState([]);
+  const stripElRef = useRef(null);
+  const rafRef = useRef(null);
+  const posRef = useRef(0);
+  const phaseRef = useRef("idle");
+  const spinStartRef = useRef(0);
+  const spinFromRef = useRef(0);
+  const spinToRef = useRef(0);
   const inventory = claimedTiers.map(t => TIER_REWARDS[t] || defaultChest).filter(r => r.name !== "Coffre Standard");
+
+  const RAR = {
+    commun: { bg: "#1a1a1a", border: "#555", text: "#999", glow: "none", label: "COMMUN" },
+    rare: { bg: "#0d1f3c", border: "#3b82f6", text: "#60a5fa", glow: "0 0 14px rgba(59,130,246,0.3)", label: "RARE" },
+    epique: { bg: "#1f0d3c", border: "#a855f7", text: "#c084fc", glow: "0 0 14px rgba(168,85,247,0.35)", label: "ÉPIQUE" },
+    legendaire: { bg: "#2d1f00", border: "#f59e0b", text: "#fbbf24", glow: "0 0 18px rgba(245,158,11,0.4)", label: "LÉGENDAIRE" },
+  };
+
+  const LOOT_POOL = [
+    { emoji: "🏅", name: "Badge Bronze", rarity: "commun" },
+    { emoji: "🎖️", name: "Badge Argent", rarity: "commun" },
+    { emoji: "⭐", name: "Boost XP 12h", rarity: "commun" },
+    { emoji: "💰", name: "50 Pièces", rarity: "commun" },
+    { emoji: "🔰", name: "Emblème Recruit", rarity: "commun" },
+    { emoji: "🖼️", name: "Bannière Bleue", rarity: "rare" },
+    { emoji: "🏷️", name: "Titre Guerrier", rarity: "rare" },
+    { emoji: "✨", name: "Boost ×2 Points", rarity: "rare" },
+    { emoji: "🎯", name: "Boost Pronos +2", rarity: "rare" },
+    { emoji: "🖼️", name: "Bannière Néon", rarity: "rare" },
+    { emoji: "🎴", name: "Carte Épique", rarity: "epique" },
+    { emoji: "🏷️", name: "Titre Holographique", rarity: "epique" },
+    { emoji: "✨", name: "Titre Graphique", rarity: "epique" },
+    { emoji: "🎴", name: "Carte Animée", rarity: "epique" },
+    { emoji: "🌌", name: "BG Neon City", rarity: "legendaire", preview: "/bg-profile-1.png" },
+    { emoji: "🌌", name: "BG Crystal Palace", rarity: "legendaire", preview: "/bg-profile-2.png" },
+    { emoji: "🌌", name: "BG Gaming Zone", rarity: "legendaire", preview: "/bg-profile-3.png" },
+  ];
+
+  const ITEM_H = 82, VIS_N = 5, STRIP_N = 55, WIN_I = 40;
+
+  function getRar(ch) {
+    const n = ch.name;
+    if (n.includes("Légendaire") || n.includes("Ultime") || n.includes("Background") || n.includes("mythique")) return "legendaire";
+    if (n.includes("Épique") || n.includes("Carte") || n.includes("Graphique") || n.includes("holographique")) return "epique";
+    if (n.includes("Rare") || n.includes("Bannière") || n.includes("Titre") || n.includes("Boost")) return "rare";
+    return "commun";
+  }
+  function isChestItem(ch) { return ch.name.includes("Coffre"); }
+
+  function pickWin(chestName) {
+    const w = chestName.includes("Légendaire") ? [0,15,35,50]
+      : chestName.includes("Épique") ? [10,30,40,20]
+      : chestName.includes("Rare") ? [30,40,20,10] : [55,30,12,3];
+    const r = Math.random() * 100;
+    const rar = r < w[0] ? "commun" : r < w[0]+w[1] ? "rare" : r < w[0]+w[1]+w[2] ? "epique" : "legendaire";
+    const pool = LOOT_POOL.filter(i => i.rarity === rar);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function openChestAnim(tier) {
+    const ch = getChest(tier);
+    if (!isChestItem(ch) || claimedTiers.includes(tier)) return;
+    const winner = pickWin(ch.name);
+    const strip = [];
+    for (let i = 0; i < STRIP_N; i++) strip.push(i === WIN_I ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)]);
+    setChestStrip(strip); setChestResult(winner); setOpeningChest(tier);
+    setChestPhase("idle"); posRef.current = 0; phaseRef.current = "idle";
+  }
+
+  function triggerSpin() {
+    if (phaseRef.current !== "idle") return;
+    phaseRef.current = "spinning"; setChestPhase("spinning");
+    spinStartRef.current = performance.now(); spinFromRef.current = posRef.current;
+    spinToRef.current = -(WIN_I * ITEM_H) + (VIS_N * ITEM_H) / 2 - ITEM_H / 2;
+  }
+
+  useEffect(() => {
+    if (!openingChest) return;
+    function tick(now) {
+      if (phaseRef.current === "idle") { posRef.current -= 0.4; }
+      else if (phaseRef.current === "spinning") {
+        const t = Math.min(1, (now - spinStartRef.current) / 4500);
+        posRef.current = spinFromRef.current + (spinToRef.current - spinFromRef.current) * (1 - Math.pow(1 - t, 4));
+        if (t >= 1) { phaseRef.current = "done"; setChestPhase("done"); }
+      }
+      if (stripElRef.current) stripElRef.current.style.transform = `translateY(${posRef.current}px)`;
+      if (phaseRef.current !== "done") rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [openingChest]);
+
+  function claimChestResult() {
+    if (openingChest) { claimTier(openingChest); setOpeningChest(null); phaseRef.current = "idle"; }
+  }
 
   return (
     <div style={{ background: "#0a0a0a", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
+      <style>{`
+        @keyframes chestPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 rgba(204,247,29,0); } 50% { transform: scale(1.03); box-shadow: 0 0 16px rgba(204,247,29,0.3); } }
+        @keyframes resultReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes winGlow { 0%,100% { box-shadow: 0 0 8px var(--glow-c); } 50% { box-shadow: 0 0 28px var(--glow-c); } }
+      `}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
@@ -3164,7 +3265,7 @@ function RewardsModal({ onClose, T, userXp }) {
       </div>
 
       {tab === "rewards" ? (
-        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
+        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px" }}>
           {allTiers.map(tier => {
             const reward = getTierReward(tier);
             const unlocked = tier <= currentTier;
@@ -3173,57 +3274,170 @@ function RewardsModal({ onClose, T, userXp }) {
             const isMilestone = reward.milestone;
             const chest = getChest(tier);
             const hasPreview = !!chest.preview;
+            const rar = getRar(chest);
+            const rc = RAR[rar];
+            const isChest = isChestItem(chest);
             return (
-              <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 8 }}>
+              <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 10 }}>
                 {hasPreview && (
-                  <div style={{ borderRadius: "16px 16px 0 0", overflow: "hidden", height: 60, position: "relative" }}>
+                  <div style={{ borderRadius: "18px 18px 0 0", overflow: "hidden", height: 70, position: "relative" }}>
                     <img src={chest.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
                     {!unlocked && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />}
                   </div>
                 )}
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 14,
-                  padding: "16px 16px",
-                  borderRadius: hasPreview ? "0 0 16px 16px" : 16,
+                  padding: "20px 18px",
+                  borderRadius: hasPreview ? "0 0 18px 18px" : 18,
                   background: isCurrent ? "rgba(204,247,29,0.06)" : "#0e0e0e",
-                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : isMilestone ? "#252525" : "#1a1a1a"}`,
+                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : rar !== "commun" ? rc.border + "33" : "#1a1a1a"}`,
                   borderTop: hasPreview ? "none" : undefined,
-                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.25,
+                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.22,
                 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: unlocked ? "rgba(204,247,29,0.08)" : "#141414", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${unlocked ? "rgba(204,247,29,0.15)" : "#1e1e1e"}` }}>
-                    <span style={{ fontSize: 24, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                  <div style={{
+                    width: 54, height: 54, borderRadius: 14,
+                    background: unlocked ? rc.bg : "#141414",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    border: `1.5px solid ${unlocked ? rc.border : "#1e1e1e"}`,
+                    boxShadow: unlocked ? rc.glow : "none",
+                  }}>
+                    <span style={{ fontSize: 28, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#eee" : "#555", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#eee" : "#555", fontSize: 15, fontWeight: 800 }}>{chest.name}</span>
                       <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.1)" : "#161616", padding: "2px 8px", borderRadius: 6 }}>Lv.{tier}</span>
                     </div>
-                    <p style={{ color: unlocked ? "#999" : "#444", fontSize: 12, fontWeight: 600 }}>{chest.desc}</p>
+                    <p style={{ color: unlocked ? "#aaa" : "#444", fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{chest.desc}</p>
+                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
                   </div>
-                  {unlocked && <CheckCircle size={20} color={claimed ? "#4CAF50" : "#CCF71D"} style={{ opacity: claimed ? 1 : 0.3, flexShrink: 0 }} />}
+                  {unlocked && !claimed && isChest && (
+                    <button onClick={() => openChestAnim(tier)} style={{
+                      padding: "9px 14px", borderRadius: 10, background: "#CCF71D", color: "#000",
+                      fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer", flexShrink: 0,
+                      animation: "chestPulse 2s ease infinite",
+                    }}>OUVRIR</button>
+                  )}
+                  {unlocked && !claimed && !isChest && (
+                    <button onClick={() => claimTier(tier)} style={{
+                      padding: "9px 14px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
+                      color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
+                      cursor: "pointer", flexShrink: 0,
+                    }}>Réclamer</button>
+                  )}
+                  {claimed && <CheckCircle size={20} color="#4CAF50" style={{ flexShrink: 0 }} />}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "0 12px 24px" }}>
+        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px" }}>
           {inventory.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <span style={{ fontSize: 40, display: "block", marginBottom: 12 }}>📦</span>
-              <p style={{ color: "#666", fontSize: 14, fontWeight: 700 }}>Inventaire vide</p>
-              <p style={{ color: "#444", fontSize: 12, marginTop: 4 }}>Réclame des récompenses pour remplir ton inventaire</p>
+              <span style={{ fontSize: 44, display: "block", marginBottom: 14 }}>📦</span>
+              <p style={{ color: "#666", fontSize: 15, fontWeight: 700 }}>Inventaire vide</p>
+              <p style={{ color: "#444", fontSize: 12, marginTop: 6 }}>Réclame des récompenses pour remplir ton inventaire</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {inventory.map((item, i) => (
-                <div key={i} style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: "14px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", position: "relative" }}>
-                  {item.preview && <img src={item.preview} alt="" style={{ width: "100%", height: 50, objectFit: "cover", borderRadius: 8, marginBottom: 4 }} />}
-                  <span style={{ fontSize: 30 }}>{item.emoji}</span>
-                  <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center" }}>{item.name}</span>
-                  <span style={{ color: "#666", fontSize: 10, fontWeight: 600, textAlign: "center" }}>{item.desc}</span>
-                </div>
-              ))}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {inventory.map((item, i) => {
+                const rc = RAR[getRar(item)];
+                return (
+                  <div key={i} style={{ background: "#111", border: `1px solid ${rc.border}33`, borderRadius: 16, padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, overflow: "hidden" }}>
+                    {item.preview && <img src={item.preview} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
+                    <span style={{ fontSize: 32 }}>{item.emoji}</span>
+                    <span style={{ color: "#eee", fontSize: 13, fontWeight: 800, textAlign: "center" }}>{item.name}</span>
+                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>{rc.label}</span>
+                    <span style={{ color: "#555", fontSize: 10, fontWeight: 600, textAlign: "center" }}>{item.desc}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {openingChest && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          {chestPhase !== "spinning" && (
+            <button onClick={() => { setOpeningChest(null); phaseRef.current = "idle"; }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", zIndex: 10 }}>
+              <X size={22} color="#666" />
+            </button>
+          )}
+          <div style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 26 }}>{getChest(openingChest).emoji}</span>
+            {getChest(openingChest).name}
+          </div>
+          <p style={{ color: "#666", fontSize: 11, fontWeight: 600, marginBottom: 20 }}>
+            {chestPhase === "idle" ? "Appuie pour ouvrir" : chestPhase === "spinning" ? "..." : "Récompense obtenue !"}
+          </p>
+
+          <div style={{ position: "relative", width: "88%", maxWidth: 340, height: VIS_N * ITEM_H, overflow: "hidden", borderRadius: 18, border: "2px solid #222", background: "#0a0a0a" }}>
+            <div style={{
+              position: "absolute", left: 0, right: 0, top: "50%", transform: "translateY(-50%)",
+              height: ITEM_H + 4, borderRadius: 14, border: "2px solid #CCF71D", zIndex: 10, pointerEvents: "none",
+              boxShadow: "0 0 24px rgba(204,247,29,0.25), inset 0 0 24px rgba(204,247,29,0.04)",
+            }} />
+            <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 40, background: "linear-gradient(to bottom, #0a0a0a, transparent)", zIndex: 5, pointerEvents: "none" }} />
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: "linear-gradient(to top, #0a0a0a, transparent)", zIndex: 5, pointerEvents: "none" }} />
+
+            <div ref={stripElRef} style={{ willChange: "transform" }}>
+              {chestStrip.map((item, i) => {
+                const rc = RAR[item.rarity];
+                const isWin = i === WIN_I && chestPhase === "done";
+                return (
+                  <div key={i} style={{
+                    height: ITEM_H, display: "flex", alignItems: "center", gap: 14, padding: "0 18px",
+                    background: isWin ? rc.bg : "transparent",
+                    borderLeft: isWin ? `3px solid ${rc.border}` : "3px solid transparent",
+                    transition: isWin ? "background 0.5s, border-color 0.5s" : "none",
+                    ...(isWin ? { "--glow-c": rc.border === "#f59e0b" ? "rgba(245,158,11,0.5)" : rc.border === "#a855f7" ? "rgba(168,85,247,0.4)" : rc.border === "#3b82f6" ? "rgba(59,130,246,0.3)" : "transparent", animation: "winGlow 1.5s ease infinite" } : {}),
+                  }}>
+                    <div style={{
+                      width: 46, height: 46, borderRadius: 12, background: rc.bg,
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      border: `1.5px solid ${rc.border}`,
+                    }}>
+                      <span style={{ fontSize: 24 }}>{item.emoji}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: "#eee", fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{item.name}</p>
+                      <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
+                    </div>
+                    {item.preview && <div style={{ width: 44, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+                      <img src={item.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {chestPhase === "idle" && (
+            <button onClick={triggerSpin} style={{
+              marginTop: 28, padding: "16px 48px", borderRadius: 14, background: "#CCF71D", color: "#000",
+              fontSize: 15, fontWeight: 900, border: "none", cursor: "pointer", letterSpacing: 1,
+              boxShadow: "0 0 30px rgba(204,247,29,0.3)",
+            }}>OUVRIR LE COFFRE</button>
+          )}
+
+          {chestPhase === "done" && chestResult && (
+            <div style={{ marginTop: 24, textAlign: "center", animation: "resultReveal 0.5s ease" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10 }}>
+                <span style={{ fontSize: 36 }}>{chestResult.emoji}</span>
+                <span style={{ color: RAR[chestResult.rarity].text, fontSize: 20, fontWeight: 900 }}>{chestResult.name}</span>
+              </div>
+              <span style={{
+                color: RAR[chestResult.rarity].text, fontSize: 11, fontWeight: 800, letterSpacing: 2,
+                background: RAR[chestResult.rarity].bg, padding: "5px 16px", borderRadius: 8,
+                border: `1.5px solid ${RAR[chestResult.rarity].border}`,
+              }}>{RAR[chestResult.rarity].label}</span>
+              <button onClick={claimChestResult} style={{
+                display: "block", margin: "20px auto 0", padding: "14px 36px", borderRadius: 12,
+                background: "#CCF71D", color: "#000", fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
+                boxShadow: "0 0 20px rgba(204,247,29,0.25)",
+              }}>RÉCUPÉRER</button>
             </div>
           )}
         </div>
