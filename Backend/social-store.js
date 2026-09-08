@@ -9,6 +9,8 @@ const db = new Database(DB_PATH);
 
 db.pragma("journal_mode = WAL");
 
+try { db.exec("ALTER TABLE users ADD COLUMN xp INTEGER DEFAULT 0"); } catch {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -23,6 +25,7 @@ db.exec(`
     points_valo INTEGER DEFAULT 0,
     points_cs2 INTEGER DEFAULT 0,
     points_rl INTEGER DEFAULT 0,
+    xp INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
@@ -55,8 +58,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -69,6 +72,7 @@ const stmts = {
       points_valo = @points_valo,
       points_cs2 = @points_cs2,
       points_rl = @points_rl,
+      xp = CASE WHEN @xp > 0 THEN @xp ELSE users.xp END,
       updated_at = datetime('now')
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
@@ -98,10 +102,12 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
+  addXp: db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`),
+  setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };
 
-export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame }) {
+export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp }) {
   stmts.upsertUser.run({
     id,
     pseudo: pseudo || "Joueur",
@@ -115,6 +121,7 @@ export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPe
     points_valo: pointsPerGame?.valo || 0,
     points_cs2: pointsPerGame?.cs2 || 0,
     points_rl: pointsPerGame?.rl || 0,
+    xp: xp || 0,
   });
 }
 
@@ -166,6 +173,14 @@ export function getRecentViewers(userId) {
 
 export function getLeaderboard() {
   return stmts.getLeaderboard.all();
+}
+
+export function addXp(userId, amount) {
+  stmts.addXp.run(amount, userId);
+}
+
+export function setXpByPseudo(pseudo, xp) {
+  stmts.setXp.run(xp, pseudo.toLowerCase());
 }
 
 export function generateUserId() {

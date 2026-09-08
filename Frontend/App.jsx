@@ -7366,12 +7366,12 @@ export default function ClutchApp() {
   const [showFriendModal, setShowFriendModal] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
 
-  function syncProfileToBackend(p, pts, ppg) {
+  function syncProfileToBackend(p, pts, ppg, xp) {
     if (!p?.userId) return;
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0 }),
     }).catch(() => {});
   }
   useEffect(() => {
@@ -7380,9 +7380,12 @@ export default function ClutchApp() {
       const updated = { ...profile, userId: crypto.randomUUID() };
       setProfile(updated);
       localStorage.setItem("split_profile", JSON.stringify(updated));
-      syncProfileToBackend(updated, userPoints);
+      syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
     } else {
-      syncProfileToBackend(profile, userPoints);
+      syncProfileToBackend(profile, userPoints, pointsPerGame, userXp);
+      fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
+        if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
+      }).catch(() => {});
     }
   }, []);
 
@@ -8337,6 +8340,7 @@ export default function ClutchApp() {
               });
               const gained = xpAmount || 50;
               setUserXp(prev => { const next = prev + gained; saveXp(next); return next; });
+              if (profile?.userId) fetch(API_BASE + "/api/social/xp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, amount: gained }) }).catch(() => {});
               setXpPopup(gained);
             }} T={T} />
           </div>

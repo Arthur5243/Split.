@@ -13,14 +13,16 @@ import {
   getRecentViewers,
   getLeaderboard,
   generateUserId,
+  addXp,
+  setXpByPseudo,
 } from "./social-store.js";
 
 const router = Router();
 
 router.post("/api/social/register", (req, res) => {
-  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame } = req.body;
+  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp } = req.body;
   if (!id || !pseudo) return res.status(400).json({ error: "id and pseudo required" });
-  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame });
+  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp });
   res.json({ ok: true });
 });
 
@@ -87,5 +89,15 @@ router.get("/api/social/leaderboard", (_req, res) => {
 router.get("/api/social/generate-id", (_req, res) => {
   res.json({ id: generateUserId() });
 });
+
+router.post("/api/social/xp", (req, res) => {
+  const { userId, amount } = req.body;
+  if (!userId || !amount) return res.status(400).json({ error: "userId and amount required" });
+  addXp(userId, amount);
+  const user = getUser(userId);
+  res.json({ ok: true, xp: user?.xp || 0 });
+});
+
+setXpByPseudo("ggez", 400);
 
 export default router;
