@@ -3001,6 +3001,9 @@ function RewardsModal({ onClose, T, userXp }) {
   const [claimedTiers, setClaimedTiers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
+  const [inventoryItems, setInventoryItems] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
+  });
 
   const allTiers = Array.from({ length: 100 }, (_, i) => i + 1);
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
@@ -3014,10 +3017,15 @@ function RewardsModal({ onClose, T, userXp }) {
     }
   }, []);
 
-  function claimTier(tier) {
+  function claimTier(tier, item) {
     const next = [...claimedTiers, tier];
     setClaimedTiers(next);
     localStorage.setItem("split_claimed_tiers", JSON.stringify(next));
+    if (item) {
+      const ni = [...inventoryItems, item];
+      setInventoryItems(ni);
+      localStorage.setItem("split_inventory", JSON.stringify(ni));
+    }
   }
 
   const TIER_REWARDS = {
@@ -3137,7 +3145,7 @@ function RewardsModal({ onClose, T, userXp }) {
   const spinStartRef = useRef(0);
   const spinFromRef = useRef(0);
   const spinToRef = useRef(0);
-  const inventory = claimedTiers.map(t => TIER_REWARDS[t] || defaultChest).filter(r => r.name !== "Coffre Standard");
+  const inventory = inventoryItems;
 
   const RAR = {
     commun: { bg: "#1a1a1a", border: "#555", text: "#999", glow: "none", label: "COMMUN" },
@@ -3169,6 +3177,7 @@ function RewardsModal({ onClose, T, userXp }) {
   const ITEM_H = 82, VIS_N = 5, STRIP_N = 55, WIN_I = 40;
 
   function getRar(ch) {
+    if (ch.rarity) return ch.rarity;
     const n = ch.name;
     if (n.includes("Légendaire") || n.includes("Ultime") || n.includes("Background") || n.includes("mythique")) return "legendaire";
     if (n.includes("Épique") || n.includes("Carte") || n.includes("Graphique") || n.includes("holographique")) return "epique";
@@ -3221,7 +3230,7 @@ function RewardsModal({ onClose, T, userXp }) {
   }, [openingChest]);
 
   function claimChestResult() {
-    if (openingChest) { claimTier(openingChest); setOpeningChest(null); phaseRef.current = "idle"; }
+    if (openingChest && chestResult) { claimTier(openingChest, chestResult); setOpeningChest(null); phaseRef.current = "idle"; }
   }
 
   return (
@@ -3319,7 +3328,7 @@ function RewardsModal({ onClose, T, userXp }) {
                     }}>OUVRIR</button>
                   )}
                   {unlocked && !claimed && !isChest && (
-                    <button onClick={() => claimTier(tier)} style={{
+                    <button onClick={() => claimTier(tier, chest)} style={{
                       padding: "9px 14px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
                       color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
                       cursor: "pointer", flexShrink: 0,
