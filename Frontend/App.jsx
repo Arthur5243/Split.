@@ -2897,8 +2897,8 @@ function RewardsModal({ onClose, T, userXp }) {
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
 
-  if (!localStorage.getItem("split_inv_v2")) {
-    localStorage.setItem("split_inv_v2", "1");
+  if (!localStorage.getItem("split_inv_v3")) {
+    localStorage.setItem("split_inv_v3", "1");
     localStorage.removeItem("split_inventory");
     localStorage.removeItem("split_claimed_tiers");
     localStorage.removeItem("split_equipped_title");
@@ -2941,7 +2941,7 @@ function RewardsModal({ onClose, T, userXp }) {
     2: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     3: { emoji: "🏅", name: "Badge Classement", desc: "Badge exclusif pour ton profil" },
     4: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    5: { emoji: "🖼️", name: "Bannière Lime", desc: "Personnalise l'affichage de ton pseudo", type: "banner", bannerColor: "#CCF71D" },
+    5: { emoji: "🖼️", name: "Bannière Setup", desc: "Fond gaming setup pour ton classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
     6: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre", type: "title" },
     8: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
@@ -2958,7 +2958,7 @@ function RewardsModal({ onClose, T, userXp }) {
     19: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     20: { emoji: "🎯", name: "Boost Pronos", desc: "+2 slots de pronostics supplémentaires" },
     21: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    22: { emoji: "🖼️", name: "Bannière Sunset", desc: "Bannière animée pour ton pseudo", type: "banner", bannerColor: "#FF6B00" },
+    22: { emoji: "🖼️", name: "Bannière Craft", desc: "Fond Minecraft pour ton classement", type: "banner", bannerImage: "/banner-8.png", rarity: "rare" },
     23: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     24: { emoji: "🏅", name: "Badge Classement", desc: "Badge argent pour ton profil" },
     25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png" },
@@ -2978,7 +2978,7 @@ function RewardsModal({ onClose, T, userXp }) {
     39: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     40: { emoji: "🎯", name: "Boost Pronos", desc: "+3 slots de pronostics supplémentaires" },
     41: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    42: { emoji: "🖼️", name: "Bannière Violette", desc: "Bannière légendaire pour ton pseudo", type: "banner", bannerColor: "#A855F7" },
+    42: { emoji: "🖼️", name: "Bannière Tactical", desc: "Fond CS2 pour ton classement", type: "banner", bannerImage: "/banner-4.png", rarity: "epique" },
     43: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     44: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png" },
@@ -3023,7 +3023,7 @@ function RewardsModal({ onClose, T, userXp }) {
     84: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     85: { emoji: "💎", name: "Coffre Légendaire", desc: "Récompense mythique" },
     86: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    87: { emoji: "🖼️", name: "Bannière Holo", desc: "Bannière mythique holographique", type: "banner", bannerColor: "#EC4899" },
+    87: { emoji: "🖼️", name: "Bannière Speed", desc: "Fond légendaire voiture pour ton classement", type: "banner", bannerImage: "/banner-5.png", rarity: "legendaire" },
     88: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     89: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     90: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 7 jours" },
@@ -3066,7 +3066,7 @@ function RewardsModal({ onClose, T, userXp }) {
       const val = equippedBanner === item.name ? "" : item.name;
       setEquippedBanner(val);
       localStorage.setItem("split_equipped_banner", val);
-      localStorage.setItem("split_equipped_banner_color", val ? (item.bannerColor || "#CCF71D") : "");
+      localStorage.setItem("split_equipped_banner_color", val ? (item.bannerImage || "") : "");
     }
   }
 
@@ -3112,14 +3112,15 @@ function RewardsModal({ onClose, T, userXp }) {
     { emoji: "⭐", name: "Boost XP 12h", rarity: "commun" },
     { emoji: "💰", name: "50 Pièces", rarity: "commun" },
     { emoji: "🔰", name: "Emblème Recruit", rarity: "commun" },
-    { emoji: "🖼️", name: "Bannière Bleue", rarity: "rare", type: "banner", bannerColor: "#3B82F6" },
+    { emoji: "🖼️", name: "Bannière Sunset", rarity: "commun", type: "banner", bannerImage: "/banner-10.png" },
     { emoji: "✨", name: "Boost ×2 Points", rarity: "rare" },
     { emoji: "🎯", name: "Boost Pronos +2", rarity: "rare" },
-    { emoji: "🖼️", name: "Bannière Néon", rarity: "rare", type: "banner", bannerColor: "#39FF14" },
-    { emoji: "🖼️", name: "Bannière Flamme", rarity: "epique", type: "banner", bannerColor: "#F97316" },
+    { emoji: "🖼️", name: "Bannière Play Grind", rarity: "rare", type: "banner", bannerImage: "/banner-1.png" },
+    { emoji: "🖼️", name: "Bannière Anime", rarity: "rare", type: "banner", bannerImage: "/banner-7.png" },
+    { emoji: "🖼️", name: "Bannière Trophée", rarity: "epique", type: "banner", bannerImage: "/banner-3.png" },
     { emoji: "🎴", name: "Carte Épique", rarity: "epique" },
-    { emoji: "🎴", name: "Carte Animée", rarity: "epique" },
-    { emoji: "🖼️", name: "Bannière Royale", rarity: "legendaire", type: "banner", bannerColor: "#FBBF24" },
+    { emoji: "🖼️", name: "Bannière Chill", rarity: "epique", type: "banner", bannerImage: "/banner-9.png" },
+    { emoji: "🖼️", name: "Bannière Diamant", rarity: "legendaire", type: "banner", bannerImage: "/banner-2.png" },
     ...TITLE_LIST,
     { emoji: "🌌", name: "BG Neon City", rarity: "legendaire", type: "background", preview: "/bg-profile-1.png" },
     { emoji: "🌌", name: "BG Crystal Palace", rarity: "legendaire", type: "background", preview: "/bg-profile-2.png" },
@@ -3318,7 +3319,7 @@ function RewardsModal({ onClose, T, userXp }) {
                 const canEquip = item.type === "title" || item.type === "banner";
                 return (
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
-                    {item.preview && <img src={item.preview} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
+                    {(item.preview || item.bannerImage) && <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
                     <span style={{ fontSize: 28 }}>{item.emoji}</span>
                     <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>{item.name}</span>
                     <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>{rc.label}</span>
@@ -3384,8 +3385,8 @@ function RewardsModal({ onClose, T, userXp }) {
                       <p style={{ color: "#eee", fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{item.name}</p>
                       <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
                     </div>
-                    {item.preview && <div style={{ width: 44, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
-                      <img src={item.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    {(item.preview || item.bannerImage) && <div style={{ width: 44, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+                      <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>}
                   </div>
                 );
@@ -3403,6 +3404,11 @@ function RewardsModal({ onClose, T, userXp }) {
 
           {chestPhase === "done" && chestResult && (
             <div style={{ marginTop: 24, textAlign: "center", animation: "resultReveal 0.5s ease" }}>
+              {(chestResult.preview || chestResult.bannerImage) && (
+                <div style={{ margin: "0 auto 12px", width: "80%", maxWidth: 280, height: 56, borderRadius: 12, overflow: "hidden", border: `1.5px solid ${RAR[chestResult.rarity].border}` }}>
+                  <img src={chestResult.preview || chestResult.bannerImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10 }}>
                 <span style={{ fontSize: 36 }}>{chestResult.emoji}</span>
                 <span style={{ color: RAR[chestResult.rarity].text, fontSize: 20, fontWeight: 900 }}>{chestResult.name}</span>
@@ -3805,7 +3811,13 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           const user = top3[i];
           const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
           return (
-            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #2a2a2a" : "none", borderLeft: user?.equipped_banner ? `3px solid ${user.equipped_banner}` : undefined }}>
+            <div key={i} className="flex items-center justify-between px-4 py-3" style={{
+              borderBottom: i < 2 ? "1px solid #2a2a2a" : "none",
+              position: "relative", overflow: "hidden",
+              background: user?.equipped_banner
+                ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
+                : "transparent",
+            }}>
               <div className="flex items-center gap-3">
                 <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
                 {user && user.avatar ? (
@@ -6636,21 +6648,27 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         setSpectatorUser({ ...u, ...d });
                         setSpectatorStats(d);
                       }).catch(() => { setSpectatorUser(u); });
-                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left", borderLeft: uBanner ? `3px solid ${uBanner}` : undefined }}>
-                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
-                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
+                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{
+                      position: "relative", overflow: "hidden", textAlign: "left",
+                      background: uBanner
+                        ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
+                        : (isMe ? "#141414" : "#0e0e0e"),
+                      border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "1px solid #1a1a1a"),
+                    }}>
+                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#aaa" : "#666", fontSize: "16px", width: 24, textAlign: "center", position: "relative" }}>{i + 1}</span>
+                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a", position: "relative" }}>
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0" style={{ position: "relative" }}>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                          <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
                           {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#A855F7", background: "rgba(168,85,247,0.12)", padding: "1px 6px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5 }}>{uTitle}</span>}
                         </div>
                       </div>
-                      {rankLogo.logo && rankLogo.logo !== "unranked" ? <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} /> : null}
-                      <div className="text-right shrink-0">
-                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.displayPts}</span>
-                        <span style={{ color: "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                      {rankLogo.logo && rankLogo.logo !== "unranked" ? <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0, position: "relative" }} /> : null}
+                      <div className="text-right shrink-0" style={{ position: "relative" }}>
+                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.displayPts}</span>
+                        <span style={{ color: uBanner ? "#999" : "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
                   );
