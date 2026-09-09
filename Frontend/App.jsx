@@ -1927,7 +1927,12 @@ function getMatchPointsBreakdown(match, pred) {
 }
 
 function calcMatchPoints(match, pred) {
-  return getMatchPointsBreakdown(match, pred).total;
+  const base = getMatchPointsBreakdown(match, pred).total;
+  try {
+    const boosted = JSON.parse(localStorage.getItem("split_boosted_matches") || "[]");
+    if (boosted.includes(String(match.id))) return base * 2;
+  } catch {}
+  return base;
 }
 
 function isValidScore(aStr, bStr) {
@@ -2891,7 +2896,7 @@ function QuestModal({ quests, onClose, onClaim, T }) {
   );
 }
 
-function RewardsModal({ onClose, T, userXp }) {
+function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
   const tierInfo = getTierFromXp(userXp || 0);
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
@@ -2937,105 +2942,105 @@ function RewardsModal({ onClose, T, userXp }) {
   }
 
   const TIER_REWARDS = {
-    1: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de bienvenue" },
-    2: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    3: { emoji: "🏅", name: "Badge Classement", desc: "Badge exclusif pour ton profil" },
-    4: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement" },
+    2: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    3: { emoji: "🏷️", name: "Rookie", desc: "Titre de débutant", type: "title", rarity: "commun" },
+    4: { emoji: "⭐", name: "Boost XP +200", desc: "+200 XP bonus", type: "xp_bonus", xpAmount: 200 },
     5: { emoji: "🖼️", name: "Bannière Setup", desc: "Fond gaming setup pour ton classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
-    6: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre", type: "title" },
-    8: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    6: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre officiel", type: "title", rarity: "commun" },
+    8: { emoji: "🏅", name: "Badge Argent", desc: "Badge argent pour ton profil" },
     9: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    10: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 24h" },
-    11: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    12: { emoji: "🏅", name: "Badge Classement", desc: "Badge bronze pour ton profil" },
-    13: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    14: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    15: { emoji: "⭐", name: "Boost XP", desc: "Gagne plus d'XP pendant 24h" },
-    16: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    17: { emoji: "🏷️", name: "Vétéran", desc: "Titre pour les habitués", type: "title" },
-    18: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    19: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    20: { emoji: "🎯", name: "Boost Pronos", desc: "+2 slots de pronostics supplémentaires" },
-    21: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    10: { emoji: "🖼️", name: "Bannière Sunset", desc: "Fond cozy pour ton classement", type: "banner", bannerImage: "/banner-10.png", rarity: "commun" },
+    11: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    12: { emoji: "🏷️", name: "Challenger", desc: "Titre challenger", type: "title", rarity: "commun" },
+    13: { emoji: "⭐", name: "Boost XP +300", desc: "+300 XP bonus", type: "xp_bonus", xpAmount: 300 },
+    14: { emoji: "🌌", name: "BG Neon City", desc: "Fond néon pour ton profil", type: "background", preview: "/bg-profile-6.png", rarity: "rare" },
+    15: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    16: { emoji: "🖼️", name: "Bannière Play Grind", desc: "Fond blue crown pour ton classement", type: "banner", bannerImage: "/banner-1.png", rarity: "rare" },
+    17: { emoji: "🏷️", name: "Vétéran", desc: "Titre pour les habitués", type: "title", rarity: "rare" },
+    18: { emoji: "🏅", name: "Badge Or", desc: "Badge or pour ton profil" },
+    19: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    20: { emoji: "🏷️", name: "Stratège", desc: "Titre stratège", type: "title", rarity: "commun" },
+    21: { emoji: "⭐", name: "Boost XP +400", desc: "+400 XP bonus", type: "xp_bonus", xpAmount: 400 },
     22: { emoji: "🖼️", name: "Bannière Craft", desc: "Fond Minecraft pour ton classement", type: "banner", bannerImage: "/banner-8.png", rarity: "rare" },
-    23: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    24: { emoji: "🏅", name: "Badge Classement", desc: "Badge argent pour ton profil" },
-    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png" },
-    26: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    27: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    28: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    29: { emoji: "🏷️", name: "Expert", desc: "Titre expert", type: "title" },
-    30: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 48h" },
-    31: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    32: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design unique pour tes matchs" },
+    23: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    24: { emoji: "🏷️", name: "Analyste", desc: "Titre analyste", type: "title", rarity: "commun" },
+    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png", rarity: "rare" },
+    26: { emoji: "🖼️", name: "Bannière Anime", desc: "Fond anime gamer pour ton classement", type: "banner", bannerImage: "/banner-7.png", rarity: "rare" },
+    27: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    28: { emoji: "🏅", name: "Badge Platine", desc: "Badge platine pour ton profil" },
+    29: { emoji: "🏷️", name: "Expert", desc: "Titre expert", type: "title", rarity: "rare" },
+    30: { emoji: "⭐", name: "Boost XP +500", desc: "+500 XP bonus", type: "xp_bonus", xpAmount: 500 },
+    31: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    32: { emoji: "🏷️", name: "Prodigy", desc: "Titre prodigy", type: "title", rarity: "rare" },
     33: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    34: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    35: { emoji: "⭐", name: "Boost XP", desc: "×2 XP pendant 48h" },
-    36: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    37: { emoji: "🏅", name: "Badge Classement", desc: "Badge or pour ton profil" },
-    38: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    39: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    40: { emoji: "🎯", name: "Boost Pronos", desc: "+3 slots de pronostics supplémentaires" },
-    41: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    34: { emoji: "🌌", name: "BG Crystal Palace", desc: "Fond crystal pour ton profil", type: "background", preview: "/bg-profile-7.png", rarity: "rare" },
+    35: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    36: { emoji: "🖼️", name: "Bannière Trophée", desc: "Fond trophée rose pour ton classement", type: "banner", bannerImage: "/banner-3.png", rarity: "epique" },
+    37: { emoji: "🏅", name: "Badge Diamant", desc: "Badge diamant pour ton profil" },
+    38: { emoji: "🏷️", name: "Sniper", desc: "Titre sniper", type: "title", rarity: "rare" },
+    39: { emoji: "⭐", name: "Boost XP +600", desc: "+600 XP bonus", type: "xp_bonus", xpAmount: 600 },
+    40: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    41: { emoji: "🏷️", name: "Tacticien", desc: "Titre tacticien", type: "title", rarity: "rare" },
     42: { emoji: "🖼️", name: "Bannière Tactical", desc: "Fond CS2 pour ton classement", type: "banner", bannerImage: "/banner-4.png", rarity: "epique" },
     43: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    44: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png" },
-    46: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    47: { emoji: "✨", name: "Titre Graphique", desc: "Titre avec effets visuels uniques" },
-    48: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    49: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    44: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png", rarity: "epique" },
+    46: { emoji: "🏷️", name: "Oracle", desc: "Titre oracle", type: "title", rarity: "epique" },
+    47: { emoji: "🏅", name: "Badge Master", desc: "Badge master pour ton profil" },
+    48: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    49: { emoji: "🖼️", name: "Bannière Chill", desc: "Fond chill cat pour ton classement", type: "banner", bannerImage: "/banner-9.png", rarity: "epique" },
     50: { emoji: "💎", name: "Coffre Légendaire", desc: "Le meilleur loot disponible" },
-    51: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    52: { emoji: "🏅", name: "Badge Classement", desc: "Badge platine pour ton profil" },
-    53: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    54: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    55: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 72h" },
-    56: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    57: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design épique pour tes matchs" },
+    51: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    52: { emoji: "🏷️", name: "Visionnaire", desc: "Titre visionnaire", type: "title", rarity: "epique" },
+    53: { emoji: "⭐", name: "Boost XP +800", desc: "+800 XP bonus", type: "xp_bonus", xpAmount: 800 },
+    54: { emoji: "🌌", name: "BG Gaming Zone", desc: "Fond gaming zone pour ton profil", type: "background", preview: "/bg-profile-8.png", rarity: "epique" },
+    55: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    56: { emoji: "🏷️", name: "Génie", desc: "Titre génie", type: "title", rarity: "epique" },
+    57: { emoji: "🏅", name: "Badge Elite", desc: "Badge élite pour ton profil" },
     58: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    59: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire animé", type: "background", preview: "/bg-profile-3.png" },
-    61: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    62: { emoji: "🏷️", name: "Maître", desc: "Titre de maître", type: "title" },
-    63: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    64: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    65: { emoji: "⭐", name: "Boost XP", desc: "×3 XP pendant 48h" },
-    66: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    67: { emoji: "✨", name: "Titre Graphique", desc: "Titre animé avec particules" },
-    68: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    69: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    70: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot ultra rare" },
-    71: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    72: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design légendaire pour tes matchs" },
+    59: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire pour ton profil", type: "background", preview: "/bg-profile-3.png", rarity: "epique" },
+    61: { emoji: "🖼️", name: "Bannière Diamant", desc: "Fond diamant crystal pour ton classement", type: "banner", bannerImage: "/banner-2.png", rarity: "legendaire" },
+    62: { emoji: "🏷️", name: "Maître", desc: "Titre de maître", type: "title", rarity: "epique" },
+    63: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    64: { emoji: "🏅", name: "Badge Champion", desc: "Badge champion pour ton profil" },
+    65: { emoji: "⭐", name: "Boost XP +1000", desc: "+1000 XP bonus", type: "xp_bonus", xpAmount: 1000 },
+    66: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    67: { emoji: "🏷️", name: "GOD Tier", desc: "Titre divin", type: "title", rarity: "legendaire" },
+    68: { emoji: "🌌", name: "BG Midnight Arena", desc: "Fond midnight arena pour ton profil", type: "background", preview: "/bg-profile-9.png", rarity: "rare" },
+    69: { emoji: "🏅", name: "Badge Légendaire", desc: "Badge légendaire pour ton profil" },
+    70: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    71: { emoji: "🏷️", name: "Le Prophète", desc: "Titre prophète", type: "title", rarity: "legendaire" },
+    72: { emoji: "⭐", name: "Boost XP +1200", desc: "+1200 XP bonus", type: "xp_bonus", xpAmount: 1200 },
     73: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    74: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    75: { emoji: "🎯", name: "Boost Pronos", desc: "+5 slots de pronostics permanents" },
-    76: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    77: { emoji: "🏅", name: "Badge Classement", desc: "Badge diamant pour ton profil" },
-    78: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    79: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé", type: "background", preview: "/bg-profile-4.png" },
-    81: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    82: { emoji: "✨", name: "Titre Graphique", desc: "Titre holographique unique" },
-    83: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    84: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    85: { emoji: "💎", name: "Coffre Légendaire", desc: "Récompense mythique" },
-    86: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
+    74: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    75: { emoji: "🏷️", name: "Élu", desc: "Titre élu", type: "title", rarity: "legendaire" },
+    76: { emoji: "🏅", name: "Badge Mythique", desc: "Badge mythique pour ton profil" },
+    77: { emoji: "🌌", name: "BG Cyber Wave", desc: "Fond cyber wave pour ton profil", type: "background", preview: "/bg-profile-10.png", rarity: "rare" },
+    78: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    79: { emoji: "🏷️", name: "Immortel", desc: "Titre immortel", type: "title", rarity: "legendaire" },
+    80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé", type: "background", preview: "/bg-profile-4.png", rarity: "legendaire" },
+    81: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    82: { emoji: "🏅", name: "Badge Suprême", desc: "Badge suprême pour ton profil" },
+    83: { emoji: "⭐", name: "Boost XP +1500", desc: "+1500 XP bonus", type: "xp_bonus", xpAmount: 1500 },
+    84: { emoji: "🏷️", name: "GOAT", desc: "Le plus grand de tous les temps", type: "title", rarity: "legendaire" },
+    85: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    86: { emoji: "🏅", name: "Badge Ultime", desc: "Badge ultime pour ton profil" },
     87: { emoji: "🖼️", name: "Bannière Speed", desc: "Fond légendaire voiture pour ton classement", type: "banner", bannerImage: "/banner-5.png", rarity: "legendaire" },
-    88: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    89: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    90: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 7 jours" },
-    91: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    92: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design mythique pour tes matchs" },
-    93: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
-    94: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    95: { emoji: "🌌", name: "Background Profil", desc: "Fond ultime animé avec particules", type: "background", preview: "/bg-profile-5.png" },
-    96: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    97: { emoji: "🏅", name: "Badge Classement", desc: "Badge ultime pour ton profil" },
-    98: { emoji: "✨", name: "Titre Graphique", desc: "Titre ultime avec effets dynamiques" },
-    99: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot ultime exclusif" },
+    88: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    89: { emoji: "⭐", name: "Boost XP +2000", desc: "+2000 XP bonus", type: "xp_bonus", xpAmount: 2000 },
+    90: { emoji: "🏅", name: "Badge Infini", desc: "Badge infini pour ton profil" },
+    91: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    92: { emoji: "🌌", name: "BG Fire Storm", desc: "Fond fire storm pour ton profil", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
+    93: { emoji: "🏅", name: "Badge Éternel", desc: "Badge éternel pour ton profil" },
+    94: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    95: { emoji: "🌌", name: "Background Ultime", desc: "Fond ultime animé", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
+    96: { emoji: "⭐", name: "Boost XP +2500", desc: "+2500 XP bonus", type: "xp_bonus", xpAmount: 2500 },
+    97: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    98: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot ultime exclusif" },
+    99: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "legendaire" },
     100: { emoji: "👑", name: "Récompense Ultime", desc: "Tu as tout débloqué. Légende." },
   };
   const defaultChest = { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" };
@@ -3068,6 +3073,58 @@ function RewardsModal({ onClose, T, userXp }) {
       localStorage.setItem("split_equipped_banner", val);
       localStorage.setItem("split_equipped_banner_color", val ? (item.bannerImage || "") : "");
     }
+  }
+
+  const [showBoostPicker, setShowBoostPicker] = useState(false);
+  const [boostItemIndex, setBoostItemIndex] = useState(null);
+  const [boostTab, setBoostTab] = useState("valo");
+
+  function useBoostItem(itemIndex) {
+    setBoostItemIndex(itemIndex);
+    setShowBoostPicker(true);
+    setBoostTab("valo");
+  }
+
+  function applyBoostToMatch(matchId) {
+    const boosted = JSON.parse(localStorage.getItem("split_boosted_matches") || "[]");
+    if (boosted.includes(String(matchId))) return;
+    boosted.push(String(matchId));
+    localStorage.setItem("split_boosted_matches", JSON.stringify(boosted));
+    if (boostItemIndex !== null) {
+      const ni = [...inventoryItems];
+      ni.splice(boostItemIndex, 1);
+      setInventoryItems(ni);
+      localStorage.setItem("split_inventory", JSON.stringify(ni));
+    }
+    setShowBoostPicker(false);
+    setBoostItemIndex(null);
+  }
+
+  function getBettedMatches(game) {
+    const preds = predictions || {};
+    const settled = settledMatchIds || new Set();
+    const boosted = JSON.parse(localStorage.getItem("split_boosted_matches") || "[]");
+    let matches = [];
+    if (game === "valo") matches = [...(upcomingMatches || []), ...(liveMatches || [])];
+    else if (game === "cs2") matches = [...(cs2UpcomingMatches || []), ...(cs2LiveMatches || [])];
+    else matches = [...(rlUpcomingMatches || []), ...(rlLiveMatches || [])];
+    return matches.filter(m => {
+      const pred = preds[m.id];
+      if (!pred || pred.seriesA === "" || pred.seriesB === "") return false;
+      if (settled.has(String(m.id))) return false;
+      if (boosted.includes(String(m.id))) return false;
+      return true;
+    });
+  }
+
+  function useXpBonusItem(itemIndex) {
+    const item = inventoryItems[itemIndex];
+    if (!item || !item.xpAmount) return;
+    if (onAddXp) onAddXp(item.xpAmount);
+    const ni = [...inventoryItems];
+    ni.splice(itemIndex, 1);
+    setInventoryItems(ni);
+    localStorage.setItem("split_inventory", JSON.stringify(ni));
   }
 
   const RAR = {
@@ -3110,7 +3167,6 @@ function RewardsModal({ onClose, T, userXp }) {
     { emoji: "🏅", name: "Badge Bronze", rarity: "commun" },
     { emoji: "🎖️", name: "Badge Argent", rarity: "commun" },
     { emoji: "⭐", name: "Boost XP 12h", rarity: "commun" },
-    { emoji: "💰", name: "50 Pièces", rarity: "commun" },
     { emoji: "🔰", name: "Emblème Recruit", rarity: "commun" },
     { emoji: "🖼️", name: "Bannière Sunset", rarity: "commun", type: "banner", bannerImage: "/banner-10.png" },
     { emoji: "✨", name: "Boost ×2 Points", rarity: "rare" },
@@ -3317,6 +3373,7 @@ function RewardsModal({ onClose, T, userXp }) {
                 const isEquippedBanner = item.type === "banner" && equippedBanner === item.name;
                 const isEquipped = isEquippedTitle || isEquippedBanner;
                 const canEquip = item.type === "title" || item.type === "banner";
+                const isBoost = item.type === "boost";
                 return (
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
                     {(item.preview || item.bannerImage) && <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
@@ -3330,11 +3387,82 @@ function RewardsModal({ onClose, T, userXp }) {
                         color: isEquipped ? "#000" : "#aaa",
                       }}>{isEquipped ? "Équipé ✓" : "Équiper"}</button>
                     )}
+                    {isBoost && (
+                      <button onClick={() => useBoostItem(i)} style={{
+                        marginTop: 2, padding: "5px 14px", borderRadius: 8, fontSize: 10, fontWeight: 800, border: "none", cursor: "pointer",
+                        background: "linear-gradient(135deg, #f59e0b, #ef4444)", color: "#000",
+                      }}>Utiliser</button>
+                    )}
+                    {item.type === "xp_bonus" && (
+                      <button onClick={() => useXpBonusItem(i)} style={{
+                        marginTop: 2, padding: "5px 14px", borderRadius: 8, fontSize: 10, fontWeight: 800, border: "none", cursor: "pointer",
+                        background: "linear-gradient(135deg, #a855f7, #6366f1)", color: "#fff",
+                      }}>Utiliser</button>
+                    )}
                   </div>
                 );
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {showBoostPicker && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.97)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "auto" }}>
+          <button onClick={() => { setShowBoostPicker(false); setBoostItemIndex(null); }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", zIndex: 10 }}>
+            <X size={22} color="#666" />
+          </button>
+          <div style={{ padding: "24px 0 12px", textAlign: "center" }}>
+            <span style={{ fontSize: 32 }}>🔥</span>
+            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginTop: 6 }}>Boost x2 Points</p>
+            <p style={{ color: "#888", fontSize: 12, fontWeight: 600, marginTop: 4 }}>Choisis un match pour doubler tes points</p>
+          </div>
+          <div style={{ display: "flex", gap: 8, margin: "8px 0 16px" }}>
+            {[["valo", "VALORANT"], ["cs2", "CS2"], ["rl", "RL"]].map(([key, label]) => (
+              <button key={key} onClick={() => setBoostTab(key)} style={{
+                padding: "8px 20px", borderRadius: 10, fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer",
+                background: boostTab === key ? "#CCF71D" : "rgba(255,255,255,0.08)",
+                color: boostTab === key ? "#000" : "#888",
+              }}>{label}</button>
+            ))}
+          </div>
+          <div style={{ width: "90%", maxWidth: 400, flex: 1 }}>
+            {(() => {
+              const matches = getBettedMatches(boostTab);
+              if (matches.length === 0) return (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <span style={{ fontSize: 40 }}>🤷</span>
+                  <p style={{ color: "#666", fontSize: 13, fontWeight: 700, marginTop: 10 }}>Aucun match disponible</p>
+                  <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Tu dois avoir parié sur un match en cours ou à venir</p>
+                </div>
+              );
+              return matches.map(m => {
+                const pred = (predictions || {})[m.id];
+                const t1 = m.opponents?.[0]?.opponent?.name || "TBD";
+                const t2 = m.opponents?.[1]?.opponent?.name || "TBD";
+                return (
+                  <button key={m.id} onClick={() => applyBoostToMatch(m.id)} style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "14px 16px", marginBottom: 8, borderRadius: 14, border: "1px solid #222",
+                    background: "#141414", cursor: "pointer", transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#1a1a1a"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#141414"}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                      <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t1}</span>
+                      <span style={{ color: "#555", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>vs</span>
+                      <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t2}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 10 }}>
+                      {pred && <span style={{ color: "#CCF71D", fontSize: 12, fontWeight: 800 }}>{pred.seriesA} - {pred.seriesB}</span>}
+                      <span style={{ color: "#f59e0b", fontSize: 16 }}>🔥</span>
+                    </div>
+                  </button>
+                );
+              });
+            })()}
+          </div>
         </div>
       )}
 
@@ -8380,7 +8508,7 @@ export default function ClutchApp() {
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} />
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
           </div>
         )}
 
