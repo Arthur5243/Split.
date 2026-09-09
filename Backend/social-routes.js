@@ -20,9 +20,9 @@ import {
 const router = Router();
 
 router.post("/api/social/register", (req, res) => {
-  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp } = req.body;
+  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner } = req.body;
   if (!id || !pseudo) return res.status(400).json({ error: "id and pseudo required" });
-  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp });
+  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner });
   res.json({ ok: true });
 });
 
@@ -98,6 +98,6 @@ router.post("/api/social/xp", (req, res) => {
   res.json({ ok: true, xp: user?.xp || 0 });
 });
 
-setXpByPseudo("ggez", 400);
+setXpByPseudo("ggez", 99999);
 
 export default router;

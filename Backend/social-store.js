@@ -43,6 +43,9 @@ db.exec(`
 try { db.exec(`ALTER TABLE users ADD COLUMN points_valo INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN points_cs2 INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN points_rl INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_color TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN equipped_title TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN equipped_banner TEXT`); } catch {}
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
@@ -58,8 +61,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, @pseudo_color, @equipped_title, @equipped_banner, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -73,6 +76,9 @@ const stmts = {
       points_cs2 = @points_cs2,
       points_rl = @points_rl,
       xp = CASE WHEN @xp > 0 THEN @xp ELSE users.xp END,
+      pseudo_color = COALESCE(@pseudo_color, users.pseudo_color),
+      equipped_title = COALESCE(@equipped_title, users.equipped_title),
+      equipped_banner = COALESCE(@equipped_banner, users.equipped_banner),
       updated_at = datetime('now')
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
@@ -102,12 +108,12 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
   addXp: db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`),
   setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };
 
-export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp }) {
+export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner }) {
   stmts.upsertUser.run({
     id,
     pseudo: pseudo || "Joueur",
@@ -122,6 +128,9 @@ export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPe
     points_cs2: pointsPerGame?.cs2 || 0,
     points_rl: pointsPerGame?.rl || 0,
     xp: xp || 0,
+    pseudo_color: pseudoColor || null,
+    equipped_title: equippedTitle || null,
+    equipped_banner: equippedBanner || null,
   });
 }
 

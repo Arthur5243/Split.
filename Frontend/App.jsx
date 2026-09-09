@@ -3034,9 +3034,9 @@ function RewardsModal({ onClose, T, userXp }) {
     2: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     3: { emoji: "🏅", name: "Badge Classement", desc: "Badge exclusif pour ton profil" },
     4: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    5: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Personnalise l'affichage de ton pseudo" },
+    5: { emoji: "🖼️", name: "Bannière Lime", desc: "Personnalise l'affichage de ton pseudo", type: "banner", bannerColor: "#CCF71D" },
     6: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    7: { emoji: "🏷️", name: "Titre Exclusif", desc: "Titre unique pour ta bio" },
+    7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre", type: "title" },
     8: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     9: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     10: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 24h" },
@@ -3046,19 +3046,19 @@ function RewardsModal({ onClose, T, userXp }) {
     14: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     15: { emoji: "⭐", name: "Boost XP", desc: "Gagne plus d'XP pendant 24h" },
     16: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    17: { emoji: "🏷️", name: "Titre Exclusif", desc: "Titre rare pour ta bio" },
+    17: { emoji: "🏷️", name: "Vétéran", desc: "Titre pour les habitués", type: "title" },
     18: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     19: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     20: { emoji: "🎯", name: "Boost Pronos", desc: "+2 slots de pronostics supplémentaires" },
     21: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    22: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Bannière animée pour ton pseudo" },
+    22: { emoji: "🖼️", name: "Bannière Sunset", desc: "Bannière animée pour ton pseudo", type: "banner", bannerColor: "#FF6B00" },
     23: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     24: { emoji: "🏅", name: "Badge Classement", desc: "Badge argent pour ton profil" },
-    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", preview: "/bg-profile-1.png" },
+    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png" },
     26: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     27: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     28: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    29: { emoji: "🏷️", name: "Titre Exclusif", desc: "Titre épique pour ta bio" },
+    29: { emoji: "🏷️", name: "Expert", desc: "Titre expert", type: "title" },
     30: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 48h" },
     31: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     32: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design unique pour tes matchs" },
@@ -3071,10 +3071,10 @@ function RewardsModal({ onClose, T, userXp }) {
     39: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     40: { emoji: "🎯", name: "Boost Pronos", desc: "+3 slots de pronostics supplémentaires" },
     41: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    42: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Bannière légendaire pour ton pseudo" },
+    42: { emoji: "🖼️", name: "Bannière Violette", desc: "Bannière légendaire pour ton pseudo", type: "banner", bannerColor: "#A855F7" },
     43: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     44: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", preview: "/bg-profile-2.png" },
+    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png" },
     46: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     47: { emoji: "✨", name: "Titre Graphique", desc: "Titre avec effets visuels uniques" },
     48: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
@@ -3089,9 +3089,9 @@ function RewardsModal({ onClose, T, userXp }) {
     57: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design épique pour tes matchs" },
     58: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     59: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire animé", preview: "/bg-profile-3.png" },
+    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire animé", type: "background", preview: "/bg-profile-3.png" },
     61: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    62: { emoji: "🏷️", name: "Titre Exclusif", desc: "Titre légendaire pour ta bio" },
+    62: { emoji: "🏷️", name: "Maître", desc: "Titre de maître", type: "title" },
     63: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     64: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     65: { emoji: "⭐", name: "Boost XP", desc: "×3 XP pendant 48h" },
@@ -3109,14 +3109,14 @@ function RewardsModal({ onClose, T, userXp }) {
     77: { emoji: "🏅", name: "Badge Classement", desc: "Badge diamant pour ton profil" },
     78: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     79: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé" },
+    80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé", type: "background", preview: "/bg-profile-4.png" },
     81: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     82: { emoji: "✨", name: "Titre Graphique", desc: "Titre holographique unique" },
     83: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     84: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     85: { emoji: "💎", name: "Coffre Légendaire", desc: "Récompense mythique" },
     86: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    87: { emoji: "🖼️", name: "Bannière Pseudo", desc: "Bannière mythique holographique" },
+    87: { emoji: "🖼️", name: "Bannière Holo", desc: "Bannière mythique holographique", type: "banner", bannerColor: "#EC4899" },
     88: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     89: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     90: { emoji: "✨", name: "Boost ×2 Points", desc: "Double tes points pendant 7 jours" },
@@ -3124,7 +3124,7 @@ function RewardsModal({ onClose, T, userXp }) {
     92: { emoji: "🎴", name: "Carte Personnalisée", desc: "Design mythique pour tes matchs" },
     93: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     94: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
-    95: { emoji: "🌌", name: "Background Profil", desc: "Fond ultime animé avec particules" },
+    95: { emoji: "🌌", name: "Background Profil", desc: "Fond ultime animé avec particules", type: "background", preview: "/bg-profile-5.png" },
     96: { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" },
     97: { emoji: "🏅", name: "Badge Classement", desc: "Badge ultime pour ton profil" },
     98: { emoji: "✨", name: "Titre Graphique", desc: "Titre ultime avec effets dynamiques" },
@@ -3147,6 +3147,21 @@ function RewardsModal({ onClose, T, userXp }) {
   const spinFromRef = useRef(0);
   const spinToRef = useRef(0);
   const inventory = inventoryItems;
+  const [equippedTitle, setEquippedTitle] = useState(() => localStorage.getItem("split_equipped_title") || "");
+  const [equippedBanner, setEquippedBanner] = useState(() => localStorage.getItem("split_equipped_banner") || "");
+
+  function equipItem(item) {
+    if (item.type === "title") {
+      const val = equippedTitle === item.name ? "" : item.name;
+      setEquippedTitle(val);
+      localStorage.setItem("split_equipped_title", val);
+    } else if (item.type === "banner") {
+      const val = equippedBanner === item.name ? "" : item.name;
+      setEquippedBanner(val);
+      localStorage.setItem("split_equipped_banner", val);
+      localStorage.setItem("split_equipped_banner_color", val ? (item.bannerColor || "#CCF71D") : "");
+    }
+  }
 
   const RAR = {
     commun: { bg: "#1a1a1a", border: "#555", text: "#999", glow: "none", label: "COMMUN" },
@@ -3155,24 +3170,60 @@ function RewardsModal({ onClose, T, userXp }) {
     legendaire: { bg: "#2d1f00", border: "#f59e0b", text: "#fbbf24", glow: "0 0 18px rgba(245,158,11,0.4)", label: "LÉGENDAIRE" },
   };
 
+  const PSEUDO_COLORS = [
+    "#CCF71D","#FF4655","#3B82F6","#F59E0B","#A855F7","#EC4899",
+    "#10B981","#EF4444","#06B6D4","#F97316","#8B5CF6","#14B8A6",
+    "#E11D48","#FBBF24","#ffffff","#22D3EE","#F472B6","#84CC16",
+  ];
+
+  const TITLE_LIST = [
+    { emoji: "🏷️", name: "Rookie", rarity: "commun", type: "title" },
+    { emoji: "🏷️", name: "Challenger", rarity: "commun", type: "title" },
+    { emoji: "🏷️", name: "Stratège", rarity: "commun", type: "title" },
+    { emoji: "🏷️", name: "Analyste", rarity: "commun", type: "title" },
+    { emoji: "🏷️", name: "Prodigy", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Visionnaire", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Oracle", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Clutch King", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Ace", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Sniper", rarity: "rare", type: "title" },
+    { emoji: "🏷️", name: "Unstoppable", rarity: "epique", type: "title" },
+    { emoji: "🏷️", name: "Légende Vivante", rarity: "epique", type: "title" },
+    { emoji: "🏷️", name: "Mastermind", rarity: "epique", type: "title" },
+    { emoji: "🏷️", name: "Roi du Prono", rarity: "epique", type: "title" },
+    { emoji: "🏷️", name: "Inarrêtable", rarity: "epique", type: "title" },
+    { emoji: "👑", name: "GOD Tier", rarity: "legendaire", type: "title" },
+    { emoji: "👑", name: "Le Prophète", rarity: "legendaire", type: "title" },
+    { emoji: "👑", name: "Élu", rarity: "legendaire", type: "title" },
+    { emoji: "👑", name: "Immortel", rarity: "legendaire", type: "title" },
+    { emoji: "👑", name: "GOAT", rarity: "legendaire", type: "title" },
+  ];
+
   const LOOT_POOL = [
     { emoji: "🏅", name: "Badge Bronze", rarity: "commun" },
     { emoji: "🎖️", name: "Badge Argent", rarity: "commun" },
     { emoji: "⭐", name: "Boost XP 12h", rarity: "commun" },
     { emoji: "💰", name: "50 Pièces", rarity: "commun" },
     { emoji: "🔰", name: "Emblème Recruit", rarity: "commun" },
-    { emoji: "🖼️", name: "Bannière Bleue", rarity: "rare" },
-    { emoji: "🏷️", name: "Titre Guerrier", rarity: "rare" },
+    { emoji: "🖼️", name: "Bannière Bleue", rarity: "rare", type: "banner", bannerColor: "#3B82F6" },
     { emoji: "✨", name: "Boost ×2 Points", rarity: "rare" },
     { emoji: "🎯", name: "Boost Pronos +2", rarity: "rare" },
-    { emoji: "🖼️", name: "Bannière Néon", rarity: "rare" },
+    { emoji: "🖼️", name: "Bannière Néon", rarity: "rare", type: "banner", bannerColor: "#39FF14" },
+    { emoji: "🖼️", name: "Bannière Flamme", rarity: "epique", type: "banner", bannerColor: "#F97316" },
     { emoji: "🎴", name: "Carte Épique", rarity: "epique" },
-    { emoji: "🏷️", name: "Titre Holographique", rarity: "epique" },
-    { emoji: "✨", name: "Titre Graphique", rarity: "epique" },
     { emoji: "🎴", name: "Carte Animée", rarity: "epique" },
-    { emoji: "🌌", name: "BG Neon City", rarity: "legendaire", preview: "/bg-profile-1.png" },
-    { emoji: "🌌", name: "BG Crystal Palace", rarity: "legendaire", preview: "/bg-profile-2.png" },
-    { emoji: "🌌", name: "BG Gaming Zone", rarity: "legendaire", preview: "/bg-profile-3.png" },
+    { emoji: "🖼️", name: "Bannière Royale", rarity: "legendaire", type: "banner", bannerColor: "#FBBF24" },
+    ...TITLE_LIST,
+    { emoji: "🌌", name: "BG Neon City", rarity: "legendaire", type: "background", preview: "/bg-profile-1.png" },
+    { emoji: "🌌", name: "BG Crystal Palace", rarity: "legendaire", type: "background", preview: "/bg-profile-2.png" },
+    { emoji: "🌌", name: "BG Gaming Zone", rarity: "legendaire", type: "background", preview: "/bg-profile-3.png" },
+    { emoji: "🌌", name: "BG Midnight Arena", rarity: "legendaire", type: "background", preview: "/bg-profile-4.png" },
+    { emoji: "🌌", name: "BG Cyber Wave", rarity: "legendaire", type: "background", preview: "/bg-profile-5.png" },
+    { emoji: "🌌", name: "BG Fire Storm", rarity: "epique", type: "background", preview: "/bg-profile-6.png" },
+    { emoji: "🌌", name: "BG Frost Peak", rarity: "epique", type: "background", preview: "/bg-profile-7.png" },
+    { emoji: "🌌", name: "BG Galaxy Drift", rarity: "epique", type: "background", preview: "/bg-profile-8.png" },
+    { emoji: "🌌", name: "BG Neon Rush", rarity: "rare", type: "background", preview: "/bg-profile-9.png" },
+    { emoji: "🌌", name: "BG Urban Glow", rarity: "rare", type: "background", preview: "/bg-profile-10.png" },
   ];
 
   const ITEM_H = 82, VIS_N = 5, STRIP_N = 55, WIN_I = 40;
@@ -3217,7 +3268,7 @@ function RewardsModal({ onClose, T, userXp }) {
   useEffect(() => {
     if (!openingChest) return;
     function tick(now) {
-      if (phaseRef.current === "idle") { posRef.current -= 0.4; }
+      if (phaseRef.current === "idle") { posRef.current -= 0.06; }
       else if (phaseRef.current === "spinning") {
         const t = Math.min(1, (now - spinStartRef.current) / 4500);
         posRef.current = spinFromRef.current + (spinToRef.current - spinFromRef.current) * (1 - Math.pow(1 - t, 4));
@@ -3342,24 +3393,35 @@ function RewardsModal({ onClose, T, userXp }) {
           })}
         </div>
       ) : (
-        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px" }}>
+        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px", minHeight: 0 }}>
           {inventory.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
               <span style={{ fontSize: 44, display: "block", marginBottom: 14 }}>📦</span>
-              <p style={{ color: "#666", fontSize: 15, fontWeight: 700 }}>Inventaire vide</p>
-              <p style={{ color: "#444", fontSize: 12, marginTop: 6 }}>Réclame des récompenses pour remplir ton inventaire</p>
+              <p style={{ color: "#aaa", fontSize: 15, fontWeight: 700 }}>Inventaire vide</p>
+              <p style={{ color: "#666", fontSize: 12, marginTop: 6 }}>Réclame des récompenses pour remplir ton inventaire</p>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               {inventory.map((item, i) => {
-                const rc = RAR[getRar(item)];
+                const rar = getRar(item);
+                const rc = RAR[rar] || RAR.commun;
+                const isEquippedTitle = item.type === "title" && equippedTitle === item.name;
+                const isEquippedBanner = item.type === "banner" && equippedBanner === item.name;
+                const isEquipped = isEquippedTitle || isEquippedBanner;
+                const canEquip = item.type === "title" || item.type === "banner";
                 return (
-                  <div key={i} style={{ background: "#111", border: `1px solid ${rc.border}33`, borderRadius: 16, padding: "16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, overflow: "hidden" }}>
+                  <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
                     {item.preview && <img src={item.preview} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
-                    <span style={{ fontSize: 32 }}>{item.emoji}</span>
-                    <span style={{ color: "#eee", fontSize: 13, fontWeight: 800, textAlign: "center" }}>{item.name}</span>
+                    <span style={{ fontSize: 28 }}>{item.emoji}</span>
+                    <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>{item.name}</span>
                     <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>{rc.label}</span>
-                    <span style={{ color: "#555", fontSize: 10, fontWeight: 600, textAlign: "center" }}>{item.desc}</span>
+                    {canEquip && (
+                      <button onClick={() => equipItem(item)} style={{
+                        marginTop: 2, padding: "5px 14px", borderRadius: 8, fontSize: 10, fontWeight: 800, border: "none", cursor: "pointer",
+                        background: isEquipped ? rc.border : "rgba(255,255,255,0.08)",
+                        color: isEquipped ? "#000" : "#aaa",
+                      }}>{isEquipped ? "Équipé ✓" : "Équiper"}</button>
+                    )}
                   </div>
                 );
               })}
@@ -3837,7 +3899,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           const user = top3[i];
           const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
           return (
-            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #2a2a2a" : "none" }}>
+            <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: i < 2 ? "1px solid #2a2a2a" : "none", borderLeft: user?.equipped_banner ? `3px solid ${user.equipped_banner}` : undefined }}>
               <div className="flex items-center gap-3">
                 <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
                 {user && user.avatar ? (
@@ -3847,7 +3909,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
                     <User size={14} color="#555" />
                   </div>
                 )}
-                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
+                <span style={{ color: user?.pseudo_color || (user ? "#ccc" : "#555"), fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
               </div>
               <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? `${user.points} pts` : "—"}</span>
             </div>
@@ -5632,8 +5694,15 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
   const [favCs2, setFavCs2] = useState(profile?.favTeams?.cs2 || "");
   const [favRl, setFavRl] = useState(profile?.favTeams?.rl || "");
+  const [pseudoColor, setPseudoColor] = useState(profile?.pseudoColor || "#ffffff");
   const [bioError, setBioError] = useState(false);
   const fileRef = useRef(null);
+
+  const PSEUDO_COLORS = [
+    "#ffffff","#CCF71D","#FF4655","#3B82F6","#F59E0B","#A855F7","#EC4899",
+    "#10B981","#EF4444","#06B6D4","#F97316","#8B5CF6","#14B8A6",
+    "#E11D48","#FBBF24","#22D3EE","#F472B6","#84CC16",
+  ];
 
   const bioOk = bio.trim() === "" || validateBio(bio);
   const canSave = pseudo.trim().length >= 2 && bioOk;
@@ -5652,7 +5721,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
 
   function handleSave() {
     if (!canSave) return;
-    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl } });
+    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl }, pseudoColor });
   }
 
   return (
@@ -5679,6 +5748,18 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
             <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
+          </div>
+          <div>
+            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Couleur du pseudo</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+              {PSEUDO_COLORS.map(c => (
+                <button key={c} onClick={() => setPseudoColor(c)} style={{
+                  width: 28, height: 28, borderRadius: "50%", background: c, border: pseudoColor === c ? "3px solid #fff" : "2px solid #333",
+                  cursor: "pointer", boxShadow: pseudoColor === c ? `0 0 10px ${c}66` : "none", transition: "all 0.15s",
+                }} />
+              ))}
+            </div>
+            <p style={{ color: pseudoColor, fontSize: 13, fontWeight: 800, marginTop: 6 }}>{pseudo || "Pseudo"}</p>
           </div>
           <div>
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
@@ -6639,6 +6720,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const isMe = u.id === profile.userId;
                   const rankLogo = getUserRank(u.displayPts);
                   const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
+                  const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
+                  const uBanner = isMe ? (localStorage.getItem("split_equipped_banner_color") || "") : (u.equipped_banner || "");
+                  const uPseudoColor = isMe ? (profile?.pseudoColor || "#fff") : (u.pseudo_color || "#ccc");
                   return (
                     <button key={u.id} onClick={() => {
                       if (isMe) { setProfileView(true); return; }
@@ -6646,12 +6730,17 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         setSpectatorUser({ ...u, ...d });
                         setSpectatorStats(d);
                       }).catch(() => { setSpectatorUser(u); });
-                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left" }}>
+                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: isMe ? "#141414" : "#0e0e0e", border: isMe ? "1px solid #262626" : "1px solid #1a1a1a", textAlign: "left", borderLeft: uBanner ? `3px solid ${uBanner}` : undefined }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : "#666", fontSize: "16px", width: 24, textAlign: "center" }}>{i + 1}</span>
                       <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : "1px solid #2a2a2a" }}>
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
-                      <span className="font-bold flex-1 truncate" style={{ fontSize: "13px", color: isMe ? "#fff" : "#ccc" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                          {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#A855F7", background: "rgba(168,85,247,0.12)", padding: "1px 6px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5 }}>{uTitle}</span>}
+                        </div>
+                      </div>
                       {rankLogo.logo && rankLogo.logo !== "unranked" ? <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} /> : null}
                       <div className="text-right shrink-0">
                         <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900 }}>{u.displayPts}</span>
@@ -7378,10 +7467,12 @@ export default function ClutchApp() {
 
   function syncProfileToBackend(p, pts, ppg, xp) {
     if (!p?.userId) return;
+    const equippedTitle = localStorage.getItem("split_equipped_title") || "";
+    const equippedBanner = localStorage.getItem("split_equipped_banner_color") || "";
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0 }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner }),
     }).catch(() => {});
   }
   useEffect(() => {
@@ -8407,7 +8498,7 @@ export default function ClutchApp() {
         {showProfile && (
           <ProfileSetupModal
             onClose={() => setShowProfile(false)}
-            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints); setShowProfile(false); }}
+            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); setShowProfile(false); }}
             profile={profile}
             valoTeams={allTeams}
             cs2Teams={cs2AllTeams}
