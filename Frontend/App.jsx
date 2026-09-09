@@ -2192,6 +2192,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
+            {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -5656,14 +5657,14 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", overflow: "hidden" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileTitle}</h2>
           <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
             <X size={18} color="#888" />
           </button>
         </div>
-        <div className="overflow-y-auto dark-scroll px-5 pb-6 flex flex-col gap-4">
+        <div className="overflow-y-auto no-scrollbar px-5 pb-6 flex flex-col gap-4" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
           <div className="flex flex-col items-center">
             <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "flex-start" }}>{T.profileAvatar}</label>
             <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1e1e1e", border: "2px solid #2a2a2a" }}>
@@ -6989,12 +6990,12 @@ function CalendarModal({ onClose, T, lang }) {
   const todayISO = getTodayISO();
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO); // "done" | "live" | "soon"
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
