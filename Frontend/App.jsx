@@ -2811,109 +2811,6 @@ function loadInventory() {
 }
 function saveInventory(inv) { localStorage.setItem("split_inventory", JSON.stringify(inv)); }
 
-const NEXIUM_ITEMS = {
-  rare: [
-    { id: "title_rookie", type: "title", name: "Rookie", icon: "R" },
-    { id: "title_analyst", type: "title", name: "Analyste", icon: "A" },
-    { id: "badge_star", type: "badge", name: "Star", icon: "★" },
-    { id: "badge_bolt", type: "badge", name: "Bolt", icon: "⚡" },
-    { id: "skin_wave", type: "skin", name: "Blue Wave", icon: "W" },
-    { id: "border_silver", type: "border", name: "Argent", icon: "○" },
-  ],
-  epic: [
-    { id: "title_strategist", type: "title", name: "Stratège", icon: "S" },
-    { id: "badge_crown", type: "badge", name: "Couronne", icon: "♛" },
-    { id: "border_purple", type: "border", name: "Aura Violette", icon: "◉" },
-    { id: "skin_neon", type: "skin", name: "Néon", icon: "N" },
-  ],
-  legendary: [
-    { id: "title_oracle", type: "title", name: "Oracle", icon: "O" },
-    { id: "badge_diamond", type: "badge", name: "Diamant", icon: "◆" },
-    { id: "border_gold", type: "border", name: "Anneau Doré", icon: "◎" },
-  ],
-  ultra: [
-    { id: "title_prophet", type: "title", name: "Prophète", icon: "P" },
-    { id: "badge_phoenix", type: "badge", name: "Phoenix", icon: "🔥" },
-    { id: "border_fire", type: "border", name: "Flamme Sacrée", icon: "✦" },
-  ],
-};
-const RARITY_WEIGHTS = { rare: 50, epic: 25, legendary: 15, ultra: 10 };
-const RARITY_COLORS = { rare: "#3B82F6", epic: "#A855F7", legendary: "#F59E0B", ultra: "#EF4444" };
-const RARITY_LABELS = { rare: "nexiumRare", epic: "nexiumEpic", legendary: "nexiumLegendary", ultra: "nexiumUltra" };
-
-function rollNexiumBox() {
-  const r = Math.random() * 100;
-  let rarity;
-  if (r < RARITY_WEIGHTS.ultra) rarity = "ultra";
-  else if (r < RARITY_WEIGHTS.ultra + RARITY_WEIGHTS.legendary) rarity = "legendary";
-  else if (r < RARITY_WEIGHTS.ultra + RARITY_WEIGHTS.legendary + RARITY_WEIGHTS.epic) rarity = "epic";
-  else rarity = "rare";
-  const pool = NEXIUM_ITEMS[rarity];
-  return { ...pool[Math.floor(Math.random() * pool.length)], rarity };
-}
-
-function NexiumBoxModal({ onClose, T }) {
-  const [phase, setPhase] = useState("closed");
-  const [item, setItem] = useState(null);
-
-  const openBox = () => {
-    setPhase("opening");
-    const rolled = rollNexiumBox();
-    setItem(rolled);
-    setTimeout(() => setPhase("reveal"), 1500);
-    const inv = loadInventory();
-    inv.push({ ...rolled, date: todayStr() });
-    saveInventory(inv);
-  };
-
-  const rarColor = item ? RARITY_COLORS[item.rarity] : "#666";
-
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 300, textAlign: "center" }}>
-        {phase === "closed" && (
-          <>
-            <svg viewBox="0 0 120 120" style={{ width: 140, height: 140, margin: "0 auto 20px", filter: "drop-shadow(0 0 20px rgba(168,85,247,0.4))" }}>
-              <defs>
-                <linearGradient id="boxG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#A855F7" /><stop offset="100%" stopColor="#6366F1" /></linearGradient>
-              </defs>
-              <rect x="15" y="45" width="90" height="60" rx="8" fill="url(#boxG)" stroke="#c084fc" strokeWidth="2" />
-              <rect x="10" y="35" width="100" height="18" rx="4" fill="#7c3aed" stroke="#c084fc" strokeWidth="1.5" />
-              <rect x="55" y="35" width="10" height="70" rx="2" fill="#c084fc" opacity="0.4" />
-              <path d="M60 20 L50 35 L70 35 Z" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" />
-              <circle cx="60" cy="28" r="3" fill="#fef3c7" />
-            </svg>
-            <p style={{ color: "#c084fc", fontSize: 18, fontWeight: 900, marginBottom: 8 }}>{T.nexiumBox}</p>
-            <button onClick={openBox} style={{ background: "linear-gradient(135deg, #A855F7, #6366F1)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 32px", fontSize: 14, fontWeight: 800, cursor: "pointer", letterSpacing: "0.04em" }}>{T.nexiumOpen}</button>
-          </>
-        )}
-        {phase === "opening" && (
-          <div style={{ animation: "nexiumSpin 1.5s ease-in-out" }}>
-            <svg viewBox="0 0 120 120" style={{ width: 160, height: 160, margin: "0 auto", filter: "drop-shadow(0 0 30px rgba(168,85,247,0.6))" }}>
-              <defs><linearGradient id="boxG2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#A855F7" /><stop offset="100%" stopColor="#6366F1" /></linearGradient></defs>
-              <rect x="15" y="55" width="90" height="55" rx="8" fill="url(#boxG2)" stroke="#c084fc" strokeWidth="2" />
-              <rect x="10" y="20" width="100" height="18" rx="4" fill="#7c3aed" stroke="#c084fc" strokeWidth="1.5" style={{ transform: "rotate(-15deg)", transformOrigin: "60px 29px" }} />
-              <circle cx="60" cy="50" r="15" fill="#fef3c7" opacity="0.6"><animate attributeName="r" values="15;25;15" dur="0.8s" repeatCount="indefinite" /></circle>
-            </svg>
-          </div>
-        )}
-        {phase === "reveal" && item && (
-          <div style={{ animation: "nexiumReveal 0.5s ease-out" }}>
-            <div style={{ width: 100, height: 100, borderRadius: "50%", margin: "0 auto 16px", background: `radial-gradient(circle, ${rarColor}40, transparent 70%)`, display: "flex", alignItems: "center", justifyContent: "center", border: `3px solid ${rarColor}`, boxShadow: `0 0 30px ${rarColor}60`, fontSize: 36 }}>
-              {item.icon}
-            </div>
-            <div style={{ display: "inline-block", padding: "3px 12px", borderRadius: 20, background: `${rarColor}25`, border: `1px solid ${rarColor}50`, marginBottom: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: rarColor, textTransform: "uppercase", letterSpacing: "0.1em" }}>{T[RARITY_LABELS[item.rarity]]}</span>
-            </div>
-            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginBottom: 4 }}>{item.name}</p>
-            <p style={{ color: "#888", fontSize: 11, marginBottom: 20 }}>{item.type === "title" ? "Titre" : item.type === "badge" ? "Badge" : item.type === "border" ? "Bordure" : "Skin"}</p>
-            <button onClick={onClose} style={{ background: rarColor, color: "#fff", border: "none", borderRadius: 10, padding: "10px 28px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>OK</button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 const QUEST_KIT_ICONS = {
   pronostic: (done) => <Crosshair size={16} color={done ? "#4CAF50" : "#CCF71D"} />,
@@ -2999,6 +2896,16 @@ function RewardsModal({ onClose, T, userXp }) {
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
+
+  if (!localStorage.getItem("split_inv_v2")) {
+    localStorage.setItem("split_inv_v2", "1");
+    localStorage.removeItem("split_inventory");
+    localStorage.removeItem("split_claimed_tiers");
+    localStorage.removeItem("split_equipped_title");
+    localStorage.removeItem("split_equipped_banner");
+    localStorage.removeItem("split_equipped_banner_color");
+  }
+
   const [claimedTiers, setClaimedTiers] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
   });
@@ -3877,11 +3784,10 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         {(() => {
           const expiring = isStreakExpiring() && streak.current > 0;
           return (
-            <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${expiring ? "rgba(239,68,68,0.4)" : streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", position: "relative" }}>
-              {expiring && <Clock size={10} color="#EF4444" style={{ position: "absolute", top: 4, right: 4 }} />}
-              <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? "drop-shadow(0 0 6px rgba(255,107,0,0.5))" : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
-              <span style={{ color: streak.current > 0 ? "#FF9500" : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
-              <span style={{ color: expiring ? "#EF4444" : "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{expiring ? T.streakExpiring : T.streakTitle}</span>
+            <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", position: "relative" }}>
+              <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? (expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : "drop-shadow(0 0 6px rgba(255,107,0,0.5))") : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
+              <span style={{ color: streak.current > 0 ? (expiring ? "#995a00" : "#FF9500") : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
+              <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
             </button>
           );
         })()}
@@ -7412,7 +7318,6 @@ export default function ClutchApp() {
   });
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
-  const [showNexiumBox, setShowNexiumBox] = useState(false);
   const [streakPopup, setStreakPopup] = useState(null);
   const [userXp, setUserXp] = useState(() => loadXp());
   const [xpPopup, setXpPopup] = useState(null);
@@ -7487,6 +7392,14 @@ export default function ClutchApp() {
       fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
         if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
       }).catch(() => {});
+    }
+    if (profile?.pseudo?.toLowerCase() === "ggez" && !localStorage.getItem("split_ggez_6k_bonus")) {
+      localStorage.setItem("split_ggez_6k_bonus", "1");
+      const bonus = 6000;
+      const newXp = (userXp || 0) + bonus;
+      setUserXp(newXp); saveXp(newXp);
+      setTimeout(() => setXpPopup(bonus), 800);
+      if (profile.userId) fetch(API_BASE + "/api/social/xp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, amount: bonus }) }).catch(() => {});
     }
   }, []);
 
@@ -8514,7 +8427,6 @@ export default function ClutchApp() {
             lang={currentLang}
           />
         )}
-        {showNexiumBox && <NexiumBoxModal onClose={() => setShowNexiumBox(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
         {xpPopup && <XpPopup xp={xpPopup} onClose={() => setXpPopup(null)} T={T} />}
         {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
@@ -8536,14 +8448,6 @@ export default function ClutchApp() {
                   <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bonus</p>
                 </div>
               </div>
-              {isStreakExpiring() && streak.current > 0 && (
-                <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 14, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Clock size={16} color="#EF4444" />
-                  </div>
-                  <p style={{ color: "#EF4444", fontSize: 12, fontWeight: 700, textAlign: "left" }}>{T.streakExpiring}</p>
-                </div>
-              )}
               <p style={{ color: "#666", fontSize: 12, lineHeight: 1.6, marginBottom: 20 }}>{T.streakExplain}</p>
               <button onClick={() => setShowStreakInfo(false)} style={{ width: "100%", background: streak.current > 0 ? "linear-gradient(135deg, #FF6B00, #FF9500)" : "#222", color: streak.current > 0 ? "#fff" : "#888", border: "none", borderRadius: 14, padding: "14px", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: streak.current > 0 ? "0 4px 16px rgba(255,107,0,0.3)" : "none" }}>OK</button>
             </div>
@@ -8571,8 +8475,6 @@ export default function ClutchApp() {
         .dark-scroll { scrollbar-width: thin; scrollbar-color: #333 transparent; }
         @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
         @keyframes bracketLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes nexiumSpin { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.2) rotate(10deg); } 100% { transform: scale(1) rotate(0deg); } }
-        @keyframes nexiumReveal { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes streakSlide { 0% { transform: translateX(-50%) translateY(-30px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
         @keyframes streakFade { 0% { opacity: 1; } 100% { opacity: 0; } }
         @keyframes flameGlow { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,107,0,0.4)); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,107,0,0.7)); } }
