@@ -1374,7 +1374,7 @@ function isTbd(m) {
 // Vrai si le tournoi de ce match est une phase Playoffs (peu importe la
 // casse) -> sert à afficher un petit tag gris "Playoffs" à côté de la ligue.
 function isPlayoffs(m) {
-  return /playoff/i.test(m.tournamentName || "") || /playoff/i.test(m.phase || "");
+  return /playoff/i.test(m.phase || "");
 }
 
 // vlr.gg renvoie parfois le nom de map avec l'annotation de pick collée dedans,
@@ -2188,8 +2188,17 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
       {(() => {
-        const bgIdx = (Math.abs(String(match.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 8) + 1;
-        return <img src={`/match-bg-${bgIdx}.png`} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.12, pointerEvents: "none" }} />;
+        try {
+          const mbSettings = JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null");
+          if (!mbSettings) return null;
+          const gameType = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
+          if (mbSettings.game !== "all" && mbSettings.game !== gameType) return null;
+          if (mbSettings.scope === "betted") {
+            const pred = ((() => { try { return JSON.parse(localStorage.getItem("split_predictions") || "{}"); } catch { return {}; } })())[match.id];
+            if (!pred || pred.seriesA === "" || pred.seriesB === "") return null;
+          }
+          return <img src={mbSettings.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.3, pointerEvents: "none" }} />;
+        } catch { return null; }
       })()}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
@@ -2204,7 +2213,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             )}
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
-            {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 9, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 4, padding: "1px 6px", marginLeft: 5 }}>x2 🔥</span>}
           </span>
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -2379,6 +2387,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
+            {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 8, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 4, padding: "1px 5px", lineHeight: 1.3, marginTop: 1 }}>x2 🔥</span>}
           </div>
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
@@ -2987,7 +2996,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     5: { emoji: "🖼️", name: "Bannière Setup", desc: "Fond gaming setup pour ton classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
     6: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre officiel", type: "title", rarity: "commun" },
-    8: { emoji: "🏅", name: "Badge Argent", desc: "Badge argent pour ton profil" },
+    8: { emoji: "🎴", name: "Fond Match Néon", desc: "Background néon pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
     9: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     10: { emoji: "🖼️", name: "Bannière Sunset", desc: "Fond cozy pour ton classement", type: "banner", bannerImage: "/banner-10.png", rarity: "commun" },
     11: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -2997,7 +3006,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     15: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     16: { emoji: "🖼️", name: "Bannière Play Grind", desc: "Fond blue crown pour ton classement", type: "banner", bannerImage: "/banner-1.png", rarity: "rare" },
     17: { emoji: "🏷️", name: "Vétéran", desc: "Titre pour les habitués", type: "title", rarity: "rare" },
-    18: { emoji: "🏅", name: "Badge Or", desc: "Badge or pour ton profil" },
+    18: { emoji: "🎴", name: "Fond Match Fire", desc: "Background fire pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-2.png", rarity: "commun" },
     19: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     20: { emoji: "🏷️", name: "Stratège", desc: "Titre stratège", type: "title", rarity: "commun" },
     21: { emoji: "⭐", name: "Boost XP +400", desc: "+400 XP bonus", type: "xp_bonus", xpAmount: 400 },
@@ -3007,7 +3016,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png", rarity: "rare" },
     26: { emoji: "🖼️", name: "Bannière Anime", desc: "Fond anime gamer pour ton classement", type: "banner", bannerImage: "/banner-7.png", rarity: "rare" },
     27: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    28: { emoji: "🏅", name: "Badge Platine", desc: "Badge platine pour ton profil" },
+    28: { emoji: "🎴", name: "Fond Match Galaxy", desc: "Background galaxy pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-3.png", rarity: "rare" },
     29: { emoji: "🏷️", name: "Expert", desc: "Titre expert", type: "title", rarity: "rare" },
     30: { emoji: "⭐", name: "Boost XP +500", desc: "+500 XP bonus", type: "xp_bonus", xpAmount: 500 },
     31: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3016,7 +3025,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     34: { emoji: "🌌", name: "BG Crystal Palace", desc: "Fond crystal pour ton profil", type: "background", preview: "/bg-profile-7.png", rarity: "rare" },
     35: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     36: { emoji: "🖼️", name: "Bannière Trophée", desc: "Fond trophée rose pour ton classement", type: "banner", bannerImage: "/banner-3.png", rarity: "epique" },
-    37: { emoji: "🏅", name: "Badge Diamant", desc: "Badge diamant pour ton profil" },
+    37: { emoji: "🎴", name: "Fond Match Storm", desc: "Background storm pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
     38: { emoji: "🏷️", name: "Sniper", desc: "Titre sniper", type: "title", rarity: "rare" },
     39: { emoji: "⭐", name: "Boost XP +600", desc: "+600 XP bonus", type: "xp_bonus", xpAmount: 600 },
     40: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3026,7 +3035,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     44: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png", rarity: "epique" },
     46: { emoji: "🏷️", name: "Oracle", desc: "Titre oracle", type: "title", rarity: "epique" },
-    47: { emoji: "🏅", name: "Badge Master", desc: "Badge master pour ton profil" },
+    47: { emoji: "🎴", name: "Fond Match Cyber", desc: "Background cyber pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-5.png", rarity: "epique" },
     48: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     49: { emoji: "🖼️", name: "Bannière Chill", desc: "Fond chill cat pour ton classement", type: "banner", bannerImage: "/banner-9.png", rarity: "epique" },
     50: { emoji: "💎", name: "Coffre Légendaire", desc: "Le meilleur loot disponible" },
@@ -3036,7 +3045,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     54: { emoji: "🌌", name: "BG Gaming Zone", desc: "Fond gaming zone pour ton profil", type: "background", preview: "/bg-profile-8.png", rarity: "epique" },
     55: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     56: { emoji: "🏷️", name: "Génie", desc: "Titre génie", type: "title", rarity: "epique" },
-    57: { emoji: "🏅", name: "Badge Elite", desc: "Badge élite pour ton profil" },
+    57: { emoji: "🎴", name: "Fond Match Aurora", desc: "Background aurora pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-6.png", rarity: "epique" },
     58: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     59: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire pour ton profil", type: "background", preview: "/bg-profile-3.png", rarity: "epique" },
@@ -3048,7 +3057,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     66: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     67: { emoji: "🏷️", name: "GOD Tier", desc: "Titre divin", type: "title", rarity: "legendaire" },
     68: { emoji: "🌌", name: "BG Midnight Arena", desc: "Fond midnight arena pour ton profil", type: "background", preview: "/bg-profile-9.png", rarity: "rare" },
-    69: { emoji: "🏅", name: "Badge Légendaire", desc: "Badge légendaire pour ton profil" },
+    69: { emoji: "🎴", name: "Fond Match Blaze", desc: "Background blaze pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-7.png", rarity: "legendaire" },
     70: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     71: { emoji: "🏷️", name: "Le Prophète", desc: "Titre prophète", type: "title", rarity: "legendaire" },
     72: { emoji: "⭐", name: "Boost XP +1200", desc: "+1200 XP bonus", type: "xp_bonus", xpAmount: 1200 },
@@ -3061,7 +3070,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     79: { emoji: "🏷️", name: "Immortel", desc: "Titre immortel", type: "title", rarity: "legendaire" },
     80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé", type: "background", preview: "/bg-profile-4.png", rarity: "legendaire" },
     81: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    82: { emoji: "🏅", name: "Badge Suprême", desc: "Badge suprême pour ton profil" },
+    82: { emoji: "🎴", name: "Fond Match Inferno", desc: "Background inferno pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-8.png", rarity: "legendaire" },
     83: { emoji: "⭐", name: "Boost XP +1500", desc: "+1500 XP bonus", type: "xp_bonus", xpAmount: 1500 },
     84: { emoji: "🏷️", name: "GOAT", desc: "Le plus grand de tous les temps", type: "title", rarity: "legendaire" },
     85: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3116,6 +3125,9 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const [showBoostPicker, setShowBoostPicker] = useState(false);
   const [boostItemIndex, setBoostItemIndex] = useState(null);
   const [boostTab, setBoostTab] = useState("valo");
+  const [showMatchBgPicker, setShowMatchBgPicker] = useState(false);
+  const [matchBgPickerItem, setMatchBgPickerItem] = useState(null);
+  const [equippedMatchBg, setEquippedMatchBg] = useState(() => { try { return JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null"); } catch { return null; } });
 
   function useBoostItem(itemIndex) {
     setBoostItemIndex(itemIndex);
@@ -3153,6 +3165,19 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       if (boosted.includes(String(m.id))) return false;
       return true;
     });
+  }
+
+  function equipMatchBg(item, game, scope) {
+    if (equippedMatchBg && equippedMatchBg.name === item.name) {
+      localStorage.removeItem("split_equipped_match_bg");
+      setEquippedMatchBg(null);
+    } else {
+      const val = { name: item.name, image: item.matchBgImage, game, scope };
+      localStorage.setItem("split_equipped_match_bg", JSON.stringify(val));
+      setEquippedMatchBg(val);
+    }
+    setShowMatchBgPicker(false);
+    setMatchBgPickerItem(null);
   }
 
   function useXpBonusItem(itemIndex) {
@@ -3409,12 +3434,13 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 const rc = RAR[rar] || RAR.commun;
                 const isEquippedTitle = item.type === "title" && equippedTitle === item.name;
                 const isEquippedBanner = item.type === "banner" && equippedBanner === item.name;
-                const isEquipped = isEquippedTitle || isEquippedBanner;
+                const isEquippedMatchBg = item.type === "match_bg" && equippedMatchBg && equippedMatchBg.name === item.name;
+                const isEquipped = isEquippedTitle || isEquippedBanner || isEquippedMatchBg;
                 const canEquip = item.type === "title" || item.type === "banner";
                 const isBoost = item.type === "boost";
                 return (
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
-                    {(item.preview || item.bannerImage) && <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
+                    {(item.preview || item.bannerImage || item.matchBgImage) && <img src={item.preview || item.bannerImage || item.matchBgImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
                     <span style={{ fontSize: 28 }}>{item.emoji}</span>
                     {item.type === "title" ? (
                       <span style={{ color: rc.text, fontSize: 13, fontWeight: 900, textAlign: "center", lineHeight: 1.2, background: rc.bg, padding: "4px 12px", borderRadius: 8, border: `1px solid ${rc.border}40` }}>{item.name}</span>
@@ -3440,6 +3466,13 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                         marginTop: 2, padding: "5px 14px", borderRadius: 8, fontSize: 10, fontWeight: 800, border: "none", cursor: "pointer",
                         background: "linear-gradient(135deg, #a855f7, #6366f1)", color: "#fff",
                       }}>Utiliser</button>
+                    )}
+                    {item.type === "match_bg" && (
+                      <button onClick={() => { setMatchBgPickerItem(item); setShowMatchBgPicker(true); }} style={{
+                        marginTop: 2, padding: "5px 14px", borderRadius: 8, fontSize: 10, fontWeight: 800, border: "none", cursor: "pointer",
+                        background: isEquippedMatchBg ? rc.border : "rgba(255,255,255,0.08)",
+                        color: isEquippedMatchBg ? "#000" : "#aaa",
+                      }}>{isEquippedMatchBg ? "Équipé ✓" : "Équiper"}</button>
                     )}
                   </div>
                 );
@@ -3474,8 +3507,8 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
               if (matches.length === 0) return (
                 <div style={{ textAlign: "center", padding: "40px 0" }}>
                   <span style={{ fontSize: 40 }}>🤷</span>
-                  <p style={{ color: "#666", fontSize: 13, fontWeight: 700, marginTop: 10 }}>Aucun match disponible</p>
-                  <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Tu dois avoir parié sur un match en cours ou à venir</p>
+                  <p style={{ color: "#888", fontSize: 13, fontWeight: 700, marginTop: 10 }}>Aucun match disponible</p>
+                  <p style={{ color: "#666", fontSize: 12, marginTop: 6, lineHeight: 1.5, padding: "0 16px" }}>Il faut que tu paries sur un match pour pouvoir appliquer un boost x2</p>
                 </div>
               );
               return matches.map(m => {
@@ -3512,6 +3545,52 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
               });
             })()}
           </div>
+        </div>
+      )}
+
+      {showMatchBgPicker && matchBgPickerItem && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 110, background: "rgba(0,0,0,0.97)", display: "flex", flexDirection: "column", alignItems: "center", overflow: "auto" }}>
+          <button onClick={() => { setShowMatchBgPicker(false); setMatchBgPickerItem(null); }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", zIndex: 10 }}>
+            <X size={22} color="#666" />
+          </button>
+          <div style={{ padding: "24px 0 12px", textAlign: "center" }}>
+            <span style={{ fontSize: 32 }}>🎴</span>
+            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginTop: 6 }}>{matchBgPickerItem.name}</p>
+            <p style={{ color: "#888", fontSize: 12, fontWeight: 600, marginTop: 4 }}>Choisis où appliquer ce fond de carte</p>
+          </div>
+          <div style={{ width: "88%", maxWidth: 360, borderRadius: 16, overflow: "hidden", marginBottom: 16, border: "1px solid #333" }}>
+            <img src={matchBgPickerItem.matchBgImage} alt="" style={{ width: "100%", height: 100, objectFit: "cover" }} />
+          </div>
+          <p style={{ color: "#aaa", fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Quel jeu ?</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 20 }}>
+            {[["all", "Tous les jeux"], ["valo", "VALORANT"], ["cs2", "CS2"], ["rl", "Rocket League"]].map(([key, label]) => (
+              <button key={key} onClick={() => setMatchBgPickerItem(prev => ({ ...prev, _game: key }))} style={{
+                padding: "8px 18px", borderRadius: 10, fontSize: 11, fontWeight: 800, border: "none", cursor: "pointer",
+                background: matchBgPickerItem._game === key ? "#CCF71D" : "rgba(255,255,255,0.08)",
+                color: matchBgPickerItem._game === key ? "#000" : "#888",
+              }}>{label}</button>
+            ))}
+          </div>
+          <p style={{ color: "#aaa", fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Quels matchs ?</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24 }}>
+            {[["all", "Tous les matchs"], ["betted", "Matchs pariés uniquement"]].map(([key, label]) => (
+              <button key={key} onClick={() => setMatchBgPickerItem(prev => ({ ...prev, _scope: key }))} style={{
+                padding: "8px 18px", borderRadius: 10, fontSize: 11, fontWeight: 800, border: "none", cursor: "pointer",
+                background: matchBgPickerItem._scope === key ? "#CCF71D" : "rgba(255,255,255,0.08)",
+                color: matchBgPickerItem._scope === key ? "#000" : "#888",
+              }}>{label}</button>
+            ))}
+          </div>
+          {equippedMatchBg && equippedMatchBg.name === matchBgPickerItem.name && (
+            <button onClick={() => { localStorage.removeItem("split_equipped_match_bg"); setEquippedMatchBg(null); setShowMatchBgPicker(false); setMatchBgPickerItem(null); }} style={{
+              padding: "12px 32px", borderRadius: 12, fontSize: 13, fontWeight: 800, border: "1px solid #555", cursor: "pointer",
+              background: "transparent", color: "#aaa", marginBottom: 10,
+            }}>Déséquiper</button>
+          )}
+          <button onClick={() => equipMatchBg(matchBgPickerItem, matchBgPickerItem._game || "all", matchBgPickerItem._scope || "all")} style={{
+            padding: "12px 32px", borderRadius: 12, fontSize: 13, fontWeight: 900, border: "none", cursor: "pointer",
+            background: "#CCF71D", color: "#000",
+          }}>Équiper</button>
         </div>
       )}
 
@@ -3562,8 +3641,8 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                       <p style={{ color: "#eee", fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{item.name}</p>
                       <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
                     </div>
-                    {(item.preview || item.bannerImage) && <div style={{ width: 44, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
-                      <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    {(item.preview || item.bannerImage || item.matchBgImage) && <div style={{ width: 44, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+                      <img src={item.preview || item.bannerImage || item.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>}
                   </div>
                 );
@@ -3581,9 +3660,9 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
 
           {chestPhase === "done" && chestResult && (
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px" }}>
-              {(chestResult.preview || chestResult.bannerImage) && (
+              {(chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage) && (
                 <div style={{ margin: "0 auto 16px", width: "85%", maxWidth: 300, height: 80, borderRadius: 14, overflow: "hidden", border: `2px solid ${RAR[chestResult.rarity].border}`, boxShadow: RAR[chestResult.rarity].glow }}>
-                  <img src={chestResult.preview || chestResult.bannerImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
               )}
               <span style={{ fontSize: 52, marginBottom: 8 }}>{chestResult.emoji}</span>
@@ -3602,6 +3681,12 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 }}>RÉCUPÉRER</button>
                 {(chestResult.type === "title" || chestResult.type === "banner") && (
                   <button onClick={() => { equipItem(chestResult); claimChestResult(); }} style={{
+                    padding: "14px 28px", borderRadius: 12,
+                    background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
+                  }}>ÉQUIPER</button>
+                )}
+                {chestResult.type === "match_bg" && (
+                  <button onClick={() => { claimChestResult(); setMatchBgPickerItem(chestResult); setShowMatchBgPicker(true); }} style={{
                     padding: "14px 28px", borderRadius: 12,
                     background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
                   }}>ÉQUIPER</button>
@@ -6850,9 +6935,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         </div>
                       </div>
                       {rankLogo.logo && rankLogo.logo !== "unranked" ? (
-                        <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: uBanner ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: uBanner ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
-                          <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
-                        </div>
+                        uBanner ? (
+                          <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: "1px solid rgba(255,255,255,0.1)" }}>
+                            <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
+                          </div>
+                        ) : (
+                          <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} />
+                        )
                       ) : null}
                       <div className="text-right shrink-0" style={{ position: "relative" }}>
                         <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "16px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
@@ -7599,13 +7688,49 @@ export default function ClutchApp() {
         if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
       }).catch(() => {});
     }
-    if (profile?.pseudo?.toLowerCase() === "ggez" && !localStorage.getItem("split_ggez_6k_bonus")) {
-      localStorage.setItem("split_ggez_6k_bonus", "1");
-      const bonus = 6000;
-      const newXp = (userXp || 0) + bonus;
-      setUserXp(newXp); saveXp(newXp);
-      setTimeout(() => setXpPopup(bonus), 800);
-      if (profile.userId) fetch(API_BASE + "/api/social/xp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, amount: bonus }) }).catch(() => {});
+    const adminPseudos = ["ggez", "sayzox"];
+    if (adminPseudos.includes(profile?.pseudo?.toLowerCase()) && !localStorage.getItem("split_admin_v2_" + profile.pseudo.toLowerCase())) {
+      localStorage.setItem("split_admin_v2_" + profile.pseudo.toLowerCase(), "1");
+      const adminXp = 50000;
+      setUserXp(adminXp); saveXp(adminXp);
+      const allTiers = [];
+      for (let t = 1; t <= 100; t++) allTiers.push(String(t));
+      localStorage.setItem("split_claimed_tiers", JSON.stringify(allTiers));
+      const adminInv = [
+        { emoji: "🏷️", name: "Rookie", type: "title", rarity: "commun" },
+        { emoji: "🏷️", name: "Débutant", type: "title", rarity: "commun" },
+        { emoji: "🏷️", name: "Challenger", type: "title", rarity: "commun" },
+        { emoji: "🏷️", name: "Vétéran", type: "title", rarity: "rare" },
+        { emoji: "🏷️", name: "Expert", type: "title", rarity: "rare" },
+        { emoji: "🏷️", name: "GOD Tier", type: "title", rarity: "legendaire" },
+        { emoji: "🏷️", name: "GOAT", type: "title", rarity: "legendaire" },
+        { emoji: "🖼️", name: "Bannière Setup", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
+        { emoji: "🖼️", name: "Bannière Sunset", type: "banner", bannerImage: "/banner-10.png", rarity: "commun" },
+        { emoji: "🖼️", name: "Bannière Play Grind", type: "banner", bannerImage: "/banner-1.png", rarity: "rare" },
+        { emoji: "🖼️", name: "Bannière Speed", type: "banner", bannerImage: "/banner-5.png", rarity: "legendaire" },
+        { emoji: "🖼️", name: "Bannière Diamant", type: "banner", bannerImage: "/banner-2.png", rarity: "legendaire" },
+        { emoji: "🎴", name: "Fond Match Néon", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
+        { emoji: "🎴", name: "Fond Match Fire", type: "match_bg", matchBgImage: "/match-bg-2.png", rarity: "commun" },
+        { emoji: "🎴", name: "Fond Match Galaxy", type: "match_bg", matchBgImage: "/match-bg-3.png", rarity: "rare" },
+        { emoji: "🎴", name: "Fond Match Storm", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
+        { emoji: "🎴", name: "Fond Match Cyber", type: "match_bg", matchBgImage: "/match-bg-5.png", rarity: "epique" },
+        { emoji: "🎴", name: "Fond Match Aurora", type: "match_bg", matchBgImage: "/match-bg-6.png", rarity: "epique" },
+        { emoji: "🎴", name: "Fond Match Blaze", type: "match_bg", matchBgImage: "/match-bg-7.png", rarity: "legendaire" },
+        { emoji: "🎴", name: "Fond Match Inferno", type: "match_bg", matchBgImage: "/match-bg-8.png", rarity: "legendaire" },
+        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
+        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
+        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
+        { emoji: "⭐", name: "Boost XP +500", type: "xp_bonus", xpAmount: 500, rarity: "rare" },
+      ];
+      localStorage.setItem("split_inventory", JSON.stringify(adminInv));
+      const pseudoLow = profile.pseudo.toLowerCase();
+      const bgIdx = pseudoLow === "ggez" ? 1 : 5;
+      localStorage.setItem("split_equipped_match_bg", JSON.stringify({ name: adminInv[12 + (pseudoLow === "ggez" ? 0 : 4)].name, image: `/match-bg-${bgIdx}.png`, game: "all", scope: "all" }));
+      localStorage.setItem("split_equipped_title", "GOD Tier");
+      localStorage.setItem("split_equipped_banner", "Bannière Speed");
+      localStorage.setItem("split_equipped_banner_color", "/banner-5.png");
+      setTimeout(() => setXpPopup(adminXp), 800);
+      if (profile.userId) fetch(API_BASE + "/api/social/xp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, amount: adminXp }) }).catch(() => {});
     }
   }, []);
 
