@@ -28,6 +28,7 @@ import {
   mapWithConcurrency,
   sleep,
   classifyTeamRegion,
+  getMapScoresForMatch,
   CS2_SLUG,
   PANDASCORE_API_KEY,
 } from "./cs2-scores.js";
@@ -420,8 +421,10 @@ async function processOneMatch(m, data) {
     const serieName = m.serie?.full_name || m.serie?.name || "";
     let source = null;
 
-    // PandaScore games array — fastest source, available directly from the match object
+    // PandaScore games array — fastest source, available directly from the match object.
+    // Only accept if we got REAL round scores (not dummy 13-0 from winner-only data).
     if (Array.isArray(m.games) && m.games.length > 0) {
+      let hasRealScores = false;
       const pandaMapScores = m.games
         .filter(g => g.status === "finished" && !g.forfeit && g.winner)
         .map(g => {
@@ -434,13 +437,27 @@ async function processOneMatch(m, data) {
             const gt2 = g.teams.find(t => t.team_id === t2.id);
             if (gt1 && gt2 && typeof gt1.score === "number" && typeof gt2.score === "number") {
               sc1 = gt1.score; sc2 = gt2.score;
+              hasRealScores = true;
             }
           }
           return { map: mapName, score1: sc1, score2: sc2 };
         });
-      if (pandaMapScores.length > 0 && isMapScoresConsistent(pandaMapScores, s1, s2)) {
+      if (hasRealScores && pandaMapScores.length > 0 && isMapScoresConsistent(pandaMapScores, s1, s2)) {
         mapScores = pandaMapScores;
         source = "pandascore-games";
+      }
+    }
+
+    // PandaScore detailed per-game API — individual call per map, gets real round scores
+    if (!mapScores) {
+      try {
+        const detailedScores = await getMapScoresForMatch(m, t1.id, t2.id);
+        if (detailedScores && detailedScores.length > 0 && isMapScoresConsistent(detailedScores, s1, s2)) {
+          mapScores = detailedScores;
+          source = "pandascore-detailed";
+        }
+      } catch (e) {
+        console.log(`[cs2 map_scores] pandascore-detailed ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
       }
     }
 
