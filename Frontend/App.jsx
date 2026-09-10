@@ -2205,16 +2205,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = hasBg ? { WebkitTextStroke: "0.8px rgba(255,255,255,0.85)", paintOrder: "stroke fill" } : {};
+  const txtSt = hasBg ? { WebkitTextStroke: "0.8px rgba(0,0,0,0.85)", paintOrder: "stroke fill" } : {};
   const txtStW = hasBg ? { WebkitTextStroke: "0.6px rgba(0,0,0,0.9)", paintOrder: "stroke fill" } : {};
 
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
-      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: finished ? "100%" : "calc(100% - 40px)", objectFit: "cover", opacity: 0.5, pointerEvents: "none" }} />}
+      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.5, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
-          <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
+          <span style={{ color: accent, fontSize: "11.5px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
             {match.matchTier && (
               <span style={{ color: match.matchTier.color, fontWeight: 800, fontSize: 9, border: `1px solid ${match.matchTier.color}44`, borderRadius: 4, padding: "1px 5px", marginRight: 5 }}>{match.matchTier.label}</span>
             )}
@@ -2225,7 +2225,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
-          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px", ...txtSt }}>
+          <div style={{ color: "#888", fontSize: "14px", fontWeight: 600, marginTop: "2px", ...txtSt }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2237,7 +2237,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", ...txtSt }}
+              style={{ color: "#ff3b3b", fontSize: "14px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", ...txtSt }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
@@ -2353,7 +2353,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team1RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
+            <span style={{ color: "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
@@ -2399,6 +2399,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
+          {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 11, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 7, padding: "3px 7px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
               <span
@@ -2416,7 +2417,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team2RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
+            <span style={{ color: "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
           </span>
         </div>
       </div>
@@ -2434,7 +2435,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
-          {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 12, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 8, padding: "4px 10px", letterSpacing: 0.5, alignSelf: "flex-end", marginBottom: 2 }}>x2 🔥</span>}
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
@@ -2464,8 +2464,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </>
               )}
             </div>
-            <button onClick={() => onToggleExpand(match.id)} className="flex-1 flex items-center justify-center" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "4px 0" }}>
-              <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
+            <button onClick={() => onToggleExpand(match.id)} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
+              <ChevronDown size={16} color={accent} />
             </button>
             {pointsBreakdown && (
               <span
@@ -2597,8 +2597,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </>
               )}
             </div>
-            <button onClick={() => onToggleExpand(match.id)} disabled={tbd} className="flex-1 flex items-center justify-center" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "4px 0" }}>
-              <ChevronDown size={16} color={accent} style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }} />
+            <button onClick={() => onToggleExpand(match.id)} disabled={tbd} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
+              <ChevronDown size={16} color={accent} />
             </button>
           </div>
 
@@ -3035,7 +3035,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   }
 
   const TIER_REWARDS = {
-    1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement" },
+    1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement", type: "badge", rarity: "commun" },
     2: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     3: { emoji: "🏷️", name: "Rookie", desc: "Titre de débutant", type: "title", rarity: "commun" },
     4: { emoji: "⭐", name: "Boost XP +200", desc: "+200 XP bonus", type: "xp_bonus", xpAmount: 200 },
@@ -3098,7 +3098,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     61: { emoji: "🖼️", name: "Bannière Diamant", desc: "Fond diamant crystal pour ton classement", type: "banner", bannerImage: "/banner-2.png", rarity: "legendaire" },
     62: { emoji: "🏷️", name: "Maître", desc: "Titre de maître", type: "title", rarity: "epique" },
     63: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    64: { emoji: "🏅", name: "Badge Champion", desc: "Badge champion pour ton profil" },
+    64: { emoji: "🏅", name: "Badge Champion", desc: "Badge champion pour ton profil", type: "badge", rarity: "epique" },
     65: { emoji: "⭐", name: "Boost XP +1000", desc: "+1000 XP bonus", type: "xp_bonus", xpAmount: 1000 },
     66: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     67: { emoji: "🏷️", name: "GOD Tier", desc: "Titre divin", type: "title", rarity: "legendaire" },
@@ -3110,7 +3110,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     73: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     74: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     75: { emoji: "🏷️", name: "Élu", desc: "Titre élu", type: "title", rarity: "legendaire" },
-    76: { emoji: "🏅", name: "Badge Mythique", desc: "Badge mythique pour ton profil" },
+    76: { emoji: "🏅", name: "Badge Mythique", desc: "Badge mythique pour ton profil", type: "badge", rarity: "epique" },
     77: { emoji: "🌌", name: "BG Cyber Wave", desc: "Fond cyber wave pour ton profil", type: "background", preview: "/bg-profile-10.png", rarity: "rare" },
     78: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     79: { emoji: "🏷️", name: "Immortel", desc: "Titre immortel", type: "title", rarity: "legendaire" },
@@ -3120,14 +3120,14 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     83: { emoji: "⭐", name: "Boost XP +1500", desc: "+1500 XP bonus", type: "xp_bonus", xpAmount: 1500 },
     84: { emoji: "🏷️", name: "GOAT", desc: "Le plus grand de tous les temps", type: "title", rarity: "legendaire" },
     85: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    86: { emoji: "🏅", name: "Badge Ultime", desc: "Badge ultime pour ton profil" },
+    86: { emoji: "🏅", name: "Badge Ultime", desc: "Badge ultime pour ton profil", type: "badge", rarity: "legendaire" },
     87: { emoji: "🖼️", name: "Bannière Speed", desc: "Fond légendaire voiture pour ton classement", type: "banner", bannerImage: "/banner-5.png", rarity: "legendaire" },
     88: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     89: { emoji: "⭐", name: "Boost XP +2000", desc: "+2000 XP bonus", type: "xp_bonus", xpAmount: 2000 },
-    90: { emoji: "🏅", name: "Badge Infini", desc: "Badge infini pour ton profil" },
+    90: { emoji: "🏅", name: "Badge Infini", desc: "Badge infini pour ton profil", type: "badge", rarity: "legendaire" },
     91: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     92: { emoji: "🌌", name: "BG Fire Storm", desc: "Fond fire storm pour ton profil", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
-    93: { emoji: "🏅", name: "Badge Éternel", desc: "Badge éternel pour ton profil" },
+    93: { emoji: "🏅", name: "Badge Éternel", desc: "Badge éternel pour ton profil", type: "badge", rarity: "legendaire" },
     94: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     95: { emoji: "🌌", name: "Background Ultime", desc: "Fond ultime animé", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
     96: { emoji: "⭐", name: "Boost XP +2500", desc: "+2500 XP bonus", type: "xp_bonus", xpAmount: 2500 },
@@ -3140,6 +3140,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   function getChest(tier) { return TIER_REWARDS[tier] || defaultChest; }
 
   const [tab, setTab] = useState("rewards");
+  const [invCat, setInvCat] = useState("all");
   const [openingChest, setOpeningChest] = useState(null);
   const [chestPhase, setChestPhase] = useState("idle");
   const [chestResult, setChestResult] = useState(null);
@@ -3154,6 +3155,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const inventory = inventoryItems;
   const [equippedTitle, setEquippedTitle] = useState(() => localStorage.getItem("split_equipped_title") || "");
   const [equippedBanner, setEquippedBanner] = useState(() => localStorage.getItem("split_equipped_banner") || "");
+  const [equippedBadge, setEquippedBadge] = useState(() => localStorage.getItem("split_equipped_badge") || "");
 
   function equipItem(item) {
     if (item.type === "title") {
@@ -3165,6 +3167,11 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       setEquippedBanner(val);
       localStorage.setItem("split_equipped_banner", val);
       localStorage.setItem("split_equipped_banner_color", val ? (item.bannerImage || "") : "");
+    } else if (item.type === "badge") {
+      const val = equippedBadge === item.name ? "" : item.name;
+      setEquippedBadge(val);
+      localStorage.setItem("split_equipped_badge", val);
+      localStorage.setItem("split_equipped_badge_emoji", val ? (item.emoji || "🏅") : "");
     }
   }
 
@@ -3484,22 +3491,45 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
         </div>
       ) : (
         <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px", minHeight: 0 }}>
-          {inventory.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <span style={{ fontSize: 44, display: "block", marginBottom: 14 }}>📦</span>
-              <p style={{ color: "#aaa", fontSize: 15, fontWeight: 700 }}>Inventaire vide</p>
-              <p style={{ color: "#666", fontSize: 12, marginTop: 6 }}>Réclame des récompenses pour remplir ton inventaire</p>
-            </div>
-          ) : (
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-3" style={{ flexShrink: 0 }}>
+            {[
+              { key: "all", label: "Tout" },
+              { key: "fonds", label: "Fonds" },
+              { key: "badge", label: "Badges" },
+              { key: "titre", label: "Titres" },
+              { key: "arsenal", label: "Arsenal" },
+            ].map(c => (
+              <button key={c.key} onClick={() => setInvCat(c.key)} className="shrink-0 rounded-full" style={{ padding: "6px 14px", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: invCat === c.key ? "#CCF71D" : "#161616", color: invCat === c.key ? "#000" : "#888", border: invCat === c.key ? "none" : "1px solid #2a2a2a", cursor: "pointer" }}>{c.label}</button>
+            ))}
+          </div>
+          {(() => {
+            const filtered = inventory.filter(item => {
+              if (invCat === "all") return true;
+              if (invCat === "fonds") return item.type === "match_bg" || item.type === "banner" || item.type === "background";
+              if (invCat === "badge") return item.type === "badge";
+              if (invCat === "titre") return item.type === "title";
+              if (invCat === "arsenal") return item.type === "boost" || item.type === "xp_bonus";
+              return true;
+            });
+            if (filtered.length === 0) return (
+              <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                <span style={{ fontSize: 44, display: "block", marginBottom: 14 }}>📦</span>
+                <p style={{ color: "#aaa", fontSize: 15, fontWeight: 700 }}>{invCat === "all" ? "Inventaire vide" : "Aucun objet dans cette catégorie"}</p>
+                <p style={{ color: "#666", fontSize: 12, marginTop: 6 }}>Réclame des récompenses pour remplir ton inventaire</p>
+              </div>
+            );
+            return (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {inventory.map((item, i) => {
+              {filtered.map((item) => {
+                const i = inventory.indexOf(item);
                 const rar = getRar(item);
                 const rc = RAR[rar] || RAR.commun;
                 const isEquippedTitle = item.type === "title" && equippedTitle === item.name;
                 const isEquippedBanner = item.type === "banner" && equippedBanner === item.name;
                 const isEquippedMatchBg = item.type === "match_bg" && equippedMatchBgs.some(b => b.name === item.name);
-                const isEquipped = isEquippedTitle || isEquippedBanner || isEquippedMatchBg;
-                const canEquip = item.type === "title" || item.type === "banner";
+                const isEquippedBadge = item.type === "badge" && equippedBadge === item.name;
+                const isEquipped = isEquippedTitle || isEquippedBanner || isEquippedMatchBg || isEquippedBadge;
+                const canEquip = item.type === "title" || item.type === "banner" || item.type === "badge";
                 const isBoost = item.type === "boost";
                 return (
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
@@ -3541,7 +3571,8 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 );
               })}
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
@@ -3824,12 +3855,12 @@ function PredBadge({ remainingPreds, T }) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#666",    logo: "unranked",          bg: "rgba(100,100,100,0.1)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.12)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.12)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.12)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.12)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
-  { name: "Infinite",      minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.12)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05 },
+  { name: "Unranked",      minPts: 0,    color: "#666",    logo: "unranked",          bg: "rgba(100,100,100,0.3)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
+  { name: "Infinite",      minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05 },
 ];
 
 function getUserRank(points, allUsersPoints) {
@@ -6788,6 +6819,19 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {profile.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{profile.bio}</p>}
 
+        {(() => {
+          const eb = localStorage.getItem("split_equipped_badge") || "";
+          const ebe = localStorage.getItem("split_equipped_badge_emoji") || "";
+          const et = localStorage.getItem("split_equipped_title") || "";
+          if (!eb && !et) return null;
+          return (
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              {eb && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 800, color: "#EAB308" }}><span style={{ fontSize: 14 }}>{ebe || "🏅"}</span>{eb}</span>}
+              {et && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 800, color: "#c084fc" }}>{et}</span>}
+            </div>
+          );
+        })()}
+
         {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
@@ -6921,6 +6965,19 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
 
         {su.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{su.bio}</p>}
+
+        {(() => {
+          const seb = su.equipped_badge || "";
+          const sebe = su.equipped_badge_emoji || "";
+          const set2 = su.equipped_title || "";
+          if (!seb && !set2) return null;
+          return (
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              {seb && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 800, color: "#EAB308" }}><span style={{ fontSize: 14 }}>{sebe || "🏅"}</span>{seb}</span>}
+              {set2 && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 800, color: "#c084fc" }}>{set2}</span>}
+            </div>
+          );
+        })()}
 
         {profile && ss.iFollow !== undefined && (
           <div className="flex gap-2 mb-4">
@@ -7104,6 +7161,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const rankLogo = getUserRank(u.displayPts);
                   const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
+                  const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
+                  const uBadgeEmoji = isMe ? (localStorage.getItem("split_equipped_badge_emoji") || "") : (u.equipped_badge_emoji || "");
                   const uBanner = isMe ? (localStorage.getItem("split_equipped_banner_color") || "") : (u.equipped_banner || "");
                   const uPseudoColor = isMe ? (profile?.pseudoColor || "#fff") : (u.pseudo_color || "#ccc");
                   return (
@@ -7127,6 +7186,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       <div className="flex-1 min-w-0" style={{ position: "relative" }}>
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                          {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
                           {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                         </div>
                       </div>
@@ -7866,10 +7926,12 @@ export default function ClutchApp() {
     if (!p?.userId) return;
     const equippedTitle = localStorage.getItem("split_equipped_title") || "";
     const equippedBanner = localStorage.getItem("split_equipped_banner_color") || "";
+    const equippedBadge = localStorage.getItem("split_equipped_badge") || "";
+    const equippedBadgeEmoji = localStorage.getItem("split_equipped_badge_emoji") || "";
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji }),
     }).catch(() => {});
   }
   useEffect(() => {
