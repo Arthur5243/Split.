@@ -884,6 +884,26 @@ function catLabel(key, T) {
 // (à configurer dans Railway ou dans un fichier .env local, voir .env.example)
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
+let _h2cPromise = null;
+function loadHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve(window.html2canvas);
+  if (_h2cPromise) return _h2cPromise;
+  _h2cPromise = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _h2cPromise;
+}
+
+async function captureCardAsBlob(el) {
+  const h2c = await loadHtml2Canvas();
+  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 2, useCORS: true });
+  return new Promise(r => canvas.toBlob(r, "image/png"));
+}
+
 function classifyRegion(text) {
   const t = (text || "").toLowerCase();
   // On exclut le circuit féminin VCT Game Changers, l'API PandaScore le renvoie
@@ -2337,7 +2357,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "21px 16px" : "12px 16px" }}>
+      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "25px 16px" : "12px 16px" }}>
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
@@ -2461,10 +2481,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}`, matchCard: { team1: match.team1Name || match.team1, team2: match.team2Name || match.team2, score1: match.score1, score2: match.score2, league: match.league || "", tilt: Math.round((Math.random() * 50 - 25) * 10) / 10 } } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const dataUrl = URL.createObjectURL(blob); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); const text = `${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} | ${match.league || ""} — Split`; if (navigator.share) { navigator.share({ title: "Split", text }); } else { navigator.clipboard?.writeText(text); } }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const file = new File([blob], "split-match.png", { type: "image/png" }); if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); } else { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "split-match.png"; a.click(); } } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Share2 size={14} color="#aaa" /> <span style={{ color: "#aaa" }}>Partager</span>
                     </button>
                   </div>
@@ -2595,10 +2615,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, matchCard: { team1: match.team1Name || match.team1, team2: match.team2Name || match.team2, score1: match.score1, score2: match.score2, league: match.league || "", tilt: Math.round((Math.random() * 50 - 25) * 10) / 10 } } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const dataUrl = URL.createObjectURL(blob); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); const text = `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""} — Split`; if (navigator.share) { navigator.share({ title: "Split", text }); } else { navigator.clipboard?.writeText(text); } }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const file = new File([blob], "split-match.png", { type: "image/png" }); if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); } else { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "split-match.png"; a.click(); } } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Share2 size={14} color="#aaa" /> <span style={{ color: "#aaa" }}>Partager</span>
                     </button>
                   </div>
@@ -6336,16 +6356,11 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           )}
 
           {matchCardData && (
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-              <div style={{ transform: `rotate(${matchCardData.tilt}deg)`, background: "#141414", border: "1px solid #333", borderRadius: 14, padding: "14px 20px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", textAlign: "center" }}>
-                <span style={{ color: "#888", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{matchCardData.league}</span>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 6 }}>
-                  <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{matchCardData.team1}</span>
-                  <span style={{ color: "#CCF71D", fontSize: 16, fontWeight: 900 }}>{matchCardData.score1 != null ? `${matchCardData.score1} - ${matchCardData.score2}` : "VS"}</span>
-                  <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{matchCardData.team2}</span>
-                </div>
-                <div style={{ marginTop: 6, fontSize: 8, color: "#555", fontWeight: 700, letterSpacing: 1 }}>SPLIT</div>
-              </div>
+            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden" }}>
+              <img src={matchCardData} alt="" style={{ width: "100%", borderRadius: 12 }} />
+              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+                <X size={14} color="#fff" />
+              </button>
             </div>
           )}
 
@@ -6802,7 +6817,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   useEffect(() => {
     function onCreatePost(e) {
       setPostPrefill(e.detail?.text || "");
-      setPostMatchCard(e.detail?.matchCard || null);
+      setPostMatchCard(e.detail?.screenshot || null);
       setCarouselSlide(1);
       setShowCreatePost(true);
     }
