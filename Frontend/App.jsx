@@ -2212,8 +2212,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = { WebkitTextStroke: "1px rgba(0,0,0,0.85)", paintOrder: "stroke fill" };
-  const txtStW = { WebkitTextStroke: "0.7px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
+  const txtSt = { WebkitTextStroke: "1.3px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
+  const txtStW = { WebkitTextStroke: "0.9px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
@@ -2337,7 +2337,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-3 gap-2">
+      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "16px 16px" : "12px 16px" }}>
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
@@ -2452,7 +2452,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "11px 12px" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "10px 12px" }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
@@ -2461,7 +2461,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}` } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}`, matchCard: { team1: match.team1Name || match.team1, team2: match.team2Name || match.team2, score1: match.score1, score2: match.score2, league: match.league || "", tilt: Math.round((Math.random() * 50 - 25) * 10) / 10 } } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); const text = `${match.team1Name || match.team1} ${match.score1}-${match.score2} ${match.team2Name || match.team2} | ${match.league || ""} — Split`; if (navigator.share) { navigator.share({ title: "Split", text }); } else { navigator.clipboard?.writeText(text); } }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
@@ -2586,7 +2586,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </>
       ) : (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "8px 12px", opacity: tbd ? 0.4 : 1 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "9px 12px", opacity: tbd ? 0.4 : 1 }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
@@ -2595,7 +2595,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}` } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, matchCard: { team1: match.team1Name || match.team1, team2: match.team2Name || match.team2, score1: match.score1, score2: match.score2, league: match.league || "", tilt: Math.round((Math.random() * 50 - 25) * 10) / 10 } } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(false); const text = `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""} — Split`; if (navigator.share) { navigator.share({ title: "Split", text }); } else { navigator.clipboard?.writeText(text); } }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
@@ -6220,7 +6220,7 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
   );
 }
 
-function CreatePostScreen({ onClose, T, profile, prefillText }) {
+function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   const [content, setContent] = useState(prefillText || "");
   const [matchData, setMatchData] = useState(null);
   const [posting, setPosting] = useState(false);
@@ -6294,7 +6294,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
   const canPost = content.trim() || matchData || photoPreview;
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+    <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
@@ -6332,6 +6332,20 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
               <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
                 <X size={14} color="#fff" />
               </button>
+            </div>
+          )}
+
+          {matchCardData && (
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <div style={{ transform: `rotate(${matchCardData.tilt}deg)`, background: "#141414", border: "1px solid #333", borderRadius: 14, padding: "14px 20px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", textAlign: "center" }}>
+                <span style={{ color: "#888", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{matchCardData.league}</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 6 }}>
+                  <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{matchCardData.team1}</span>
+                  <span style={{ color: "#CCF71D", fontSize: 16, fontWeight: 900 }}>{matchCardData.score1 != null ? `${matchCardData.score1} - ${matchCardData.score2}` : "VS"}</span>
+                  <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>{matchCardData.team2}</span>
+                </div>
+                <div style={{ marginTop: 6, fontSize: 8, color: "#555", fontWeight: 700, letterSpacing: 1 }}>SPLIT</div>
+              </div>
             </div>
           )}
 
@@ -6405,7 +6419,7 @@ function PostsFeedScreen({ onClose, T, profile }) {
   }
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
+    <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
@@ -6760,6 +6774,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const registeredCount = leaderboard.length;
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postPrefill, setPostPrefill] = useState("");
+  const [postMatchCard, setPostMatchCard] = useState(null);
   const [nexusPosts, setNexusPosts] = useState([]);
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
@@ -6787,6 +6802,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   useEffect(() => {
     function onCreatePost(e) {
       setPostPrefill(e.detail?.text || "");
+      setPostMatchCard(e.detail?.matchCard || null);
       setCarouselSlide(1);
       setShowCreatePost(true);
     }
@@ -7326,7 +7342,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
       {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
 
-      {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} />}
+      {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
         <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
