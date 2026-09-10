@@ -2212,8 +2212,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = { WebkitTextStroke: "1.3px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
-  const txtStW = { WebkitTextStroke: "0.9px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
+  const txtSt = { WebkitTextStroke: "2px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
+  const txtStW = { WebkitTextStroke: "1.4px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
@@ -2452,7 +2452,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "10px 12px" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "8px 12px" }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
@@ -2474,19 +2474,19 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <button onClick={() => onToggleExpand(match.id)} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
               <ChevronDown size={16} color={accent} />
             </button>
-            {pointsBreakdown && (
+            {pointsBreakdown && pointsBreakdown.total > 0 && (
               <span
                 style={{
                   marginLeft: "auto",
-                  background: pointsBreakdown.total > 0 ? "#CCF71D" : "#262626",
-                  color: pointsBreakdown.total > 0 ? "#0d0d0d" : "#777",
+                  background: "#CCF71D",
+                  color: "#0d0d0d",
                   fontSize: "17px",
                   fontWeight: 900,
                   fontStyle: "italic",
                   letterSpacing: "0.01em",
                   padding: "4px 14px",
                   borderRadius: "8px",
-                  boxShadow: pointsBreakdown.total > 0 ? "0 0 0 1px rgba(204,247,29,0.35)" : "none",
+                  boxShadow: "0 0 0 1px rgba(204,247,29,0.35)",
                 }}
               >
                 {pointsBreakdown.total} pts
@@ -2586,7 +2586,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </>
       ) : (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "9px 12px", opacity: tbd ? 0.4 : 1 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "11px 12px", opacity: tbd ? 0.4 : 1 }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
