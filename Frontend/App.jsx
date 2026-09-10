@@ -42,6 +42,7 @@ import {
   Square,
   ArrowUp,
   Clock,
+  MoreHorizontal,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -2204,16 +2205,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSh = hasBg ? "0 0 4px rgba(255,255,255,0.7), 0 0 8px rgba(255,255,255,0.4)" : "none";
-  const txtShW = hasBg ? "0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6)" : "none";
+  const txtSt = hasBg ? { WebkitTextStroke: "0.8px rgba(255,255,255,0.85)", paintOrder: "stroke fill" } : {};
+  const txtStW = hasBg ? { WebkitTextStroke: "0.6px rgba(0,0,0,0.9)", paintOrder: "stroke fill" } : {};
 
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
-      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, pointerEvents: "none" }} />}
+      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: finished ? "100%" : "calc(100% - 40px)", objectFit: "cover", opacity: 0.5, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
-          <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", textShadow: txtSh }}>
+          <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
             {match.matchTier && (
               <span style={{ color: match.matchTier.color, fontWeight: 800, fontSize: 9, border: `1px solid ${match.matchTier.color}44`, borderRadius: 4, padding: "1px 5px", marginRight: 5 }}>{match.matchTier.label}</span>
             )}
@@ -2224,7 +2225,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
-          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px", textShadow: txtSh }}>
+          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px", ...txtSt }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2236,7 +2237,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", textShadow: txtSh }}
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", ...txtSt }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
@@ -2352,14 +2353,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team1RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, textShadow: txtSh }}>{match.team1}</span>
+            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
           <div className="flex flex-col items-center">
             {scoresRevealed ? (
               <>
-                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out", textShadow: txtShW }}>
+                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out", ...txtStW }}>
                   {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
                 </span>
                 {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
@@ -2415,7 +2416,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team2RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, textShadow: txtSh }}>{match.team2}</span>
+            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
           </span>
         </div>
       </div>
@@ -2433,11 +2434,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
-        </div>
-      )}
-      {isBoosted && !finished && (
-        <div className="flex items-center justify-center pb-2">
-          <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 8, padding: "5px 18px", letterSpacing: 0.5 }}>x2 🔥</span>
+          {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 12, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 8, padding: "4px 10px", letterSpacing: 0.5, alignSelf: "flex-end", marginBottom: 2 }}>x2 🔥</span>}
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
@@ -5902,10 +5899,13 @@ function resizeImage(file, maxSize, cb) {
     img.onload = () => {
       const canvas = document.createElement("canvas");
       const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      cb(canvas.toDataURL("image/jpeg", 0.8));
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL("image/jpeg", 0.92));
     };
     img.src = e.target.result;
   };
@@ -6178,6 +6178,10 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
   const [posting, setPosting] = useState(false);
   const [history, setHistory] = useState([]);
   const [tab, setTab] = useState("write");
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoError, setPhotoError] = useState("");
+  const photoRef = useRef(null);
 
   useEffect(() => {
     if (!profile?.userId) return;
@@ -6186,22 +6190,60 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
     }).catch(() => {});
   }, [profile?.userId]);
 
+  function handlePhotoSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoError("");
+    if (file.size > 5 * 1024 * 1024) { setPhotoError("Image trop lourde (max 5 Mo)"); return; }
+    if (!file.type.startsWith("image/")) { setPhotoError("Format non supporté"); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        setPhotoPreview(dataUrl);
+        setPhotoFile(file);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   function handlePost() {
-    if (!profile?.userId || (!content.trim() && !matchData)) return;
+    if (!profile?.userId || (!content.trim() && !matchData && !photoPreview)) return;
     setPosting(true);
+    const postData = { userId: profile.userId, type: photoPreview ? "photo" : matchData ? "result" : "text", content: content.trim(), matchData };
+    if (photoPreview) postData.image = photoPreview;
     fetch(API_BASE + "/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: profile.userId, type: matchData ? "result" : "text", content: content.trim(), matchData }),
+      body: JSON.stringify(postData),
     }).then(r => r.json()).then(() => {
       setContent("");
       setMatchData(null);
+      setPhotoPreview(null);
+      setPhotoFile(null);
       setTab("history");
       fetch(API_BASE + "/api/posts/user/" + profile.userId).then(r => r.json()).then(d => {
         if (Array.isArray(d)) setHistory(d);
       });
     }).catch(() => {}).finally(() => setPosting(false));
   }
+
+  const canPost = content.trim() || matchData || photoPreview;
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "#0a0a0a" }}>
@@ -6220,20 +6262,49 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
 
       {tab === "write" && (
         <div className="flex-1 overflow-y-auto px-4 py-4">
-          <textarea
-            value={content}
-            onChange={e => setContent(e.target.value.slice(0, 500))}
-            placeholder={T.postPlaceholder || "Partagez vos résultats, analyses..."}
-            className="w-full rounded-xl p-3 resize-none"
-            style={{ background: "#141414", border: "1px solid #2a2a2a", color: "#fff", fontSize: "14px", minHeight: "120px", outline: "none" }}
-          />
-          <p style={{ color: "#555", fontSize: "10px", textAlign: "right", marginTop: 4 }}>{content.length}/500</p>
+          <div className="flex items-start gap-3 mb-3">
+            <div className="rounded-full overflow-hidden shrink-0" style={{ width: 40, height: 40, background: "#1e1e1e" }}>
+              {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" style={{ margin: "11px" }} />}
+            </div>
+            <div className="flex-1">
+              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{profile?.pseudo || "Toi"}</span>
+              <textarea
+                value={content}
+                onChange={e => setContent(e.target.value.slice(0, 500))}
+                placeholder={T.postPlaceholder || "Partagez vos résultats, analyses..."}
+                className="w-full resize-none mt-1"
+                style={{ background: "transparent", border: "none", color: "#ddd", fontSize: "14px", minHeight: "80px", outline: "none", lineHeight: 1.5 }}
+              />
+            </div>
+          </div>
+
+          {photoPreview && (
+            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden" }}>
+              <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 12 }} />
+              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+                <X size={14} color="#fff" />
+              </button>
+            </div>
+          )}
+
+          {photoError && <p style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
+
+          <div style={{ borderTop: "1px solid #1e1e1e", paddingTop: 12, marginBottom: 12 }}>
+            <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: "none" }} />
+            <button onClick={() => photoRef.current?.click()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Photo</span>
+            </button>
+            <p style={{ color: "#444", fontSize: "9px", marginTop: 4 }}>Max 5 Mo · Pas de contenu publicitaire ou inapproprié</p>
+          </div>
+
+          <p style={{ color: "#555", fontSize: "10px", textAlign: "right" }}>{content.length}/500</p>
 
           <button
             onClick={handlePost}
-            disabled={posting || (!content.trim() && !matchData)}
-            className="w-full rounded-xl py-3 mt-4 font-bold"
-            style={{ background: content.trim() || matchData ? "#CCF71D" : "#222", color: content.trim() || matchData ? "#000" : "#555", fontSize: "14px", transition: "all 0.2s" }}
+            disabled={posting || !canPost}
+            className="w-full rounded-xl py-3 mt-3 font-bold"
+            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", transition: "all 0.2s" }}
           >
             {posting ? "..." : (T.postPublish || "Publier")}
           </button>
@@ -6245,6 +6316,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText }) {
           {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
           {history.map(p => (
             <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
+              {p.image && <img src={p.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: 8, maxHeight: 250, objectFit: "cover" }} />}
               <p style={{ color: "#fff", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>
               {p.match_data && (
                 <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
@@ -6644,6 +6716,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
   const [friendModalTab, setFriendModalTab] = useState("search");
+  const [specMenu, setSpecMenu] = useState(false);
+  const [specInfoPopup, setSpecInfoPopup] = useState(false);
 
   useEffect(() => {
     if (profile?.userId) {
@@ -6665,6 +6739,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   useEffect(() => {
     function onCreatePost(e) {
       setPostPrefill(e.detail?.text || "");
+      setCarouselSlide(1);
       setShowCreatePost(true);
     }
     window.addEventListener("split-create-post", onCreatePost);
@@ -6792,8 +6867,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     const ss = spectatorStats || {};
     const allPts = leaderboard.map(u => u.points);
     const rank = getUserRank(su.displayPts || su.points || 0, allPts.length >= 50 ? allPts : undefined);
-    let bellOn = !!ss.bellOn;
-    if (!bellOn) { try { bellOn = (JSON.parse(localStorage.getItem("split_notif_users") || "[]")).includes(su.id); } catch {} }
     return (
       <div className="px-4 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-5">
@@ -6801,23 +6874,37 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <ArrowLeft size={18} color="#ccc" />
           </button>
           <h1 className="font-black text-white flex-1" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{su.pseudo}</h1>
-          <button onClick={() => {
-            try {
-              const list = JSON.parse(localStorage.getItem("split_notif_users") || "[]");
-              const has = list.includes(su.id);
-              const next = has ? list.filter(x => x !== su.id) : [...list, su.id];
-              localStorage.setItem("split_notif_users", JSON.stringify(next));
-              setSpectatorStats(prev => ({ ...prev, bellOn: !has }));
-            } catch {}
-          }} className="rounded-full p-1.5" style={{ background: bellOn ? "rgba(204,247,29,0.15)" : "#181818", border: "1px solid #2a2a2a" }}>
-            <Bell size={16} color={bellOn ? "#CCF71D" : "#666"} />
-          </button>
-        </div>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1e1e1e", border: "2px solid #333", flexShrink: 0 }}>
-            {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={32} color="#555" />}
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setSpecMenu(v => !v)} className="rounded-full p-1.5" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+              <MoreHorizontal size={16} color="#999" />
+            </button>
+            {specMenu && (
+              <>
+                <div onClick={() => setSpecMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
+                <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, overflow: "hidden", minWidth: 180, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+                  <button onClick={() => { setSpecMenu(false); }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#e05252", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                    Bannir
+                  </button>
+                  <button onClick={() => { setSpecMenu(false); }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#f59e0b", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
+                    <AlertCircle size={14} />
+                    Signaler
+                  </button>
+                  <button onClick={() => { setSpecMenu(false); setSpecInfoPopup(true); }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#aaa", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", cursor: "pointer" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Info sur ce compte
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          <div className="flex-1 flex justify-around text-center">
+        </div>
+
+        <div className="flex flex-col items-center mb-4">
+          <div className="rounded-full overflow-hidden flex items-center justify-center mb-3" style={{ width: 80, height: 80, background: "#1e1e1e", border: "2px solid #333" }}>
+            {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={36} color="#555" />}
+          </div>
+          <div className="flex justify-around text-center w-full mb-2">
             <div>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{ss.followers || 0}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
@@ -6832,7 +6919,25 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
           </div>
         </div>
+
         {su.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{su.bio}</p>}
+
+        {profile && ss.iFollow !== undefined && (
+          <div className="flex gap-2 mb-4">
+            <button onClick={() => {
+              const action = ss.iFollow ? "unfollow" : "follow";
+              fetch(API_BASE + `/api/social/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ followerId: profile.userId, followedId: su.id }) }).then(() => {
+                setSpectatorStats(prev => ({ ...prev, iFollow: !prev.iFollow, followers: (prev.followers || 0) + (prev.iFollow ? -1 : 1) }));
+              });
+            }} className="flex-1 rounded-xl font-bold py-2.5" style={{ background: ss.iFollow ? "#1a1a1a" : "#CCF71D", color: ss.iFollow ? "#aaa" : "#000", fontSize: "13px", border: ss.iFollow ? "1px solid #333" : "none" }}>
+              {ss.iFollow ? (T.friendUnfollow || "Ne plus suivre") : (T.friendFollow || "S'abonner")}
+            </button>
+            <button onClick={() => { setShowMessages(true); }} className="flex-1 rounded-xl font-bold py-2.5 flex items-center justify-center gap-2" style={{ background: "#1a1a1a", color: "#ccc", fontSize: "13px", border: "1px solid #333" }}>
+              <MessageCircle size={14} /> Discussion
+            </button>
+          </div>
+        )}
+
         {(su.fav_teams_valo || su.fav_teams_cs2 || su.fav_teams_rl) && (
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
@@ -6843,6 +6948,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
           </div>
         )}
+
         <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
           {rank.logo === "unranked" ? (
             <svg width="100" height="100" viewBox="0 0 48 48" fill="none">
@@ -6856,16 +6962,27 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           )}
           <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px" }}>{rank.label}</p>
         </div>
-        {profile && ss.iFollow !== undefined && (
-          <button onClick={() => {
-            const action = ss.iFollow ? "unfollow" : "follow";
-            const body = ss.iFollow ? { followerId: profile.userId, followedId: su.id } : { followerId: profile.userId, followedId: su.id };
-            fetch(API_BASE + `/api/social/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(() => {
-              setSpectatorStats(prev => ({ ...prev, iFollow: !prev.iFollow, followers: (prev.followers || 0) + (prev.iFollow ? -1 : 1) }));
-            });
-          }} className="w-full rounded-xl font-bold py-2.5 mb-4" style={{ background: ss.iFollow ? "#1a1a1a" : "#CCF71D", color: ss.iFollow ? "#aaa" : "#000", fontSize: "13px", border: ss.iFollow ? "1px solid #333" : "none" }}>
-            {ss.iFollow ? (T.friendUnfollow || "Ne plus suivre") : (T.friendFollow || "Suivre")}
-          </button>
+
+        {specInfoPopup && (
+          <>
+            <div onClick={() => setSpecInfoPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.6)" }} />
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 51, background: "#1c1c1c", border: "1px solid #333", borderRadius: 16, padding: "20px 24px", minWidth: 260, boxShadow: "0 8px 30px rgba(0,0,0,0.6)" }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="rounded-full overflow-hidden" style={{ width: 44, height: 44, background: "#1e1e1e" }}>
+                  {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
+                </div>
+                <div>
+                  <p style={{ color: "#fff", fontSize: "14px", fontWeight: 800 }}>{su.pseudo}</p>
+                  <p style={{ color: "#666", fontSize: "11px" }}>ID: {su.id?.slice(0, 8)}...</p>
+                </div>
+              </div>
+              <div style={{ borderTop: "1px solid #2a2a2a", paddingTop: 12 }}>
+                <p style={{ color: "#888", fontSize: "11px" }}>Date de création</p>
+                <p style={{ color: "#ccc", fontSize: "13px", fontWeight: 700 }}>{ss.createdAt ? new Date(ss.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Inconnue"}</p>
+              </div>
+              <button onClick={() => setSpecInfoPopup(false)} className="w-full rounded-lg py-2 mt-4 font-bold" style={{ background: "#262626", color: "#ccc", fontSize: "12px", border: "none", cursor: "pointer" }}>Fermer</button>
+            </div>
+          </>
         )}
       </div>
     );
@@ -7082,12 +7199,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   <p style={{ color: "#555", fontSize: "12px", alignSelf: "center", padding: "12px 0" }}>{T.friendEmpty}</p>
                 )}
                 {friendsList.map(f => (
-                  <div key={f.id} className="flex flex-col items-center shrink-0">
+                  <button key={f.id} onClick={() => { setSpectatorUser({ id: f.id, pseudo: f.pseudo, avatar: f.avatar, points: f.points || 0, bio: f.bio }); fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); }} className="flex flex-col items-center shrink-0" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                     <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 50, height: 50, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
                       {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
                     </div>
                     <span className="truncate" style={{ color: "#aaa", fontSize: "9px", fontWeight: 600, marginTop: 3, maxWidth: 50, textAlign: "center" }}>{f.pseudo}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -7096,12 +7213,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               {nexusPosts.map(p => (
                 <div key={p.id} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #262626" }}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="rounded-full overflow-hidden" style={{ width: 24, height: 24, background: "#1e1e1e" }}>
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
                       {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
-                    </div>
-                    <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
+                    </button>
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "11px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
                     <span style={{ color: "#444", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
+                  {p.image && <img src={p.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: 8, maxHeight: 250, objectFit: "cover" }} />}
                   {p.content && <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}>{p.content}</p>}
                   {p.match_data && (
                     <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
@@ -7851,6 +7969,14 @@ export default function ClutchApp() {
     const el = scrollRef.current;
     if (el) el.scrollTop = 0;
   }, [activeTab]);
+
+  useEffect(() => {
+    function onCreatePostNav() {
+      setActiveTab("classement");
+    }
+    window.addEventListener("split-create-post", onCreatePostNav);
+    return () => window.removeEventListener("split-create-post", onCreatePostNav);
+  }, []);
 
   const [upcomingMatches, setUpcomingMatches] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
