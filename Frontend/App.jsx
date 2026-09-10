@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
@@ -2124,6 +2124,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesARef = useRef(null);
   const seriesBRef = useRef(null);
   const gameRefs = useRef({});
+  const cardRef = useRef(null);
+  const [frozenBgH, setFrozenBgH] = useState(null);
+  useLayoutEffect(() => {
+    if (cardRef.current && !expanded) {
+      setFrozenBgH(cardRef.current.offsetHeight);
+    }
+  }, [expanded]);
 
   // Suit quels champs de score par map ont été "quittés" (blur) par
   // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
@@ -2205,12 +2212,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = hasBg ? { WebkitTextStroke: "0.8px rgba(0,0,0,0.85)", paintOrder: "stroke fill" } : {};
-  const txtStW = hasBg ? { WebkitTextStroke: "0.6px rgba(0,0,0,0.9)", paintOrder: "stroke fill" } : {};
+  const txtSt = { WebkitTextStroke: "0.8px rgba(0,0,0,0.85)", paintOrder: "stroke fill" };
+  const txtStW = { WebkitTextStroke: "0.6px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
-      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.5, pointerEvents: "none" }} />}
+    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
+      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
@@ -2399,7 +2406,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
-          {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 11, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 7, padding: "3px 7px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
               <span
@@ -2425,7 +2431,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       {finished ? null : tbd ? (
         <div className="px-4 pb-3 text-center" style={{ color: "#666", fontSize: "11px" }}>{T.teamsTbc}</div>
       ) : (
-        <div className="px-4 pb-3 flex items-center justify-center gap-3">
+        <div className="px-4 pb-3 flex items-center justify-center gap-3" style={{ position: "relative" }}>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
             <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
@@ -2435,6 +2441,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
+          {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 11, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 7, padding: "3px 7px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
@@ -2445,7 +2452,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "10px 12px" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "11px 12px" }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
@@ -2578,7 +2585,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </>
       ) : (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "6px 12px", opacity: tbd ? 0.4 : 1 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "7px 12px", opacity: tbd ? 0.4 : 1 }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
@@ -3015,13 +3022,26 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
 
   useEffect(() => {
-    if (currentRef.current && scrollRef.current) {
+    if (tab === "rewards" && currentRef.current && scrollRef.current) {
       const container = scrollRef.current;
       const el = currentRef.current;
       const top = el.offsetTop - container.offsetTop - 80;
       container.scrollTo({ top: Math.max(0, top) });
     }
-  }, []);
+    if (tab === "inventory" && invScrollRef.current) {
+      invScrollRef.current.scrollTo({ top: 0 });
+    }
+  }, [tab]);
+
+  function handleRewardsScroll(e) {
+    const y = e.target.scrollTop;
+    const dir = y < lastScrollY.current ? "up" : "down";
+    lastScrollY.current = y;
+    if (y < 10) { setScrollDir(null); return; }
+    setScrollDir(dir);
+    clearTimeout(scrollDirTimer.current);
+    scrollDirTimer.current = setTimeout(() => setScrollDir(null), 1200);
+  }
 
   function claimTier(tier, item) {
     const next = [...claimedTiers, tier];
@@ -3048,7 +3068,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     11: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     12: { emoji: "🏷️", name: "Challenger", desc: "Titre challenger", type: "title", rarity: "commun" },
     13: { emoji: "⭐", name: "Boost XP +300", desc: "+300 XP bonus", type: "xp_bonus", xpAmount: 300 },
-    14: { emoji: "🌌", name: "BG Neon City", desc: "Fond néon pour ton profil", type: "background", preview: "/bg-profile-6.png", rarity: "rare" },
+    14: { emoji: "🎴", name: "Fond Match Plasma", desc: "Background plasma pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-3.png", rarity: "rare" },
     15: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     16: { emoji: "🖼️", name: "Bannière Play Grind", desc: "Fond blue crown pour ton classement", type: "banner", bannerImage: "/banner-1.png", rarity: "rare" },
     17: { emoji: "🏷️", name: "Vétéran", desc: "Titre pour les habitués", type: "title", rarity: "rare" },
@@ -3059,7 +3079,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     22: { emoji: "🖼️", name: "Bannière Craft", desc: "Fond Minecraft pour ton classement", type: "banner", bannerImage: "/banner-8.png", rarity: "rare" },
     23: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     24: { emoji: "🏷️", name: "Analyste", desc: "Titre analyste", type: "title", rarity: "commun" },
-    25: { emoji: "🌌", name: "Background Profil", desc: "Fond personnalisé pour ton profil", type: "background", preview: "/bg-profile-1.png", rarity: "rare" },
+    25: { emoji: "⭐", name: "Boost XP +350", desc: "+350 XP bonus", type: "xp_bonus", xpAmount: 350 },
     26: { emoji: "🖼️", name: "Bannière Anime", desc: "Fond anime gamer pour ton classement", type: "banner", bannerImage: "/banner-7.png", rarity: "rare" },
     27: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     28: { emoji: "🎴", name: "Fond Match Galaxy", desc: "Background galaxy pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-3.png", rarity: "rare" },
@@ -3068,7 +3088,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     31: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     32: { emoji: "🏷️", name: "Prodigy", desc: "Titre prodigy", type: "title", rarity: "rare" },
     33: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
-    34: { emoji: "🌌", name: "BG Crystal Palace", desc: "Fond crystal pour ton profil", type: "background", preview: "/bg-profile-7.png", rarity: "rare" },
+    34: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     35: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     36: { emoji: "🖼️", name: "Bannière Trophée", desc: "Fond trophée rose pour ton classement", type: "banner", bannerImage: "/banner-3.png", rarity: "epique" },
     37: { emoji: "🎴", name: "Fond Match Storm", desc: "Background storm pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
@@ -3079,7 +3099,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     42: { emoji: "🖼️", name: "Bannière Tactical", desc: "Fond CS2 pour ton classement", type: "banner", bannerImage: "/banner-4.png", rarity: "epique" },
     43: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     44: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    45: { emoji: "🌌", name: "Background Profil", desc: "Fond animé pour ton profil", type: "background", preview: "/bg-profile-2.png", rarity: "epique" },
+    45: { emoji: "🏷️", name: "Clutcheur", desc: "Titre clutcheur", type: "title", rarity: "epique" },
     46: { emoji: "🏷️", name: "Oracle", desc: "Titre oracle", type: "title", rarity: "epique" },
     47: { emoji: "🎴", name: "Fond Match Cyber", desc: "Background cyber pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-5.png", rarity: "epique" },
     48: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3088,13 +3108,13 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     51: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     52: { emoji: "🏷️", name: "Visionnaire", desc: "Titre visionnaire", type: "title", rarity: "epique" },
     53: { emoji: "⭐", name: "Boost XP +800", desc: "+800 XP bonus", type: "xp_bonus", xpAmount: 800 },
-    54: { emoji: "🌌", name: "BG Gaming Zone", desc: "Fond gaming zone pour ton profil", type: "background", preview: "/bg-profile-8.png", rarity: "epique" },
+    54: { emoji: "⭐", name: "Boost XP +700", desc: "+700 XP bonus", type: "xp_bonus", xpAmount: 700 },
     55: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     56: { emoji: "🏷️", name: "Génie", desc: "Titre génie", type: "title", rarity: "epique" },
     57: { emoji: "🎴", name: "Fond Match Aurora", desc: "Background aurora pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-6.png", rarity: "epique" },
     58: { emoji: "🎁", name: "Coffre Épique", desc: "Récompense premium esport" },
     59: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    60: { emoji: "🌌", name: "Background Profil", desc: "Fond légendaire pour ton profil", type: "background", preview: "/bg-profile-3.png", rarity: "epique" },
+    60: { emoji: "🏷️", name: "MVP", desc: "Titre MVP", type: "title", rarity: "epique" },
     61: { emoji: "🖼️", name: "Bannière Diamant", desc: "Fond diamant crystal pour ton classement", type: "banner", bannerImage: "/banner-2.png", rarity: "legendaire" },
     62: { emoji: "🏷️", name: "Maître", desc: "Titre de maître", type: "title", rarity: "epique" },
     63: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3102,7 +3122,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     65: { emoji: "⭐", name: "Boost XP +1000", desc: "+1000 XP bonus", type: "xp_bonus", xpAmount: 1000 },
     66: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     67: { emoji: "🏷️", name: "GOD Tier", desc: "Titre divin", type: "title", rarity: "legendaire" },
-    68: { emoji: "🌌", name: "BG Midnight Arena", desc: "Fond midnight arena pour ton profil", type: "background", preview: "/bg-profile-9.png", rarity: "rare" },
+    68: { emoji: "⭐", name: "Boost XP +1100", desc: "+1100 XP bonus", type: "xp_bonus", xpAmount: 1100 },
     69: { emoji: "🎴", name: "Fond Match Blaze", desc: "Background blaze pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-7.png", rarity: "legendaire" },
     70: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     71: { emoji: "🏷️", name: "Le Prophète", desc: "Titre prophète", type: "title", rarity: "legendaire" },
@@ -3111,10 +3131,10 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     74: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     75: { emoji: "🏷️", name: "Élu", desc: "Titre élu", type: "title", rarity: "legendaire" },
     76: { emoji: "🏅", name: "Badge Mythique", desc: "Badge mythique pour ton profil", type: "badge", rarity: "epique" },
-    77: { emoji: "🌌", name: "BG Cyber Wave", desc: "Fond cyber wave pour ton profil", type: "background", preview: "/bg-profile-10.png", rarity: "rare" },
+    77: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "epique" },
     78: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     79: { emoji: "🏷️", name: "Immortel", desc: "Titre immortel", type: "title", rarity: "legendaire" },
-    80: { emoji: "🌌", name: "Background Profil", desc: "Fond mythique personnalisé", type: "background", preview: "/bg-profile-4.png", rarity: "legendaire" },
+    80: { emoji: "🏷️", name: "Légende", desc: "Titre légende", type: "title", rarity: "legendaire" },
     81: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     82: { emoji: "🎴", name: "Fond Match Inferno", desc: "Background inferno pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-8.png", rarity: "legendaire" },
     83: { emoji: "⭐", name: "Boost XP +1500", desc: "+1500 XP bonus", type: "xp_bonus", xpAmount: 1500 },
@@ -3126,21 +3146,25 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     89: { emoji: "⭐", name: "Boost XP +2000", desc: "+2000 XP bonus", type: "xp_bonus", xpAmount: 2000 },
     90: { emoji: "🏅", name: "Badge Infini", desc: "Badge infini pour ton profil", type: "badge", rarity: "legendaire" },
     91: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    92: { emoji: "🌌", name: "BG Fire Storm", desc: "Fond fire storm pour ton profil", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
+    92: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "legendaire" },
     93: { emoji: "🏅", name: "Badge Éternel", desc: "Badge éternel pour ton profil", type: "badge", rarity: "legendaire" },
     94: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
-    95: { emoji: "🌌", name: "Background Ultime", desc: "Fond ultime animé", type: "background", preview: "/bg-profile-5.png", rarity: "legendaire" },
+    95: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot légendaire exclusif" },
     96: { emoji: "⭐", name: "Boost XP +2500", desc: "+2500 XP bonus", type: "xp_bonus", xpAmount: 2500 },
     97: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     98: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot ultime exclusif" },
     99: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "legendaire" },
-    100: { emoji: "👑", name: "Récompense Ultime", desc: "Tu as tout débloqué. Légende." },
+    100: { emoji: "👑", name: "The First One", desc: "Le titre ultime. Tu es une légende.", type: "title", rarity: "legendaire" },
   };
   const defaultChest = { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" };
   function getChest(tier) { return TIER_REWARDS[tier] || defaultChest; }
 
   const [tab, setTab] = useState("rewards");
   const [invCat, setInvCat] = useState("all");
+  const [scrollDir, setScrollDir] = useState(null);
+  const scrollDirTimer = useRef(null);
+  const invScrollRef = useRef(null);
+  const lastScrollY = useRef(0);
   const [openingChest, setOpeningChest] = useState(null);
   const [chestPhase, setChestPhase] = useState("idle");
   const [chestResult, setChestResult] = useState(null);
@@ -3305,16 +3329,6 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     { emoji: "🖼️", name: "Bannière Chill", rarity: "epique", type: "banner", bannerImage: "/banner-9.png" },
     { emoji: "🖼️", name: "Bannière Diamant", rarity: "legendaire", type: "banner", bannerImage: "/banner-2.png" },
     ...TITLE_LIST,
-    { emoji: "🌌", name: "BG Neon City", rarity: "legendaire", type: "background", preview: "/bg-profile-1.png" },
-    { emoji: "🌌", name: "BG Crystal Palace", rarity: "legendaire", type: "background", preview: "/bg-profile-2.png" },
-    { emoji: "🌌", name: "BG Gaming Zone", rarity: "legendaire", type: "background", preview: "/bg-profile-3.png" },
-    { emoji: "🌌", name: "BG Midnight Arena", rarity: "legendaire", type: "background", preview: "/bg-profile-4.png" },
-    { emoji: "🌌", name: "BG Cyber Wave", rarity: "legendaire", type: "background", preview: "/bg-profile-5.png" },
-    { emoji: "🌌", name: "BG Fire Storm", rarity: "epique", type: "background", preview: "/bg-profile-6.png" },
-    { emoji: "🌌", name: "BG Frost Peak", rarity: "epique", type: "background", preview: "/bg-profile-7.png" },
-    { emoji: "🌌", name: "BG Galaxy Drift", rarity: "epique", type: "background", preview: "/bg-profile-8.png" },
-    { emoji: "🌌", name: "BG Neon Rush", rarity: "rare", type: "background", preview: "/bg-profile-9.png" },
-    { emoji: "🌌", name: "BG Urban Glow", rarity: "rare", type: "background", preview: "/bg-profile-10.png" },
     { emoji: "🎴", name: "Fond Match Néon", rarity: "commun", type: "match_bg", matchBgImage: "/match-bg-1.png" },
     { emoji: "🎴", name: "Fond Match Fire", rarity: "commun", type: "match_bg", matchBgImage: "/match-bg-2.png" },
     { emoji: "🎴", name: "Fond Match Galaxy", rarity: "rare", type: "match_bg", matchBgImage: "/match-bg-3.png" },
@@ -3388,6 +3402,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
         @keyframes chestPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 rgba(204,247,29,0); } 50% { transform: scale(1.03); box-shadow: 0 0 16px rgba(204,247,29,0.3); } }
         @keyframes resultReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes winGlow { 0%,100% { box-shadow: 0 0 8px var(--glow-c); } 50% { box-shadow: 0 0 28px var(--glow-c); } }
+        @keyframes fadeInOut { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
       `}</style>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
@@ -3423,7 +3438,8 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       </div>
 
       {tab === "rewards" ? (
-        <div ref={scrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px" }}>
+        <div ref={scrollRef} onScroll={handleRewardsScroll} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px", position: "relative" }}>
+          {scrollDir && <div style={{ position: "sticky", top: scrollDir === "up" ? 8 : "auto", bottom: scrollDir === "down" ? 8 : "auto", left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none", animation: "fadeInOut 1.2s ease forwards" }}><div style={{ background: "rgba(204,247,29,0.15)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><ChevronDown size={18} color="#CCF71D" style={{ transform: scrollDir === "up" ? "rotate(180deg)" : "none" }} /></div></div>}
           {allTiers.map(tier => {
             const reward = getTierReward(tier);
             const unlocked = tier <= currentTier;
@@ -3490,7 +3506,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
           })}
         </div>
       ) : (
-        <div className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px", minHeight: 0 }}>
+        <div ref={invScrollRef} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "8px 12px 24px", minHeight: 0 }}>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-3" style={{ flexShrink: 0 }}>
             {[
               { key: "all", label: "Tout" },
@@ -8968,7 +8984,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a", position: "relative", zIndex: 9999 }}>
+        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a", position: "relative", zIndex: 60 }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
