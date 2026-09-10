@@ -2212,8 +2212,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = { WebkitTextStroke: "2px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
-  const txtStW = { WebkitTextStroke: "1.4px rgba(0,0,0,0.9)", paintOrder: "stroke fill" };
+  const txtSt = {};
+  const txtStW = {};
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
@@ -2232,7 +2232,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
-          <div style={{ color: "#888", fontSize: "14px", fontWeight: 600, marginTop: "2px", ...txtSt }}>
+          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2315,7 +2315,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             </button>
           )
         ) : finished ? (
-          <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
+          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
           <button onClick={(e) => { e.stopPropagation(); onToggleNotif && onToggleNotif(match.id, notifActive); }} style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
             {notifActive ? (
@@ -2337,7 +2337,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "16px 16px" : "12px 16px" }}>
+      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "21px 16px" : "12px 16px" }}>
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
