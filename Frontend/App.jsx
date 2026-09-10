@@ -2163,6 +2163,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [showReplayPopup, setShowReplayPopup] = useState(false);
   const [scoresRevealed, setScoresRevealed] = useState(false);
   const [liveRevealed, setLiveRevealed] = useState(false);
+  const isBoosted = (() => { try { return JSON.parse(localStorage.getItem("split_boosted_matches") || "[]").includes(String(match.id)); } catch { return false; } })();
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
   const replayUrl = _ytCache.get(replayCacheKey) || "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
@@ -2185,7 +2186,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: "1px solid #333" }}>
+    <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
+      {(() => {
+        const bgIdx = (Math.abs(String(match.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 8) + 1;
+        return <img src={`/match-bg-${bgIdx}.png`} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.12, pointerEvents: "none" }} />;
+      })()}
+      <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
           <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
@@ -2198,6 +2204,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             )}
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
+            {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 9, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 4, padding: "1px 6px", marginLeft: 5 }}>x2 🔥</span>}
           </span>
           <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -2618,6 +2625,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -2629,12 +2637,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 const QUEST_DAILY_POOL = [
   { id: "bet_today", titleKey: "questBetToday", target: 1, kit: "pronostic", xp: 75 },
   { id: "bet_2_games", titleKey: "questBet2Games", target: 1, kit: "pronostic", xp: 100 },
-  { id: "use_all_slots", titleKey: "questUseAllSlots", target: 4, kit: "pronostic", xp: 150 },
-  { id: "bet_3_matches", titleKey: "questBet3Matches", target: 3, kit: "pronostic", xp: 125 },
+  { id: "use_all_slots", titleKey: "questUseAllSlots", target: 4, kit: "pronostic", xp: 150, group: "multi_bet" },
+  { id: "bet_3_matches", titleKey: "questBet3Matches", target: 3, kit: "pronostic", xp: 125, group: "multi_bet" },
   { id: "bet_cs2", titleKey: "questBetCs2", target: 1, kit: "pronostic", xp: 75 },
   { id: "bet_valo", titleKey: "questBetValo", target: 1, kit: "pronostic", xp: 75 },
-  { id: "bet_4_matches", title: "Place 4 pronostics aujourd'hui", target: 4, kit: "pronostic", xp: 150 },
-  { id: "bet_5_matches", title: "Place tes 5 pronostics du jour", target: 5, kit: "pronostic", xp: 175 },
+  { id: "bet_5_matches", title: "Place tes 5 pronostics du jour", target: 5, kit: "pronostic", xp: 175, group: "multi_bet" },
   { id: "bet_both_games", title: "Parie sur un match Valo et un match CS2", target: 2, kit: "pronostic", xp: 125 },
   { id: "bet_rl", title: "Place un pronostic sur un match Rocket League", target: 1, kit: "pronostic", xp: 75 },
   { id: "bet_all_3_games", title: "Parie sur les 3 jeux dans la même session", target: 3, kit: "pronostic", xp: 200 },
@@ -2735,7 +2742,15 @@ function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
   });
   const shuffled = [...avail].sort(() => Math.random() - 0.5);
   const matchPick = shuffled.find(q => q.matchId);
-  const regularPicks = shuffled.filter(q => !q.matchId).slice(0, matchPick ? 2 : 3);
+  const usedGroups = new Set();
+  const regularPicks = [];
+  for (const q of shuffled) {
+    if (q.matchId) continue;
+    if (regularPicks.length >= (matchPick ? 2 : 3)) break;
+    if (q.group && usedGroups.has(q.group)) continue;
+    regularPicks.push(q);
+    if (q.group) usedGroups.add(q.group);
+  }
   const daily = (matchPick ? [...regularPicks, matchPick] : regularPicks).map(q => ({ ...q, progress: 0, completed: false, claimed: false }));
   let weekly = state?.weekly;
   if (!weekly || state?.weekStart !== ws) {
@@ -2831,6 +2846,26 @@ function QuestModal({ quests, onClose, onClaim, T }) {
   if (!quests) return null;
   const { daily, weekly } = quests;
 
+  const [resetTimer, setResetTimer] = useState("");
+  useEffect(() => {
+    function calcTimer() {
+      const now = new Date();
+      const h = now.getUTCHours();
+      const target = new Date(now);
+      target.setUTCMinutes(0, 0, 0);
+      if (h < 12) target.setUTCHours(12);
+      else { target.setUTCDate(target.getUTCDate() + 1); target.setUTCHours(0); }
+      const diff = Math.max(0, target - now);
+      const hh = Math.floor(diff / 3600000);
+      const mm = Math.floor((diff % 3600000) / 60000);
+      const ss = Math.floor((diff % 60000) / 1000);
+      setResetTimer(`${hh}h ${String(mm).padStart(2, "0")}m ${String(ss).padStart(2, "0")}s`);
+    }
+    calcTimer();
+    const iv = setInterval(calcTimer, 1000);
+    return () => clearInterval(iv);
+  }, []);
+
   const renderQuest = (q, idx, isWeekly) => {
     const done = q.completed;
     const kitIcon = QUEST_KIT_ICONS[q.kit] || QUEST_KIT_ICONS.pronostic;
@@ -2881,7 +2916,10 @@ function QuestModal({ quests, onClose, onClaim, T }) {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "0 16px 16px" }}>
-        <p style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10 }}>{T.questDaily}</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+          <p style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase" }}>{T.questDaily}</p>
+          <span style={{ color: "#555", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>Reset {resetTimer}</span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
           {(daily || []).map((q, i) => renderQuest(q, i, false))}
         </div>
@@ -3314,10 +3352,10 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                   width: "100%", display: "flex", alignItems: "center", gap: 14,
                   padding: "20px 18px",
                   borderRadius: hasPreview ? "0 0 18px 18px" : 18,
-                  background: isCurrent ? "rgba(204,247,29,0.06)" : "#0e0e0e",
-                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.3)" : rar !== "commun" ? rc.border + "33" : "#1a1a1a"}`,
+                  background: isCurrent ? "rgba(204,247,29,0.08)" : "#121212",
+                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "44" : "#222"}`,
                   borderTop: hasPreview ? "none" : undefined,
-                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.22,
+                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
                 }}>
                   <div style={{
                     width: 54, height: 54, borderRadius: 14,
@@ -3330,11 +3368,11 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#eee" : "#555", fontSize: 15, fontWeight: 800 }}>{chest.name}</span>
-                      <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.1)" : "#161616", padding: "2px 8px", borderRadius: 6 }}>Lv.{tier}</span>
+                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 15, fontWeight: 800 }}>{chest.name}</span>
+                      <span style={{ color: isCurrent ? "#CCF71D" : "#777", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 8px", borderRadius: 6 }}>Lv.{tier}</span>
                     </div>
-                    <p style={{ color: unlocked ? "#aaa" : "#444", fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{chest.desc}</p>
-                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
+                    <p style={{ color: unlocked ? "#ccc" : "#555", fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{chest.desc}</p>
+                    <span style={{ color: rc.text, fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
                   </div>
                   {unlocked && !claimed && isChest && (
                     <button onClick={() => openChestAnim(tier)} style={{
@@ -6801,20 +6839,24 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         : (isMe ? "#141414" : "#0e0e0e"),
                       border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "1px solid #1a1a1a"),
                     }}>
-                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#aaa" : "#666", fontSize: "16px", width: 24, textAlign: "center", position: "relative" }}>{i + 1}</span>
+                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "16px", width: 24, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
                       <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a", position: "relative" }}>
                         {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                       </div>
                       <div className="flex-1 min-w-0" style={{ position: "relative" }}>
                         <div className="flex items-center gap-1.5">
                           <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                          {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#A855F7", background: "rgba(168,85,247,0.12)", padding: "1px 6px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5 }}>{uTitle}</span>}
+                          {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                         </div>
                       </div>
-                      {rankLogo.logo && rankLogo.logo !== "unranked" ? <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0, position: "relative" }} /> : null}
+                      {rankLogo.logo && rankLogo.logo !== "unranked" ? (
+                        <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: uBanner ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.04)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: uBanner ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+                          <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
+                        </div>
+                      ) : null}
                       <div className="text-right shrink-0" style={{ position: "relative" }}>
-                        <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "16px", fontWeight: 900, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.displayPts}</span>
-                        <span style={{ color: uBanner ? "#999" : "#666", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                        <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "16px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
+                        <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
                   );
