@@ -2452,7 +2452,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "8px 12px" }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "0 12px", height: 36 }}>
             <div style={{ position: "relative" }}>
               <button onClick={(e) => { e.stopPropagation(); setShowSharePicker(v => !v); }} className="flex items-center gap-1.5" style={{ color: "#888", fontSize: "10px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", background: "none", border: "none", cursor: "pointer" }}>
                 <Share2 size={13} /> Partager
