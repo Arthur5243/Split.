@@ -2052,7 +2052,7 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-xl"
-      style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
+      style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a", opacity: disabled ? 0.7 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 });
@@ -2185,25 +2185,33 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     pointsBreakdown = getMatchPointsBreakdown(match, pred);
   }
 
+  const hasBg = (() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null");
+      if (!raw) return false;
+      const list = Array.isArray(raw) ? raw : [raw];
+      const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
+      const preds = (() => { try { return JSON.parse(localStorage.getItem("split_predictions") || "{}"); } catch { return {}; } })();
+      const mp = preds[match.id];
+      const isBetted = mp && mp.seriesA !== "" && mp.seriesB !== "";
+      for (const s of list) {
+        if (s.game !== "all" && s.game !== gt) continue;
+        if (s.scope === "betted" && !isBetted) continue;
+        if (s.scope === "others" && isBetted) continue;
+        return s.image;
+      }
+      return false;
+    } catch { return false; }
+  })();
+  const txtSh = hasBg ? "0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6)" : "none";
+
   return (
     <div className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
-      {(() => {
-        try {
-          const mbSettings = JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null");
-          if (!mbSettings) return null;
-          const gameType = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
-          if (mbSettings.game !== "all" && mbSettings.game !== gameType) return null;
-          if (mbSettings.scope === "betted") {
-            const pred = ((() => { try { return JSON.parse(localStorage.getItem("split_predictions") || "{}"); } catch { return {}; } })())[match.id];
-            if (!pred || pred.seriesA === "" || pred.seriesB === "") return null;
-          }
-          return <img src={mbSettings.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.3, pointerEvents: "none" }} />;
-        } catch { return null; }
-      })()}
+      {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.3, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3">
         <div>
-          <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          <span style={{ color: accent, fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", textShadow: txtSh }}>
             {match.matchTier && (
               <span style={{ color: match.matchTier.color, fontWeight: 800, fontSize: 9, border: `1px solid ${match.matchTier.color}44`, borderRadius: 4, padding: "1px 5px", marginRight: 5 }}>{match.matchTier.label}</span>
             )}
@@ -2214,7 +2222,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
-          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px" }}>
+          <div style={{ color: "#888", fontSize: "12px", fontWeight: 600, marginTop: "2px", textShadow: txtSh }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2226,7 +2234,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none" }}
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", textShadow: txtSh }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
@@ -2342,14 +2350,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team1RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team1}</span>
+            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, textShadow: txtSh }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
           <div className="flex flex-col items-center">
             {scoresRevealed ? (
               <>
-                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
+                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out", textShadow: txtSh }}>
                   {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
                 </span>
                 {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
@@ -2387,7 +2395,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
-            {isBoosted && <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 8, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", borderRadius: 4, padding: "1px 5px", lineHeight: 1.3, marginTop: 1 }}>x2 🔥</span>}
           </div>
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
@@ -2406,7 +2413,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team2RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700 }}>{match.team2}</span>
+            <span style={{ color: "#ccc", fontSize: "12px", fontWeight: 700, textShadow: txtSh }}>{match.team2}</span>
           </span>
         </div>
       </div>
@@ -2424,6 +2431,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
+        </div>
+      )}
+      {isBoosted && !finished && (
+        <div className="flex items-center justify-center pb-2">
+          <span style={{ color: "#f59e0b", fontWeight: 900, fontSize: 11, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 8, padding: "4px 14px", letterSpacing: 0.5 }}>x2 Points 🔥</span>
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
@@ -3127,7 +3139,13 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const [boostTab, setBoostTab] = useState("valo");
   const [showMatchBgPicker, setShowMatchBgPicker] = useState(false);
   const [matchBgPickerItem, setMatchBgPickerItem] = useState(null);
-  const [equippedMatchBg, setEquippedMatchBg] = useState(() => { try { return JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null"); } catch { return null; } });
+  const [equippedMatchBgs, setEquippedMatchBgs] = useState(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem("split_equipped_match_bg") || "null");
+      if (!v) return [];
+      return Array.isArray(v) ? v : [v];
+    } catch { return []; }
+  });
 
   function useBoostItem(itemIndex) {
     setBoostItemIndex(itemIndex);
@@ -3168,14 +3186,19 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   }
 
   function equipMatchBg(item, game, scope) {
-    if (equippedMatchBg && equippedMatchBg.name === item.name) {
-      localStorage.removeItem("split_equipped_match_bg");
-      setEquippedMatchBg(null);
-    } else {
-      const val = { name: item.name, image: item.matchBgImage, game, scope };
-      localStorage.setItem("split_equipped_match_bg", JSON.stringify(val));
-      setEquippedMatchBg(val);
-    }
+    const existing = equippedMatchBgs.filter(b => b.name !== item.name);
+    const val = { name: item.name, image: item.matchBgImage, game, scope };
+    const updated = [...existing, val];
+    localStorage.setItem("split_equipped_match_bg", JSON.stringify(updated));
+    setEquippedMatchBgs(updated);
+    setShowMatchBgPicker(false);
+    setMatchBgPickerItem(null);
+  }
+
+  function unequipMatchBg(name) {
+    const updated = equippedMatchBgs.filter(b => b.name !== name);
+    localStorage.setItem("split_equipped_match_bg", JSON.stringify(updated));
+    setEquippedMatchBgs(updated);
     setShowMatchBgPicker(false);
     setMatchBgPickerItem(null);
   }
@@ -3251,6 +3274,12 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     { emoji: "🌌", name: "BG Galaxy Drift", rarity: "epique", type: "background", preview: "/bg-profile-8.png" },
     { emoji: "🌌", name: "BG Neon Rush", rarity: "rare", type: "background", preview: "/bg-profile-9.png" },
     { emoji: "🌌", name: "BG Urban Glow", rarity: "rare", type: "background", preview: "/bg-profile-10.png" },
+    { emoji: "🎴", name: "Fond Match Néon", rarity: "commun", type: "match_bg", matchBgImage: "/match-bg-1.png" },
+    { emoji: "🎴", name: "Fond Match Fire", rarity: "commun", type: "match_bg", matchBgImage: "/match-bg-2.png" },
+    { emoji: "🎴", name: "Fond Match Galaxy", rarity: "rare", type: "match_bg", matchBgImage: "/match-bg-3.png" },
+    { emoji: "🎴", name: "Fond Match Storm", rarity: "rare", type: "match_bg", matchBgImage: "/match-bg-4.png" },
+    { emoji: "🎴", name: "Fond Match Cyber", rarity: "epique", type: "match_bg", matchBgImage: "/match-bg-5.png" },
+    { emoji: "🎴", name: "Fond Match Aurora", rarity: "epique", type: "match_bg", matchBgImage: "/match-bg-6.png" },
   ];
 
   const ITEM_H = 82, VIS_N = 5, STRIP_N = 55, WIN_I = 40;
@@ -3361,26 +3390,26 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             const claimed = claimedTiers.includes(tier);
             const isMilestone = reward.milestone;
             const chest = getChest(tier);
-            const hasPreview = !!chest.preview;
+            const hasPreview = !!(chest.preview || chest.bannerImage || chest.matchBgImage);
             const rar = getRar(chest);
             const rc = RAR[rar];
             const isChest = isChestItem(chest);
             return (
-              <div key={tier} ref={isCurrent ? currentRef : undefined} style={{ marginBottom: 10 }}>
+              <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
+                marginBottom: 10, borderRadius: 18, overflow: "hidden",
+                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "44" : "#222"}`,
+                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
+              }}>
                 {hasPreview && (
-                  <div style={{ borderRadius: "18px 18px 0 0", overflow: "hidden", height: 70, position: "relative" }}>
-                    <img src={chest.preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
+                  <div style={{ overflow: "hidden", height: 70, position: "relative" }}>
+                    <img src={chest.preview || chest.bannerImage || chest.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
                     {!unlocked && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />}
                   </div>
                 )}
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 14,
                   padding: "20px 18px",
-                  borderRadius: hasPreview ? "0 0 18px 18px" : 18,
                   background: isCurrent ? "rgba(204,247,29,0.08)" : "#121212",
-                  border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "44" : "#222"}`,
-                  borderTop: hasPreview ? "none" : undefined,
-                  opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
                 }}>
                   <div style={{
                     width: 54, height: 54, borderRadius: 14,
@@ -3434,7 +3463,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 const rc = RAR[rar] || RAR.commun;
                 const isEquippedTitle = item.type === "title" && equippedTitle === item.name;
                 const isEquippedBanner = item.type === "banner" && equippedBanner === item.name;
-                const isEquippedMatchBg = item.type === "match_bg" && equippedMatchBg && equippedMatchBg.name === item.name;
+                const isEquippedMatchBg = item.type === "match_bg" && equippedMatchBgs.some(b => b.name === item.name);
                 const isEquipped = isEquippedTitle || isEquippedBanner || isEquippedMatchBg;
                 const canEquip = item.type === "title" || item.type === "banner";
                 const isBoost = item.type === "boost";
@@ -3443,7 +3472,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                     {(item.preview || item.bannerImage || item.matchBgImage) && <img src={item.preview || item.bannerImage || item.matchBgImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
                     <span style={{ fontSize: 28 }}>{item.emoji}</span>
                     {item.type === "title" ? (
-                      <span style={{ color: rc.text, fontSize: 13, fontWeight: 900, textAlign: "center", lineHeight: 1.2, background: rc.bg, padding: "4px 12px", borderRadius: 8, border: `1px solid ${rc.border}40` }}>{item.name}</span>
+                      <span style={{ color: "#fff", fontSize: 13, fontWeight: 900, textAlign: "center", lineHeight: 1.2, background: `linear-gradient(135deg, ${rc.border}cc, ${rc.border}88)`, padding: "5px 14px", borderRadius: 8, border: `1.5px solid ${rc.border}`, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{item.name}</span>
                     ) : (
                       <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>{item.name}</span>
                     )}
@@ -3572,8 +3601,8 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             ))}
           </div>
           <p style={{ color: "#aaa", fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Quels matchs ?</p>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24 }}>
-            {[["all", "Tous les matchs"], ["betted", "Matchs pariés uniquement"]].map(([key, label]) => (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
+            {[["all", "Tous les matchs"], ["betted", "Matchs pariés"], ["others", "Autres matchs"]].map(([key, label]) => (
               <button key={key} onClick={() => setMatchBgPickerItem(prev => ({ ...prev, _scope: key }))} style={{
                 padding: "8px 18px", borderRadius: 10, fontSize: 11, fontWeight: 800, border: "none", cursor: "pointer",
                 background: matchBgPickerItem._scope === key ? "#CCF71D" : "rgba(255,255,255,0.08)",
@@ -3581,8 +3610,11 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
               }}>{label}</button>
             ))}
           </div>
-          {equippedMatchBg && equippedMatchBg.name === matchBgPickerItem.name && (
-            <button onClick={() => { localStorage.removeItem("split_equipped_match_bg"); setEquippedMatchBg(null); setShowMatchBgPicker(false); setMatchBgPickerItem(null); }} style={{
+          {matchBgPickerItem._scope === "others" && (
+            <p style={{ color: "#666", fontSize: 10, fontWeight: 600, marginBottom: 16, textAlign: "center", padding: "0 20px" }}>Les matchs non pariés auront ce fond. Dès que tu paries, le fond passe sur "pariés".</p>
+          )}
+          {equippedMatchBgs.some(b => b.name === matchBgPickerItem.name) && (
+            <button onClick={() => unequipMatchBg(matchBgPickerItem.name)} style={{
               padding: "12px 32px", borderRadius: 12, fontSize: 13, fontWeight: 800, border: "1px solid #555", cursor: "pointer",
               background: "transparent", color: "#aaa", marginBottom: 10,
             }}>Déséquiper</button>
@@ -7724,8 +7756,12 @@ export default function ClutchApp() {
       ];
       localStorage.setItem("split_inventory", JSON.stringify(adminInv));
       const pseudoLow = profile.pseudo.toLowerCase();
-      const bgIdx = pseudoLow === "ggez" ? 1 : 5;
-      localStorage.setItem("split_equipped_match_bg", JSON.stringify({ name: adminInv[12 + (pseudoLow === "ggez" ? 0 : 4)].name, image: `/match-bg-${bgIdx}.png`, game: "all", scope: "all" }));
+      const adminBgs = [
+        { name: "Fond Match Néon", image: "/match-bg-1.png", game: "valo", scope: "all" },
+        { name: "Fond Match Galaxy", image: "/match-bg-3.png", game: "cs2", scope: "all" },
+        { name: "Fond Match Cyber", image: "/match-bg-5.png", game: "rl", scope: "all" },
+      ];
+      localStorage.setItem("split_equipped_match_bg", JSON.stringify(adminBgs));
       localStorage.setItem("split_equipped_title", "GOD Tier");
       localStorage.setItem("split_equipped_banner", "Bannière Speed");
       localStorage.setItem("split_equipped_banner_color", "/banner-5.png");
