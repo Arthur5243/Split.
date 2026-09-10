@@ -2926,7 +2926,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       const container = scrollRef.current;
       const el = currentRef.current;
       const top = el.offsetTop - container.offsetTop - 80;
-      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      container.scrollTo({ top: Math.max(0, top) });
     }
   }, []);
 
@@ -3378,7 +3378,11 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
                     {(item.preview || item.bannerImage) && <img src={item.preview || item.bannerImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
                     <span style={{ fontSize: 28 }}>{item.emoji}</span>
-                    <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>{item.name}</span>
+                    {item.type === "title" ? (
+                      <span style={{ color: rc.text, fontSize: 13, fontWeight: 900, textAlign: "center", lineHeight: 1.2, background: rc.bg, padding: "4px 12px", borderRadius: 8, border: `1px solid ${rc.border}40` }}>{item.name}</span>
+                    ) : (
+                      <span style={{ color: "#eee", fontSize: 12, fontWeight: 800, textAlign: "center", lineHeight: 1.2 }}>{item.name}</span>
+                    )}
                     <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>{rc.label}</span>
                     {canEquip && (
                       <button onClick={() => equipItem(item)} style={{
@@ -3426,7 +3430,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
               }}>{label}</button>
             ))}
           </div>
-          <div style={{ width: "90%", maxWidth: 400, flex: 1 }}>
+          <div style={{ width: "90%", maxWidth: 400, flex: 1, paddingBottom: 24 }}>
             {(() => {
               const matches = getBettedMatches(boostTab);
               if (matches.length === 0) return (
@@ -3440,25 +3444,32 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 const pred = (predictions || {})[m.id];
                 const t1 = m.opponents?.[0]?.opponent?.name || "TBD";
                 const t2 = m.opponents?.[1]?.opponent?.name || "TBD";
+                const img1 = m.opponents?.[0]?.opponent?.image_url;
+                const img2 = m.opponents?.[1]?.opponent?.image_url;
                 return (
-                  <button key={m.id} onClick={() => applyBoostToMatch(m.id)} style={{
-                    width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "14px 16px", marginBottom: 8, borderRadius: 14, border: "1px solid #222",
-                    background: "#141414", cursor: "pointer", transition: "background 0.15s",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#1a1a1a"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#141414"}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t1}</span>
-                      <span style={{ color: "#555", fontSize: 11, fontWeight: 700, flexShrink: 0 }}>vs</span>
-                      <span style={{ color: "#fff", fontSize: 13, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t2}</span>
+                  <div key={m.id} style={{
+                    marginBottom: 10, borderRadius: 16, border: "1px solid #222",
+                    background: "#111", overflow: "hidden",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                        {img1 && <img src={img1} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain", background: "#1a1a1a" }} />}
+                        <span style={{ color: "#fff", fontSize: 14, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t1}</span>
+                      </div>
+                      <span style={{ color: "#555", fontSize: 12, fontWeight: 800, flexShrink: 0, margin: "0 10px" }}>VS</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
+                        <span style={{ color: "#fff", fontSize: 14, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "right" }}>{t2}</span>
+                        {img2 && <img src={img2} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "contain", background: "#1a1a1a" }} />}
+                      </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 10 }}>
-                      {pred && <span style={{ color: "#CCF71D", fontSize: 12, fontWeight: 800 }}>{pred.seriesA} - {pred.seriesB}</span>}
-                      <span style={{ color: "#f59e0b", fontSize: 16 }}>🔥</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 18px 14px" }}>
+                      {pred && <span style={{ color: "#888", fontSize: 10, fontWeight: 700 }}>Ton prono : {pred.seriesA} - {pred.seriesB}</span>}
+                      <button onClick={() => applyBoostToMatch(m.id)} style={{
+                        padding: "7px 18px", borderRadius: 10, fontSize: 11, fontWeight: 800, border: "none", cursor: "pointer",
+                        background: "linear-gradient(135deg, #f59e0b, #ef4444)", color: "#000", marginLeft: "auto",
+                      }}>Utiliser 🔥</button>
                     </div>
-                  </button>
+                  </div>
                 );
               });
             })()}
@@ -3531,26 +3542,33 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
           )}
 
           {chestPhase === "done" && chestResult && (
-            <div style={{ marginTop: 24, textAlign: "center", animation: "resultReveal 0.5s ease" }}>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px" }}>
               {(chestResult.preview || chestResult.bannerImage) && (
-                <div style={{ margin: "0 auto 12px", width: "80%", maxWidth: 280, height: 56, borderRadius: 12, overflow: "hidden", border: `1.5px solid ${RAR[chestResult.rarity].border}` }}>
+                <div style={{ margin: "0 auto 16px", width: "85%", maxWidth: 300, height: 80, borderRadius: 14, overflow: "hidden", border: `2px solid ${RAR[chestResult.rarity].border}`, boxShadow: RAR[chestResult.rarity].glow }}>
                   <img src={chestResult.preview || chestResult.bannerImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
               )}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10 }}>
-                <span style={{ fontSize: 36 }}>{chestResult.emoji}</span>
-                <span style={{ color: RAR[chestResult.rarity].text, fontSize: 20, fontWeight: 900 }}>{chestResult.name}</span>
-              </div>
+              <span style={{ fontSize: 52, marginBottom: 8 }}>{chestResult.emoji}</span>
+              <span style={{ color: RAR[chestResult.rarity].text, fontSize: 24, fontWeight: 900, marginBottom: 8 }}>{chestResult.name}</span>
               <span style={{
                 color: RAR[chestResult.rarity].text, fontSize: 11, fontWeight: 800, letterSpacing: 2,
                 background: RAR[chestResult.rarity].bg, padding: "5px 16px", borderRadius: 8,
-                border: `1.5px solid ${RAR[chestResult.rarity].border}`,
+                border: `1.5px solid ${RAR[chestResult.rarity].border}`, marginBottom: 20,
               }}>{RAR[chestResult.rarity].label}</span>
-              <button onClick={claimChestResult} style={{
-                display: "block", margin: "20px auto 0", padding: "14px 36px", borderRadius: 12,
-                background: "#CCF71D", color: "#000", fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
-                boxShadow: "0 0 20px rgba(204,247,29,0.25)",
-              }}>RÉCUPÉRER</button>
+              {chestResult.desc && <p style={{ color: "#888", fontSize: 12, fontWeight: 600, marginBottom: 16 }}>{chestResult.desc}</p>}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                <button onClick={claimChestResult} style={{
+                  padding: "14px 36px", borderRadius: 12,
+                  background: "#CCF71D", color: "#000", fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
+                  boxShadow: "0 0 20px rgba(204,247,29,0.25)",
+                }}>RÉCUPÉRER</button>
+                {(chestResult.type === "title" || chestResult.type === "banner") && (
+                  <button onClick={() => { equipItem(chestResult); claimChestResult(); }} style={{
+                    padding: "14px 28px", borderRadius: 12,
+                    background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
+                  }}>ÉQUIPER</button>
+                )}
+              </div>
             </div>
           )}
         </div>
