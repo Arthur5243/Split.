@@ -3021,18 +3021,6 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const allTiers = Array.from({ length: 100 }, (_, i) => i + 1);
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
 
-  useEffect(() => {
-    if (tab === "rewards" && currentRef.current && scrollRef.current) {
-      const container = scrollRef.current;
-      const el = currentRef.current;
-      const top = el.offsetTop - container.offsetTop - 80;
-      container.scrollTo({ top: Math.max(0, top) });
-    }
-    if (tab === "inventory" && invScrollRef.current) {
-      invScrollRef.current.scrollTo({ top: 0 });
-    }
-  }, [tab]);
-
   function handleRewardsScroll(e) {
     const y = e.target.scrollTop;
     const dir = y < lastScrollY.current ? "up" : "down";
@@ -3165,6 +3153,18 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const scrollDirTimer = useRef(null);
   const invScrollRef = useRef(null);
   const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    if (tab === "rewards" && currentRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const el = currentRef.current;
+      const top = el.offsetTop - container.offsetTop - 80;
+      container.scrollTo({ top: Math.max(0, top) });
+    }
+    if (tab === "inventory" && invScrollRef.current) {
+      invScrollRef.current.scrollTo({ top: 0 });
+    }
+  }, [tab]);
   const [openingChest, setOpeningChest] = useState(null);
   const [chestPhase, setChestPhase] = useState("idle");
   const [chestResult, setChestResult] = useState(null);
