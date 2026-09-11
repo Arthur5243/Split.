@@ -2239,8 +2239,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = hasBg ? { textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7)" } : {};
-  const txtStW = hasBg ? { textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7)" } : {};
+  const bgSh = "0 1px 8px rgba(0,0,0,1), 0 0 3px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)";
+  const txtSt = hasBg ? { textShadow: bgSh } : {};
+  const txtStW = hasBg ? { textShadow: bgSh } : {};
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
@@ -2254,7 +2255,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             )}
             {match.league} • {match.phase}
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
-              <span style={{ color: "#888", fontWeight: 700 }}> • Playoffs</span>
+              <span style={{ color: hasBg ? "#ccc" : "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
@@ -2368,7 +2369,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
-            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
+            {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5">
             {team1RegionColor && (
@@ -2387,7 +2388,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team1RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
@@ -2398,7 +2399,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
                 </span>
                 {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
-                  <span style={{ color: "#777", fontSize: "9.5px", fontWeight: 700, marginTop: "1px" }}>
+                  <span style={{ color: hasBg ? "#ccc" : "#777", fontSize: "9.5px", fontWeight: 700, marginTop: "1px", ...txtStW }}>
                     {T.yourBet} : {pred.seriesA}-{pred.seriesB}
                   </span>
                 )}
@@ -2426,12 +2427,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             )}
           </div>
         ) : (
-          <span style={{ color: "#555", fontSize: "11px", fontWeight: 700 }}>VS</span>
+          <span style={{ color: hasBg ? "#fff" : "#555", fontSize: "11px", fontWeight: 700, ...txtStW }}>VS</span>
         )}
         <div className="flex items-center gap-2 flex-row-reverse">
           <div className="flex flex-col items-center gap-0.5">
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
-            {!hideOdds && <span style={{ color: "#777", fontSize: "10px", fontWeight: 600 }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
+            {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5 flex-row-reverse">
             {team2RegionColor && (
@@ -2450,22 +2451,22 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 {team2RegionCode}
               </span>
             )}
-            <span style={{ color: "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
           </span>
         </div>
       </div>
 
       {finished ? null : tbd ? (
-        <div className="px-4 pb-3 text-center" style={{ color: "#666", fontSize: "11px" }}>{T.teamsTbc}</div>
+        <div className="px-4 pb-3 text-center" style={{ color: hasBg ? "#bbb" : "#666", fontSize: "11px", ...txtStW }}>{T.teamsTbc}</div>
       ) : (
         <div className="px-4 pb-3 flex items-center justify-center gap-3" style={{ position: "relative" }}>
           <div className="flex flex-col items-center gap-1">
-            <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team1}</span>
+            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team1}</span>
             <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
           </div>
-          <span style={{ color: "#444", fontWeight: 900, fontSize: "18px" }}>–</span>
+          <span style={{ color: hasBg ? "#ccc" : "#444", fontWeight: 900, fontSize: "18px", ...txtStW }}>–</span>
           <div className="flex flex-col items-center gap-1">
-            <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
+            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
           {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
@@ -2473,8 +2474,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {lockedByTime && !finished && !tbd && (
         <div className="px-4 pb-2 flex items-center justify-center gap-1.5">
-          <Lock size={11} color="#666" />
-          <span style={{ color: "#666", fontSize: "10px", fontWeight: 600 }}>{T.betLocked || "Pari verrouillé"}</span>
+          <Lock size={11} color={hasBg ? "#bbb" : "#666"} />
+          <span style={{ color: hasBg ? "#bbb" : "#666", fontSize: "10px", fontWeight: 600, ...txtStW }}>{T.betLocked || "Pari verrouillé"}</span>
         </div>
       )}
       {finished ? (
@@ -6353,9 +6354,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           <ArrowLeft size={18} color="#ccc" />
         </button>
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
-        <button onClick={handlePost} disabled={posting || !canPost} style={{ background: "none", border: "none", cursor: canPost ? "pointer" : "default", padding: 0 }}>
-          <span style={{ color: canPost ? "#CCF71D" : "#444", fontSize: "14px", fontWeight: 800 }}>{posting ? "..." : "Publier"}</span>
-        </button>
+        <div style={{ width: 34 }} />
       </div>
 
       <div className="flex gap-0" style={{ borderBottom: "1px solid #262626" }}>
@@ -6364,6 +6363,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
       </div>
 
       {tab === "write" && (
+        <>
         <div className="flex-1 overflow-y-auto">
           {photoPreview && (
             <div style={{ position: "relative" }}>
@@ -6393,14 +6393,25 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
 
           <div className="flex items-center gap-4 px-4 py-3" style={{ borderTop: "1px solid #1e1e1e" }}>
-            <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: "none" }} />
+            <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
             <button onClick={() => photoRef.current?.click()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Photo</span>
+              <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
             </button>
             <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{content.length}/500</span>
           </div>
         </div>
+        <div style={{ padding: "12px 16px", borderTop: "1px solid #262626", background: "#0a0a0a" }}>
+          <button
+            onClick={handlePost}
+            disabled={posting || !canPost}
+            className="w-full rounded-xl py-3 font-bold"
+            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", fontWeight: 800, transition: "all 0.2s" }}
+          >
+            {posting ? "..." : (T.postPublish || "Publier")}
+          </button>
+        </div>
+        </>
       )}
 
       {tab === "history" && (
@@ -6800,6 +6811,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
+  const [eqBadgeTick, setEqBadgeTick] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
   const [friendsList, setFriendsList] = useState([]);
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -6886,14 +6898,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {profile.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{profile.bio}</p>}
 
         {(() => {
-          const eb = localStorage.getItem("split_equipped_badge") || "";
-          const ebe = localStorage.getItem("split_equipped_badge_emoji") || "";
+          const ebId = localStorage.getItem("split_equipped_badge_id") || "";
           const et = localStorage.getItem("split_equipped_title") || "";
-          if (!eb && !et) return null;
+          const badgeData = ebId ? ACHIEVEMENT_BADGES.find(b => b.id === ebId) : null;
+          if (!badgeData && !et) return null;
           return (
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              {eb && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 12, fontWeight: 800, color: "#EAB308" }}><span style={{ fontSize: 14 }}>{ebe || "🏅"}</span>{eb}</span>}
-              {et && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 800, color: "#c084fc" }}>{et}</span>}
+              {badgeData && (
+                <div className="flex items-center gap-2" style={{ background: `${badgeData.color}15`, border: `1.5px solid ${badgeData.color}40`, borderRadius: 20, padding: "4px 12px 4px 4px" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: `radial-gradient(circle at 30% 30%, ${badgeData.color}30, ${badgeData.color}10)`, border: `1.5px solid ${badgeData.color}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 14 }}>{badgeData.emoji}</span>
+                  </div>
+                  <span style={{ color: badgeData.color, fontSize: 11, fontWeight: 800 }}>{badgeData.name}</span>
+                </div>
+              )}
+              {et && <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 20, padding: "4px 10px", fontSize: 11, fontWeight: 800, color: "#c084fc" }}>{et}</span>}
             </div>
           );
         })()}
@@ -6930,20 +6949,53 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const badgeStats = { exact, bon, parie, rank: myRank, streak: streakData.best };
           const unlocked = ACHIEVEMENT_BADGES.filter(b => b.check(badgeStats));
           const locked = ACHIEVEMENT_BADGES.filter(b => !b.check(badgeStats));
+          const equippedId = localStorage.getItem("split_equipped_badge_id") || "";
+          const handleEquip = (b) => {
+            if (equippedId === b.id) {
+              localStorage.removeItem("split_equipped_badge_id");
+              localStorage.removeItem("split_equipped_badge");
+              localStorage.removeItem("split_equipped_badge_emoji");
+            } else {
+              localStorage.setItem("split_equipped_badge_id", b.id);
+              localStorage.setItem("split_equipped_badge", b.name);
+              localStorage.setItem("split_equipped_badge_emoji", b.emoji);
+            }
+            setEqBadgeTick(t => t + 1);
+          };
           return (
             <div className="mb-5">
               <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Badges ({unlocked.length}/{ACHIEVEMENT_BADGES.length})</p>
-              <div className="flex flex-wrap gap-2">
-                {unlocked.map(b => (
-                  <div key={b.id} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: `${b.color}15`, border: `1px solid ${b.color}40` }}>
-                    <span style={{ fontSize: 14 }}>{b.emoji}</span>
-                    <span style={{ color: b.color, fontSize: 10, fontWeight: 800 }}>{b.name}</span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-3 justify-center">
+                {unlocked.map(b => {
+                  const isEquipped = equippedId === b.id;
+                  return (
+                    <div key={b.id} onClick={() => handleEquip(b)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <div style={{
+                        width: 52, height: 52, borderRadius: "50%",
+                        background: `radial-gradient(circle at 30% 30%, ${b.color}30, ${b.color}10)`,
+                        border: isEquipped ? `2.5px solid ${b.color}` : `2px solid ${b.color}50`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: isEquipped ? `0 0 12px ${b.color}40` : "none",
+                        position: "relative"
+                      }}>
+                        <span style={{ fontSize: 22 }}>{b.emoji}</span>
+                        {isEquipped && <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#CCF71D", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#000", border: "2px solid #0d0d0d" }}>✓</span>}
+                      </div>
+                      <span style={{ color: b.color, fontSize: 8, fontWeight: 800, textAlign: "center", maxWidth: 56, lineHeight: 1.2 }}>{b.name}</span>
+                    </div>
+                  );
+                })}
                 {locked.map(b => (
-                  <div key={b.id} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                    <span style={{ fontSize: 14, filter: "grayscale(1)", opacity: 0.3 }}>{b.emoji}</span>
-                    <span style={{ color: "#444", fontSize: 10, fontWeight: 800 }}>{b.name}</span>
+                  <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: 0.35 }}>
+                    <div style={{
+                      width: 52, height: 52, borderRadius: "50%",
+                      background: "#1a1a1a",
+                      border: "2px solid #333",
+                      display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
+                      <span style={{ fontSize: 22, filter: "grayscale(1)" }}>{b.emoji}</span>
+                    </div>
+                    <span style={{ color: "#555", fontSize: 8, fontWeight: 800, textAlign: "center", maxWidth: 56, lineHeight: 1.2 }}>{b.name}</span>
                   </div>
                 ))}
               </div>
