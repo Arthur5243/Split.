@@ -2080,7 +2080,7 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-xl"
-      style={{ width: "48px", height: "46px", background: "#1a1a1a", color: accent, fontSize: "20px", border: "1px solid #333", opacity: disabled ? 0.7 : 1, cursor: disabled ? "not-allowed" : "text" }}
+      style={{ width: "48px", height: "46px", background: "#1a1a1a", color: accent, fontSize: "20px", border: "1px solid #333", opacity: 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 });
@@ -2112,7 +2112,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-lg"
-      style={{ width: "44px", height: "38px", background: "#1c1c1c", color: "#fff", fontSize: "15px", border: "1px solid #2a2a2a", opacity: disabled ? 0.5 : 1, cursor: disabled ? "not-allowed" : "text" }}
+      style={{ width: "44px", height: "38px", background: "#1c1c1c", color: "#fff", fontSize: "15px", border: "1px solid #2a2a2a", opacity: 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 });
@@ -6520,11 +6520,11 @@ function VoiceMessage({ src }) {
   );
 }
 
-function MessagesScreen({ onClose, T, profile }) {
-  const [tab, setTab] = useState("community");
+function MessagesScreen({ onClose, T, profile, dmTarget }) {
+  const [tab, setTab] = useState(dmTarget ? "dm" : "community");
   const [conversations, setConversations] = useState([]);
   const [communityMessages, setCommunityMessages] = useState([]);
-  const [activeDm, setActiveDm] = useState(null);
+  const [activeDm, setActiveDm] = useState(dmTarget || null);
   const [dmMessages, setDmMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -6533,8 +6533,14 @@ function MessagesScreen({ onClose, T, profile }) {
   const messagesEndRef = useRef(null);
   const [deletingId, setDeletingId] = useState(null);
 
+  const dmTargetHandled = useRef(false);
   useEffect(() => {
-    initCrypto();
+    initCrypto().then(() => {
+      if (dmTarget && !dmTargetHandled.current) {
+        dmTargetHandled.current = true;
+        openDm(dmTarget);
+      }
+    });
     loadConversations();
     loadCommunity();
     return () => { if (communityPollRef.current) clearInterval(communityPollRef.current); };
@@ -6807,7 +6813,7 @@ function MessagesScreen({ onClose, T, profile }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
@@ -7134,7 +7140,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             }} className="flex-1 rounded-xl font-bold py-2.5" style={{ background: ss.iFollow ? "#1a1a1a" : "#CCF71D", color: ss.iFollow ? "#aaa" : "#000", fontSize: "13px", border: ss.iFollow ? "1px solid #333" : "none" }}>
               {ss.iFollow ? (T.friendUnfollow || "Ne plus suivre") : (T.friendFollow || "S'abonner")}
             </button>
-            <button onClick={() => { setShowMessages(true); }} className="flex-1 rounded-xl font-bold py-2.5 flex items-center justify-center gap-2" style={{ background: "#1a1a1a", color: "#ccc", fontSize: "13px", border: "1px solid #333" }}>
+            <button onClick={() => { setDmTarget({ partnerId: su.id, pseudo: su.pseudo }); setShowMessages(true); }} className="flex-1 rounded-xl font-bold py-2.5 flex items-center justify-center gap-2" style={{ background: "#1a1a1a", color: "#ccc", fontSize: "13px", border: "1px solid #333" }}>
               <MessageCircle size={14} /> Discussion
             </button>
           </div>
@@ -8066,6 +8072,7 @@ export default function ClutchApp() {
   const [profileView, setProfileView] = useState(false);
   const [showFriendModal, setShowFriendModal] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [dmTarget, setDmTarget] = useState(null);
 
   function syncProfileToBackend(p, pts, ppg, xp) {
     if (!p?.userId) return;
@@ -9081,9 +9088,9 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} />}
         </div>
-        {showMessages && <MessagesScreen onClose={() => setShowMessages(false)} T={T} profile={profile} />}
+        {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
 
         <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
