@@ -7300,7 +7300,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   }
 
   return (
-    <div style={{ position: "relative", overflow: "hidden" }}>
+    <div style={{ position: "relative", overflow: "hidden", minHeight: "100%" }}>
       {/* Dots */}
       <div className="flex items-center justify-center gap-1.5 pt-3 pb-1">
         {[0, 1].map(i => (
