@@ -6439,9 +6439,9 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
-        <div style={{ padding: "0 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a" }}>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 60, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a" }}>
           <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
-          <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2 mt-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
+          <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
           </button>
