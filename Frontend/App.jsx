@@ -4797,6 +4797,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   const [showHistory, setShowHistory] = useState(false);
   const [historyData, setHistoryData] = useState(null);
   const [historyEvent, setHistoryEvent] = useState(null);
+  const [showAutre, setShowAutre] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
@@ -4931,6 +4932,39 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     </>;
   };
 
+  // --- Autre competitions view ---
+  if (showAutre) {
+    const autreComps = [
+      { name: "VCT Challengers", desc: "Ligues régionales Tier 2", color: "#4FC3F7", regions: ["EMEA", "Pacific", "Americas", "CN"] },
+      { name: "Game Changers", desc: "Circuit compétitif féminin", color: "#E040FB", regions: ["EMEA", "Pacific", "Americas", "BR", "LATAM", "JP", "KR", "CN"] },
+      { name: "VCT Ascension", desc: "Promotion vers la ligue internationale", color: "#FFB74D", regions: ["EMEA", "Pacific", "Americas"] },
+    ];
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>
+          {backBtn(() => setShowAutre(false))}
+          {titleSpan("Autres compétitions", "#C4F000")}
+        </div>
+        <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {autreComps.map((c) => (
+            <div key={c.name} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+              </div>
+              <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {c.regions.map((r) => (
+                  <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // --- History views ---
   if (showHistory) {
     if (historyEvent && historyBracketData) {
@@ -5015,18 +5049,18 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           })}
         </div>
         <div style={{ padding: "0 16px 12px" }}>
-          <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <div className="flex items-center gap-3">
               <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
                 <Trophy size={15} color="#888" />
               </span>
-              <div>
+              <div style={{ textAlign: "left" }}>
                 <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
                 <span className="block" style={{ color: "#666", fontSize: "10px" }}>Challengers · Game Changers · Ascension</span>
               </div>
             </div>
             <ChevronRight size={16} color="#555" />
-          </div>
+          </button>
         </div>
         <div style={{ padding: "4px 16px 20px" }}>
           <button onClick={openHistory} style={{
@@ -5237,6 +5271,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   const [phase, setPhase] = useState(null);
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
+  const [showAutre, setShowAutre] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
@@ -5407,6 +5442,39 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     );
   }
 
+  // --- Autre CS2 competitions view ---
+  if (showAutre) {
+    const autreComps = [
+      { name: "ESL Challenger", desc: "Circuit Tier 2 ESL", color: "#00BFFF", regions: ["Europe", "NA", "Asia", "Oceania"] },
+      { name: "BLAST Rising", desc: "Développement de talents BLAST", color: "#FF6B00", regions: ["Europe", "Americas"] },
+      { name: "CCT", desc: "Champions Cup Tour", color: "#4CAF50", regions: ["Europe", "South America", "Online"] },
+    ];
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>
+          {backBtn(() => setShowAutre(false))}
+          {titleSpan("Autres compétitions", "#FFD700")}
+        </div>
+        <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {autreComps.map((c) => (
+            <div key={c.name} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+              </div>
+              <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {c.regions.map((r) => (
+                  <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // --- Step 1: Choose competition ---
   return (
     <div style={pageStylePlain}>
@@ -5437,18 +5505,18 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         })}
       </div>
       <div style={{ padding: "0 16px 20px" }}>
-        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+        <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
           <div className="flex items-center gap-3">
             <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
               <Trophy size={15} color="#888" />
             </span>
-            <div>
+            <div style={{ textAlign: "left" }}>
               <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
               <span className="block" style={{ color: "#666", fontSize: "10px" }}>ESL Challenger · BLAST Rising · CCT</span>
             </div>
           </div>
           <ChevronRight size={16} color="#555" />
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -6377,8 +6445,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   }
 
   return (
-    <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
+    <div className="fixed z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #262626" }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -6386,8 +6454,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
         <div style={{ width: 34 }} />
       </div>
 
-      <div className="flex gap-0" style={{ borderBottom: "1px solid #262626" }}>
-        <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postWrite || "Écrire"}</button>
+      <div className="flex gap-0 shrink-0" style={{ borderBottom: "1px solid #262626" }}>
+        <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>Post</button>
         <button onClick={() => setTab("history")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postHistory || "Historique"}</button>
       </div>
 
