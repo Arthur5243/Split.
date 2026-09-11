@@ -2073,7 +2073,7 @@ const SeriesScoreInput = React.forwardRef(function SeriesScoreInput({ value, onC
       disabled={disabled}
       inputMode="numeric"
       className="score-input text-center font-black rounded-xl"
-      style={{ width: "48px", height: "46px", background: "#1c1c1c", color: accent, fontSize: "20px", border: "1px solid #2a2a2a", opacity: disabled ? 0.7 : 1, cursor: disabled ? "not-allowed" : "text" }}
+      style={{ width: "48px", height: "46px", background: "#1a1a1a", color: accent, fontSize: "20px", border: "1px solid #333", opacity: disabled ? 0.7 : 1, cursor: disabled ? "not-allowed" : "text" }}
     />
   );
 });
@@ -2232,8 +2232,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       return false;
     } catch { return false; }
   })();
-  const txtSt = {};
-  const txtStW = {};
+  const txtSt = hasBg ? { textShadow: "0 1px 6px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7)" } : {};
+  const txtStW = hasBg ? { textShadow: "0 1px 4px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.7)" } : {};
 
   return (
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
@@ -2461,7 +2461,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <span style={{ color: "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase" }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
-          {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "rgba(245,158,11,0.12)", border: "1.5px solid rgba(245,158,11,0.4)", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
+          {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
@@ -3062,6 +3062,25 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       localStorage.setItem("split_inventory", JSON.stringify(ni));
     }
   }
+
+  const ACHIEVEMENT_BADGES = [
+    { id: "first_bet", emoji: "🎯", name: "Premier Pari", desc: "Faire son premier pari", check: (s) => s.parie >= 1, color: "#4ade80" },
+    { id: "ten_bets", emoji: "🔥", name: "En Feu", desc: "10 paris placés", check: (s) => s.parie >= 10, color: "#f59e0b" },
+    { id: "fifty_bets", emoji: "💎", name: "Diamant", desc: "50 paris placés", check: (s) => s.parie >= 50, color: "#38bdf8" },
+    { id: "hundred_bets", emoji: "👑", name: "Centurion", desc: "100 paris placés", check: (s) => s.parie >= 100, color: "#c084fc" },
+    { id: "first_correct", emoji: "✅", name: "Bonne Lecture", desc: "1ère bonne équipe", check: (s) => s.bon >= 1, color: "#4ade80" },
+    { id: "ten_correct", emoji: "🧠", name: "Analyste", desc: "10 bonnes équipes", check: (s) => s.bon >= 10, color: "#38bdf8" },
+    { id: "first_exact", emoji: "🎪", name: "Sniper", desc: "1er score exact", check: (s) => s.exact >= 1, color: "#f59e0b" },
+    { id: "five_exact", emoji: "🏆", name: "Oracle", desc: "5 scores exacts", check: (s) => s.exact >= 5, color: "#c084fc" },
+    { id: "ten_exact", emoji: "⚡", name: "Prophète", desc: "10 scores exacts", check: (s) => s.exact >= 10, color: "#ef4444" },
+    { id: "half_correct", emoji: "📊", name: "50/50", desc: "50% de bons paris (min 10)", check: (s) => s.parie >= 10 && s.bon / s.parie >= 0.5, color: "#CCF71D" },
+    { id: "seventy_correct", emoji: "🌟", name: "Expert", desc: "70% de bons paris (min 20)", check: (s) => s.parie >= 20 && s.bon / s.parie >= 0.7, color: "#f59e0b" },
+    { id: "top1", emoji: "🥇", name: "Numéro 1", desc: "Top 1 du classement", check: (s) => s.rank === 1, color: "#fbbf24" },
+    { id: "top3", emoji: "🥉", name: "Podium", desc: "Top 3 du classement", check: (s) => s.rank <= 3 && s.rank > 0, color: "#cd7f32" },
+    { id: "top10", emoji: "🏅", name: "Top 10", desc: "Top 10 du classement", check: (s) => s.rank <= 10 && s.rank > 0, color: "#94a3b8" },
+    { id: "streak3", emoji: "🔗", name: "Streak x3", desc: "Série de 3 bons paris", check: (s) => (s.streak || 0) >= 3, color: "#f59e0b" },
+    { id: "streak5", emoji: "💥", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
+  ];
 
   const TIER_REWARDS = {
     1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement", type: "badge", rarity: "commun" },
@@ -6446,29 +6465,30 @@ function PostsFeedScreen({ onClose, T, profile }) {
         {loading && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>...</p>}
         {!loading && posts.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
         {posts.map(p => (
-          <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
+          <div key={p.id} className="mb-4" style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }}>
+            <div className="flex items-center gap-2.5 px-4 py-2.5">
+              <div className="rounded-full overflow-hidden" style={{ width: 32, height: 32, background: "#1e1e1e" }}>
                 {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
               </div>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
-              <span style={{ color: "#444", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
+              <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
-            {p.content && <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>}
+            {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 400, objectFit: "cover" }} />}
             {p.match_data && (
-              <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
-                <span style={{ color: "#888", fontSize: "11px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+              <div className="px-4 py-3" style={{ background: "#111" }}>
+                <span style={{ color: "#aaa", fontSize: "12px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
               </div>
             )}
-            <div className="flex items-center gap-4 mt-2">
-              <button onClick={() => toggleLike(p)} className="flex items-center gap-1">
-                <span style={{ color: p.liked ? "#CCF71D" : "#555", fontSize: "18px" }}>{p.liked ? "♥" : "♡"}</span>
-                <span style={{ color: "#666", fontSize: "11px" }}>{p.likes || 0}</span>
+            <div className="flex items-center gap-4 px-4 py-2.5">
+              <button onClick={() => toggleLike(p)} className="flex items-center gap-1.5" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <span style={{ color: p.liked ? "#CCF71D" : "#888", fontSize: "22px" }}>{p.liked ? "♥" : "♡"}</span>
+                <span style={{ color: "#888", fontSize: "12px", fontWeight: 600 }}>{p.likes || 0}</span>
               </button>
-              <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }}>
-                <Share2 size={14} color="#555" />
+              <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <Share2 size={18} color="#888" />
               </button>
             </div>
+            {p.content && <p className="px-4 pb-3" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
           </div>
         ))}
       </div>
@@ -6907,6 +6927,33 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
 
         {(() => {
+          const streakData = loadStreak();
+          const myRank = leaderboard.findIndex(u => u.id === profile?.userId) + 1;
+          const badgeStats = { exact, bon, parie, rank: myRank, streak: streakData.best };
+          const unlocked = ACHIEVEMENT_BADGES.filter(b => b.check(badgeStats));
+          const locked = ACHIEVEMENT_BADGES.filter(b => !b.check(badgeStats));
+          return (
+            <div className="mb-5">
+              <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Badges ({unlocked.length}/{ACHIEVEMENT_BADGES.length})</p>
+              <div className="flex flex-wrap gap-2">
+                {unlocked.map(b => (
+                  <div key={b.id} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: `${b.color}15`, border: `1px solid ${b.color}40` }}>
+                    <span style={{ fontSize: 14 }}>{b.emoji}</span>
+                    <span style={{ color: b.color, fontSize: 10, fontWeight: 800 }}>{b.name}</span>
+                  </div>
+                ))}
+                {locked.map(b => (
+                  <div key={b.id} className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                    <span style={{ fontSize: 14, filter: "grayscale(1)", opacity: 0.3 }}>{b.emoji}</span>
+                    <span style={{ color: "#444", fontSize: 10, fontWeight: 800 }}>{b.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {(() => {
           const allPts = leaderboard.map(u => u.points);
           const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
@@ -7319,35 +7366,35 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="mt-4 flex flex-col gap-3">
               {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
               {nexusPosts.map(p => (
-                <div key={p.id} className="rounded-xl p-3" style={{ background: "#141414", border: "1px solid #262626" }}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
-                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                <div key={p.id} style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }}>
+                  <div className="flex items-center gap-2.5 px-3 py-2.5">
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                     </button>
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "11px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
-                    <span style={{ color: "#444", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
+                    <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
-                  {p.image && <img src={p.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: 8, maxHeight: 250, objectFit: "cover" }} />}
-                  {p.content && <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}>{p.content}</p>}
+                  {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
                   {p.match_data && (
-                    <div className="mt-2 rounded-lg px-2 py-1.5" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
-                      <span style={{ color: "#888", fontSize: "10px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                    <div className="px-3 py-2" style={{ background: "#111" }}>
+                      <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-4 px-3 py-2">
                     <button onClick={() => {
                       if (!profile?.userId) return;
                       const action = p.liked ? "unlike" : "like";
                       fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
                         .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
-                    }} className="flex items-center gap-1">
-                      <span style={{ color: p.liked ? "#CCF71D" : "#555", fontSize: "16px" }}>{p.liked ? "♥" : "♡"}</span>
-                      <span style={{ color: "#666", fontSize: "10px" }}>{p.likes || 0}</span>
+                    }} className="flex items-center gap-1.5" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <span style={{ color: p.liked ? "#CCF71D" : "#888", fontSize: "20px" }}>{p.liked ? "♥" : "♡"}</span>
+                      <span style={{ color: "#888", fontSize: "11px", fontWeight: 600 }}>{p.likes || 0}</span>
                     </button>
-                    <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }}>
-                      <Share2 size={12} color="#555" />
+                    <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <Share2 size={16} color="#888" />
                     </button>
                   </div>
+                  {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
                 </div>
               ))}
             </div>
