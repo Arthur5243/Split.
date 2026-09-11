@@ -5536,13 +5536,28 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
         })}
       </div>
 
-      <div className="px-4 pb-2">
+      <div className="flex items-center gap-4 px-4 pb-2">
         <button
           onClick={() => setShowBracketPage(true)}
           style={{ background: "none", border: "none", cursor: "pointer", color: "#C4F000", fontSize: 15, fontWeight: 700, padding: 0 }}
         >
           {T.bracketShow}
         </button>
+      </div>
+
+      <div className="px-4 pb-3">
+        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+              <Trophy size={15} color="#888" />
+            </span>
+            <div>
+              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
+              <span className="block" style={{ color: "#666", fontSize: "10px" }}>Challengers · Game Changers · Ascension</span>
+            </div>
+          </div>
+          <ChevronRight size={16} color="#555" />
+        </div>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -5751,13 +5766,28 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
         })}
       </div>
 
-      <div className="px-4 pb-2">
+      <div className="flex items-center gap-4 px-4 pb-2">
         <button
           onClick={() => setShowCs2BracketPage(true)}
           style={{ background: "none", border: "none", cursor: "pointer", color: "#FFD700", fontSize: 15, fontWeight: 700, padding: 0 }}
         >
           {T.cs2BracketShow}
         </button>
+      </div>
+
+      <div className="px-4 pb-3">
+        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+              <Trophy size={15} color="#888" />
+            </span>
+            <div>
+              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
+              <span className="block" style={{ color: "#666", fontSize: "10px" }}>ESL Challenger · BLAST Rising · CCT</span>
+            </div>
+          </div>
+          <ChevronRight size={16} color="#555" />
+        </div>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -5898,6 +5928,21 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
             </button>
           );
         })}
+      </div>
+
+      <div className="px-4 pb-3">
+        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+              <Trophy size={15} color="#888" />
+            </span>
+            <div>
+              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
+              <span className="block" style={{ color: "#666", fontSize: "10px" }}>RLCS Open · Gamers8 · Invitational</span>
+            </div>
+          </div>
+          <ChevronRight size={16} color="#555" />
+        </div>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -6404,7 +6449,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
             onClick={handlePost}
             disabled={posting || !canPost}
             className="w-full rounded-xl py-3 font-bold"
-            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", fontWeight: 800, transition: "all 0.2s", marginBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}
+            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", fontWeight: 800, transition: "all 0.2s", marginBottom: "max(env(safe-area-inset-bottom, 0px), 24px)" }}
           >
             {posting ? "..." : (T.postPublish || "Publier")}
           </button>
