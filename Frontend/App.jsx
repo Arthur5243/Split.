@@ -6445,8 +6445,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   }
 
   return (
-    <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0, height: "100%" }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626", flexShrink: 0 }}>
+    <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #262626", background: "#0a0a0a", zIndex: 2 }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -6454,14 +6454,14 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
         <div style={{ width: 34 }} />
       </div>
 
-      <div className="flex gap-0" style={{ borderBottom: "1px solid #262626", flexShrink: 0 }}>
-        <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>Post</button>
-        <button onClick={() => setTab("history")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postHistory || "Historique"}</button>
+      <div style={{ position: "absolute", top: 50, left: 0, right: 0, display: "flex", borderBottom: "1px solid #262626", background: "#0a0a0a", zIndex: 2 }}>
+        <button onClick={() => setTab("write")} style={{ flex: 1, padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent", background: "none", border: "none", borderBottomStyle: "solid", cursor: "pointer" }}>Post</button>
+        <button onClick={() => setTab("history")} style={{ flex: 1, padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent", background: "none", border: "none", borderBottomStyle: "solid", cursor: "pointer" }}>{T.postHistory || "Historique"}</button>
       </div>
 
       {tab === "write" && (
         <>
-        <div style={{ flex: "1 1 0", minHeight: 0, overflowY: "auto" }}>
+        <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 120, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           <div className="flex items-start gap-3 px-4 py-3">
             <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
               {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
@@ -6482,7 +6482,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           {photoPreview && (
             <div style={{ position: "relative" }}>
               <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />
-              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
                 <X size={14} color="#fff" />
               </button>
             </div>
@@ -6490,7 +6490,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
-        <div style={{ padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
           <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
           <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -6509,7 +6509,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
       )}
 
       {tab === "history" && (
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 0, overflowY: "auto" }}>
           {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
           {history.map(p => (
             <div key={p.id} style={{ borderBottom: "1px solid #1e1e1e" }}>
