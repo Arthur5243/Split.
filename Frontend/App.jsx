@@ -6364,16 +6364,115 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
   );
 }
 
+function MatchCardEditor({ image, onDone, onClose }) {
+  const canvasRef = useRef(null);
+  const [bgColor, setBgColor] = useState("#0a0a0a");
+  const [scale, setScale] = useState(0.85);
+  const [rotation, setRotation] = useState(0);
+  const [textOverlay, setTextOverlay] = useState("");
+  const [textPos, setTextPos] = useState({ x: 50, y: 88 });
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [offsetY, setOffsetY] = useState(0);
+  const dragRef = useRef(null);
+
+  const BG_COLORS = ["#0a0a0a", "#1a1a2e", "#16213e", "#1b1b2f", "#2d132c", "#0f3460", "#1a3c34", "#3a0000", "#1e1e1e", "#CCF71D"];
+  const EMOJIS = ["🔥", "🏆", "💪", "🎯", "⚡", "💀", "🐐", "👑", "😤", "🥶", "💚", "❤️"];
+
+  function handleTouchCard(e) {
+    const t = e.touches[0];
+    dragRef.current = { startY: t.clientY, startOffset: offsetY };
+  }
+  function handleMoveCard(e) {
+    if (!dragRef.current) return;
+    const t = e.touches[0];
+    const dy = t.clientY - dragRef.current.startY;
+    setOffsetY(dragRef.current.startOffset + dy);
+  }
+  function handleEndCard() { dragRef.current = null; }
+
+  async function handleExport() {
+    const el = canvasRef.current;
+    if (!el) return;
+    const h2c = await loadHtml2Canvas();
+    const canvas = await h2c(el, { backgroundColor: bgColor, scale: 2, useCORS: true });
+    const dataUrl = canvas.toDataURL("image/png");
+    onDone(dataUrl);
+  }
+
+  return (
+    <div className="absolute inset-0 z-50" style={{ background: "#000" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5 }}>
+        <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <X size={18} color="#fff" />
+        </button>
+        <button onClick={handleExport} style={{ background: "#CCF71D", border: "none", borderRadius: 20, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#000" }}>
+          Suivant
+        </button>
+      </div>
+
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 16, right: 16, bottom: 180, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}
+        onTouchStart={handleTouchCard} onTouchMove={handleMoveCard} onTouchEnd={handleEndCard}
+      >
+        <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `rotate(${rotation}deg) translateY(${offsetY}px)`, objectFit: "contain", pointerEvents: "none", transition: "width 0.15s" }} />
+        {textOverlay && (
+          <div style={{ position: "absolute", left: `${textPos.x}%`, top: `${textPos.y}%`, transform: "translate(-50%, -50%)", color: "#fff", fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: "80%", wordBreak: "break-word", pointerEvents: "none" }}>
+            {textOverlay}
+          </div>
+        )}
+      </div>
+
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#111", borderTop: "1px solid #222" }}>
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, overflowX: "auto" }}>
+          {BG_COLORS.map(c => (
+            <button key={c} onClick={() => setBgColor(c)} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
+          ))}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <span style={{ color: "#666", fontSize: 10, fontWeight: 700, width: 40 }}>Zoom</span>
+          <input type="range" min="0.4" max="1.2" step="0.05" value={scale} onChange={e => setScale(+e.target.value)} style={{ flex: 1, accentColor: "#CCF71D" }} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <span style={{ color: "#666", fontSize: 10, fontWeight: 700, width: 40 }}>Angle</span>
+          <input type="range" min="-15" max="15" step="1" value={rotation} onChange={e => setRotation(+e.target.value)} style={{ flex: 1, accentColor: "#CCF71D" }} />
+        </div>
+
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <input
+            type="text"
+            value={textOverlay}
+            onChange={e => setTextOverlay(e.target.value.slice(0, 60))}
+            placeholder="Ajouter du texte..."
+            style={{ flex: 1, background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 13, outline: "none" }}
+          />
+          <button onClick={() => setShowEmoji(!showEmoji)} style={{ background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 18 }}>😀</button>
+        </div>
+
+        {showEmoji && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+            {EMOJIS.map(e => (
+              <button key={e} onClick={() => { setTextOverlay(prev => prev + e); setShowEmoji(false); }} style={{ fontSize: 22, background: "none", border: "none", cursor: "pointer", padding: 4 }}>{e}</button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   const [content, setContent] = useState(prefillText || "");
   const [matchData, setMatchData] = useState(null);
   const [posting, setPosting] = useState(false);
   const [history, setHistory] = useState([]);
   const [tab, setTab] = useState("write");
-  const [photoPreview, setPhotoPreview] = useState(matchCardData || null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");
   const photoRef = useRef(null);
+  const [showCardEditor, setShowCardEditor] = useState(!!matchCardData);
+  const [cardEditorImage] = useState(matchCardData || null);
 
   useEffect(() => {
     if (!profile?.userId) return;
@@ -6442,6 +6541,10 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
     fetch(API_BASE + `/api/posts/${postId}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
       .then(() => setHistory(prev => prev.filter(p => p.id !== postId)))
       .catch(() => {});
+  }
+
+  if (showCardEditor && cardEditorImage) {
+    return <MatchCardEditor image={cardEditorImage} onDone={(editedImg) => { setPhotoPreview(editedImg); setShowCardEditor(false); }} onClose={onClose} />;
   }
 
   return (
@@ -6907,7 +7010,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
@@ -6917,9 +7020,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
   const registeredCount = leaderboard.length;
-  const [showCreatePost, setShowCreatePost] = useState(false);
-  const [postPrefill, setPostPrefill] = useState("");
-  const [postMatchCard, setPostMatchCard] = useState(null);
+  const showCreatePost = appCreatePost;
+  const setShowCreatePost = setAppCreatePost;
+  const postPrefill = appPostPrefill;
+  const setPostPrefill = setAppPostPrefill;
+  const postMatchCard = appPostMatchCard;
+  const setPostMatchCard = setAppPostMatchCard;
   const [nexusPosts, setNexusPosts] = useState([]);
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
@@ -6945,15 +7051,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   }, [profile?.userId, profileView]);
 
   useEffect(() => {
-    function onCreatePost(e) {
-      setPostPrefill(e.detail?.text || "");
-      setPostMatchCard(e.detail?.screenshot || null);
-      setCarouselSlide(1);
-      setShowCreatePost(true);
-    }
-    window.addEventListener("split-create-post", onCreatePost);
-    return () => window.removeEventListener("split-create-post", onCreatePost);
-  }, []);
+    if (appCreatePost) setCarouselSlide(1);
+  }, [appCreatePost]);
 
   if (profileView && profile) {
     const { exact, bon, parie, history } = profileStats;
@@ -8128,6 +8227,19 @@ export default function ClutchApp() {
     }
   }, []);
   const [showLimitPopup, setShowLimitPopup] = useState(false);
+  const [appCreatePost, setAppCreatePost] = useState(false);
+  const [appPostPrefill, setAppPostPrefill] = useState("");
+  const [appPostMatchCard, setAppPostMatchCard] = useState(null);
+  useEffect(() => {
+    function onCreatePost(e) {
+      setAppPostPrefill(e.detail?.text || "");
+      setAppPostMatchCard(e.detail?.screenshot || null);
+      setActiveTab("classement");
+      setAppCreatePost(true);
+    }
+    window.addEventListener("split-create-post", onCreatePost);
+    return () => window.removeEventListener("split-create-post", onCreatePost);
+  }, []);
   const [splashDone, setSplashDone] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -9182,7 +9294,7 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
             />
           )}
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
