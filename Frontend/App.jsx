@@ -44,6 +44,7 @@ import {
   Clock,
   MoreHorizontal,
   Trash2,
+  Heart,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -6365,15 +6366,6 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
       {tab === "write" && (
         <>
         <div className="flex-1 overflow-y-auto">
-          {photoPreview && (
-            <div style={{ position: "relative" }}>
-              <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />
-              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
-                <X size={14} color="#fff" />
-              </button>
-            </div>
-          )}
-
           <div className="flex items-start gap-3 px-4 py-3">
             <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
               {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
@@ -6387,26 +6379,32 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
                 className="w-full resize-none mt-1"
                 style={{ background: "transparent", border: "none", color: "#ddd", fontSize: "14px", minHeight: "80px", outline: "none", lineHeight: 1.5 }}
               />
+              <span style={{ color: "#555", fontSize: "10px" }}>{content.length}/500</span>
             </div>
           </div>
 
-          {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
+          {photoPreview && (
+            <div style={{ position: "relative" }}>
+              <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />
+              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+                <X size={14} color="#fff" />
+              </button>
+            </div>
+          )}
 
-          <div className="flex items-center gap-4 px-4 py-3" style={{ borderTop: "1px solid #1e1e1e" }}>
-            <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
-            <button onClick={() => photoRef.current?.click()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
-            </button>
-            <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{content.length}/500</span>
-          </div>
+          {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
-        <div style={{ padding: "12px 16px", borderTop: "1px solid #262626", background: "#0a0a0a" }}>
+        <div style={{ padding: "0 16px 0", background: "#0a0a0a" }}>
+          <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
+          <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
+          </button>
           <button
             onClick={handlePost}
             disabled={posting || !canPost}
             className="w-full rounded-xl py-3 font-bold"
-            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", fontWeight: 800, transition: "all 0.2s" }}
+            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", fontWeight: 800, transition: "all 0.2s", marginBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}
           >
             {posting ? "..." : (T.postPublish || "Publier")}
           </button>
@@ -6488,13 +6486,13 @@ function PostsFeedScreen({ onClose, T, profile }) {
                 <span style={{ color: "#aaa", fontSize: "12px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
               </div>
             )}
-            <div className="flex items-center gap-4 px-4 py-2.5">
-              <button onClick={() => toggleLike(p)} className="flex items-center gap-1.5" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                <span style={{ color: p.liked ? "#CCF71D" : "#888", fontSize: "22px" }}>{p.liked ? "♥" : "♡"}</span>
-                <span style={{ color: "#888", fontSize: "12px", fontWeight: 600 }}>{p.likes || 0}</span>
+            <div className="flex items-center gap-5 px-4 py-2.5">
+              <button onClick={() => toggleLike(p)} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <Heart size={22} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
+                <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "13px", fontWeight: 700 }}>{p.likes || 0}</span>
               </button>
               <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                <Share2 size={18} color="#888" />
+                <Share2 size={20} color="#888" />
               </button>
             </div>
             {p.content && <p className="px-4 pb-3" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
@@ -6790,7 +6788,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
       )}
 
       {(tab === "community" || activeDm) && (
-        <div className="px-3 flex gap-2 items-center shrink-0" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 6, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 4px)" }}>
+        <div className="px-3 flex gap-2 items-center shrink-0" style={{ borderTop: "1px solid #1a1a1a", background: "#0a0a0a", paddingTop: 8, paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value.slice(0, 500))}
@@ -7436,18 +7434,18 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-4 px-3 py-2">
+                  <div className="flex items-center gap-5 px-3 py-2">
                     <button onClick={() => {
                       if (!profile?.userId) return;
                       const action = p.liked ? "unlike" : "like";
                       fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
                         .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
-                    }} className="flex items-center gap-1.5" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                      <span style={{ color: p.liked ? "#CCF71D" : "#888", fontSize: "20px" }}>{p.liked ? "♥" : "♡"}</span>
-                      <span style={{ color: "#888", fontSize: "11px", fontWeight: 600 }}>{p.likes || 0}</span>
+                    }} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      <Heart size={20} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
+                      <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "12px", fontWeight: 700 }}>{p.likes || 0}</span>
                     </button>
                     <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                      <Share2 size={16} color="#888" />
+                      <Share2 size={18} color="#888" />
                     </button>
                   </div>
                   {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
