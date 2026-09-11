@@ -43,6 +43,7 @@ import {
   ArrowUp,
   Clock,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -902,6 +903,12 @@ async function captureCardAsBlob(el) {
   const h2c = await loadHtml2Canvas();
   const canvas = await h2c(el, { backgroundColor: "#141414", scale: 2, useCORS: true });
   return new Promise(r => canvas.toBlob(r, "image/png"));
+}
+
+async function captureCardAsDataUrl(el) {
+  const h2c = await loadHtml2Canvas();
+  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 2, useCORS: true });
+  return canvas.toDataURL("image/png");
 }
 
 function classifyRegion(text) {
@@ -2481,7 +2488,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const dataUrl = URL.createObjectURL(blob); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const dataUrl = await captureCardAsDataUrl(cardRef.current); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} ${match.score1 ?? ""}-${match.score2 ?? ""} ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const file = new File([blob], "split-match.png", { type: "image/png" }); if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); } else { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "split-match.png"; a.click(); } } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
@@ -2615,7 +2622,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const dataUrl = URL.createObjectURL(blob); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const dataUrl = await captureCardAsDataUrl(cardRef.current); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: dataUrl } })); } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); try { const blob = await captureCardAsBlob(cardRef.current); const file = new File([blob], "split-match.png", { type: "image/png" }); if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); } else { const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "split-match.png"; a.click(); } } catch {} }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
@@ -3017,6 +3024,25 @@ function QuestModal({ quests, onClose, onClaim, T }) {
   );
 }
 
+const ACHIEVEMENT_BADGES = [
+  { id: "first_bet", emoji: "\u{1F3AF}", name: "Premier Pari", desc: "Faire son premier pari", check: (s) => s.parie >= 1, color: "#4ade80" },
+  { id: "ten_bets", emoji: "\u{1F525}", name: "En Feu", desc: "10 paris placés", check: (s) => s.parie >= 10, color: "#f59e0b" },
+  { id: "fifty_bets", emoji: "\u{1F48E}", name: "Diamant", desc: "50 paris placés", check: (s) => s.parie >= 50, color: "#38bdf8" },
+  { id: "hundred_bets", emoji: "\u{1F451}", name: "Centurion", desc: "100 paris placés", check: (s) => s.parie >= 100, color: "#c084fc" },
+  { id: "first_correct", emoji: "✅", name: "Bonne Lecture", desc: "1ère bonne équipe", check: (s) => s.bon >= 1, color: "#4ade80" },
+  { id: "ten_correct", emoji: "\u{1F9E0}", name: "Analyste", desc: "10 bonnes équipes", check: (s) => s.bon >= 10, color: "#38bdf8" },
+  { id: "first_exact", emoji: "\u{1F3AA}", name: "Sniper", desc: "1er score exact", check: (s) => s.exact >= 1, color: "#f59e0b" },
+  { id: "five_exact", emoji: "\u{1F3C6}", name: "Oracle", desc: "5 scores exacts", check: (s) => s.exact >= 5, color: "#c084fc" },
+  { id: "ten_exact", emoji: "⚡", name: "Prophète", desc: "10 scores exacts", check: (s) => s.exact >= 10, color: "#ef4444" },
+  { id: "half_correct", emoji: "\u{1F4CA}", name: "50/50", desc: "50% de bons paris (min 10)", check: (s) => s.parie >= 10 && s.bon / s.parie >= 0.5, color: "#CCF71D" },
+  { id: "seventy_correct", emoji: "\u{1F31F}", name: "Expert", desc: "70% de bons paris (min 20)", check: (s) => s.parie >= 20 && s.bon / s.parie >= 0.7, color: "#f59e0b" },
+  { id: "top1", emoji: "\u{1F947}", name: "Numéro 1", desc: "Top 1 du classement", check: (s) => s.rank === 1, color: "#fbbf24" },
+  { id: "top3", emoji: "\u{1F949}", name: "Podium", desc: "Top 3 du classement", check: (s) => s.rank <= 3 && s.rank > 0, color: "#cd7f32" },
+  { id: "top10", emoji: "\u{1F3C5}", name: "Top 10", desc: "Top 10 du classement", check: (s) => s.rank <= 10 && s.rank > 0, color: "#94a3b8" },
+  { id: "streak3", emoji: "\u{1F517}", name: "Streak x3", desc: "Série de 3 bons paris", check: (s) => (s.streak || 0) >= 3, color: "#f59e0b" },
+  { id: "streak5", emoji: "\u{1F4A5}", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
+];
+
 function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
   const tierInfo = getTierFromXp(userXp || 0);
   const currentTier = tierInfo.tier;
@@ -3062,25 +3088,6 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       localStorage.setItem("split_inventory", JSON.stringify(ni));
     }
   }
-
-  const ACHIEVEMENT_BADGES = [
-    { id: "first_bet", emoji: "🎯", name: "Premier Pari", desc: "Faire son premier pari", check: (s) => s.parie >= 1, color: "#4ade80" },
-    { id: "ten_bets", emoji: "🔥", name: "En Feu", desc: "10 paris placés", check: (s) => s.parie >= 10, color: "#f59e0b" },
-    { id: "fifty_bets", emoji: "💎", name: "Diamant", desc: "50 paris placés", check: (s) => s.parie >= 50, color: "#38bdf8" },
-    { id: "hundred_bets", emoji: "👑", name: "Centurion", desc: "100 paris placés", check: (s) => s.parie >= 100, color: "#c084fc" },
-    { id: "first_correct", emoji: "✅", name: "Bonne Lecture", desc: "1ère bonne équipe", check: (s) => s.bon >= 1, color: "#4ade80" },
-    { id: "ten_correct", emoji: "🧠", name: "Analyste", desc: "10 bonnes équipes", check: (s) => s.bon >= 10, color: "#38bdf8" },
-    { id: "first_exact", emoji: "🎪", name: "Sniper", desc: "1er score exact", check: (s) => s.exact >= 1, color: "#f59e0b" },
-    { id: "five_exact", emoji: "🏆", name: "Oracle", desc: "5 scores exacts", check: (s) => s.exact >= 5, color: "#c084fc" },
-    { id: "ten_exact", emoji: "⚡", name: "Prophète", desc: "10 scores exacts", check: (s) => s.exact >= 10, color: "#ef4444" },
-    { id: "half_correct", emoji: "📊", name: "50/50", desc: "50% de bons paris (min 10)", check: (s) => s.parie >= 10 && s.bon / s.parie >= 0.5, color: "#CCF71D" },
-    { id: "seventy_correct", emoji: "🌟", name: "Expert", desc: "70% de bons paris (min 20)", check: (s) => s.parie >= 20 && s.bon / s.parie >= 0.7, color: "#f59e0b" },
-    { id: "top1", emoji: "🥇", name: "Numéro 1", desc: "Top 1 du classement", check: (s) => s.rank === 1, color: "#fbbf24" },
-    { id: "top3", emoji: "🥉", name: "Podium", desc: "Top 3 du classement", check: (s) => s.rank <= 3 && s.rank > 0, color: "#cd7f32" },
-    { id: "top10", emoji: "🏅", name: "Top 10", desc: "Top 10 du classement", check: (s) => s.rank <= 10 && s.rank > 0, color: "#94a3b8" },
-    { id: "streak3", emoji: "🔗", name: "Streak x3", desc: "Série de 3 bons paris", check: (s) => (s.streak || 0) >= 3, color: "#f59e0b" },
-    { id: "streak5", emoji: "💥", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
-  ];
 
   const TIER_REWARDS = {
     1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement", type: "badge", rarity: "commun" },
@@ -6265,7 +6272,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   const [posting, setPosting] = useState(false);
   const [history, setHistory] = useState([]);
   const [tab, setTab] = useState("write");
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(matchCardData || null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");
   const photoRef = useRef(null);
@@ -6332,6 +6339,13 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
   const canPost = content.trim() || matchData || photoPreview;
 
+  function handleDelete(postId) {
+    if (!profile?.userId) return;
+    fetch(API_BASE + `/api/posts/${postId}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+      .then(() => setHistory(prev => prev.filter(p => p.id !== postId)))
+      .catch(() => {});
+  }
+
   return (
     <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626" }}>
@@ -6339,7 +6353,9 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           <ArrowLeft size={18} color="#ccc" />
         </button>
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
-        <div style={{ width: 34 }} />
+        <button onClick={handlePost} disabled={posting || !canPost} style={{ background: "none", border: "none", cursor: canPost ? "pointer" : "default", padding: 0 }}>
+          <span style={{ color: canPost ? "#CCF71D" : "#444", fontSize: "14px", fontWeight: 800 }}>{posting ? "..." : "Publier"}</span>
+        </button>
       </div>
 
       <div className="flex gap-0" style={{ borderBottom: "1px solid #262626" }}>
@@ -6348,10 +6364,19 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
       </div>
 
       {tab === "write" && (
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="rounded-full overflow-hidden shrink-0" style={{ width: 40, height: 40, background: "#1e1e1e" }}>
-              {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" style={{ margin: "11px" }} />}
+        <div className="flex-1 overflow-y-auto">
+          {photoPreview && (
+            <div style={{ position: "relative" }}>
+              <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />
+              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
+                <X size={14} color="#fff" />
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-start gap-3 px-4 py-3">
+            <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
+              {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
             </div>
             <div className="flex-1">
               <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{profile?.pseudo || "Toi"}</span>
@@ -6365,63 +6390,36 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
             </div>
           </div>
 
-          {photoPreview && (
-            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden" }}>
-              <img src={photoPreview} alt="" style={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 12 }} />
-              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
-                <X size={14} color="#fff" />
-              </button>
-            </div>
-          )}
+          {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
 
-          {matchCardData && (
-            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden" }}>
-              <img src={matchCardData} alt="" style={{ width: "100%", borderRadius: 12 }} />
-              <button onClick={() => { setPhotoPreview(null); setPhotoFile(null); }} className="absolute" style={{ top: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>
-                <X size={14} color="#fff" />
-              </button>
-            </div>
-          )}
-
-          {photoError && <p style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
-
-          <div style={{ borderTop: "1px solid #1e1e1e", paddingTop: 12, marginBottom: 12 }}>
+          <div className="flex items-center gap-4 px-4 py-3" style={{ borderTop: "1px solid #1e1e1e" }}>
             <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: "none" }} />
             <button onClick={() => photoRef.current?.click()} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Photo</span>
             </button>
-            <p style={{ color: "#444", fontSize: "9px", marginTop: 4 }}>Max 5 Mo · Pas de contenu publicitaire ou inapproprié</p>
+            <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{content.length}/500</span>
           </div>
-
-          <p style={{ color: "#555", fontSize: "10px", textAlign: "right" }}>{content.length}/500</p>
-
-          <button
-            onClick={handlePost}
-            disabled={posting || !canPost}
-            className="w-full rounded-xl py-3 mt-3 font-bold"
-            style={{ background: canPost ? "#CCF71D" : "#222", color: canPost ? "#000" : "#555", fontSize: "14px", transition: "all 0.2s" }}
-          >
-            {posting ? "..." : (T.postPublish || "Publier")}
-          </button>
         </div>
       )}
 
       {tab === "history" && (
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto">
           {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
           {history.map(p => (
-            <div key={p.id} className="rounded-xl p-3 mb-3" style={{ background: "#141414", border: "1px solid #262626" }}>
-              {p.image && <img src={p.image} alt="" style={{ width: "100%", borderRadius: 8, marginBottom: 8, maxHeight: 250, objectFit: "cover" }} />}
-              <p style={{ color: "#fff", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>
+            <div key={p.id} style={{ borderBottom: "1px solid #1e1e1e" }}>
+              {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 300, objectFit: "cover" }} />}
+              {p.content && <p className="px-4 py-2" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>}
               {p.match_data && (
-                <div className="mt-2 rounded-lg px-3 py-2" style={{ background: "#0d0d0d", border: "1px solid #222" }}>
-                  <span style={{ color: "#888", fontSize: "11px" }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                <div className="px-4 py-1.5" style={{ background: "#111" }}>
+                  <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
                 </div>
               )}
-              <div className="flex items-center justify-between mt-2">
-                <span style={{ color: "#444", fontSize: "10px" }}>{new Date(p.created_at).toLocaleDateString()}</span>
-                <span style={{ color: "#666", fontSize: "10px" }}>{p.likes || 0} likes</span>
+              <div className="flex items-center justify-between px-4 py-2">
+                <span style={{ color: "#555", fontSize: "10px" }}>{new Date(p.created_at).toLocaleDateString()} · {p.likes || 0} likes</span>
+                <button onClick={() => handleDelete(p.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
+                  <Trash2 size={14} color="#ef4444" />
+                </button>
               </div>
             </div>
           ))}
