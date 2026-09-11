@@ -5014,6 +5014,20 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
             );
           })}
         </div>
+        <div style={{ padding: "0 16px 12px" }}>
+          <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+                <Trophy size={15} color="#888" />
+              </span>
+              <div>
+                <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
+                <span className="block" style={{ color: "#666", fontSize: "10px" }}>Challengers · Game Changers · Ascension</span>
+              </div>
+            </div>
+            <ChevronRight size={16} color="#555" />
+          </div>
+        </div>
         <div style={{ padding: "4px 16px 20px" }}>
           <button onClick={openHistory} style={{
             width: "100%", background: "#111", border: "1px solid rgba(255,255,255,0.06)",
@@ -5422,6 +5436,20 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           );
         })}
       </div>
+      <div style={{ padding: "0 16px 20px" }}>
+        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+              <Trophy size={15} color="#888" />
+            </span>
+            <div>
+              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
+              <span className="block" style={{ color: "#666", fontSize: "10px" }}>ESL Challenger · BLAST Rising · CCT</span>
+            </div>
+          </div>
+          <ChevronRight size={16} color="#555" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -5543,21 +5571,6 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
         >
           {T.bracketShow}
         </button>
-      </div>
-
-      <div className="px-4 pb-3">
-        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
-              <Trophy size={15} color="#888" />
-            </span>
-            <div>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-              <span className="block" style={{ color: "#666", fontSize: "10px" }}>Challengers · Game Changers · Ascension</span>
-            </div>
-          </div>
-          <ChevronRight size={16} color="#555" />
-        </div>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -5775,21 +5788,6 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
         </button>
       </div>
 
-      <div className="px-4 pb-3">
-        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
-              <Trophy size={15} color="#888" />
-            </span>
-            <div>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-              <span className="block" style={{ color: "#666", fontSize: "10px" }}>ESL Challenger · BLAST Rising · CCT</span>
-            </div>
-          </div>
-          <ChevronRight size={16} color="#555" />
-        </div>
-      </div>
-
       <div className="px-4 pb-6 relative">
         {combined.map((m) => {
           const showDay = m.day !== lastDay;
@@ -5928,21 +5926,6 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
             </button>
           );
         })}
-      </div>
-
-      <div className="px-4 pb-3">
-        <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: "#141414", border: "1px solid #262626" }}>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
-              <Trophy size={15} color="#888" />
-            </span>
-            <div>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-              <span className="block" style={{ color: "#666", fontSize: "10px" }}>RLCS Open · Gamers8 · Invitational</span>
-            </div>
-          </div>
-          <ChevronRight size={16} color="#555" />
-        </div>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -6439,7 +6422,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
-        <div style={{ marginTop: "auto", padding: "8px 16px 0", background: "#0a0a0a", borderTop: "1px solid #1a1a1a" }}>
+        <div style={{ padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
           <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
           <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
