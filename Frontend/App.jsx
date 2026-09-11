@@ -6445,8 +6445,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   }
 
   return (
-    <div className="fixed z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0 }}>
-      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid #262626" }}>
+    <div className="absolute z-50 flex flex-col" style={{ background: "#0a0a0a", top: 0, left: 0, right: 0, bottom: 0, height: "100%" }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #262626", flexShrink: 0 }}>
         <button onClick={onClose} className="rounded-full p-1.5" style={{ background: "#181818" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
@@ -6454,14 +6454,14 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
         <div style={{ width: 34 }} />
       </div>
 
-      <div className="flex gap-0 shrink-0" style={{ borderBottom: "1px solid #262626" }}>
+      <div className="flex gap-0" style={{ borderBottom: "1px solid #262626", flexShrink: 0 }}>
         <button onClick={() => setTab("write")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent" }}>Post</button>
         <button onClick={() => setTab("history")} className="flex-1 py-2.5 text-center" style={{ fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent" }}>{T.postHistory || "Historique"}</button>
       </div>
 
       {tab === "write" && (
         <>
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex: "1 1 0", minHeight: 0, overflowY: "auto" }}>
           <div className="flex items-start gap-3 px-4 py-3">
             <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
               {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
