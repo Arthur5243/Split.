@@ -6814,21 +6814,25 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   );
 }
 
-function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
-  const [content, setContent] = useState("");
+function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, initialDraft, onContentChange }) {
+  const [content, setContent] = useState(initialDraft?.content || "");
   const [matchData, setMatchData] = useState(null);
   const [posting, setPosting] = useState(false);
   const [history, setHistory] = useState([]);
   const [tab, setTab] = useState("write");
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(initialDraft?.image || null);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoError, setPhotoError] = useState("");
   const photoRef = useRef(null);
-  const isMatchObj = matchCardData && typeof matchCardData === "object";
-  const isImageStr = matchCardData && typeof matchCardData === "string";
-  const [showCardEditor, setShowCardEditor] = useState(!!matchCardData);
+  const isMatchObj = !initialDraft && matchCardData && typeof matchCardData === "object";
+  const isImageStr = !initialDraft && matchCardData && typeof matchCardData === "string";
+  const [showCardEditor, setShowCardEditor] = useState(!initialDraft && !!matchCardData);
   const [cardEditorImage, setCardEditorImage] = useState(isImageStr ? matchCardData : null);
   const [cardMatch, setCardMatch] = useState(isMatchObj ? matchCardData : null);
+
+  useEffect(() => {
+    if (onContentChange) onContentChange({ content, image: photoPreview });
+  }, [content, photoPreview]);
 
   useEffect(() => {
     if (!profile?.userId) return;
@@ -8238,12 +8242,12 @@ function CalendarModal({ onClose, T, lang }) {
   const todayISO = getTodayISO();
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
+      <div onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO); // "done" | "live" | "soon"
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
@@ -8399,12 +8403,12 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+      <div onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1 }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO);
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
@@ -8587,6 +8591,13 @@ export default function ClutchApp() {
   const [appCreatePost, setAppCreatePost] = useState(false);
   const [appPostPrefill, setAppPostPrefill] = useState("");
   const [appPostMatchCard, setAppPostMatchCard] = useState(null);
+  const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
+  const [drafts, setDrafts] = useState(() => { try { return JSON.parse(localStorage.getItem("split_drafts") || "[]"); } catch { return []; } });
+  function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); localStorage.setItem("split_drafts", JSON.stringify(limited)); }
+  const postContentRef = useRef({ content: "", image: null });
+  const [appDraftInit, setAppDraftInit] = useState(null);
+  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
   useEffect(() => {
     function onCreatePost(e) {
       setAppPostPrefill(e.detail?.text || "");
@@ -9689,7 +9700,19 @@ export default function ClutchApp() {
 
         {appCreatePost && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <CreatePostScreen onClose={() => { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} />
+            <CreatePostScreen onClose={() => { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} />
+          </div>
+        )}
+
+        {showDraftPrompt && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => { setShowDraftPrompt(false); setPendingTabSwitch(null); }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 300 }}>
+              <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Enregistrer comme brouillon ?</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button onClick={() => { const d = postContentRef.current; if (d.content || d.image) { saveDrafts([{ id: Date.now(), content: d.content, image: d.image, date: new Date().toISOString() }, ...drafts]); } setShowDraftPrompt(false); doTabSwitch(pendingTabSwitch); setPendingTabSwitch(null); }} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Oui, sauvegarder</button>
+                <button onClick={() => { setShowDraftPrompt(false); doTabSwitch(pendingTabSwitch); setPendingTabSwitch(null); }} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non, supprimer</button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -9699,10 +9722,8 @@ export default function ClutchApp() {
             const labelColor = active ? "#fff" : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => {
-                setShowBracketPage(false); setShowCs2BracketPage(false);
-                setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false);
-                setProfileView(false);
-                setActiveTab(item.key);
+                if (appCreatePost) { setPendingTabSwitch(item.key); setShowDraftPrompt(true); return; }
+                doTabSwitch(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {item.img ? (
