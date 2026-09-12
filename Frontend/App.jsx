@@ -6668,7 +6668,9 @@ function MatchCardEditor({ image, cardHtml, onDone, onClose, visible = true }) {
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
       >
         {processedHtml ? (
-          <div dangerouslySetInnerHTML={{ __html: processedHtml }} style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", pointerEvents: "none" }} />
+          <div style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+            <div dangerouslySetInnerHTML={{ __html: processedHtml }} style={{ transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg) scale(${scale})`, transformOrigin: "center center", pointerEvents: "none", flexShrink: 0 }} />
+          </div>
         ) : image ? (
           <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", pointerEvents: "none" }} />
         ) : null}
