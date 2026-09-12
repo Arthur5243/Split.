@@ -6677,25 +6677,9 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             onTouchEnd={editingTextId !== tl.id ? handleTextLayerTouchEnd : undefined}
             onClick={(e) => { e.stopPropagation(); if (editingTextId === tl.id) return; if (!textDraggedRef.current) { setEditingTextId(tl.id); setSelectedTextId(tl.id); setShowEmojiPicker(false); setTimeout(() => textInputRef.current?.focus(), 50); } textDraggedRef.current = false; }}
           >
-            {editingTextId === tl.id ? (
-              <div style={{ position: "relative" }}>
-                <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === tl.id ? { ...t, text: e.target.value.slice(0, 80) } : t))}
-                  onBlur={finishTextEdit}
-                  onClick={e => e.stopPropagation()}
-                  style={{ background: tl.hasBg ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, padding: "8px 14px", color: tl.color, fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none", width: "auto", textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", caretColor: "#CCF71D" }}
-                  placeholder="Texte..."
-                />
-                <div style={{ display: "flex", gap: 3, justifyContent: "center", marginTop: 6 }}>
-                  {TEXT_COLORS.map(c => (
-                    <button key={c} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.stopPropagation(); setTextLayers(prev => prev.map(t => t.id === tl.id ? { ...t, color: c } : t)); }} style={{ width: 20, height: 20, borderRadius: 10, background: c, border: tl.color === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
-                  ))}
-                </div>
-              </div>
-            ) : tl.text ? (
-              <div style={{ color: tl.color, fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: "22ch", overflowWrap: "break-word", wordWrap: "break-word", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : "none", padding: tl.hasBg ? "4px 10px" : 0, borderRadius: tl.hasBg ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none" }}>
-                {tl.text}
-              </div>
-            ) : null}
+            <div style={{ color: tl.text ? tl.color : "rgba(255,255,255,0.3)", fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: "22ch", overflowWrap: "break-word", wordWrap: "break-word", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : (editingTextId === tl.id ? "rgba(0,0,0,0.3)" : "none"), padding: tl.hasBg || editingTextId === tl.id ? "4px 10px" : 0, borderRadius: tl.hasBg || editingTextId === tl.id ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none", minWidth: editingTextId === tl.id ? 80 : undefined }}>
+              {tl.text || "Texte..."}
+            </div>
           </div>
         ))}
 
@@ -6720,6 +6704,25 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </div>
       )}
 
+      {editingTextId && (() => {
+        const tl = textLayers.find(t => t.id === editingTextId);
+        if (!tl) return null;
+        return (
+          <div style={{ position: "absolute", bottom: 56, left: 0, right: 0, background: "#111", borderTop: "1px solid #222", padding: "10px 16px", zIndex: 5 }}>
+            <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === editingTextId ? { ...t, text: e.target.value.slice(0, 80) } : t))}
+              onBlur={finishTextEdit}
+              autoFocus
+              style={{ width: "100%", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, padding: "10px 14px", color: tl.color, fontSize: 16, fontWeight: 800, textAlign: "center", outline: "none", textShadow: tl.hasBg ? "none" : "0 1px 4px rgba(0,0,0,0.8)", caretColor: "#CCF71D", marginBottom: 8 }}
+              placeholder="Texte..."
+            />
+            <div style={{ display: "flex", gap: 4, justifyContent: "center" }}>
+              {TEXT_COLORS.map(c => (
+                <button key={c} onMouseDown={e => e.preventDefault()} onClick={(e) => { e.stopPropagation(); setTextLayers(prev => prev.map(t => t.id === editingTextId ? { ...t, color: c } : t)); }} style={{ width: 22, height: 22, borderRadius: 11, background: c, border: tl.color === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)", background: "#111", borderTop: "1px solid #222" }}>
         <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
           {BG_COLORS.map(c => (
