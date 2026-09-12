@@ -910,7 +910,7 @@ function hideForCapture(el) {
 async function captureCardAsBlob(el) {
   const restore = hideForCapture(el);
   const h2c = await loadHtml2Canvas();
-  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 2, useCORS: true });
+  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 3, useCORS: true });
   restore();
   return new Promise(r => canvas.toBlob(r, "image/png"));
 }
@@ -918,7 +918,7 @@ async function captureCardAsBlob(el) {
 async function captureCardAsDataUrl(el) {
   const restore = hideForCapture(el);
   const h2c = await loadHtml2Canvas();
-  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 2, useCORS: true });
+  const canvas = await h2c(el, { backgroundColor: "#141414", scale: 3, useCORS: true });
   restore();
   return canvas.toDataURL("image/png");
 }
@@ -2514,7 +2514,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); setScoresRevealed(true); setLiveRevealed(true); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const html = cardRef.current?.outerHTML || ""; window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: "", cardHtml: html } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); setScoresRevealed(true); setLiveRevealed(true); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const img = await captureCardAsDataUrl(cardRef.current); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: "", screenshot: img } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={async (e) => {
@@ -2658,7 +2658,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 <>
                   <div onClick={() => setShowSharePicker(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                   <div style={{ position: "absolute", bottom: "calc(100% + 8px)", left: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, padding: "10px 14px", minWidth: 200, boxShadow: "0 4px 20px rgba(0,0,0,0.5)", display: "flex", flexDirection: "column", gap: 8 }}>
-                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); setScoresRevealed(true); setLiveRevealed(true); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const html = cardRef.current?.outerHTML || ""; window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, cardHtml: html } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                    <button onClick={async (e) => { e.stopPropagation(); setShowSharePicker(false); setScoresRevealed(true); setLiveRevealed(true); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const img = await captureCardAsDataUrl(cardRef.current); window.dispatchEvent(new CustomEvent("split-create-post", { detail: { text: `${match.team1Name || match.team1} vs ${match.team2Name || match.team2} | ${match.league || ""}`, screenshot: img } })); }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Edit3 size={14} color="#CCF71D" /> <span style={{ color: "#CCF71D" }}>Créer un post</span>
                     </button>
                     <button onClick={async (e) => {
@@ -6413,14 +6413,7 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
   );
 }
 
-function MatchCardEditor({ image, cardHtml, onDone, onClose, visible = true }) {
-  const processedHtml = useMemo(() => {
-    if (!cardHtml) return null;
-    const d = document.createElement("div");
-    d.innerHTML = cardHtml;
-    d.querySelectorAll("[data-capture-hide]").forEach(el => el.remove());
-    return d.innerHTML;
-  }, [cardHtml]);
+function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   const canvasRef = useRef(null);
   const [bgColor, setBgColor] = useState("#0a0a0a");
   const [scale, setScale] = useState(0.85);
@@ -6667,9 +6660,7 @@ function MatchCardEditor({ image, cardHtml, onDone, onClose, visible = true }) {
         onMouseDown={handleMouseDown}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
       >
-        {processedHtml ? (
-          <div dangerouslySetInnerHTML={{ __html: processedHtml }} style={{ width: 340, flexShrink: 0, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg) scale(${scale})`, transformOrigin: "center center", pointerEvents: "none" }} />
-        ) : image ? (
+        {image ? (
           <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", pointerEvents: "none" }} />
         ) : null}
 
@@ -6818,8 +6809,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
   }
 
   if (showCardEditor && cardEditorImage) {
-    const isHtml = cardEditorImage.startsWith("<");
-    return <MatchCardEditor image={isHtml ? null : cardEditorImage} cardHtml={isHtml ? cardEditorImage : null} onDone={(editedImg) => { setPhotoPreview(editedImg); setShowCardEditor(false); }} onClose={onClose} />;
+    return <MatchCardEditor image={cardEditorImage} onDone={(editedImg) => { setPhotoPreview(editedImg); setShowCardEditor(false); }} onClose={onClose} />;
   }
 
   return (
