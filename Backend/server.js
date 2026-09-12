@@ -26,13 +26,14 @@ import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
+import { captureCardHtml, warmupBrowser } from "./capture.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "10mb" }));
 app.use(oddsRouter);
 // Endpoints CS2 (/api/cs2-upcoming, /api/cs2-live, /api/cs2-results) : même
 // backend PandaScore, route dédiée dans cs2-routes.js (voir ce fichier pour
@@ -1837,8 +1838,22 @@ app.get("/api/live-scraped", (req, res) => {
   res.json(entries);
 });
 
+app.post("/api/capture-card", async (req, res) => {
+  try {
+    const { html } = req.body;
+    if (!html) return res.status(400).json({ error: "html required" });
+    const png = await captureCardHtml(html);
+    const base64 = `data:image/png;base64,${png.toString("base64")}`;
+    res.json({ image: base64 });
+  } catch (e) {
+    console.error("[capture-card]", e.message);
+    res.status(500).json({ error: "capture failed" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log("Backend démarré sur le port " + PORT);
+  warmupBrowser();
   startScraper();
   startHltvScraper();
   startRlScraper();
