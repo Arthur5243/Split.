@@ -6895,8 +6895,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
   function handleDelete(postId) {
     if (!profile?.userId) return;
+    setHistory(prev => prev.filter(p => p.id !== postId));
     fetch(API_BASE + `/api/posts/${postId}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
-      .then(() => setHistory(prev => prev.filter(p => p.id !== postId)))
       .catch(() => {});
   }
 
@@ -6973,7 +6973,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           {history.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
           {history.map(p => (
             <div key={p.id} style={{ borderBottom: "1px solid #1e1e1e" }}>
-              {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 300, objectFit: "cover" }} />}
+              {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 300, objectFit: "cover" }} />}
               {p.content && <p className="px-4 py-2" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}>{p.content}</p>}
               {p.match_data && (
                 <div className="px-4 py-1.5" style={{ background: "#111" }}>
@@ -7036,7 +7036,7 @@ function PostsFeedScreen({ onClose, T, profile }) {
               <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{p.pseudo || "?"}</span>
               <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
             </div>
-            {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 400, objectFit: "cover" }} />}
+            {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 400, objectFit: "cover" }} />}
             {p.match_data && (
               <div className="px-4 py-3" style={{ background: "#111" }}>
                 <span style={{ color: "#aaa", fontSize: "12px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
@@ -7974,13 +7974,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               {nexusPosts.map(p => (
                 <div key={p.id} style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }}>
                   <div className="flex items-center gap-2.5 px-3 py-2.5">
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
                       {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                     </button>
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: p.points || 0, bio: p.bio }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
+                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
                     <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
-                  {p.image && <img src={p.image} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
+                  {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
                   {p.match_data && (
                     <div className="px-3 py-2" style={{ background: "#111" }}>
                       <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>

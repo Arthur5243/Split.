@@ -35,18 +35,22 @@ db.exec(`
 const stmts = {
   create: db.prepare(`INSERT INTO posts (user_id, type, content, match_id, match_data, image) VALUES (?, ?, ?, ?, ?, ?)`),
   getFeed: db.prepare(`
-    SELECT p.*, u.pseudo, u.avatar,
+    SELECT p.id, p.user_id, p.type, p.content, p.match_id, p.match_data, p.created_at,
+      CASE WHEN p.image IS NOT NULL THEN 1 ELSE 0 END as has_image,
+      u.pseudo, u.avatar,
       (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes
     FROM posts p
     LEFT JOIN users u ON u.id = p.user_id
     ORDER BY p.created_at DESC LIMIT ? OFFSET ?
   `),
   getUserPosts: db.prepare(`
-    SELECT p.*,
+    SELECT p.id, p.user_id, p.type, p.content, p.match_id, p.match_data, p.created_at,
+      CASE WHEN p.image IS NOT NULL THEN 1 ELSE 0 END as has_image,
       (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes
     FROM posts p WHERE p.user_id = ?
     ORDER BY p.created_at DESC LIMIT 50
   `),
+  getImage: db.prepare(`SELECT image FROM posts WHERE id = ?`),
   getById: db.prepare(`
     SELECT p.*, u.pseudo, u.avatar,
       (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes
@@ -93,6 +97,11 @@ export function unlikePost(postId, userId) {
 
 export function isPostLiked(postId, userId) {
   return !!stmts.isLiked.get(postId, userId);
+}
+
+export function getPostImage(postId) {
+  const row = stmts.getImage.get(postId);
+  return row ? row.image : null;
 }
 
 export function deletePost(postId, userId) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getFeed, getUserPosts, getPostById, likePost, unlikePost, isPostLiked, deletePost } from "./posts-store.js";
+import { createPost, getFeed, getUserPosts, getPostById, getPostImage, likePost, unlikePost, isPostLiked, deletePost } from "./posts-store.js";
 import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
 
 const router = Router();
@@ -29,6 +29,19 @@ router.get("/api/posts/feed", (req, res) => {
 
 router.get("/api/posts/user/:userId", (req, res) => {
   res.json(getUserPosts(req.params.userId));
+});
+
+router.get("/api/posts/:id/image", (req, res) => {
+  const img = getPostImage(parseInt(req.params.id));
+  if (!img) return res.status(404).json({ error: "no image" });
+  const match = img.match(/^data:(image\/\w+);base64,(.+)$/);
+  if (match) {
+    const buf = Buffer.from(match[2], "base64");
+    res.set("Content-Type", match[1]);
+    res.set("Cache-Control", "public, max-age=86400");
+    return res.send(buf);
+  }
+  res.json({ image: img });
 });
 
 router.get("/api/posts/:id", (req, res) => {
