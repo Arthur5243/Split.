@@ -8,6 +8,8 @@ const db = new Database(DB_PATH);
 
 db.pragma("journal_mode = WAL");
 
+try { db.exec(`ALTER TABLE posts ADD COLUMN image TEXT`); } catch(e) {}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +18,7 @@ db.exec(`
     content TEXT,
     match_id TEXT,
     match_data TEXT,
+    image TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_posts_user ON posts(user_id);
@@ -30,7 +33,7 @@ db.exec(`
 `);
 
 const stmts = {
-  create: db.prepare(`INSERT INTO posts (user_id, type, content, match_id, match_data) VALUES (?, ?, ?, ?, ?)`),
+  create: db.prepare(`INSERT INTO posts (user_id, type, content, match_id, match_data, image) VALUES (?, ?, ?, ?, ?, ?)`),
   getFeed: db.prepare(`
     SELECT p.*, u.pseudo, u.avatar,
       (SELECT COUNT(*) FROM post_likes WHERE post_id = p.id) as likes
@@ -55,8 +58,8 @@ const stmts = {
   delete: db.prepare(`DELETE FROM posts WHERE id = ? AND user_id = ?`),
 };
 
-export function createPost(userId, type, content, matchId, matchData) {
-  const r = stmts.create.run(userId, type, content || null, matchId || null, matchData ? JSON.stringify(matchData) : null);
+export function createPost(userId, type, content, matchId, matchData, image) {
+  const r = stmts.create.run(userId, type, content || null, matchId || null, matchData ? JSON.stringify(matchData) : null, image || null);
   return r.lastInsertRowid;
 }
 

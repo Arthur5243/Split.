@@ -6400,18 +6400,47 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   const [editingText, setEditingText] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stickers, setStickers] = useState([]);
+  const [selectedSticker, setSelectedSticker] = useState(null);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
   const stickerDragRef = useRef(null);
   const textDragRef = useRef(null);
   const textInputRef = useRef(null);
+  const historyRef = useRef([]);
+  const historyIndexRef = useRef(-1);
 
   const BG_COLORS = ["#0a0a0a", "#1a1a2e", "#16213e", "#1b1b2f", "#2d132c", "#0f3460", "#1a3c34", "#3a0000", "#1e1e1e", "#CCF71D"];
   const TEXT_COLORS = ["#ffffff", "#CCF71D", "#ff3b3b", "#4FC3F7", "#E040FB", "#FFB74D", "#66BB6A", "#000000"];
   const ALL_EMOJIS = ["🔥","🏆","💪","🎯","⚡","💀","🐐","👑","😤","🥶","💯","🫡","💰","🎮","❤️","💚","😂","🤣","😍","🥳","😎","🤯","🫠","💅","🗿","😈","👀","🙏","💥","✨","🎉","🪩","🎊","💎","🌟","⭐","🔔","📢","🫶","🤝","👊","✊","🤙","🖤","💜","💙","🧡","💛","🤍","❤️‍🔥","💘","💝","🏅","🥇","🥈","🥉","🎖️","🏴‍☠️","🦁","🐍","🦅","🐺","🐉","🦈","🦇","🕹️","🎮","🖥️","⌨️","🔫","💣","🛡️","⚔️","🗡️","🎯","🏹","🧨","🚀","🌍","🇫🇷","🇺🇸","🇧🇷","🇰🇷","🇯🇵","🇨🇳","🇩🇪","🇪🇸","🇬🇧","🇷🇺","🇹🇷","🇸🇪","🇩🇰","🇺🇦"];
 
+  function saveHistory() {
+    const snap = { stickers: JSON.parse(JSON.stringify(stickers)), textOverlay, textColor, textPos: { ...textPos }, bgColor, scale, rotation, offsetX, offsetY };
+    const newHist = historyRef.current.slice(0, historyIndexRef.current + 1);
+    newHist.push(snap);
+    if (newHist.length > 30) newHist.shift();
+    historyRef.current = newHist;
+    historyIndexRef.current = newHist.length - 1;
+  }
+  function undo() {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current--;
+    const snap = historyRef.current[historyIndexRef.current];
+    setStickers(snap.stickers); setTextOverlay(snap.textOverlay); setTextColor(snap.textColor); setTextPos(snap.textPos);
+    setBgColor(snap.bgColor); setScale(snap.scale); setRotation(snap.rotation); setOffsetX(snap.offsetX); setOffsetY(snap.offsetY);
+  }
+  function redo() {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current++;
+    const snap = historyRef.current[historyIndexRef.current];
+    setStickers(snap.stickers); setTextOverlay(snap.textOverlay); setTextColor(snap.textColor); setTextPos(snap.textPos);
+    setBgColor(snap.bgColor); setScale(snap.scale); setRotation(snap.rotation); setOffsetX(snap.offsetX); setOffsetY(snap.offsetY);
+  }
+
+  useEffect(() => { saveHistory(); }, []);
+
   function handleTouchStart(e) {
     if (editingText) return;
+    setSelectedSticker(null);
     if (e.touches.length === 2) {
       e.preventDefault();
       const t1 = e.touches[0], t2 = e.touches[1];
@@ -6438,20 +6467,22 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
       setOffsetY(dragRef.current.startOffY + (t.clientY - dragRef.current.startY));
     }
   }
-  function handleTouchEnd() { dragRef.current = null; gestureRef.current = null; }
+  function handleTouchEnd() { dragRef.current = null; gestureRef.current = null; saveHistory(); }
 
   function handleMouseDown(e) {
     if (editingText) return;
+    setSelectedSticker(null);
     dragRef.current = { startX: e.clientX, startY: e.clientY, startOffX: offsetX, startOffY: offsetY };
     const onMove = (ev) => { if (dragRef.current) { setOffsetX(dragRef.current.startOffX + (ev.clientX - dragRef.current.startX)); setOffsetY(dragRef.current.startOffY + (ev.clientY - dragRef.current.startY)); } };
-    const onUp = () => { dragRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    const onUp = () => { dragRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); saveHistory(); };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
   }
 
-  function addSticker(emoji) { setStickers(prev => [...prev, { id: Date.now(), emoji, x: 50, y: 50 }]); }
+  function addSticker(emoji) { saveHistory(); setStickers(prev => [...prev, { id: Date.now(), emoji, x: 50, y: 50 }]); setTimeout(saveHistory, 0); }
   function handleStickerTouchStart(e, id) {
     e.stopPropagation();
+    setSelectedSticker(id);
     const t = e.touches[0];
     const s = stickers.find(s => s.id === id);
     if (s) stickerDragRef.current = { id, startX: t.clientX, startY: t.clientY, origX: s.x, origY: s.y };
@@ -6466,11 +6497,16 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
     const dy = ((t.clientY - stickerDragRef.current.startY) / rect.height) * 100;
     setStickers(prev => prev.map(s => s.id === stickerDragRef.current.id ? { ...s, x: Math.max(2, Math.min(98, stickerDragRef.current.origX + dx)), y: Math.max(2, Math.min(98, stickerDragRef.current.origY + dy)) } : s));
   }
-  function handleStickerTouchEnd() { stickerDragRef.current = null; }
-  function removeSticker(id) { setStickers(prev => prev.filter(s => s.id !== id)); }
+  function handleStickerTouchEnd() { stickerDragRef.current = null; saveHistory(); }
+  function removeSticker(id) { saveHistory(); setStickers(prev => prev.filter(s => s.id !== id)); setSelectedSticker(null); setTimeout(saveHistory, 0); }
+  function deleteSelected() {
+    if (selectedSticker) { removeSticker(selectedSticker); return; }
+    if (textOverlay) { saveHistory(); setTextOverlay(""); setEditingText(false); setTimeout(saveHistory, 0); }
+  }
 
   function handleTextTouchStart(e) {
     e.stopPropagation();
+    setSelectedSticker(null);
     const t = e.touches[0];
     textDragRef.current = { startX: t.clientX, startY: t.clientY, origX: textPos.x, origY: textPos.y };
   }
@@ -6484,10 +6520,11 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
     const dy = ((t.clientY - textDragRef.current.startY) / rect.height) * 100;
     setTextPos({ x: Math.max(5, Math.min(95, textDragRef.current.origX + dx)), y: Math.max(5, Math.min(95, textDragRef.current.origY + dy)) });
   }
-  function handleTextTouchEnd() { textDragRef.current = null; }
+  function handleTextTouchEnd() { textDragRef.current = null; saveHistory(); }
 
-  function startTextEdit() { setEditingText(true); setTimeout(() => textInputRef.current?.focus(), 50); }
-  function finishTextEdit() { setEditingText(false); }
+  function startTextEdit() { setShowEmojiPicker(false); setEditingText(true); setTimeout(() => textInputRef.current?.focus(), 50); }
+  function finishTextEdit() { setEditingText(false); saveHistory(); }
+  function toggleEmoji() { setEditingText(false); setShowEmojiPicker(p => !p); }
 
   async function handleExport() {
     const el = canvasRef.current;
@@ -6499,29 +6536,43 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
 
   if (!visible) return null;
 
+  const canUndo = historyIndexRef.current > 0;
+  const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+
   return (
     <div className="absolute inset-0 z-50" style={{ background: "#000", touchAction: "none" }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5 }}>
         <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <span style={{ fontSize: 16 }}>😀</span>
-          </button>
-          <button onClick={startTextEdit} style={{ background: editingText ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <span style={{ fontSize: 14, fontWeight: 900, color: editingText ? "#000" : "#fff" }}>Aa</span>
-          </button>
-          <button onClick={handleExport} style={{ background: "#CCF71D", border: "none", borderRadius: 20, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#000" }}>
-            Suivant
-          </button>
-        </div>
+        <button onClick={handleExport} style={{ background: "#CCF71D", border: "none", borderRadius: 20, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#000" }}>
+          Suivant
+        </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 16, right: 16, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div style={{ position: "absolute", top: 56, right: 8, display: "flex", flexDirection: "column", gap: 8, zIndex: 6 }}>
+        <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <span style={{ fontSize: 16 }}>😀</span>
+        </button>
+        <button onClick={startTextEdit} style={{ background: editingText ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: editingText ? "#000" : "#fff" }}>Aa</span>
+        </button>
+        <button onClick={deleteSelected} style={{ background: (selectedSticker || textOverlay) ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Trash2 size={16} color={(selectedSticker || textOverlay) ? "#ef4444" : "#666"} />
+        </button>
+        <div style={{ height: 1, background: "#333", margin: "2px 6px" }} />
+        <button onClick={undo} style={{ background: canUndo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canUndo ? 1 : 0.3 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button onClick={redo} style={{ background: canRedo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canRedo ? 1 : 0.3 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+        </button>
+      </div>
+
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 16, right: 56, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
-        onClick={(e) => { if (editingText) { finishTextEdit(); e.stopPropagation(); } }}
+        onClick={(e) => { if (editingText) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); } }}
       >
         <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `rotate(${rotation}deg) translate(${offsetX}px, ${offsetY}px)`, objectFit: "contain", pointerEvents: "none" }} />
 
@@ -6535,17 +6586,17 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
                 <input ref={textInputRef} type="text" value={textOverlay} onChange={e => setTextOverlay(e.target.value.slice(0, 80))}
                   onBlur={finishTextEdit}
                   onClick={e => e.stopPropagation()}
-                  style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, padding: "8px 14px", color: textColor, fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none", minWidth: 120, textShadow: "0 2px 8px rgba(0,0,0,0.8)", caretColor: "#CCF71D" }}
+                  style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, padding: "8px 14px", color: textColor, fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none", width: "auto", textShadow: "0 2px 8px rgba(0,0,0,0.8)", caretColor: "#CCF71D" }}
                   placeholder="Texte..."
                 />
                 <div style={{ display: "flex", gap: 3, justifyContent: "center", marginTop: 6 }}>
                   {TEXT_COLORS.map(c => (
-                    <button key={c} onClick={(e) => { e.stopPropagation(); setTextColor(c); }} style={{ width: 20, height: 20, borderRadius: 10, background: c, border: textColor === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
+                    <button key={c} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.stopPropagation(); setTextColor(c); }} style={{ width: 20, height: 20, borderRadius: 10, background: c, border: textColor === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
                   ))}
                 </div>
               </div>
             ) : (
-              <div style={{ color: textColor, fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: 250, wordBreak: "break-word", cursor: "grab" }}>
+              <div style={{ color: textColor, fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", wordBreak: "break-word", cursor: "grab" }}>
                 {textOverlay}
               </div>
             )}
@@ -6553,8 +6604,9 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
         )}
 
         {stickers.map(s => (
-          <div key={s.id} style={{ position: "absolute", left: `${s.x}%`, top: `${s.y}%`, transform: "translate(-50%, -50%)", fontSize: 32, cursor: "grab", userSelect: "none", zIndex: 2 }}
+          <div key={s.id} style={{ position: "absolute", left: `${s.x}%`, top: `${s.y}%`, transform: "translate(-50%, -50%)", fontSize: 32, cursor: "grab", userSelect: "none", zIndex: 2, outline: selectedSticker === s.id ? "2px solid #CCF71D" : "none", borderRadius: 4, padding: 2 }}
             onTouchStart={e => handleStickerTouchStart(e, s.id)} onTouchMove={handleStickerTouchMove} onTouchEnd={handleStickerTouchEnd}
+            onClick={(e) => { e.stopPropagation(); setSelectedSticker(s.id); }}
             onDoubleClick={() => removeSticker(s.id)}
           >
             {s.emoji}
@@ -6575,7 +6627,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)", background: "#111", borderTop: "1px solid #222" }}>
         <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
           {BG_COLORS.map(c => (
-            <button key={c} onClick={() => setBgColor(c)} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
+            <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
           ))}
         </div>
       </div>
@@ -6605,6 +6657,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
 
   function handlePhotoSelect(e) {
     const file = e.target.files?.[0];
+    if (photoRef.current) photoRef.current.value = "";
     if (!file) return;
     setPhotoError("");
     if (file.size > 5 * 1024 * 1024) { setPhotoError("Image trop lourde (max 5 Mo)"); return; }
@@ -6716,7 +6769,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
-          <input ref={photoRef} type="file" accept="image/*" capture={false} onChange={handlePhotoSelect} style={{ display: "none" }} />
+          <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: "none" }} />
           <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
@@ -9340,7 +9393,7 @@ export default function ClutchApp() {
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
-          {activeTab === "valorant" && (
+          <div style={{ display: activeTab === "valorant" ? "block" : "none" }}>
             <ValorantTab
               selectedRegions={selectedRegions}
               toggleRegion={toggleRegion}
@@ -9367,8 +9420,8 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
             />
-          )}
-          {activeTab === "csgo" && (
+          </div>
+          <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
             <Cs2Tab
               selectedRegions={selectedRegionsCS2}
               toggleRegion={toggleRegionCS2}
@@ -9395,8 +9448,8 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.cs2 || 0}
               prefetchedBrackets={prefetchedBrackets}
             />
-          )}
-          {activeTab === "rocketleague" && (
+          </div>
+          <div style={{ display: activeTab === "rocketleague" ? "block" : "none" }}>
             <RlTab
               selectedRegions={selectedRegionsRL}
               toggleRegion={toggleRegionRL}
@@ -9419,7 +9472,7 @@ export default function ClutchApp() {
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.rl || 0}
             />
-          )}
+          </div>
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}

@@ -5,13 +5,13 @@ import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
 const router = Router();
 
 router.post("/api/posts", (req, res) => {
-  const { userId, type, content, matchId, matchData } = req.body;
+  const { userId, type, content, matchId, matchData, image } = req.body;
   if (!userId) return res.status(400).json({ error: "userId required" });
   if (content && containsBlockedWord(content)) {
     return res.status(400).json({ error: "blocked_content" });
   }
   const safe = sanitizeMessage(content);
-  const id = createPost(userId, type || "result", safe, matchId, matchData);
+  const id = createPost(userId, type || "result", safe, matchId, matchData, image);
   res.json({ id });
 });
 
