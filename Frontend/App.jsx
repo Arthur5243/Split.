@@ -6910,9 +6910,9 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
   }
 
   return (
-    <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #262626", background: "#0a0a0a", zIndex: 2 }}>
-        <button onClick={() => (cardEditorImage || cardMatch) ? setShowCardEditor(true) : onClose()} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+    <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a", borderLeft: "1px solid #1e1e1e", borderRight: "1px solid #1e1e1e", borderTop: "1px solid #262626" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #262626", background: "#0d0d0d", zIndex: 2 }}>
+        <button onClick={() => (cardEditorImage || cardMatch) ? setShowCardEditor(true) : onClose()} className="rounded-full p-1.5" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
@@ -9720,7 +9720,7 @@ export default function ClutchApp() {
         )}
 
         {appCreatePost && (
-          <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 47, zIndex: 50 }}>
             <CreatePostScreen onClose={() => { const d = postContentRef.current; if (d.content || d.image) { setPendingTabSwitch("__close__"); setShowDraftPrompt(true); } else { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); } }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} />
           </div>
         )}
