@@ -2645,6 +2645,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 ) : (
                   <span />
                 )}
+                {pointsBreakdown && pointsBreakdown.total > 0 && (
+                  <div className="flex items-center gap-2" style={{ marginLeft: "auto" }}>
+                    {pointsBreakdown.score > 0 && <span style={{ color: "#aaa", fontSize: 10, fontWeight: 700 }}>Score <span style={{ color: "#CCF71D", fontWeight: 900 }}>+{pointsBreakdown.score}</span></span>}
+                    {pointsBreakdown.bonus > 0 && <span style={{ color: "#aaa", fontSize: 10, fontWeight: 700 }}>Maps <span style={{ color: "#CCF71D", fontWeight: 900 }}>+{pointsBreakdown.bonus}</span></span>}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -6624,7 +6630,6 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
 
   function handleAddImage(e) {
     const file = e.target.files?.[0];
-    if (imgInputRef.current) imgInputRef.current.value = "";
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (ev) => { saveHistory(); setUserImages(prev => [...prev, { id: Date.now(), src: ev.target.result, x: 0, y: 0, scale: 1, rot: 0 }]); setTimeout(saveHistory, 0); };
@@ -6666,7 +6671,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
 
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "#0a0a0a", touchAction: "none", zIndex: 50 }}>
-      <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAddImage} />
+      <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onClick={e => { e.target.value = ""; }} onChange={handleAddImage} />
       {showCloseConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 280 }}>
@@ -6679,7 +6684,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </div>
       )}
 
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5 }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5, borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(10,10,10,0.85)", backdropFilter: "blur(8px)" }}>
         <button onClick={() => setShowCloseConfirm(true)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
@@ -6696,30 +6701,30 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div style={{ position: "absolute", top: 56, right: 12, display: "flex", flexDirection: "column", gap: 8, zIndex: 6 }}>
-        <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+      <div style={{ position: "absolute", top: 56, right: 12, display: "flex", flexDirection: "column", gap: 6, zIndex: 6 }}>
+        <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
-        <button onClick={addTextLayer} style={{ background: editingTextId ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={addTextLayer} style={{ background: editingTextId ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <span style={{ fontSize: 14, fontWeight: 900, color: editingTextId ? "#000" : "#fff" }}>Aa</span>
         </button>
         {(selectedTextId || editingTextId) && (
-          <button onClick={toggleTextBg} style={{ background: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <button onClick={toggleTextBg} style={{ background: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
             <span style={{ fontSize: 11, fontWeight: 900, color: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#000" : "#fff" }}>BG</span>
           </button>
         )}
-        <button onClick={() => { setShowBgColors(p => !p); setShowEmojiPicker(false); }} style={{ background: showBgColors ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => { setShowBgColors(p => !p); setShowEmojiPicker(false); }} style={{ background: showBgColors ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <Palette size={16} color={showBgColors ? "#000" : "#fff"} />
         </button>
-        <button onClick={() => imgInputRef.current?.click()} style={{ background: "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => imgInputRef.current?.click()} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <ImageIcon size={16} color="#fff" />
         </button>
-        <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <Trash2 size={16} color={hasSelection ? "#ef4444" : "#666"} />
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, aspectRatio: "1", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, aspectRatio: "4/5", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
@@ -6733,7 +6738,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             </div>
           </div>
         ) : image ? (
-          <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", cursor: "grab" }}
+          <img src={image} alt="" style={{ width: "100%", height: "100%", transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg) scale(${scale})`, transformOrigin: "center center", objectFit: "cover", cursor: "grab" }}
             onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
             onMouseDown={handleMouseDown}
           />
@@ -6843,7 +6848,6 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
 
   function handlePhotoSelect(e) {
     const file = e.target.files?.[0];
-    if (photoRef.current) photoRef.current.value = "";
     if (!file) return;
     setPhotoError("");
     if (file.size > 5 * 1024 * 1024) { setPhotoError("Image trop lourde (max 5 Mo)"); return; }
@@ -6957,7 +6961,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
         </div>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
-          <input ref={photoRef} type="file" accept="image/*" onChange={handlePhotoSelect} style={{ display: "none" }} />
+          <input ref={photoRef} type="file" accept="image/*" onClick={e => { e.target.value = ""; }} onChange={handlePhotoSelect} style={{ display: "none" }} />
           <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>Galerie</span>
@@ -7898,23 +7902,23 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         setSpectatorUser({ ...u, ...d });
                         setSpectatorStats(d);
                       }).catch(() => { setSpectatorUser(u); });
-                    }} className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{
+                    }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5" style={{
                       position: "relative", overflow: "hidden", textAlign: "left",
                       background: uBanner
                         ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
                         : (isMe ? "#141414" : "#0e0e0e"),
                       border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "1px solid #1a1a1a"),
                     }}>
-                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "16px", width: 24, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
-                      <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a", position: "relative" }}>
-                        {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
-                      </div>
-                      <div className="flex-1 min-w-0" style={{ position: "relative" }}>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold truncate" style={{ fontSize: "13px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none" }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
-                          {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
-                          {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
+                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
+                      <div className="flex flex-col items-center shrink-0" style={{ position: "relative", width: 42 }}>
+                        <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
+                          {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                         </div>
+                        <span className="font-bold truncate" style={{ fontSize: "9px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-1.5" style={{ position: "relative" }}>
+                        {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
+                        {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                       </div>
                       {rankLogo.logo && rankLogo.logo !== "unranked" ? (
                         uBanner ? (
@@ -7926,7 +7930,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         )
                       ) : null}
                       <div className="text-right shrink-0" style={{ position: "relative" }}>
-                        <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "16px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
+                        <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "15px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
                         <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
@@ -8615,7 +8619,7 @@ export default function ClutchApp() {
   const [pendingTabSwitch, setPendingTabSwitch] = useState(null);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   const [drafts, setDrafts] = useState(() => { try { return JSON.parse(localStorage.getItem("split_drafts") || "[]"); } catch { return []; } });
-  function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); localStorage.setItem("split_drafts", JSON.stringify(limited)); }
+  function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
   function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); if (tab === "__close__") return; setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
