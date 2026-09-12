@@ -6438,6 +6438,11 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const textInputRef = useRef(null);
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
+  const imgInputRef = useRef(null);
+  const [userImages, setUserImages] = useState([]);
+  const userImgDragRef = useRef(null);
+  const userImgGestureRef = useRef(null);
+  const [selectedUserImg, setSelectedUserImg] = useState(null);
 
   const BG_COLORS = ["#0a0a0a", "#1a1a2e", "#16213e", "#1b1b2f", "#2d132c", "#0f3460", "#1a3c34", "#3a0000", "#1e1e1e", "#CCF71D"];
   const TEXT_COLORS = ["#ffffff", "#CCF71D", "#ff3b3b", "#4FC3F7", "#E040FB", "#FFB74D", "#66BB6A", "#000000"];
@@ -6611,8 +6616,6 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const hasSelection = selectedSticker || selectedTextId || selectedUserImg;
   const editingLayer = editingTextId ? textLayers.find(tl => tl.id === editingTextId) : null;
 
-  const imgInputRef = useRef(null);
-  const [userImages, setUserImages] = useState([]);
   function handleAddImage(e) {
     const file = e.target.files?.[0];
     if (imgInputRef.current) imgInputRef.current.value = "";
@@ -6621,9 +6624,6 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
     reader.onload = (ev) => { saveHistory(); setUserImages(prev => [...prev, { id: Date.now(), src: ev.target.result, x: 0, y: 0, scale: 1, rot: 0 }]); setTimeout(saveHistory, 0); };
     reader.readAsDataURL(file);
   }
-  const userImgDragRef = useRef(null);
-  const userImgGestureRef = useRef(null);
-  const [selectedUserImg, setSelectedUserImg] = useState(null);
   function handleUserImgTouchStart(e, id) {
     e.stopPropagation();
     setSelectedUserImg(id); setSelectedSticker(null); setSelectedTextId(null);
