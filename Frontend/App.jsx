@@ -2296,8 +2296,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: hasBg ? "#ccc" : "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
-            {bo === 5 && <span data-capture-hide style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
-            {bo >= 7 && <span data-capture-hide style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
+            {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO5</span>}
+            {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5 }}>BO7</span>}
           </span>
           <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -2443,10 +2443,15 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div className="flex flex-col items-center">
             {liveRevealed ? (() => {
               let s1 = 0, s2 = 0;
-              for (const m of match.live_map_scores) { if (m.score1 > m.score2) s1++; else if (m.score2 > m.score1) s2++; }
+              for (const m of match.live_map_scores) {
+                const hi = Math.max(m.score1, m.score2);
+                const diff = Math.abs(m.score1 - m.score2);
+                if (hi >= 13 && diff >= 2) { if (m.score1 > m.score2) s1++; else s2++; }
+              }
+              const confirmed = s1 + s2 > 0;
               return (
                 <span style={{ color: "#ff3b3b", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
-                  {s1} - {s2}
+                  {confirmed ? `${s1} - ${s2}` : "!"}
                 </span>
               );
             })() : (
@@ -2492,7 +2497,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
       )}
       {lockedByTime && !finished && !tbd && (
-        <div data-capture-hide className="px-4 pb-2 flex items-center justify-center gap-1.5">
+        <div className="px-4 pb-2 flex items-center justify-center gap-1.5">
           <Lock size={11} color={hasBg ? "#bbb" : "#666"} />
           <span style={{ color: hasBg ? "#bbb" : "#666", fontSize: "10px", fontWeight: 600, ...txtStW }}>{T.betLocked || "Pari verrouillé"}</span>
         </div>
@@ -6405,6 +6410,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   const gestureRef = useRef(null);
   const stickerDragRef = useRef(null);
   const textDragRef = useRef(null);
+  const textDraggedRef = useRef(false);
   const textInputRef = useRef(null);
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
@@ -6495,7 +6501,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
     if (!rect) return;
     const dx = ((t.clientX - stickerDragRef.current.startX) / rect.width) * 100;
     const dy = ((t.clientY - stickerDragRef.current.startY) / rect.height) * 100;
-    setStickers(prev => prev.map(s => s.id === stickerDragRef.current.id ? { ...s, x: Math.max(2, Math.min(98, stickerDragRef.current.origX + dx)), y: Math.max(2, Math.min(98, stickerDragRef.current.origY + dy)) } : s));
+    setStickers(prev => prev.map(s => s.id === stickerDragRef.current.id ? { ...s, x: stickerDragRef.current.origX + dx, y: stickerDragRef.current.origY + dy } : s));
   }
   function handleStickerTouchEnd() { stickerDragRef.current = null; saveHistory(); }
   function removeSticker(id) { saveHistory(); setStickers(prev => prev.filter(s => s.id !== id)); setSelectedSticker(null); setTimeout(saveHistory, 0); }
@@ -6507,18 +6513,20 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   function handleTextTouchStart(e) {
     e.stopPropagation();
     setSelectedSticker(null);
+    textDraggedRef.current = false;
     const t = e.touches[0];
     textDragRef.current = { startX: t.clientX, startY: t.clientY, origX: textPos.x, origY: textPos.y };
   }
   function handleTextTouchMove(e) {
     if (!textDragRef.current) return;
     e.stopPropagation();
+    textDraggedRef.current = true;
     const t = e.touches[0];
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const dx = ((t.clientX - textDragRef.current.startX) / rect.width) * 100;
     const dy = ((t.clientY - textDragRef.current.startY) / rect.height) * 100;
-    setTextPos({ x: Math.max(5, Math.min(95, textDragRef.current.origX + dx)), y: Math.max(5, Math.min(95, textDragRef.current.origY + dy)) });
+    setTextPos({ x: textDragRef.current.origX + dx, y: textDragRef.current.origY + dy });
   }
   function handleTextTouchEnd() { textDragRef.current = null; saveHistory(); }
 
@@ -6579,7 +6587,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
         {(textOverlay || editingText) && (
           <div style={{ position: "absolute", left: `${textPos.x}%`, top: `${textPos.y}%`, transform: "translate(-50%, -50%)", zIndex: 3 }}
             onTouchStart={!editingText ? handleTextTouchStart : undefined} onTouchMove={!editingText ? handleTextTouchMove : undefined} onTouchEnd={!editingText ? handleTextTouchEnd : undefined}
-            onClick={(e) => { if (!editingText) { e.stopPropagation(); startTextEdit(); } }}
+            onClick={(e) => { if (!editingText && !textDraggedRef.current) { e.stopPropagation(); startTextEdit(); } textDraggedRef.current = false; }}
           >
             {editingText ? (
               <div style={{ position: "relative" }}>
@@ -6596,7 +6604,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
                 </div>
               </div>
             ) : (
-              <div style={{ color: textColor, fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", wordBreak: "break-word", cursor: "grab" }}>
+              <div style={{ color: textColor, fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", whiteSpace: "nowrap", cursor: "grab" }}>
                 {textOverlay}
               </div>
             )}

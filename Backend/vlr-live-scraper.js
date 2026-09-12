@@ -161,7 +161,7 @@ async function scrapeMapScores(matchUrl) {
 
     if (s1 < 5 && s2 < 5) return;
 
-    const isComplete = s1 >= 13 || s2 >= 13;
+    const isComplete = (s1 >= 13 || s2 >= 13) && Math.abs(s1 - s2) >= 2;
 
     maps.push({
       map: mapName || `Map ${maps.length + 1}`,
