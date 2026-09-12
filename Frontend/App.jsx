@@ -6672,7 +6672,8 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, bottom: showEmojiPicker ? 280 : 80, left: "50%", transform: "translateX(-50%)", width: "min(calc(100% - 56px), calc((100vh - 136px) * 9 / 16))", maxWidth: "calc(100% - 56px)", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div style={{ position: "absolute", top: 56, bottom: showEmojiPicker ? 280 : 80, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 52px 8px 8px" }}>
+      <div ref={canvasRef} style={{ width: "100%", maxHeight: "100%", aspectRatio: "9/16", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none", position: "relative" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
@@ -6708,6 +6709,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             {s.imgSrc ? <img src={s.imgSrc} style={{ width: 120, height: 120, objectFit: "contain", pointerEvents: "none", borderRadius: 8 }} draggable={false} /> : s.emoji}
           </div>
         ))}
+      </div>
       </div>
 
       {showEmojiPicker && (
