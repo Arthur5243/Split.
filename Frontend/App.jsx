@@ -46,6 +46,7 @@ import {
   Trash2,
   Heart,
   Image as ImageIcon,
+  Palette,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -6429,6 +6430,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const [editingTextId, setEditingTextId] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showBgColors, setShowBgColors] = useState(false);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
   const stickerDragRef = useRef(null);
@@ -6588,7 +6590,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
     }
     setEditingTextId(null); saveHistory();
   }
-  function toggleEmoji() { if (editingTextId) finishTextEdit(); setShowEmojiPicker(p => !p); }
+  function toggleEmoji() { if (editingTextId) finishTextEdit(); setShowEmojiPicker(p => !p); setShowBgColors(false); }
   function toggleTextBg() {
     const id = selectedTextId || editingTextId;
     if (!id) return;
@@ -6604,9 +6606,13 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   async function handleExport() {
     const el = canvasRef.current;
     if (!el) return;
-    const h2c = await loadHtml2Canvas();
-    const canvas = await h2c(el, { backgroundColor: bgColor, scale: 3, useCORS: true });
-    onDone(canvas.toDataURL("image/png"));
+    try {
+      const h2c = await loadHtml2Canvas();
+      const canvas = await h2c(el, { backgroundColor: bgColor, scale: 2, useCORS: true });
+      onDone(canvas.toDataURL("image/jpeg", 0.82));
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
   }
 
   if (!visible) return null;
@@ -6702,6 +6708,9 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             <span style={{ fontSize: 11, fontWeight: 900, color: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#000" : "#fff" }}>BG</span>
           </button>
         )}
+        <button onClick={() => { setShowBgColors(p => !p); setShowEmojiPicker(false); }} style={{ background: showBgColors ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Palette size={16} color={showBgColors ? "#000" : "#fff"} />
+        </button>
         <button onClick={() => imgInputRef.current?.click()} style={{ background: "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <ImageIcon size={16} color="#fff" />
         </button>
@@ -6710,7 +6719,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, bottom: showEmojiPicker ? 280 : 56, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, bottom: showEmojiPicker ? 280 : (showBgColors ? 56 : 8), borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
@@ -6792,13 +6801,15 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
           </div>
         );
       })()}
-      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
-        <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
-          {BG_COLORS.map(c => (
-            <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
-          ))}
+      {showBgColors && (
+        <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+            {BG_COLORS.map(c => (
+              <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
