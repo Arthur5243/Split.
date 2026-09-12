@@ -45,6 +45,7 @@ import {
   MoreHorizontal,
   Trash2,
   Heart,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
@@ -6609,8 +6610,19 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const hasSelection = selectedSticker || selectedTextId;
   const editingLayer = editingTextId ? textLayers.find(tl => tl.id === editingTextId) : null;
 
+  const imgInputRef = useRef(null);
+  function handleAddImage(e) {
+    const file = e.target.files?.[0];
+    if (imgInputRef.current) imgInputRef.current.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { saveHistory(); setStickers(prev => [...prev, { id: Date.now(), emoji: null, imgSrc: ev.target.result, x: 50, y: 50 }]); setTimeout(saveHistory, 0); };
+    reader.readAsDataURL(file);
+  }
+
   return (
-    <div className="absolute inset-0 z-50" style={{ background: "#000", touchAction: "none" }}>
+    <div className="absolute inset-0 z-50" style={{ background: "transparent", touchAction: "none" }}>
+      <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAddImage} />
       {showCloseConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 280 }}>
@@ -6627,6 +6639,14 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         <button onClick={() => setShowCloseConfirm(true)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button onClick={undo} style={{ background: canUndo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canUndo ? 1 : 0.3 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button onClick={redo} style={{ background: canRedo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canRedo ? 1 : 0.3 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+          </button>
+        </div>
         <button onClick={handleExport} style={{ background: "#CCF71D", border: "none", borderRadius: 20, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#000" }}>
           Suivant
         </button>
@@ -6644,19 +6664,15 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             <span style={{ fontSize: 11, fontWeight: 900, color: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#000" : "#fff" }}>BG</span>
           </button>
         )}
+        <button onClick={() => imgInputRef.current?.click()} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <ImageIcon size={16} color="#fff" />
+        </button>
         <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <Trash2 size={16} color={hasSelection ? "#ef4444" : "#666"} />
         </button>
-        <div style={{ height: 1, background: "#333", margin: "2px 6px" }} />
-        <button onClick={undo} style={{ background: canUndo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canUndo ? 1 : 0.3 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        </button>
-        <button onClick={redo} style={{ background: canRedo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canRedo ? 1 : 0.3 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
-        </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 16, right: 56, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 0, right: 48, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
@@ -6689,7 +6705,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             onClick={(e) => { e.stopPropagation(); setSelectedSticker(s.id); setSelectedTextId(null); }}
             onDoubleClick={() => removeSticker(s.id)}
           >
-            {s.emoji}
+            {s.imgSrc ? <img src={s.imgSrc} style={{ width: 120, height: 120, objectFit: "contain", pointerEvents: "none", borderRadius: 8 }} draggable={false} /> : s.emoji}
           </div>
         ))}
       </div>
@@ -6708,7 +6724,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         const tl = textLayers.find(t => t.id === editingTextId);
         if (!tl) return null;
         return (
-          <div style={{ position: "absolute", bottom: 56, left: 0, right: 0, background: "#111", borderTop: "1px solid #222", padding: "10px 16px", zIndex: 5 }}>
+          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "rgba(0,0,0,0.85)", padding: "14px 16px", zIndex: 5 }}>
             <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === editingTextId ? { ...t, text: e.target.value.slice(0, 80) } : t))}
               onBlur={finishTextEdit}
               autoFocus
