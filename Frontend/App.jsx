@@ -6621,7 +6621,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#0a0a0a", touchAction: "none" }}>
+    <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a", touchAction: "none" }}>
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAddImage} />
       {showCloseConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
@@ -6672,8 +6672,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div style={{ position: "absolute", top: 56, bottom: showEmojiPicker ? 280 : 80, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "8px 52px 8px 8px" }}>
-      <div ref={canvasRef} style={{ maxWidth: "100%", maxHeight: "100%", aspectRatio: "4/5", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none", position: "relative", width: "100%" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 52, bottom: showEmojiPicker ? 280 : 56, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
@@ -6709,7 +6708,6 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             {s.imgSrc ? <img src={s.imgSrc} style={{ width: 120, height: 120, objectFit: "contain", pointerEvents: "none", borderRadius: 8 }} draggable={false} /> : s.emoji}
           </div>
         ))}
-      </div>
       </div>
 
       {showEmojiPicker && (
@@ -7948,7 +7946,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
       {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
 
-      {showCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
+      {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
         <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
@@ -9622,6 +9620,12 @@ export default function ClutchApp() {
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
             <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
+          </div>
+        )}
+
+        {appCreatePost && (
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
+            <CreatePostScreen onClose={() => { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} />
           </div>
         )}
 
