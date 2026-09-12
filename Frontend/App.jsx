@@ -8262,13 +8262,13 @@ function CalendarModal({ onClose, T, lang }) {
   const timeline = TIMELINE_I18N[lang] || TIMELINE_I18N.fr;
   const todayISO = getTodayISO();
   return (
-    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+    <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3" onTouchMove={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", overflowY: "auto" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO); // "done" | "live" | "soon"
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
@@ -8423,13 +8423,13 @@ function Cs2CalendarModal({ onClose, T, lang }) {
   const todayISO = getTodayISO();
 
   return (
-    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+    <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3" onTouchMove={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", touchAction: "pan-y", overflowY: "auto", overscrollBehavior: "contain" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO);
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
