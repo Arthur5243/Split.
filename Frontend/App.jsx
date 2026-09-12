@@ -6399,18 +6399,19 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   const [rotation, setRotation] = useState(0);
   const [offsetX, setOffsetX] = useState(0);
   const [offsetY, setOffsetY] = useState(0);
-  const [textOverlay, setTextOverlay] = useState("");
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [textPos, setTextPos] = useState({ x: 50, y: 85 });
-  const [editingText, setEditingText] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stickers, setStickers] = useState([]);
   const [selectedSticker, setSelectedSticker] = useState(null);
+  const [textLayers, setTextLayers] = useState([]);
+  const [editingTextId, setEditingTextId] = useState(null);
+  const [selectedTextId, setSelectedTextId] = useState(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
   const stickerDragRef = useRef(null);
   const textDragRef = useRef(null);
   const textDraggedRef = useRef(false);
+  const textGestureRef = useRef(null);
   const textInputRef = useRef(null);
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
@@ -6420,7 +6421,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   const ALL_EMOJIS = ["🔥","🏆","💪","🎯","⚡","💀","🐐","👑","😤","🥶","💯","🫡","💰","🎮","❤️","💚","😂","🤣","😍","🥳","😎","🤯","🫠","💅","🗿","😈","👀","🙏","💥","✨","🎉","🪩","🎊","💎","🌟","⭐","🔔","📢","🫶","🤝","👊","✊","🤙","🖤","💜","💙","🧡","💛","🤍","❤️‍🔥","💘","💝","🏅","🥇","🥈","🥉","🎖️","🏴‍☠️","🦁","🐍","🦅","🐺","🐉","🦈","🦇","🕹️","🎮","🖥️","⌨️","🔫","💣","🛡️","⚔️","🗡️","🎯","🏹","🧨","🚀","🌍","🇫🇷","🇺🇸","🇧🇷","🇰🇷","🇯🇵","🇨🇳","🇩🇪","🇪🇸","🇬🇧","🇷🇺","🇹🇷","🇸🇪","🇩🇰","🇺🇦"];
 
   function saveHistory() {
-    const snap = { stickers: JSON.parse(JSON.stringify(stickers)), textOverlay, textColor, textPos: { ...textPos }, bgColor, scale, rotation, offsetX, offsetY };
+    const snap = { stickers: JSON.parse(JSON.stringify(stickers)), textLayers: JSON.parse(JSON.stringify(textLayers)), bgColor, scale, rotation, offsetX, offsetY };
     const newHist = historyRef.current.slice(0, historyIndexRef.current + 1);
     newHist.push(snap);
     if (newHist.length > 30) newHist.shift();
@@ -6431,22 +6432,24 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
     if (historyIndexRef.current <= 0) return;
     historyIndexRef.current--;
     const snap = historyRef.current[historyIndexRef.current];
-    setStickers(snap.stickers); setTextOverlay(snap.textOverlay); setTextColor(snap.textColor); setTextPos(snap.textPos);
+    setStickers(snap.stickers); setTextLayers(snap.textLayers);
     setBgColor(snap.bgColor); setScale(snap.scale); setRotation(snap.rotation); setOffsetX(snap.offsetX); setOffsetY(snap.offsetY);
+    setEditingTextId(null); setSelectedTextId(null);
   }
   function redo() {
     if (historyIndexRef.current >= historyRef.current.length - 1) return;
     historyIndexRef.current++;
     const snap = historyRef.current[historyIndexRef.current];
-    setStickers(snap.stickers); setTextOverlay(snap.textOverlay); setTextColor(snap.textColor); setTextPos(snap.textPos);
+    setStickers(snap.stickers); setTextLayers(snap.textLayers);
     setBgColor(snap.bgColor); setScale(snap.scale); setRotation(snap.rotation); setOffsetX(snap.offsetX); setOffsetY(snap.offsetY);
+    setEditingTextId(null); setSelectedTextId(null);
   }
 
   useEffect(() => { saveHistory(); }, []);
 
   function handleTouchStart(e) {
-    if (editingText) return;
-    setSelectedSticker(null);
+    if (editingTextId) return;
+    setSelectedSticker(null); setSelectedTextId(null);
     if (e.touches.length === 2) {
       e.preventDefault();
       const t1 = e.touches[0], t2 = e.touches[1];
@@ -6476,8 +6479,8 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   function handleTouchEnd() { dragRef.current = null; gestureRef.current = null; saveHistory(); }
 
   function handleMouseDown(e) {
-    if (editingText) return;
-    setSelectedSticker(null);
+    if (editingTextId) return;
+    setSelectedSticker(null); setSelectedTextId(null);
     dragRef.current = { startX: e.clientX, startY: e.clientY, startOffX: offsetX, startOffY: offsetY };
     const onMove = (ev) => { if (dragRef.current) { setOffsetX(dragRef.current.startOffX + (ev.clientX - dragRef.current.startX)); setOffsetY(dragRef.current.startOffY + (ev.clientY - dragRef.current.startY)); } };
     const onUp = () => { dragRef.current = null; window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); saveHistory(); };
@@ -6488,7 +6491,7 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   function addSticker(emoji) { saveHistory(); setStickers(prev => [...prev, { id: Date.now(), emoji, x: 50, y: 50 }]); setTimeout(saveHistory, 0); }
   function handleStickerTouchStart(e, id) {
     e.stopPropagation();
-    setSelectedSticker(id);
+    setSelectedSticker(id); setSelectedTextId(null);
     const t = e.touches[0];
     const s = stickers.find(s => s.id === id);
     if (s) stickerDragRef.current = { id, startX: t.clientX, startY: t.clientY, origX: s.x, origY: s.y };
@@ -6505,34 +6508,69 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
   }
   function handleStickerTouchEnd() { stickerDragRef.current = null; saveHistory(); }
   function removeSticker(id) { saveHistory(); setStickers(prev => prev.filter(s => s.id !== id)); setSelectedSticker(null); setTimeout(saveHistory, 0); }
+
+  function handleTextLayerTouchStart(e, id) {
+    e.stopPropagation();
+    setSelectedTextId(id); setSelectedSticker(null);
+    textDraggedRef.current = false;
+    if (e.touches.length === 2) {
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+      const tl = textLayers.find(t => t.id === id);
+      textGestureRef.current = { id, startAngle: angle, startRot: tl?.rot || 0 };
+      textDragRef.current = null;
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const tl = textLayers.find(tl => tl.id === id);
+      if (tl) textDragRef.current = { id, startX: t.clientX, startY: t.clientY, origX: tl.x, origY: tl.y };
+    }
+  }
+  function handleTextLayerTouchMove(e) {
+    if (e.touches.length === 2 && textGestureRef.current) {
+      e.stopPropagation(); e.preventDefault();
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+      const delta = (angle - textGestureRef.current.startAngle) * (180 / Math.PI);
+      setTextLayers(prev => prev.map(tl => tl.id === textGestureRef.current.id ? { ...tl, rot: textGestureRef.current.startRot + delta } : tl));
+    } else if (textDragRef.current) {
+      e.stopPropagation();
+      textDraggedRef.current = true;
+      const t = e.touches[0];
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const dx = ((t.clientX - textDragRef.current.startX) / rect.width) * 100;
+      const dy = ((t.clientY - textDragRef.current.startY) / rect.height) * 100;
+      setTextLayers(prev => prev.map(tl => tl.id === textDragRef.current.id ? { ...tl, x: textDragRef.current.origX + dx, y: textDragRef.current.origY + dy } : tl));
+    }
+  }
+  function handleTextLayerTouchEnd() { textDragRef.current = null; textGestureRef.current = null; saveHistory(); }
+
+  function addTextLayer() {
+    setShowEmojiPicker(false);
+    if (editingTextId) { setEditingTextId(null); saveHistory(); return; }
+    const id = Date.now();
+    saveHistory();
+    setTextLayers(prev => [...prev, { id, text: "", color: "#ffffff", x: 50, y: 50, rot: 0, hasBg: false }]);
+    setEditingTextId(id); setSelectedTextId(id);
+    setTimeout(() => textInputRef.current?.focus(), 50);
+  }
+  function finishTextEdit() {
+    if (editingTextId) {
+      setTextLayers(prev => prev.filter(tl => tl.id !== editingTextId || tl.text));
+    }
+    setEditingTextId(null); saveHistory();
+  }
+  function toggleEmoji() { if (editingTextId) finishTextEdit(); setShowEmojiPicker(p => !p); }
+  function toggleTextBg() {
+    const id = selectedTextId || editingTextId;
+    if (!id) return;
+    setTextLayers(prev => prev.map(tl => tl.id === id ? { ...tl, hasBg: !tl.hasBg } : tl));
+  }
+
   function deleteSelected() {
     if (selectedSticker) { removeSticker(selectedSticker); return; }
-    if (textOverlay) { saveHistory(); setTextOverlay(""); setEditingText(false); setTimeout(saveHistory, 0); }
+    if (selectedTextId) { saveHistory(); setTextLayers(prev => prev.filter(tl => tl.id !== selectedTextId)); setSelectedTextId(null); setEditingTextId(null); setTimeout(saveHistory, 0); return; }
   }
-
-  function handleTextTouchStart(e) {
-    e.stopPropagation();
-    setSelectedSticker(null);
-    textDraggedRef.current = false;
-    const t = e.touches[0];
-    textDragRef.current = { startX: t.clientX, startY: t.clientY, origX: textPos.x, origY: textPos.y };
-  }
-  function handleTextTouchMove(e) {
-    if (!textDragRef.current) return;
-    e.stopPropagation();
-    textDraggedRef.current = true;
-    const t = e.touches[0];
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const dx = ((t.clientX - textDragRef.current.startX) / rect.width) * 100;
-    const dy = ((t.clientY - textDragRef.current.startY) / rect.height) * 100;
-    setTextPos({ x: textDragRef.current.origX + dx, y: textDragRef.current.origY + dy });
-  }
-  function handleTextTouchEnd() { textDragRef.current = null; saveHistory(); }
-
-  function startTextEdit() { setShowEmojiPicker(false); setEditingText(true); setTimeout(() => textInputRef.current?.focus(), 50); }
-  function finishTextEdit() { setEditingText(false); saveHistory(); }
-  function toggleEmoji() { setEditingText(false); setShowEmojiPicker(p => !p); }
 
   async function handleExport() {
     const el = canvasRef.current;
@@ -6546,11 +6584,25 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
 
   const canUndo = historyIndexRef.current > 0;
   const canRedo = historyIndexRef.current < historyRef.current.length - 1;
+  const hasSelection = selectedSticker || selectedTextId;
+  const editingLayer = editingTextId ? textLayers.find(tl => tl.id === editingTextId) : null;
 
   return (
     <div className="absolute inset-0 z-50" style={{ background: "#000", touchAction: "none" }}>
+      {showCloseConfirm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 280 }}>
+            <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Supprimer ce post ?</p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button onClick={() => setShowCloseConfirm(false)} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non</button>
+              <button onClick={() => { setShowCloseConfirm(false); onClose(); }} style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Oui</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5 }}>
-        <button onClick={onClose} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => setShowCloseConfirm(true)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
         <button onClick={handleExport} style={{ background: "#CCF71D", border: "none", borderRadius: 20, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#000" }}>
@@ -6562,11 +6614,16 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
         <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
-        <button onClick={startTextEdit} style={{ background: editingText ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <span style={{ fontSize: 14, fontWeight: 900, color: editingText ? "#000" : "#fff" }}>Aa</span>
+        <button onClick={addTextLayer} style={{ background: editingTextId ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: editingTextId ? "#000" : "#fff" }}>Aa</span>
         </button>
-        <button onClick={deleteSelected} style={{ background: (selectedSticker || textOverlay) ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <Trash2 size={16} color={(selectedSticker || textOverlay) ? "#ef4444" : "#666"} />
+        {(selectedTextId || editingTextId) && (
+          <button onClick={toggleTextBg} style={{ background: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <span style={{ fontSize: 11, fontWeight: 900, color: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#000" : "#fff" }}>BG</span>
+          </button>
+        )}
+        <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Trash2 size={16} color={hasSelection ? "#ef4444" : "#666"} />
         </button>
         <div style={{ height: 1, background: "#333", margin: "2px 6px" }} />
         <button onClick={undo} style={{ background: canUndo ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.05)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", opacity: canUndo ? 1 : 0.3 }}>
@@ -6580,41 +6637,43 @@ function MatchCardEditor({ image, onDone, onClose, visible = true }) {
       <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 16, right: 56, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
-        onClick={(e) => { if (editingText) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); } }}
+        onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
       >
-        <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `rotate(${rotation}deg) translate(${offsetX}px, ${offsetY}px)`, objectFit: "contain", pointerEvents: "none" }} />
+        <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", pointerEvents: "none" }} />
 
-        {(textOverlay || editingText) && (
-          <div style={{ position: "absolute", left: `${textPos.x}%`, top: `${textPos.y}%`, transform: "translate(-50%, -50%)", zIndex: 3 }}
-            onTouchStart={!editingText ? handleTextTouchStart : undefined} onTouchMove={!editingText ? handleTextTouchMove : undefined} onTouchEnd={!editingText ? handleTextTouchEnd : undefined}
-            onClick={(e) => { if (!editingText && !textDraggedRef.current) { e.stopPropagation(); startTextEdit(); } textDraggedRef.current = false; }}
+        {textLayers.map(tl => (
+          <div key={tl.id} style={{ position: "absolute", left: `${tl.x}%`, top: `${tl.y}%`, transform: `translate(-50%, -50%) rotate(${tl.rot || 0}deg)`, zIndex: 3 }}
+            onTouchStart={editingTextId !== tl.id ? (e) => handleTextLayerTouchStart(e, tl.id) : undefined}
+            onTouchMove={editingTextId !== tl.id ? handleTextLayerTouchMove : undefined}
+            onTouchEnd={editingTextId !== tl.id ? handleTextLayerTouchEnd : undefined}
+            onClick={(e) => { e.stopPropagation(); if (editingTextId === tl.id) return; if (!textDraggedRef.current) { setEditingTextId(tl.id); setSelectedTextId(tl.id); setShowEmojiPicker(false); setTimeout(() => textInputRef.current?.focus(), 50); } textDraggedRef.current = false; }}
           >
-            {editingText ? (
+            {editingTextId === tl.id ? (
               <div style={{ position: "relative" }}>
-                <input ref={textInputRef} type="text" value={textOverlay} onChange={e => setTextOverlay(e.target.value.slice(0, 80))}
+                <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === tl.id ? { ...t, text: e.target.value.slice(0, 80) } : t))}
                   onBlur={finishTextEdit}
                   onClick={e => e.stopPropagation()}
-                  style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, padding: "8px 14px", color: textColor, fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none", width: "auto", textShadow: "0 2px 8px rgba(0,0,0,0.8)", caretColor: "#CCF71D" }}
+                  style={{ background: tl.hasBg ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: 8, padding: "8px 14px", color: tl.color, fontSize: 18, fontWeight: 800, textAlign: "center", outline: "none", width: "auto", textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", caretColor: "#CCF71D" }}
                   placeholder="Texte..."
                 />
                 <div style={{ display: "flex", gap: 3, justifyContent: "center", marginTop: 6 }}>
                   {TEXT_COLORS.map(c => (
-                    <button key={c} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.stopPropagation(); setTextColor(c); }} style={{ width: 20, height: 20, borderRadius: 10, background: c, border: textColor === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
+                    <button key={c} onMouseDown={(e) => e.preventDefault()} onClick={(e) => { e.stopPropagation(); setTextLayers(prev => prev.map(t => t.id === tl.id ? { ...t, color: c } : t)); }} style={{ width: 20, height: 20, borderRadius: 10, background: c, border: tl.color === c ? "2px solid #CCF71D" : "1.5px solid #555", cursor: "pointer" }} />
                   ))}
                 </div>
               </div>
-            ) : (
-              <div style={{ color: textColor, fontSize: 18, fontWeight: 800, textShadow: "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", whiteSpace: "nowrap", cursor: "grab" }}>
-                {textOverlay}
+            ) : tl.text ? (
+              <div style={{ color: tl.color, fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: "22ch", overflowWrap: "break-word", wordWrap: "break-word", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : "none", padding: tl.hasBg ? "4px 10px" : 0, borderRadius: tl.hasBg ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none" }}>
+                {tl.text}
               </div>
-            )}
+            ) : null}
           </div>
-        )}
+        ))}
 
         {stickers.map(s => (
           <div key={s.id} style={{ position: "absolute", left: `${s.x}%`, top: `${s.y}%`, transform: "translate(-50%, -50%)", fontSize: 32, cursor: "grab", userSelect: "none", zIndex: 2, outline: selectedSticker === s.id ? "2px solid #CCF71D" : "none", borderRadius: 4, padding: 2 }}
             onTouchStart={e => handleStickerTouchStart(e, s.id)} onTouchMove={handleStickerTouchMove} onTouchEnd={handleStickerTouchEnd}
-            onClick={(e) => { e.stopPropagation(); setSelectedSticker(s.id); }}
+            onClick={(e) => { e.stopPropagation(); setSelectedSticker(s.id); setSelectedTextId(null); }}
             onDoubleClick={() => removeSticker(s.id)}
           >
             {s.emoji}
