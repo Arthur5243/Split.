@@ -6814,7 +6814,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   );
 }
 
-function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, initialDraft, onContentChange }) {
+function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, initialDraft, onContentChange, drafts, onLoadDraft, onDeleteDraft }) {
   const [content, setContent] = useState(initialDraft?.content || "");
   const [matchData, setMatchData] = useState(null);
   const [posting, setPosting] = useState(false);
@@ -6866,7 +6866,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, w, h);
         const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        setPhotoPreview(dataUrl);
+        setCardEditorImage(dataUrl);
+        setShowCardEditor(true);
         setPhotoFile(file);
       };
       img.src = ev.target.result;
@@ -6920,6 +6921,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
 
       <div style={{ position: "absolute", top: 50, left: 0, right: 0, display: "flex", borderBottom: "1px solid #262626", background: "#0a0a0a", zIndex: 2 }}>
         <button onClick={() => setTab("write")} style={{ flex: 1, padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 700, color: tab === "write" ? "#CCF71D" : "#666", borderBottom: tab === "write" ? "2px solid #CCF71D" : "2px solid transparent", background: "none", border: "none", borderBottomStyle: "solid", cursor: "pointer" }}>Post</button>
+        <button onClick={() => setTab("drafts")} style={{ flex: 1, padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 700, color: tab === "drafts" ? "#CCF71D" : "#666", borderBottom: tab === "drafts" ? "2px solid #CCF71D" : "2px solid transparent", background: "none", border: "none", borderBottomStyle: "solid", cursor: "pointer", position: "relative" }}>Brouillons{drafts?.length > 0 && <span style={{ marginLeft: 4, background: "#CCF71D", color: "#000", borderRadius: 99, fontSize: 9, fontWeight: 800, padding: "1px 5px", verticalAlign: "middle" }}>{drafts.length}</span>}</button>
         <button onClick={() => setTab("history")} style={{ flex: 1, padding: "10px 0", textAlign: "center", fontSize: "12px", fontWeight: 700, color: tab === "history" ? "#CCF71D" : "#666", borderBottom: tab === "history" ? "2px solid #CCF71D" : "2px solid transparent", background: "none", border: "none", borderBottomStyle: "solid", cursor: "pointer" }}>{T.postHistory || "Historique"}</button>
       </div>
 
@@ -6970,6 +6972,25 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
           </button>
         </div>
         </>
+      )}
+
+      {tab === "drafts" && (
+        <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+          {(!drafts || drafts.length === 0) && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>Aucun brouillon</p>}
+          {drafts?.map(draft => (
+            <div key={draft.id} style={{ borderBottom: "1px solid #1e1e1e", padding: "12px 16px" }}>
+              {draft.image && <img src={draft.image} alt="" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />}
+              {draft.content && <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5, marginBottom: 8 }}>{draft.content.length > 120 ? draft.content.slice(0, 120) + "..." : draft.content}</p>}
+              <div className="flex items-center justify-between">
+                <span style={{ color: "#555", fontSize: "10px" }}>{new Date(draft.date).toLocaleDateString()}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => onLoadDraft?.(draft)} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Charger</button>
+                  <button onClick={() => onDeleteDraft?.(draft.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Trash2 size={14} color="#ef4444" /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {tab === "history" && (
@@ -8242,12 +8263,12 @@ function CalendarModal({ onClose, T, lang }) {
   const todayISO = getTodayISO();
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" onTouchMove={(e) => e.stopPropagation()} style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y", overflowY: "auto" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO); // "done" | "live" | "soon"
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
@@ -8403,12 +8424,12 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 
   return (
     <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" onTouchMove={(e) => e.stopPropagation()}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", touchAction: "pan-y", overflowY: "auto", overscrollBehavior: "contain" }}>
           {timeline.map((item, idx) => {
             const status = computeStageStatus(item, todayISO);
             const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#CCF71D";
@@ -8597,7 +8618,7 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); localStorage.setItem("split_drafts", JSON.stringify(limited)); }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
-  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
+  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); if (tab === "__close__") return; setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
   useEffect(() => {
     function onCreatePost(e) {
       setAppPostPrefill(e.detail?.text || "");
@@ -9700,7 +9721,7 @@ export default function ClutchApp() {
 
         {appCreatePost && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <CreatePostScreen onClose={() => { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} />
+            <CreatePostScreen onClose={() => { const d = postContentRef.current; if (d.content || d.image) { setPendingTabSwitch("__close__"); setShowDraftPrompt(true); } else { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); } }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} />
           </div>
         )}
 
