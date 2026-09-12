@@ -2289,7 +2289,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
-      <div className="flex items-start justify-between px-4 pt-3">
+      <div className="flex items-start justify-between px-4 pt-2">
         <div>
           <span style={{ color: accent, fontSize: "11.5px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
             {match.matchTier && (
@@ -2302,7 +2302,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>BO5</span>}
             {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>BO7</span>}
           </span>
-          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>
+          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "1px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2407,7 +2407,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "25px 16px" : "12px 16px" }}>
+      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "20px 16px" : "8px 16px" }}>
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             {regionsAboveLogo && showRegion1 && (
@@ -2484,9 +2484,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       </div>
 
       {finished ? null : tbd ? (
-        <div className="px-4 pb-3 text-center" style={{ color: hasBg ? "#bbb" : "#666", fontSize: "11px", ...txtStW }}>{T.teamsTbc}</div>
+        <div className="px-4 pb-2 text-center" style={{ color: hasBg ? "#bbb" : "#666", fontSize: "11px", ...txtStW }}>{T.teamsTbc}</div>
       ) : (
-        <div className="px-4 pb-3 flex items-center justify-center gap-3" style={{ position: "relative" }}>
+        <div className="px-4 pb-2 flex items-center justify-center gap-3" style={{ position: "relative" }}>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team1}</span>
             <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
@@ -2507,7 +2507,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       )}
       {finished ? (
         <>
-          <div data-capture-hide style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "0 12px", height: 40 }}>
+          <div data-capture-hide style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "0 12px", height: 36 }}>
             <div style={{ position: "relative" }}>
               <button onClick={async (e) => {
                 e.stopPropagation();
@@ -2664,7 +2664,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </>
       ) : (
         <>
-          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "8px 12px", opacity: tbd ? 0.4 : 1 }}>
+          <div style={{ position: "relative", display: "flex", alignItems: "center", background: "#1e1e1e", padding: "7px 12px", opacity: tbd ? 0.4 : 1 }}>
             <div style={{ position: "relative" }}>
               <button onClick={async (e) => {
                 e.stopPropagation();
