@@ -2513,7 +2513,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 e.stopPropagation();
                 if (showSharePicker) { setShowSharePicker(false); return; }
                 setShareLoading(true); setShowSharePicker(true);
-                setScoresRevealed(true);
+                setScoresRevealed(true); setLiveRevealed(true);
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 try { const [dataUrl, blob] = await Promise.all([captureCardAsDataUrl(cardRef.current), captureCardAsBlob(cardRef.current)]); shareCacheRef.current = { dataUrl, blob }; } catch { shareCacheRef.current = null; }
                 setShareLoading(false);
@@ -2670,6 +2670,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 e.stopPropagation();
                 if (showSharePicker) { setShowSharePicker(false); return; }
                 setShareLoading(true); setShowSharePicker(true);
+                setScoresRevealed(true); setLiveRevealed(true);
                 await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                 try { const [dataUrl, blob] = await Promise.all([captureCardAsDataUrl(cardRef.current), captureCardAsBlob(cardRef.current)]); shareCacheRef.current = { dataUrl, blob }; } catch { shareCacheRef.current = null; }
                 setShareLoading(false);
