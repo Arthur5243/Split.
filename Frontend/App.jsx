@@ -6591,6 +6591,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   }
 
   function deleteSelected() {
+    if (selectedUserImg) { saveHistory(); setUserImages(prev => prev.filter(i => i.id !== selectedUserImg)); setSelectedUserImg(null); setTimeout(saveHistory, 0); return; }
     if (selectedSticker) { removeSticker(selectedSticker); return; }
     if (selectedTextId) { saveHistory(); setTextLayers(prev => prev.filter(tl => tl.id !== selectedTextId)); setSelectedTextId(null); setEditingTextId(null); setTimeout(saveHistory, 0); return; }
   }
@@ -6607,18 +6608,55 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
 
   const canUndo = historyIndexRef.current > 0;
   const canRedo = historyIndexRef.current < historyRef.current.length - 1;
-  const hasSelection = selectedSticker || selectedTextId;
+  const hasSelection = selectedSticker || selectedTextId || selectedUserImg;
   const editingLayer = editingTextId ? textLayers.find(tl => tl.id === editingTextId) : null;
 
   const imgInputRef = useRef(null);
+  const [userImages, setUserImages] = useState([]);
   function handleAddImage(e) {
     const file = e.target.files?.[0];
     if (imgInputRef.current) imgInputRef.current.value = "";
     if (!file || !file.type.startsWith("image/")) return;
     const reader = new FileReader();
-    reader.onload = (ev) => { saveHistory(); setStickers(prev => [...prev, { id: Date.now(), emoji: null, imgSrc: ev.target.result, x: 50, y: 50 }]); setTimeout(saveHistory, 0); };
+    reader.onload = (ev) => { saveHistory(); setUserImages(prev => [...prev, { id: Date.now(), src: ev.target.result, x: 0, y: 0, scale: 1, rot: 0 }]); setTimeout(saveHistory, 0); };
     reader.readAsDataURL(file);
   }
+  const userImgDragRef = useRef(null);
+  const userImgGestureRef = useRef(null);
+  const [selectedUserImg, setSelectedUserImg] = useState(null);
+  function handleUserImgTouchStart(e, id) {
+    e.stopPropagation();
+    setSelectedUserImg(id); setSelectedSticker(null); setSelectedTextId(null);
+    const img = userImages.find(i => i.id === id);
+    if (!img) return;
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+      userImgGestureRef.current = { id, startDist: dist, startAngle: angle, startScale: img.scale, startRot: img.rot };
+      userImgDragRef.current = null;
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      userImgDragRef.current = { id, startX: t.clientX, startY: t.clientY, origX: img.x, origY: img.y };
+    }
+  }
+  function handleUserImgTouchMove(e) {
+    if (e.touches.length === 2 && userImgGestureRef.current) {
+      e.preventDefault(); e.stopPropagation();
+      const t1 = e.touches[0], t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX);
+      const g = userImgGestureRef.current;
+      setUserImages(prev => prev.map(i => i.id === g.id ? { ...i, scale: Math.min(3, Math.max(0.2, g.startScale * (dist / g.startDist))), rot: g.startRot + (angle - g.startAngle) * (180 / Math.PI) } : i));
+    } else if (userImgDragRef.current) {
+      e.stopPropagation();
+      const t = e.touches[0];
+      const d = userImgDragRef.current;
+      setUserImages(prev => prev.map(i => i.id === d.id ? { ...i, x: d.origX + (t.clientX - d.startX), y: d.origY + (t.clientY - d.startY) } : i));
+    }
+  }
+  function handleUserImgTouchEnd() { userImgDragRef.current = null; userImgGestureRef.current = null; saveHistory(); }
 
   return (
     <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a", touchAction: "none" }}>
@@ -6653,38 +6691,53 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
       </div>
 
       <div style={{ position: "absolute", top: 56, right: 8, display: "flex", flexDirection: "column", gap: 8, zIndex: 6 }}>
-        <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
-        <button onClick={addTextLayer} style={{ background: editingTextId ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={addTextLayer} style={{ background: editingTextId ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <span style={{ fontSize: 14, fontWeight: 900, color: editingTextId ? "#000" : "#fff" }}>Aa</span>
         </button>
         {(selectedTextId || editingTextId) && (
-          <button onClick={toggleTextBg} style={{ background: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <button onClick={toggleTextBg} style={{ background: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
             <span style={{ fontSize: 11, fontWeight: 900, color: (editingLayer || textLayers.find(t => t.id === selectedTextId))?.hasBg ? "#000" : "#fff" }}>BG</span>
           </button>
         )}
-        <button onClick={() => imgInputRef.current?.click()} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => imgInputRef.current?.click()} style={{ background: "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <ImageIcon size={16} color="#fff" />
         </button>
-        <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "rgba(255,255,255,0.08)", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={deleteSelected} style={{ background: hasSelection ? "rgba(239,68,68,0.25)" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <Trash2 size={16} color={hasSelection ? "#ef4444" : "#666"} />
         </button>
       </div>
 
       <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 52, bottom: showEmojiPicker ? 280 : 56, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
-        onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-        onMouseDown={handleMouseDown}
-        onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
+        onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
-          <div ref={matchCardRef} className="editor-card-wrap" style={{ width: 340, flexShrink: 0, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg) scale(${scale})`, transformOrigin: "center center", pointerEvents: "none" }}>
+          <div ref={matchCardRef} className="editor-card-wrap" style={{ width: 340, flexShrink: 0, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg) scale(${scale})`, transformOrigin: "center center", cursor: "grab" }}
+            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+          >
             <style>{`.editor-card-wrap [data-capture-hide] { display: none !important; } .editor-card-wrap .mb-3 { margin-bottom: 0 !important; }`}</style>
-            <MatchCard match={{ ...matchObj, status: matchObj.status || "not_started" }} accent="#CCF71D" pred={null} onSeriesChange={() => {}} onToggleExpand={() => {}} onScoreChange={() => {}} T={T || {}} lang="fr" teamLogoCache={{}} streamUrl={null} replayUrl={null} hideOdds={false} notifActive={false} onToggleNotif={() => {}} remainingPreds={0} />
+            <div style={{ pointerEvents: "none" }}>
+              <MatchCard match={{ ...matchObj, status: matchObj.status || "not_started" }} accent="#CCF71D" pred={null} onSeriesChange={() => {}} onToggleExpand={() => {}} onScoreChange={() => {}} T={T || {}} lang="fr" teamLogoCache={{}} streamUrl={null} replayUrl={null} hideOdds={false} notifActive={false} onToggleNotif={() => {}} remainingPreds={0} />
+            </div>
           </div>
         ) : image ? (
-          <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", pointerEvents: "none" }} />
+          <img src={image} alt="" style={{ width: `${scale * 100}%`, transform: `translate(${offsetX}px, ${offsetY}px) rotate(${rotation}deg)`, transformOrigin: "center center", objectFit: "contain", cursor: "grab" }}
+            onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+          />
         ) : null}
+
+        {userImages.map(ui => (
+          <div key={ui.id} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) translate(${ui.x}px, ${ui.y}px) rotate(${ui.rot}deg) scale(${ui.scale})`, transformOrigin: "center center", cursor: "grab", zIndex: 1, outline: selectedUserImg === ui.id ? "2px solid #CCF71D" : "none", borderRadius: 8 }}
+            onTouchStart={e => handleUserImgTouchStart(e, ui.id)} onTouchMove={handleUserImgTouchMove} onTouchEnd={handleUserImgTouchEnd}
+            onClick={e => { e.stopPropagation(); setSelectedUserImg(ui.id); setSelectedSticker(null); setSelectedTextId(null); }}
+          >
+            <img src={ui.src} style={{ maxWidth: 200, maxHeight: 200, objectFit: "contain", pointerEvents: "none", borderRadius: 8 }} draggable={false} />
+          </div>
+        ))}
 
         {textLayers.map(tl => (
           <div key={tl.id} style={{ position: "absolute", left: `${tl.x}%`, top: `${tl.y}%`, transform: `translate(-50%, -50%) rotate(${tl.rot || 0}deg)`, zIndex: 3 }}
@@ -6739,7 +6792,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
           </div>
         );
       })()}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)", background: "#111", borderTop: "1px solid #222" }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
         <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
           {BG_COLORS.map(c => (
             <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
