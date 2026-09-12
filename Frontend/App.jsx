@@ -6672,7 +6672,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 0, right: 48, bottom: showEmojiPicker ? 280 : 80, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, bottom: showEmojiPicker ? 280 : 80, left: "50%", transform: "translateX(-50%)", width: "min(calc(100% - 56px), calc((100vh - 136px) * 9 / 16))", maxWidth: "calc(100% - 56px)", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
         onMouseDown={handleMouseDown}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); } }}
