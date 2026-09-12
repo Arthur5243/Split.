@@ -6690,7 +6690,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div style={{ position: "absolute", top: 56, right: 8, display: "flex", flexDirection: "column", gap: 8, zIndex: 6 }}>
+      <div style={{ position: "absolute", top: 56, right: 12, display: "flex", flexDirection: "column", gap: 8, zIndex: 6 }}>
         <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "transparent", border: "none", borderRadius: 50, width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
@@ -6710,7 +6710,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 52, bottom: showEmojiPicker ? 280 : 56, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, bottom: showEmojiPicker ? 280 : 56, borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
@@ -6746,7 +6746,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
             onTouchEnd={editingTextId !== tl.id ? handleTextLayerTouchEnd : undefined}
             onClick={(e) => { e.stopPropagation(); if (editingTextId === tl.id) return; if (!textDraggedRef.current) { setEditingTextId(tl.id); setSelectedTextId(tl.id); setShowEmojiPicker(false); setTimeout(() => textInputRef.current?.focus(), 50); } textDraggedRef.current = false; }}
           >
-            <div style={{ color: tl.text ? tl.color : "rgba(255,255,255,0.3)", fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", maxWidth: "22ch", overflowWrap: "break-word", wordWrap: "break-word", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : (editingTextId === tl.id ? "rgba(0,0,0,0.3)" : "none"), padding: tl.hasBg || editingTextId === tl.id ? "4px 10px" : 0, borderRadius: tl.hasBg || editingTextId === tl.id ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none", minWidth: editingTextId === tl.id ? 80 : undefined }}>
+            <div style={{ color: tl.text ? tl.color : "rgba(255,255,255,0.3)", fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", whiteSpace: "nowrap", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : (editingTextId === tl.id ? "rgba(0,0,0,0.3)" : "none"), padding: tl.hasBg || editingTextId === tl.id ? "4px 10px" : 0, borderRadius: tl.hasBg || editingTextId === tl.id ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none", minWidth: editingTextId === tl.id ? 80 : undefined }}>
               {tl.text || "Texte..."}
             </div>
           </div>
@@ -6778,7 +6778,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         if (!tl) return null;
         return (
           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, transform: "translateY(-50%)", background: "rgba(0,0,0,0.85)", padding: "14px 16px", zIndex: 5 }}>
-            <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === editingTextId ? { ...t, text: e.target.value.slice(0, 80) } : t))}
+            <input ref={textInputRef} type="text" value={tl.text} onChange={e => setTextLayers(prev => prev.map(t => t.id === editingTextId ? { ...t, text: e.target.value } : t))}
               onBlur={finishTextEdit}
               autoFocus
               style={{ width: "100%", background: "#1a1a1a", border: "1px solid #333", borderRadius: 8, padding: "10px 14px", color: tl.color, fontSize: 16, fontWeight: 800, textAlign: "center", outline: "none", textShadow: tl.hasBg ? "none" : "0 1px 4px rgba(0,0,0,0.8)", caretColor: "#CCF71D", marginBottom: 8 }}
@@ -6792,7 +6792,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
           </div>
         );
       })()}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
+      <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
         <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
           {BG_COLORS.map(c => (
             <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
