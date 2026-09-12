@@ -926,15 +926,26 @@ async function captureCardAsDataUrl(el) {
 async function captureCardServer(el) {
   const restore = hideForCapture(el);
   const html = el.outerHTML;
+  const fallbackPromise = (async () => {
+    const h2c = await loadHtml2Canvas();
+    const canvas = await h2c(el, { backgroundColor: "#141414", scale: 3, useCORS: true });
+    return canvas.toDataURL("image/png");
+  })();
   restore();
-  const res = await fetch(API_BASE + "/api/capture-card", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html }),
-  });
-  const data = await res.json();
-  if (!data.image) throw new Error("capture failed");
-  return data.image;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(API_BASE + "/api/capture-card", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ html }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await res.json();
+    if (data.image) return data.image;
+  } catch {}
+  return fallbackPromise;
 }
 
 function shortenCompName(name) {
@@ -6757,6 +6768,10 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData }) {
     if (matchCardData && matchCardData !== "loading" && !cardEditorImage) {
       setCardEditorImage(matchCardData);
       setCardLoading(false);
+    }
+    if (matchCardData === null && cardLoading) {
+      setCardLoading(false);
+      setShowCardEditor(false);
     }
   }, [matchCardData]);
 
