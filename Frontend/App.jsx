@@ -6701,7 +6701,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div style={{ position: "absolute", top: 56, right: 12, display: "flex", flexDirection: "column", gap: 6, zIndex: 6 }}>
+      <div style={{ position: "absolute", top: 74, right: 18, display: "flex", flexDirection: "column", gap: 6, zIndex: 6 }}>
         <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
@@ -6724,7 +6724,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, aspectRatio: "4/5", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 68, left: 12, right: 12, aspectRatio: "4/5", borderRadius: 22, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
