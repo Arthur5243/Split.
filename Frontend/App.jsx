@@ -6719,7 +6719,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, bottom: showEmojiPicker ? 280 : (showBgColors ? 56 : 8), borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 56, left: 8, right: 8, aspectRatio: "1", borderRadius: 16, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
