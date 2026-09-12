@@ -6621,7 +6621,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   }
 
   return (
-    <div className="absolute inset-0 z-50" style={{ background: "transparent", touchAction: "none" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#0a0a0a", touchAction: "none" }}>
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAddImage} />
       {showCloseConfirm && (
         <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
