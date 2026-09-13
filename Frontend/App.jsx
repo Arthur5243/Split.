@@ -7149,37 +7149,31 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
     fetch(API_BASE + "/api/posts/top-likes").then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setTopLikes(d); }).catch(() => {});
   }, [profile?.userId]);
 
-  function handlePhotoSelect(e) {
+  async function handlePhotoSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError("");
-    if (file.size > 5 * 1024 * 1024) { setPhotoError("Image trop lourde (max 5 Mo)"); return; }
+    if (file.size > 10 * 1024 * 1024) { setPhotoError("Image trop lourde (max 10 Mo)"); return; }
     if (!file.type.startsWith("image/")) { setPhotoError("Format non supporté"); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1200;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        setCardEditorImage(dataUrl);
-        setShowCardEditor(true);
-        setPhotoFile(file);
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const bmp = await createImageBitmap(file);
+      const MAX = 1200;
+      let w = bmp.width, h = bmp.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close();
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      setCardEditorImage(dataUrl);
+      setShowCardEditor(true);
+      setPhotoFile(file);
+    } catch { setPhotoError("Impossible de lire l'image"); }
   }
 
   function handlePost() {
