@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createPost, getFeed, getUserPosts, getPostById, getPostImage, likePost, unlikePost, isPostLiked, deletePost } from "./posts-store.js";
+import { createPost, getFeed, getUserPosts, getPostById, getPostImage, likePost, unlikePost, isPostLiked, deletePost, addComment, getComments, deleteComment, getUserPostStats, getLikesLeaderboard } from "./posts-store.js";
 import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
 
 const router = Router();
@@ -29,6 +29,15 @@ router.get("/api/posts/feed", (req, res) => {
 
 router.get("/api/posts/user/:userId", (req, res) => {
   res.json(getUserPosts(req.params.userId));
+});
+
+router.get("/api/posts/stats/:userId", (req, res) => {
+  const stats = getUserPostStats(req.params.userId);
+  res.json(stats || { total_likes: 0, total_posts: 0, total_comments: 0 });
+});
+
+router.get("/api/posts/top-likes", (_req, res) => {
+  res.json(getLikesLeaderboard());
 });
 
 router.get("/api/posts/:id/image", (req, res) => {
@@ -68,6 +77,26 @@ router.delete("/api/posts/:id", (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ error: "userId required" });
   const ok = deletePost(parseInt(req.params.id), userId);
+  res.json({ ok });
+});
+
+router.get("/api/posts/:id/comments", (req, res) => {
+  res.json(getComments(parseInt(req.params.id)));
+});
+
+router.post("/api/posts/:id/comments", (req, res) => {
+  const { userId, content } = req.body;
+  if (!userId || !content?.trim()) return res.status(400).json({ error: "userId and content required" });
+  if (containsBlockedWord(content)) return res.status(400).json({ error: "blocked_content" });
+  const safe = sanitizeMessage(content);
+  const id = addComment(parseInt(req.params.id), userId, safe);
+  res.json({ id });
+});
+
+router.delete("/api/comments/:id", (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  const ok = deleteComment(parseInt(req.params.id), userId);
   res.json({ ok });
 });
 

@@ -6701,7 +6701,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div style={{ position: "absolute", top: 74, right: 18, display: "flex", flexDirection: "column", gap: 6, zIndex: 6 }}>
+      <div style={{ position: "absolute", top: 102, right: 20, display: "flex", flexDirection: "column", gap: 6, zIndex: 6 }}>
         <button onClick={toggleEmoji} style={{ background: showEmojiPicker ? "#CCF71D" : "rgba(255,255,255,0.12)", border: "none", borderRadius: 50, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(6px)" }}>
           <span style={{ fontSize: 16 }}>😀</span>
         </button>
@@ -6724,7 +6724,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
         </button>
       </div>
 
-      <div ref={canvasRef} style={{ position: "absolute", top: 68, left: 12, right: 12, aspectRatio: "4/5", borderRadius: 22, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none" }}
+      <div ref={canvasRef} style={{ position: "absolute", top: 96, left: 14, right: 14, aspectRatio: "3/4", borderRadius: 22, background: bgColor, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", touchAction: "none", border: "1px solid rgba(255,255,255,0.12)" }}
         onClick={(e) => { if (editingTextId) { finishTextEdit(); e.stopPropagation(); } else { setSelectedSticker(null); setSelectedTextId(null); setSelectedUserImg(null); } }}
       >
         {matchObj ? (
@@ -6834,6 +6834,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
   const [showCardEditor, setShowCardEditor] = useState(!initialDraft && !!matchCardData);
   const [cardEditorImage, setCardEditorImage] = useState(isImageStr ? matchCardData : null);
   const [cardMatch, setCardMatch] = useState(isMatchObj ? matchCardData : null);
+  const [userStats, setUserStats] = useState(null);
+  const [topLikes, setTopLikes] = useState([]);
 
   useEffect(() => {
     if (onContentChange) onContentChange({ content, image: photoPreview });
@@ -6844,6 +6846,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
     fetch(API_BASE + "/api/posts/user/" + profile.userId).then(r => r.json()).then(d => {
       if (Array.isArray(d)) setHistory(d);
     }).catch(() => {});
+    fetch(API_BASE + "/api/posts/stats/" + profile.userId).then(r => r.ok ? r.json() : null).then(d => setUserStats(d || { total_likes: 0, total_posts: 0, total_comments: 0 })).catch(() => setUserStats({ total_likes: 0, total_posts: 0, total_comments: 0 }));
+    fetch(API_BASE + "/api/posts/top-likes").then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setTopLikes(d); }).catch(() => {});
   }, [profile?.userId]);
 
   function handlePhotoSelect(e) {
@@ -6959,6 +6963,39 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
           )}
 
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
+
+          {profile?.userId && userStats && (
+            <div style={{ margin: "8px 16px", padding: "12px 14px", background: "#111", borderRadius: 14, border: "1px solid #1e1e1e" }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
+                    {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                  </div>
+                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{profile.pseudo || "Toi"}</span>
+                </div>
+                {topLikes.length > 0 && (() => {
+                  const myRank = topLikes.findIndex(u => u.user_id === profile.userId);
+                  return myRank >= 0 ? <span style={{ color: "#CCF71D", fontSize: 10, fontWeight: 800, background: "rgba(204,247,29,0.12)", padding: "2px 8px", borderRadius: 6 }}>Top #{myRank + 1}</span> : null;
+                })()}
+              </div>
+              <div className="flex items-center justify-around">
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_likes || 0}</div>
+                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Likes</div>
+                </div>
+                <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_posts || 0}</div>
+                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Posts</div>
+                </div>
+                <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_comments || 0}</div>
+                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Com.</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
           <input ref={photoRef} type="file" accept="image/*" onClick={e => { e.target.value = ""; }} onChange={handlePhotoSelect} style={{ display: "none" }} />
@@ -7023,6 +7060,66 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
   );
 }
 
+function PostComment({ postId, profile, T }) {
+  const [comments, setComments] = useState([]);
+  const [input, setInput] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    fetch(API_BASE + "/api/posts/" + postId + "/comments").then(r => r.json()).then(d => { if (Array.isArray(d)) setComments(d); }).catch(() => {});
+  }, [postId]);
+
+  function handleSend() {
+    if (!input.trim() || !profile?.userId || sending) return;
+    setSending(true);
+    fetch(API_BASE + "/api/posts/" + postId + "/comments", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: profile.userId, content: input.trim() }),
+    }).then(r => r.json()).then(() => {
+      setComments(prev => [...prev, { id: Date.now(), user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: input.trim(), created_at: new Date().toISOString() }]);
+      setInput("");
+    }).catch(() => {}).finally(() => setSending(false));
+  }
+
+  return (
+    <div className="px-4 pb-3">
+      {comments.length > 0 && !expanded && (
+        <button onClick={() => setExpanded(true)} style={{ background: "none", border: "none", color: "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0, marginBottom: 6 }}>
+          Voir {comments.length} commentaire{comments.length > 1 ? "s" : ""}
+        </button>
+      )}
+      {expanded && comments.map(c => (
+        <div key={c.id} className="flex items-start gap-2 mb-2">
+          <div className="rounded-full overflow-hidden shrink-0" style={{ width: 22, height: 22, background: "#1e1e1e", marginTop: 2 }}>
+            {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={10} color="#555" />}
+          </div>
+          <div>
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 800, marginRight: 4 }}>{c.pseudo}</span>
+            <span style={{ color: "#ccc", fontSize: 11 }}>{c.content}</span>
+            <div style={{ color: "#555", fontSize: 9, marginTop: 2 }}>{new Date(c.created_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      ))}
+      {expanded && comments.length === 0 && <p style={{ color: "#555", fontSize: 11, marginBottom: 6 }}>Aucun commentaire</p>}
+      <div className="flex items-center gap-2" style={{ marginTop: expanded ? 6 : 0 }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value.slice(0, 200))}
+          onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
+          placeholder="Commenter..."
+          style={{ flex: 1, background: "#141414", border: "1px solid #262626", borderRadius: 20, padding: "6px 12px", color: "#ddd", fontSize: 11, outline: "none" }}
+        />
+        {input.trim() && (
+          <button onClick={handleSend} disabled={sending} style={{ background: "#CCF71D", border: "none", borderRadius: 50, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+            <ArrowLeft size={14} color="#000" style={{ transform: "rotate(180deg)" }} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PostsFeedScreen({ onClose, T, profile }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -7076,11 +7173,16 @@ function PostsFeedScreen({ onClose, T, profile }) {
                 <Heart size={22} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
                 <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "13px", fontWeight: 700 }}>{p.likes || 0}</span>
               </button>
+              <button onClick={() => {}} className="flex items-center gap-1.5" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                <MessageCircle size={20} color="#888" />
+                <span style={{ color: "#888", fontSize: "13px", fontWeight: 700 }}>{p.comments || 0}</span>
+              </button>
               <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                 <Share2 size={20} color="#888" />
               </button>
             </div>
-            {p.content && <p className="px-4 pb-3" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
+            {p.content && <p className="px-4 pb-2" style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
+            <PostComment postId={p.id} profile={profile} T={T} />
           </div>
         ))}
       </div>
