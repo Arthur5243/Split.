@@ -857,6 +857,20 @@ function dayLabel(dateStr, lang, T) {
   }
 }
 
+function nextMatchLabel(upcoming, lang, T) {
+  if (!upcoming || upcoming.length === 0) return null;
+  const now = new Date();
+  const future = upcoming.filter(m => {
+    const d = m.beginAt || m.day;
+    return d && new Date(d) > now;
+  }).sort((a, b) => new Date(a.beginAt || a.day) - new Date(b.beginAt || b.day));
+  if (future.length === 0) return null;
+  const next = future[0];
+  const dateStr = next.day || (next.beginAt ? next.beginAt.slice(0, 10) : null);
+  if (!dateStr) return null;
+  return "Prochain match le " + dayLabel(dateStr, lang, T) + (next.time ? " à " + next.time : "");
+}
+
 function regionLabel(key, T) {
   if (key === "EMEA") return T.regionEmea;
   if (key === "PACIFIC") return T.regionPacific;
@@ -5983,7 +5997,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6217,7 +6231,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6369,7 +6383,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>Aucun match</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
