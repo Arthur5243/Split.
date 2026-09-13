@@ -6703,7 +6703,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const [textLayers, setTextLayers] = useState([]);
   const [editingTextId, setEditingTextId] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false); // unused, kept for compat
   const [showBgColors, setShowBgColors] = useState(false);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
@@ -6889,6 +6889,18 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
     }
   }
 
+  async function handleCloseWithDraft() {
+    const el = canvasRef.current;
+    if (el) {
+      try {
+        const h2c = await loadHtml2Canvas();
+        const canvas = await h2c(el, { backgroundColor: bgColor, scale: 2, useCORS: true });
+        onDone(canvas.toDataURL("image/jpeg", 0.82));
+      } catch (err) {}
+    }
+    onClose();
+  }
+
   if (!visible) return null;
 
   const canUndo = historyIndexRef.current > 0;
@@ -6940,20 +6952,10 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "#0a0a0a", touchAction: "none", zIndex: 50 }}>
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onClick={e => { e.target.value = ""; }} onChange={handleAddImage} />
-      {showCloseConfirm && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 280 }}>
-            <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Supprimer ce post ?</p>
-            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-              <button onClick={() => setShowCloseConfirm(false)} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non</button>
-              <button onClick={() => { setShowCloseConfirm(false); onClose(); }} style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Oui</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {false}
 
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5, borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(10,10,10,0.85)", backdropFilter: "blur(8px)" }}>
-        <button onClick={() => setShowCloseConfirm(true)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={handleCloseWithDraft} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
