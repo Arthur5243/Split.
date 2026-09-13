@@ -7219,7 +7219,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
   return (
     <div className="absolute inset-0 z-50" style={{ background: "#0a0a0a", borderLeft: "1px solid #1e1e1e", borderRight: "1px solid #1e1e1e", borderTop: "1px solid #262626" }}>
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #262626", background: "#0d0d0d", zIndex: 2 }}>
-        <button onClick={() => (cardEditorImage || cardMatch) ? setShowCardEditor(true) : onClose()} className="rounded-full p-1.5" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
+        <button onClick={() => onClose()} className="rounded-full p-1.5" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
