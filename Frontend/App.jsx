@@ -857,19 +857,7 @@ function dayLabel(dateStr, lang, T) {
   }
 }
 
-const KNOWN_EVENTS = {
-  valo: [
-    { title: "Champions 2026", date: "2026-09-24", game: "valo" },
-  ],
-  cs2: [
-    { title: "PGL Major 2026", date: "2026-10-01", game: "cs2" },
-  ],
-  rl: [
-    { title: "RLCS 2026 World Championship", date: "2026-10-15", game: "rl" },
-  ],
-};
-
-function nextMatchLabel(upcoming, lang, T, events, game) {
+function nextMatchLabel(upcoming, lang, T, nextEvents) {
   const now = new Date();
   if (upcoming && upcoming.length > 0) {
     const future = upcoming.filter(m => {
@@ -882,48 +870,14 @@ function nextMatchLabel(upcoming, lang, T, events, game) {
       if (dateStr) return "Prochain match le " + dayLabel(dateStr, lang, T) + (next.time ? " à " + next.time : "");
     }
   }
-  if (!events) return null;
-  let nextEvent = null;
-  const collectEntries = (obj) => {
-    if (!obj) return [];
-    if (Array.isArray(obj)) return obj;
-    const entries = [];
-    for (const v of Object.values(obj)) {
-      if (Array.isArray(v)) entries.push(...v);
-      else if (v && typeof v === "object" && v.begin_at) entries.push(v);
-      else if (v && typeof v === "object") {
-        for (const sv of Object.values(v)) { if (sv && typeof sv === "object") entries.push(sv); }
-      }
+  if (nextEvents && nextEvents.length > 0) {
+    const ev = nextEvents[0];
+    const dateStr = ev.begin_at ? ev.begin_at.slice(0, 10) : null;
+    if (dateStr) {
+      const title = ev.title || ev.league || "Event";
+      const short = title.length > 35 ? title.slice(0, 35) + "…" : title;
+      return short + " — " + dayLabel(dateStr, lang, T);
     }
-    return entries;
-  };
-  const allEvents = collectEntries(events);
-  for (const ev of allEvents) {
-    let evDate = null;
-    if (ev.begin_at) {
-      evDate = new Date(ev.begin_at);
-    } else if (ev.dates) {
-      const m = String(ev.dates).match(/(\w+)\s+(\d+)/);
-      if (m) {
-        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
-        const mi = months[m[1].toLowerCase().slice(0, 3)];
-        if (mi !== undefined) evDate = new Date(now.getFullYear(), mi, parseInt(m[2]));
-        if (evDate && evDate < new Date(now.getFullYear(), 0, 1)) evDate.setFullYear(now.getFullYear() + 1);
-      }
-    }
-    if (!evDate || evDate <= now) continue;
-    if (ev.status === "completed" || ev.status === "canceled") continue;
-    if (!nextEvent || evDate < nextEvent.date) nextEvent = { date: evDate, title: ev.title || "" };
-  }
-  if (nextEvent) {
-    const dateStr = nextEvent.date.toISOString().slice(0, 10);
-    const shortTitle = nextEvent.title.length > 30 ? nextEvent.title.slice(0, 30) + "…" : nextEvent.title;
-    return shortTitle + " — " + dayLabel(dateStr, lang, T);
-  }
-  const known = (game && KNOWN_EVENTS[game]) || [];
-  const futureKnown = known.filter(k => new Date(k.date) > now).sort((a, b) => new Date(a.date) - new Date(b.date));
-  if (futureKnown.length > 0) {
-    return futureKnown[0].title + " — " + dayLabel(futureKnown[0].date, lang, T);
   }
   return null;
 }
@@ -5906,7 +5860,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, nextEvents }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -6054,7 +6008,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, vlrEvents, "valo") || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, nextEvents) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6106,7 +6060,7 @@ function regionCodeRL(key) {
   return "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets, nextEvents }) {
   if (showCs2BracketPage) {
     return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -6288,7 +6242,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, cs2Events, "cs2") || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, nextEvents) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6297,7 +6251,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, rlEvents, showRlBracketPage, setShowRlBracketPage, prefetchedBrackets }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, rlEvents, showRlBracketPage, setShowRlBracketPage, prefetchedBrackets, nextEvents }) {
   if (showRlBracketPage) {
     return <RLBracketPage rlEvents={rlEvents} onBack={() => setShowRlBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowRlBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -6440,7 +6394,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, rlEvents, "rl") || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, nextEvents) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -9297,6 +9251,7 @@ export default function ClutchApp() {
   const [rlEvents, setRlEvents] = useState(null);
   const [showRlBracketPage, setShowRlBracketPage] = useState(false);
   const [prefetchedBrackets, setPrefetchedBrackets] = useState({});
+  const [nextEventsData, setNextEventsData] = useState({ valo: [], cs2: [], rl: [] });
 
   const T = currentLang === "fr" ? STR.fr : { ...STR.fr, ...(STR[currentLang] || {}) };
   const isLight = false;
@@ -9560,6 +9515,20 @@ export default function ClutchApp() {
     }
     loadRlEvents();
     const interval = setInterval(loadRlEvents, 15 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    async function loadNextEvents() {
+      try {
+        const res = await fetch(API_BASE + "/api/next-events");
+        if (!res.ok) return;
+        const data = await res.json();
+        setNextEventsData(data || { valo: [], cs2: [], rl: [] });
+      } catch (e) { /* silencieux */ }
+    }
+    loadNextEvents();
+    const interval = setInterval(loadNextEvents, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -10147,6 +10116,7 @@ export default function ClutchApp() {
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
+              nextEvents={nextEventsData.valo}
             />
           </div>
           <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
@@ -10175,6 +10145,7 @@ export default function ClutchApp() {
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.cs2 || 0}
               prefetchedBrackets={prefetchedBrackets}
+              nextEvents={nextEventsData.cs2}
             />
           </div>
           <div style={{ display: activeTab === "rocketleague" ? "block" : "none" }}>
@@ -10203,6 +10174,7 @@ export default function ClutchApp() {
               showRlBracketPage={showRlBracketPage}
               setShowRlBracketPage={setShowRlBracketPage}
               prefetchedBrackets={prefetchedBrackets}
+              nextEvents={nextEventsData.rl}
             />
           </div>
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}

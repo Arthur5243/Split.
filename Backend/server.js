@@ -96,6 +96,38 @@ function isFullyUnknown(m) {
   return !t1 && !t2;
 }
 
+const nextEventsCache = { data: null, at: 0 };
+app.get("/api/next-events", async (req, res) => {
+  try {
+    if (nextEventsCache.data && Date.now() - nextEventsCache.at < 15 * 60 * 1000) {
+      return res.json(nextEventsCache.data);
+    }
+    const now = new Date().toISOString();
+    const [valoSeries, cs2Series, rlSeries] = await Promise.all([
+      pandaFetch("/valorant/series?sort=begin_at&per_page=10&filter[status]=upcoming").catch(() => []),
+      pandaFetch("/csgo/series?sort=begin_at&per_page=10&filter[status]=upcoming").catch(() => []),
+      pandaFetch("/rl/series?sort=begin_at&per_page=10&filter[status]=upcoming").catch(() => []),
+    ]);
+    const pick = (list) => {
+      const future = (list || []).filter(s => s.begin_at && s.begin_at > now);
+      future.sort((a, b) => a.begin_at.localeCompare(b.begin_at));
+      return future.slice(0, 3).map(s => ({
+        title: s.full_name || s.name || (s.league && s.league.name) || "Event",
+        league: (s.league && s.league.name) || "",
+        begin_at: s.begin_at,
+        end_at: s.end_at || null,
+      }));
+    };
+    const result = { valo: pick(valoSeries), cs2: pick(cs2Series), rl: pick(rlSeries) };
+    nextEventsCache.data = result;
+    nextEventsCache.at = Date.now();
+    res.json(result);
+  } catch (e) {
+    console.error("next-events error:", e.message);
+    res.status(502).json({ error: "Impossible de récupérer les prochains events." });
+  }
+});
+
 app.get("/api/valorant-upcoming", async (req, res) => {
   try {
     // Avant : 5 pages (max 500 matchs) tirées EN PARALLÈLE avec Promise.all.
