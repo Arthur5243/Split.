@@ -6689,7 +6689,7 @@ function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
   );
 }
 
-function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }) {
+function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDismissEditor, visible = true, T }) {
   const canvasRef = useRef(null);
   const matchCardRef = useRef(null);
   const [bgColor, setBgColor] = useState("#0a0a0a");
@@ -6703,7 +6703,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   const [textLayers, setTextLayers] = useState([]);
   const [editingTextId, setEditingTextId] = useState(null);
   const [selectedTextId, setSelectedTextId] = useState(null);
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false); // unused, kept for compat
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showBgColors, setShowBgColors] = useState(false);
   const dragRef = useRef(null);
   const gestureRef = useRef(null);
@@ -6889,16 +6889,20 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
     }
   }
 
-  async function handleCloseWithDraft() {
+  async function handleSaveDraftAndClose() {
+    setShowCloseConfirm(false);
     const el = canvasRef.current;
-    if (el) {
+    if (el && onSaveDraft) {
       try {
         const h2c = await loadHtml2Canvas();
         const canvas = await h2c(el, { backgroundColor: bgColor, scale: 2, useCORS: true });
-        onDone(canvas.toDataURL("image/jpeg", 0.82));
-      } catch (err) {}
+        onSaveDraft(canvas.toDataURL("image/jpeg", 0.82));
+      } catch (err) {
+        if (onDismissEditor) onDismissEditor();
+      }
+    } else {
+      if (onDismissEditor) onDismissEditor();
     }
-    onClose();
   }
 
   if (!visible) return null;
@@ -6952,10 +6956,20 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "#0a0a0a", touchAction: "none", zIndex: 50 }}>
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onClick={e => { e.target.value = ""; }} onChange={handleAddImage} />
-      {false}
+      {showCloseConfirm && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowCloseConfirm(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 300 }}>
+            <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Enregistrer comme brouillon ?</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button onClick={handleSaveDraftAndClose} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Oui, sauvegarder</button>
+              <button onClick={() => { setShowCloseConfirm(false); if (onDismissEditor) onDismissEditor(); }} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non, supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", zIndex: 5, borderBottom: "1px solid rgba(255,255,255,0.1)", background: "rgba(10,10,10,0.85)", backdropFilter: "blur(8px)" }}>
-        <button onClick={handleCloseWithDraft} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+        <button onClick={() => setShowCloseConfirm(true)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 50, width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
           <X size={18} color="#fff" />
         </button>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -7104,7 +7118,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
   );
 }
 
-function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, initialDraft, onContentChange, drafts, onLoadDraft, onDeleteDraft }) {
+function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, initialDraft, onContentChange, drafts, onLoadDraft, onDeleteDraft, onSaveDraft }) {
   const [content, setContent] = useState(initialDraft?.content || "");
   const [matchData, setMatchData] = useState(null);
   const [posting, setPosting] = useState(false);
@@ -7199,7 +7213,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
   }
 
   if (showCardEditor && (cardEditorImage || cardMatch)) {
-    return <MatchCardEditor image={cardEditorImage} matchObj={cardMatch} onDone={(editedImg) => { setPhotoPreview(editedImg); setShowCardEditor(false); }} onClose={onClose} T={T} />;
+    return <MatchCardEditor image={cardEditorImage} matchObj={cardMatch} onDone={(editedImg) => { setPhotoPreview(editedImg); setShowCardEditor(false); }} onClose={onClose} onSaveDraft={(img) => { if (onSaveDraft) onSaveDraft({ content, image: img }); setShowCardEditor(false); }} onDismissEditor={() => setShowCardEditor(false)} T={T} />;
   }
 
   return (
@@ -10160,7 +10174,7 @@ export default function ClutchApp() {
 
         {appCreatePost && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 47, zIndex: 50 }}>
-            <CreatePostScreen onClose={() => { setPendingTabSwitch("__close__"); setShowDraftPrompt(true); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} />
+            <CreatePostScreen onClose={() => { doTabSwitch("__close__"); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} onSaveDraft={(d) => { if (d.content || d.image) { saveDrafts([{ id: Date.now(), content: d.content, image: d.image, date: new Date().toISOString() }, ...drafts]); } }} />
           </div>
         )}
 
