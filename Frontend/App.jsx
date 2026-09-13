@@ -7768,7 +7768,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
 function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
-  const [socialStats, setSocialStats] = useState({ following: 0, followers: 0, views: 0 });
+  const [socialStats, setSocialStats] = useState(null);
   const [eqBadgeTick, setEqBadgeTick] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
   const [friendsList, setFriendsList] = useState([]);
@@ -7835,11 +7835,11 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
           <div className="flex-1 flex justify-around text-center">
             <button onClick={() => { setShowFriendModal(true); setFriendModalTab("followers"); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.followers}</p>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats ? socialStats.followers : "–"}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
             </button>
             <button onClick={() => { setShowFriendModal(true); setFriendModalTab("following"); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats.following}</p>
+              <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats ? socialStats.following : "–"}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowing}</p>
             </button>
             <div>
