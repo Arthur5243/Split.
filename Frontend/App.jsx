@@ -857,18 +857,56 @@ function dayLabel(dateStr, lang, T) {
   }
 }
 
-function nextMatchLabel(upcoming, lang, T) {
-  if (!upcoming || upcoming.length === 0) return null;
+function nextMatchLabel(upcoming, lang, T, events) {
   const now = new Date();
-  const future = upcoming.filter(m => {
-    const d = m.beginAt || m.day;
-    return d && new Date(d) > now;
-  }).sort((a, b) => new Date(a.beginAt || a.day) - new Date(b.beginAt || b.day));
-  if (future.length === 0) return null;
-  const next = future[0];
-  const dateStr = next.day || (next.beginAt ? next.beginAt.slice(0, 10) : null);
-  if (!dateStr) return null;
-  return "Prochain match le " + dayLabel(dateStr, lang, T) + (next.time ? " à " + next.time : "");
+  if (upcoming && upcoming.length > 0) {
+    const future = upcoming.filter(m => {
+      const d = m.beginAt || m.day;
+      return d && new Date(d) > now;
+    }).sort((a, b) => new Date(a.beginAt || a.day) - new Date(b.beginAt || b.day));
+    if (future.length > 0) {
+      const next = future[0];
+      const dateStr = next.day || (next.beginAt ? next.beginAt.slice(0, 10) : null);
+      if (dateStr) return "Prochain match le " + dayLabel(dateStr, lang, T) + (next.time ? " à " + next.time : "");
+    }
+  }
+  if (!events) return null;
+  let nextEvent = null;
+  const collectEntries = (obj) => {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj;
+    const entries = [];
+    for (const v of Object.values(obj)) {
+      if (Array.isArray(v)) entries.push(...v);
+      else if (v && typeof v === "object" && v.begin_at) entries.push(v);
+      else if (v && typeof v === "object") {
+        for (const sv of Object.values(v)) { if (sv && typeof sv === "object") entries.push(sv); }
+      }
+    }
+    return entries;
+  };
+  const allEvents = collectEntries(events);
+  for (const ev of allEvents) {
+    let evDate = null;
+    if (ev.begin_at) {
+      evDate = new Date(ev.begin_at);
+    } else if (ev.dates) {
+      const m = String(ev.dates).match(/(\w+)\s+(\d+)/);
+      if (m) {
+        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+        const mi = months[m[1].toLowerCase().slice(0, 3)];
+        if (mi !== undefined) evDate = new Date(now.getFullYear(), mi, parseInt(m[2]));
+        if (evDate && evDate < new Date(now.getFullYear(), 0, 1)) evDate.setFullYear(now.getFullYear() + 1);
+      }
+    }
+    if (!evDate || evDate <= now) continue;
+    if (ev.status === "completed" || ev.status === "canceled") continue;
+    if (!nextEvent || evDate < nextEvent.date) nextEvent = { date: evDate, title: ev.title || "" };
+  }
+  if (!nextEvent) return null;
+  const dateStr = nextEvent.date.toISOString().slice(0, 10);
+  const shortTitle = nextEvent.title.length > 30 ? nextEvent.title.slice(0, 30) + "…" : nextEvent.title;
+  return shortTitle + " — " + dayLabel(dateStr, lang, T);
 }
 
 function regionLabel(key, T) {
@@ -5997,7 +6035,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, vlrEvents) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6231,7 +6269,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, cs2Events) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6383,7 +6421,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, rlEvents) || "Aucun match programmé"}</p>
             )}
           </div>
         )}
