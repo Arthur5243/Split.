@@ -857,7 +857,19 @@ function dayLabel(dateStr, lang, T) {
   }
 }
 
-function nextMatchLabel(upcoming, lang, T, events) {
+const KNOWN_EVENTS = {
+  valo: [
+    { title: "Champions 2026", date: "2026-09-24", game: "valo" },
+  ],
+  cs2: [
+    { title: "PGL Major 2026", date: "2026-10-01", game: "cs2" },
+  ],
+  rl: [
+    { title: "RLCS 2026 World Championship", date: "2026-10-15", game: "rl" },
+  ],
+};
+
+function nextMatchLabel(upcoming, lang, T, events, game) {
   const now = new Date();
   if (upcoming && upcoming.length > 0) {
     const future = upcoming.filter(m => {
@@ -903,10 +915,17 @@ function nextMatchLabel(upcoming, lang, T, events) {
     if (ev.status === "completed" || ev.status === "canceled") continue;
     if (!nextEvent || evDate < nextEvent.date) nextEvent = { date: evDate, title: ev.title || "" };
   }
-  if (!nextEvent) return null;
-  const dateStr = nextEvent.date.toISOString().slice(0, 10);
-  const shortTitle = nextEvent.title.length > 30 ? nextEvent.title.slice(0, 30) + "…" : nextEvent.title;
-  return shortTitle + " — " + dayLabel(dateStr, lang, T);
+  if (nextEvent) {
+    const dateStr = nextEvent.date.toISOString().slice(0, 10);
+    const shortTitle = nextEvent.title.length > 30 ? nextEvent.title.slice(0, 30) + "…" : nextEvent.title;
+    return shortTitle + " — " + dayLabel(dateStr, lang, T);
+  }
+  const known = (game && KNOWN_EVENTS[game]) || [];
+  const futureKnown = known.filter(k => new Date(k.date) > now).sort((a, b) => new Date(a.date) - new Date(b.date));
+  if (futureKnown.length > 0) {
+    return futureKnown[0].title + " — " + dayLabel(futureKnown[0].date, lang, T);
+  }
+  return null;
 }
 
 function regionLabel(key, T) {
@@ -6035,7 +6054,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, vlrEvents) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, vlrEvents, "valo") || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6269,7 +6288,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, cs2Events) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, cs2Events, "cs2") || "Aucun match programmé"}</p>
             )}
           </div>
         )}
@@ -6421,7 +6440,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 <p style={{ color: "#666", fontSize: "11px" }}>Réessai auto dans 60s</p>
               </div>
             ) : (
-              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, rlEvents) || "Aucun match programmé"}</p>
+              <p style={{ color: "#888", fontSize: "12px" }}>{nextMatchLabel(upcoming, lang, T, rlEvents, "rl") || "Aucun match programmé"}</p>
             )}
           </div>
         )}
