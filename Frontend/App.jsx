@@ -3123,6 +3123,12 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       if (!saved.includes(1)) {
         const withFree = [1, ...saved];
         localStorage.setItem("split_claimed_tiers", JSON.stringify(withFree));
+        const tier1Reward = { emoji: "🖼️", name: "Bannière Starter", desc: "Ta première bannière de classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" };
+        const inv = JSON.parse(localStorage.getItem("split_inventory") || "[]");
+        if (!inv.some(i => i.name === tier1Reward.name)) {
+          inv.push(tier1Reward);
+          localStorage.setItem("split_inventory", JSON.stringify(inv));
+        }
         return withFree;
       }
       return saved;
@@ -3157,14 +3163,14 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   }
 
   const TIER_REWARDS = {
-    1: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement", type: "badge", rarity: "commun" },
-    2: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
+    1: { emoji: "🖼️", name: "Bannière Starter", desc: "Ta première bannière de classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
+    2: { emoji: "🎴", name: "Fond Match Starter", desc: "Ton premier fond de carte de match", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
     3: { emoji: "🏷️", name: "Rookie", desc: "Titre de débutant", type: "title", rarity: "commun" },
     4: { emoji: "⭐", name: "Boost XP +200", desc: "+200 XP bonus", type: "xp_bonus", xpAmount: 200 },
-    5: { emoji: "🖼️", name: "Bannière Setup", desc: "Fond gaming setup pour ton classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
+    5: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     6: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     7: { emoji: "🏷️", name: "Débutant", desc: "Ton premier titre officiel", type: "title", rarity: "commun" },
-    8: { emoji: "🎴", name: "Fond Match Néon", desc: "Background néon pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
+    8: { emoji: "🏅", name: "Badge Bronze", desc: "Premier badge de classement", type: "badge", rarity: "commun" },
     9: { emoji: "🎁", name: "Coffre Rare", desc: "Contenu exclusif débloqué" },
     10: { emoji: "🖼️", name: "Bannière Sunset", desc: "Fond cozy pour ton classement", type: "banner", bannerImage: "/banner-10.png", rarity: "commun" },
     11: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -3365,7 +3371,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   }
 
   function equipMatchBg(item, game, scope) {
-    const existing = equippedMatchBgs.filter(b => b.name !== item.name);
+    const existing = equippedMatchBgs.filter(b => b.name !== item.name && !(b.game === game && b.scope === scope));
     const val = { name: item.name, image: item.matchBgImage, game, scope };
     const updated = [...existing, val];
     localStorage.setItem("split_equipped_match_bg", JSON.stringify(updated));
