@@ -7021,18 +7021,33 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, visible = true, T }
           </div>
         ))}
 
-        {textLayers.map(tl => (
+        {textLayers.map(tl => {
+          const wrapText = (txt, max) => {
+            if (!txt || txt.length <= max) return txt;
+            const words = txt.split(" ");
+            const lines = [];
+            let line = "";
+            for (const w of words) {
+              if (line && (line + " " + w).length > max) { lines.push(line); line = w; }
+              else { line = line ? line + " " + w : w; }
+            }
+            if (line) lines.push(line);
+            return lines.join("\n");
+          };
+          const displayText = wrapText(tl.text, 22) || "Texte...";
+          return (
           <div key={tl.id} style={{ position: "absolute", left: `${tl.x}%`, top: `${tl.y}%`, transform: `translate(-50%, -50%) rotate(${tl.rot || 0}deg)`, zIndex: 3 }}
             onTouchStart={editingTextId !== tl.id ? (e) => handleTextLayerTouchStart(e, tl.id) : undefined}
             onTouchMove={editingTextId !== tl.id ? handleTextLayerTouchMove : undefined}
             onTouchEnd={editingTextId !== tl.id ? handleTextLayerTouchEnd : undefined}
             onClick={(e) => { e.stopPropagation(); if (editingTextId === tl.id) return; if (!textDraggedRef.current) { setEditingTextId(tl.id); setSelectedTextId(tl.id); setShowEmojiPicker(false); setTimeout(() => textInputRef.current?.focus(), 50); } textDraggedRef.current = false; }}
           >
-            <div style={{ color: tl.text ? tl.color : "rgba(255,255,255,0.3)", fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", whiteSpace: "nowrap", cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : (editingTextId === tl.id ? "rgba(0,0,0,0.3)" : "none"), padding: tl.hasBg || editingTextId === tl.id ? "4px 10px" : 0, borderRadius: tl.hasBg || editingTextId === tl.id ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none", minWidth: editingTextId === tl.id ? 80 : undefined }}>
-              {tl.text || "Texte..."}
+            <div style={{ color: tl.text ? tl.color : "rgba(255,255,255,0.3)", fontSize: 18, fontWeight: 800, textShadow: tl.hasBg ? "none" : "0 2px 8px rgba(0,0,0,0.8)", textAlign: "center", whiteSpace: "pre-wrap", wordBreak: "break-word", maxWidth: 240, cursor: "grab", background: tl.hasBg ? "rgba(0,0,0,0.65)" : (editingTextId === tl.id ? "rgba(0,0,0,0.3)" : "none"), padding: tl.hasBg || editingTextId === tl.id ? "4px 10px" : 0, borderRadius: tl.hasBg || editingTextId === tl.id ? 6 : 0, outline: selectedTextId === tl.id ? "2px solid #CCF71D" : "none", minWidth: editingTextId === tl.id ? 80 : undefined }}>
+              {displayText}
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {stickers.map(s => (
           <div key={s.id} style={{ position: "absolute", left: `${s.x}%`, top: `${s.y}%`, transform: "translate(-50%, -50%)", fontSize: 32, cursor: "grab", userSelect: "none", zIndex: 2, outline: selectedSticker === s.id ? "2px solid #CCF71D" : "none", borderRadius: 4, padding: 2 }}
