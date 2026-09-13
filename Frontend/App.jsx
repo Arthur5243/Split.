@@ -190,6 +190,8 @@ const LOGOS = {
   R8: "/logos/r8.png",
   WC: "/logos/wc.png",
   BIG: "/logos/big.png",
+  BBL: "/logos/bbl.png",
+  HOTU: "/logos/hotu.png",
 };
 
 const VLR_LOGOS = {
@@ -218,6 +220,9 @@ const VLR_LOGOS = {
   "nrg esports": "/logos/nrg.png",
   "natus vincere": "/logos/envy.png",
   "eintracht frankfurt": "/logos/fort.webp",
+  "bbl esports": "/logos/bbl.png",
+  "bbl": "/logos/bbl.png",
+  "hotu": "/logos/hotu.png",
   "xerxia esports": "/logos/xe.png",
   "talon esports": "/logos/ts.png",
   "w7m esports": "/logos/w7m.png",
@@ -3113,7 +3118,15 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   }
 
   const [claimedTiers, setClaimedTiers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("split_claimed_tiers")) || []; } catch { return []; }
+    try {
+      const saved = JSON.parse(localStorage.getItem("split_claimed_tiers")) || [];
+      if (!saved.includes(1)) {
+        const withFree = [1, ...saved];
+        localStorage.setItem("split_claimed_tiers", JSON.stringify(withFree));
+        return withFree;
+      }
+      return saved;
+    } catch { return [1]; }
   });
   const [inventoryItems, setInventoryItems] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
@@ -4261,7 +4274,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         {/* Rectangle 1: Rewards / Tier */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
-          const pct = ti.xpNeeded > 0 ? Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100) : 100;
+          const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
           return (
             <button onClick={onOpenRewards} className="rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.25)", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, minWidth: 0, overflow: "hidden" }}>
               <Zap size={16} color="#A855F7" />
@@ -6874,8 +6887,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, w, h);
         const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        setCardEditorImage(dataUrl);
-        setShowCardEditor(true);
+        setPhotoPreview(dataUrl);
         setPhotoFile(file);
       };
       img.src = ev.target.result;
@@ -6935,7 +6947,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
 
       {tab === "write" && (
         <>
-        <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 120, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+        <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 200, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           <div className="flex items-start gap-3 px-4 py-3">
             <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
               {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
@@ -6963,41 +6975,40 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
           )}
 
           {photoError && <p className="px-4" style={{ color: "#e05252", fontSize: "11px", marginBottom: 8 }}>{photoError}</p>}
-
+        </div>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
           {profile?.userId && userStats && (
-            <div style={{ margin: "8px 16px", padding: "12px 14px", background: "#111", borderRadius: 14, border: "1px solid #1e1e1e" }}>
-              <div className="flex items-center justify-between" style={{ marginBottom: 10 }}>
+            <div style={{ margin: "0 0 8px", padding: "10px 12px", background: "#111", borderRadius: 12, border: "1px solid #1e1e1e" }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
                 <div className="flex items-center gap-2">
-                  <div className="rounded-full overflow-hidden" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
-                    {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                  <div className="rounded-full overflow-hidden" style={{ width: 24, height: 24, background: "#1e1e1e" }}>
+                    {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={10} color="#555" />}
                   </div>
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{profile.pseudo || "Toi"}</span>
+                  <span style={{ color: "#fff", fontSize: 11, fontWeight: 800 }}>{profile.pseudo || "Toi"}</span>
                 </div>
                 {topLikes.length > 0 && (() => {
                   const myRank = topLikes.findIndex(u => u.user_id === profile.userId);
-                  return myRank >= 0 ? <span style={{ color: "#CCF71D", fontSize: 10, fontWeight: 800, background: "rgba(204,247,29,0.12)", padding: "2px 8px", borderRadius: 6 }}>Top #{myRank + 1}</span> : null;
+                  return myRank >= 0 ? <span style={{ color: "#CCF71D", fontSize: 9, fontWeight: 800, background: "rgba(204,247,29,0.12)", padding: "2px 6px", borderRadius: 5 }}>Top #{myRank + 1}</span> : null;
                 })()}
               </div>
               <div className="flex items-center justify-around">
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_likes || 0}</div>
-                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Likes</div>
+                  <div style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{userStats.total_likes || 0}</div>
+                  <div style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Likes</div>
                 </div>
-                <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+                <div style={{ width: 1, height: 20, background: "#2a2a2a" }} />
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_posts || 0}</div>
-                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Posts</div>
+                  <div style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{userStats.total_posts || 0}</div>
+                  <div style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Posts</div>
                 </div>
-                <div style={{ width: 1, height: 24, background: "#2a2a2a" }} />
+                <div style={{ width: 1, height: 20, background: "#2a2a2a" }} />
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{userStats.total_comments || 0}</div>
-                  <div style={{ color: "#666", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Com.</div>
+                  <div style={{ color: "#fff", fontSize: 14, fontWeight: 900 }}>{userStats.total_comments || 0}</div>
+                  <div style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Com.</div>
                 </div>
               </div>
             </div>
           )}
-        </div>
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "8px 16px", paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)", background: "#0a0a0a", borderTop: "1px solid #1a1a1a", zIndex: 2 }}>
           <input ref={photoRef} type="file" accept="image/*" onClick={e => { e.target.value = ""; }} onChange={handlePhotoSelect} style={{ display: "none" }} />
           <button onClick={() => photoRef.current?.click()} className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 mb-2" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CCF71D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -9827,7 +9838,7 @@ export default function ClutchApp() {
 
         {appCreatePost && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 47, zIndex: 50 }}>
-            <CreatePostScreen onClose={() => { const d = postContentRef.current; if (d.content || d.image) { setPendingTabSwitch("__close__"); setShowDraftPrompt(true); } else { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); } }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} />
+            <CreatePostScreen onClose={() => { setPendingTabSwitch("__close__"); setShowDraftPrompt(true); }} T={T} profile={profile} prefillText={appPostPrefill} matchCardData={appPostMatchCard} initialDraft={appDraftInit} onContentChange={(d) => { postContentRef.current = d; }} drafts={drafts} onLoadDraft={(draft) => { setAppDraftInit(draft); setAppCreatePost(false); setTimeout(() => setAppCreatePost(true), 50); }} onDeleteDraft={(id) => { saveDrafts(drafts.filter(dd => dd.id !== id)); }} />
           </div>
         )}
 
