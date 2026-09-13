@@ -7142,7 +7142,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, w, h);
         const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        setPhotoPreview(dataUrl);
+        setCardEditorImage(dataUrl);
+        setShowCardEditor(true);
         setPhotoFile(file);
       };
       img.src = ev.target.result;
