@@ -7452,7 +7452,7 @@ function PostsFeedScreen({ onClose, T, profile }) {
         {loading && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>...</p>}
         {!loading && posts.length === 0 && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.postEmpty || "Aucun post"}</p>}
         {posts.map(p => (
-          <div key={p.id} className="mb-4" style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }}>
+          <div key={p.id} className="mb-4" style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }} onDoubleClick={() => { if (!p.liked) toggleLike(p); }}>
             <div className="flex items-center gap-2.5 px-4 py-2.5">
               <div className="rounded-full overflow-hidden" style={{ width: 32, height: 32, background: "#1e1e1e" }}>
                 {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
@@ -8401,7 +8401,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="mt-4 flex flex-col gap-3">
               {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
               {nexusPosts.map(p => (
-                <div key={p.id} style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }}>
+                <div key={p.id} style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
                   <div className="flex items-center gap-2.5 px-3 py-2.5">
                     <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
                       {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
