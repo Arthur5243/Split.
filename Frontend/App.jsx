@@ -273,7 +273,8 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
     cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
-    rlBracketShow: "Voir le Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Phase de groupes", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketNoEvent: "Aucun event RL disponible",
+    rlBracketShow: "Voir le Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Phase de groupes", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketPlayIn: "Play-In", rlBracketNoEvent: "Aucun event RL disponible",
+    rlFormatMajor: "16 équipes → 4 groupes de 4 → 12 en Playoffs → 1 Champion", rlFormatWorldsPlayIn: "8 équipes → 4 qualifiées rejoignent le Group Stage", rlFormatWorldsGroups: "16 équipes → 4 groupes de 4 → 12 en Playoffs", rlFormatWorldsPlayoffs: "12 équipes → Bracket Elimination → 1 Champion du Monde",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
@@ -356,7 +357,8 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
     cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
-    rlBracketShow: "View Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Group Stage", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketNoEvent: "No RL event available",
+    rlBracketShow: "View Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Group Stage", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketPlayIn: "Play-In", rlBracketNoEvent: "No RL event available",
+    rlFormatMajor: "16 teams → 4 groups of 4 → 12 to Playoffs → 1 Champion", rlFormatWorldsPlayIn: "8 teams → 4 qualify for Group Stage", rlFormatWorldsGroups: "16 teams → 4 groups of 4 → 12 to Playoffs", rlFormatWorldsPlayoffs: "12 teams → Elimination Bracket → 1 World Champion",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
@@ -5380,11 +5382,17 @@ const RL_BRACKET_COMPS = [
   { key: "regional", labelKey: "rlBracketRegional", color: "#4CAF50", icon: "🗺" },
 ];
 
-function getRLPhases(compKey, serieName) {
-  const s = (serieName || "").toLowerCase();
-  if (s.includes("swiss") || compKey === "major") {
+function getRLPhases(compKey) {
+  if (compKey === "worlds") {
     return [
-      { key: "swiss", labelKey: "rlBracketSwiss" },
+      { key: "play_in", labelKey: "rlBracketPlayIn", formatKey: "rlFormatWorldsPlayIn" },
+      { key: "group_stage", labelKey: "rlBracketGroupStage", formatKey: "rlFormatWorldsGroups" },
+      { key: "playoffs", labelKey: "rlBracketPlayoffs", formatKey: "rlFormatWorldsPlayoffs" },
+    ];
+  }
+  if (compKey === "major") {
+    return [
+      { key: "group_stage", labelKey: "rlBracketGroupStage", formatKey: "rlFormatMajor" },
       { key: "playoffs", labelKey: "rlBracketPlayoffs" },
     ];
   }
@@ -5396,9 +5404,10 @@ function getRLPhases(compKey, serieName) {
 
 function matchPhaseToTournamentRL(phase, tournament) {
   const tName = (tournament.name || "").toLowerCase();
+  if (phase.key === "play_in" && (tName.includes("play-in") || tName.includes("play in") || tName.includes("playin"))) return true;
   if (phase.key === "swiss" && (tName.includes("swiss") || tName.includes("stage") || tName.includes("group"))) return true;
   if (phase.key === "playoffs" && (tName.includes("playoff") || tName.includes("final") || tName.includes("bracket") || tName.includes("champions"))) return true;
-  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("regular") || tName.includes("stage"))) return true;
+  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("regular") || tName.includes("stage")) && !tName.includes("play-in") && !tName.includes("play in") && !tName.includes("playin")) return true;
   return false;
 }
 
@@ -5499,9 +5508,10 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
         </div>
       );
     }
-    const phases = getRLPhases(comp, serie.title);
+    const phases = getRLPhases(comp);
     const phaseInfo = phases.find((p) => p.key === phase);
     const phaseLabel = phaseInfo ? (T[phaseInfo.labelKey] || phaseInfo.key) : phase;
+    const formatText = phaseInfo?.formatKey ? T[phaseInfo.formatKey] : null;
 
     const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournamentRL({ key: phase }, p));
     const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
@@ -5513,6 +5523,11 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
       return (
         <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(serie.title + " · " + phaseLabel, accent)}</div>
+          {formatText && (
+            <div style={{ margin: "12px 16px 0", padding: "8px 12px", background: `${accent}08`, border: `1px solid ${accent}18`, borderRadius: 8 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: "#888", letterSpacing: "0.02em" }}>{formatText}</span>
+            </div>
+          )}
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
             {fallbackPhases.map((p) => {
               const teams = Object.values(p.group_stage?.standings || {}).flat();
@@ -5566,6 +5581,11 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
           {backBtn()}
           {titleSpan(headerTitle, accent)}
         </div>
+        {formatText && !group && (
+          <div style={{ margin: "12px 16px 0", padding: "8px 12px", background: `${accent}08`, border: `1px solid ${accent}18`, borderRadius: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: "#888", letterSpacing: "0.02em" }}>{formatText}</span>
+          </div>
+        )}
         {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
         {!loading && displayPhases.map((p) => {
           const b = p.playoffs?.bracket;
@@ -5599,7 +5619,7 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
     const events = rlEvents ? (rlEvents[comp] || []) : [];
     const bestEvent = events.find((e) => e.status === "running") || events[0] || null;
     const serieName = bestEvent?.title || serie?.title || "";
-    const phases = getRLPhases(comp, serieName);
+    const phases = getRLPhases(comp);
 
     return (
       <div style={pageStylePlain}>
@@ -5609,15 +5629,20 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
             <button key={p.key} onClick={() => { if (bestEvent && !serie) selectSerie(bestEvent); setPhase(p.key); }} style={{
               background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
               border: `1px solid ${accent}20`,
-              borderRadius: 10, padding: "24px 18px", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
+              borderRadius: 10, padding: "18px 16px", cursor: "pointer",
+              display: "flex", flexDirection: "column", gap: 6,
               boxShadow: `0 2px 12px ${accent}08`,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
+                  <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
+                </div>
+                <ChevronRight size={16} color="#444" />
               </div>
-              <ChevronRight size={16} color="#444" />
+              {p.formatKey && T[p.formatKey] && (
+                <span style={{ fontSize: 10, color: "#666", paddingLeft: 13, textAlign: "left" }}>{T[p.formatKey]}</span>
+              )}
             </button>
           ))}
         </div>
