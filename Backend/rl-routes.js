@@ -370,20 +370,32 @@ const RL_BRACKET_TTL = 5 * 60 * 1000;
 
 function classifyRLMatchRound(series) {
   const s = (series || "").toLowerCase().trim();
+  const roundNum = s.match(/round\s*(\d+)/i);
+  const rn = roundNum ? parseInt(roundNum[1], 10) : 0;
+
   if (s.includes("grand final")) return { bracket: "grand_final", round: s, sort: 100, explicit: true };
-  if (s.includes("upper") && s.includes("quarter")) return { bracket: "upper", round: s, sort: 10, explicit: true };
-  if (s.includes("upper") && s.includes("semi")) return { bracket: "upper", round: s, sort: 20, explicit: true };
-  if (s.includes("upper") && s.includes("final")) return { bracket: "upper", round: s, sort: 30, explicit: true };
-  if (s.includes("upper") || s.includes("winners")) return { bracket: "upper", round: s, sort: 25, explicit: true };
-  if (s.includes("lower") && s.includes("quarter")) return { bracket: "lower", round: s, sort: 10, explicit: true };
-  if (s.includes("lower") && s.includes("semi")) return { bracket: "lower", round: s, sort: 20, explicit: true };
-  if (s.includes("lower") && s.includes("final")) return { bracket: "lower", round: s, sort: 30, explicit: true };
-  if (s.includes("lower") || s.includes("losers")) return { bracket: "lower", round: s, sort: 25, explicit: true };
+
+  if (s.includes("upper") || s.includes("winners")) {
+    if (rn > 0) return { bracket: "upper", round: s, sort: rn, explicit: true };
+    if (s.includes("quarter")) return { bracket: "upper", round: s, sort: 10, explicit: true };
+    if (s.includes("semi")) return { bracket: "upper", round: s, sort: 20, explicit: true };
+    if (s.includes("final")) return { bracket: "upper", round: s, sort: 30, explicit: true };
+    return { bracket: "upper", round: s, sort: 5, explicit: true };
+  }
+
+  if (s.includes("lower") || s.includes("losers")) {
+    if (rn > 0) return { bracket: "lower", round: s, sort: rn, explicit: true };
+    if (s.includes("quarter")) return { bracket: "lower", round: s, sort: 10, explicit: true };
+    if (s.includes("semi")) return { bracket: "lower", round: s, sort: 20, explicit: true };
+    if (s.includes("final")) return { bracket: "lower", round: s, sort: 30, explicit: true };
+    return { bracket: "lower", round: s, sort: 5, explicit: true };
+  }
+
   if (s.includes("decider") || s.includes("consolidation")) return { bracket: "lower", round: s, sort: 35, explicit: true };
-  if (s.includes("semifinal") || s.includes("semi-final")) return { bracket: "upper", round: s, sort: 45, explicit: true };
-  if (s.includes("quarterfinal") || s.includes("quarter-final")) return { bracket: "upper", round: s, sort: 40, explicit: true };
+  if (s.includes("semifinal") || s.includes("semi-final")) return { bracket: "upper", round: s, sort: 20, explicit: true };
+  if (s.includes("quarterfinal") || s.includes("quarter-final")) return { bracket: "upper", round: s, sort: 10, explicit: true };
   if (s.includes("final")) return { bracket: "grand_final", round: s, sort: 100, explicit: true };
-  return { bracket: "upper", round: s, sort: 5, explicit: false };
+  return { bracket: "upper", round: s, sort: 0, explicit: false };
 }
 
 function detectRLTournamentType(tName, parsedMatches) {
@@ -401,14 +413,11 @@ function detectRLTournamentType(tName, parsedMatches) {
 function roundDisplayNameRL(bracket, sort) {
   if (bracket === "grand_final") return "Grand Final";
   const p = bracket === "upper" ? "Upper Bracket" : "Lower Bracket";
-  if (sort === 5) return p + " Round 1";
+  if (sort >= 1 && sort <= 9) return p + " Round " + sort;
   if (sort === 10) return p + " Quarterfinals";
   if (sort === 20) return p + " Semifinals";
-  if (sort === 25) return p;
   if (sort === 30) return p + " Final";
   if (sort === 35) return p + " Decider";
-  if (sort === 40) return "Quarterfinals";
-  if (sort === 45) return "Semifinals";
   return p;
 }
 

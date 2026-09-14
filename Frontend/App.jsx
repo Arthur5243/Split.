@@ -4469,7 +4469,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions, onLiveClick }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions, onLiveClick, bracketType }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
@@ -4508,7 +4508,9 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
   const totalW = numCols * CARD_W + (numCols - 1) * COL_GAP;
   const svgH = totalH + LABEL_H;
 
+  const isLower = bracketType === "lower";
   const svgPaths = [];
+  const svgDashed = [];
   for (let ri = 1; ri < rounds.length; ri++) {
     const pCount = rounds[ri - 1].matches.length;
     const cCount = rounds[ri].matches.length;
@@ -4524,6 +4526,18 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
         svgPaths.push(`M ${x1} ${tY} H ${xMid - CR} Q ${xMid} ${tY} ${xMid} ${tY + CR} V ${mY}`);
         svgPaths.push(`M ${x1} ${bY} H ${xMid - CR} Q ${xMid} ${bY} ${xMid} ${bY - CR} V ${mY}`);
         svgPaths.push(`M ${xMid} ${mY} H ${x2}`);
+      }
+    } else if (isLower && pCount === cCount) {
+      const n = Math.min(pCount, cCount);
+      for (let ci = 0; ci < n; ci++) {
+        const pY = yPositions[ri - 1][ci] + CARD_H / 2 + LABEL_H;
+        const cY = yPositions[ri][ci] + CARD_H / 2 + LABEL_H;
+        if (Math.abs(pY - cY) < 2) {
+          svgDashed.push(`M ${x1} ${pY} H ${x2}`);
+        } else {
+          const dir = cY > pY ? 1 : -1;
+          svgDashed.push(`M ${x1} ${pY} H ${xMid - CR} Q ${xMid} ${pY} ${xMid} ${pY + dir * CR} V ${cY - dir * CR} Q ${xMid} ${cY} ${xMid + CR} ${cY} H ${x2}`);
+        }
       }
     } else {
       const n = Math.min(pCount, cCount);
@@ -4576,6 +4590,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
       <div style={{ position: "relative", width: totalW, height: svgH, minWidth: totalW }}>
         <svg style={{ position: "absolute", inset: 0, width: totalW, height: svgH, pointerEvents: "none" }}>
           {svgPaths.map((d, i) => <path key={i} d={d} fill="none" stroke={accentDim} strokeWidth={1.5} />)}
+          {svgDashed.map((d, i) => <path key={"d" + i} d={d} fill="none" stroke={accentDim} strokeWidth={1} strokeDasharray="4 3" opacity={0.5} />)}
         </svg>
         {rounds.map((round, ri) => (
           <React.Fragment key={ri}>
@@ -5436,9 +5451,9 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
     if (!hasUpper && !hasLower && !hasGF) return null;
     return (
       <DragScroll>
-        {hasUpper && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
-        {hasLower && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
-        {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasUpper && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs bracketType="upper" predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasLower && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs bracketType="lower" predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs bracketType="gf" qualifiedLabel={T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
       </DragScroll>
     );
   };
