@@ -5476,13 +5476,13 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
         </div>
       );
     }
-    const b = tPhase.playoffs?.bracket;
-    const hasStandings = Object.keys(tPhase.group_stage?.standings || {}).length > 0;
+    const hasStandings = tPhase.standings && Object.keys(tPhase.standings).length > 0;
+    const b = tPhase.bracket;
     const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(tPhase.name, accent)}</div>
-        {hasStandings && <GroupStandings standings={tPhase.group_stage.standings} accent={accent} T={T} />}
+        {hasStandings && <GroupStandings standings={tPhase.standings} accent={accent} T={T} />}
         {hasBracket && renderBracketSection(b, accent)}
         {!hasStandings && !hasBracket && (
           <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
@@ -5504,8 +5504,11 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
             {tournaments.map((t) => {
               const matchCount = t.total_matches || 0;
-              const teams = Object.values(t.group_stage?.standings || {}).flat();
+              const teams = t.standings ? Object.values(t.standings).flat() : [];
               const teamNames = teams.map(tm => tm.name).filter(Boolean).slice(0, 5);
+              const isGroup = t.type === "group_stage" || t.type === "play_in";
+              const typeLabel = t.type === "group_stage" ? "Groups" : t.type === "play_in" ? "Play-In" : "Playoffs";
+              const typeColor = isGroup ? "#4A90D9" : "#FFD700";
               return (
                 <button key={t.tournament_id} onClick={() => setTournamentId(t.tournament_id)} style={{
                   background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
@@ -5520,6 +5523,7 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
                       <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{t.name}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 8, fontWeight: 800, color: typeColor, border: `1px solid ${typeColor}44`, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{typeLabel}</span>
                       {matchCount > 0 && <span style={{ fontSize: 10, color: "#555" }}>{matchCount} matchs</span>}
                       <ChevronRight size={16} color="#444" />
                     </div>
