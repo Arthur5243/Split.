@@ -4605,24 +4605,29 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             {lastRound.matches.map((m, mi) => {
               const st = (m.status || "").toLowerCase();
               const done = st === "completed" || st === "finished";
-              const winner = done && m.team1?.is_winner ? m.team1 : done && m.team2?.is_winner ? m.team2 : null;
               return (
                 <div key={"q" + mi} style={{
                   position: "absolute",
                   left: rounds.length * (CARD_W + COL_GAP),
                   top: yPositions[rounds.length - 1][mi] + LABEL_H,
                   width: CARD_W, height: CARD_H,
-                  display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, paddingLeft: 8,
+                  display: "flex", flexDirection: "column", justifyContent: "center", gap: 4,
                 }}>
                   {[m.team1, m.team2].map((team, ti) => {
                     const isWinner = done && team?.is_winner;
+                    const hasTeam = team?.name && team.name !== "TBD";
                     return (
-                      <div key={ti} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: isWinner ? "#fff" : "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                      <div key={ti} style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        background: hasTeam ? (isWinner ? "rgba(204,247,29,0.08)" : "rgba(255,255,255,0.04)") : "transparent",
+                        border: hasTeam ? (isWinner ? "1px solid rgba(204,247,29,0.25)" : "1px solid rgba(255,255,255,0.08)") : "none",
+                        borderRadius: 8, padding: hasTeam ? "3px 8px" : "3px 8px",
+                      }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: isWinner ? "#fff" : hasTeam ? "#aaa" : "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                           {team?.name || "TBD"}
                         </span>
                         {isWinner && (
-                          <span style={{ background: "#CCF71D", color: "#000", fontSize: 8, fontWeight: 800, padding: "2px 8px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>QUALIFIED</span>
+                          <span style={{ background: "#CCF71D", color: "#000", fontSize: 7, fontWeight: 800, padding: "2px 6px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>QUALIFIED</span>
                         )}
                       </div>
                     );
@@ -5401,16 +5406,18 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
   const [phase, setPhase] = useState(null);
+  const [group, setGroup] = useState(null);
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase]);
+  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase, group]);
 
   const goBack = () => {
-    if (phase) setPhase(null);
+    if (group) setGroup(null);
+    else if (phase) setPhase(null);
     else if (comp) { setComp(null); setSerie(null); }
     else onBack();
   };
@@ -5499,26 +5506,73 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
     const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournamentRL({ key: phase }, p));
     const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
 
-    const hasAnyContent = fallbackPhases.some((p) => {
+    const isGroupPhase = phase === "group_stage" || phase === "swiss";
+    const hasMultipleGroups = isGroupPhase && fallbackPhases.length > 1;
+
+    if (hasMultipleGroups && !group) {
+      return (
+        <div style={pageStylePlain}>
+          <div style={headerStyle}>{backBtn()}{titleSpan(serie.title + " · " + phaseLabel, accent)}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+            {fallbackPhases.map((p) => {
+              const teams = Object.values(p.group_stage?.standings || {}).flat();
+              const teamNames = teams.map(t => t.name).filter(Boolean).slice(0, 4);
+              return (
+                <button key={p.tournament_id} onClick={() => setGroup(p.tournament_id)} style={{
+                  background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
+                  border: `1px solid ${accent}20`,
+                  borderRadius: 10, padding: "18px 16px", cursor: "pointer",
+                  display: "flex", flexDirection: "column", gap: 8,
+                  boxShadow: `0 2px 12px ${accent}08`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
+                      <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.name}</span>
+                    </div>
+                    <ChevronRight size={16} color="#444" />
+                  </div>
+                  {teamNames.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 13 }}>
+                      {teamNames.map((name) => (
+                        <span key={name} style={{ fontSize: 10, fontWeight: 600, color: "#777", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)" }}>{name}</span>
+                      ))}
+                      {teams.length > 4 && <span style={{ fontSize: 10, color: "#555" }}>+{teams.length - 4}</span>}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    const displayPhases = group ? fallbackPhases.filter(p => p.tournament_id === group) : fallbackPhases;
+
+    const hasAnyContent = displayPhases.some((p) => {
       const b = p.playoffs?.bracket;
       const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
       const hasGroup = p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0;
       return hasBracket || hasGroup;
     });
 
+    const groupPhase = group ? displayPhases[0] : null;
+    const headerTitle = group && groupPhase ? serie.title + " · " + groupPhase.name : serie.title + " · " + phaseLabel;
+
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>
           {backBtn()}
-          {titleSpan(serie.title + " · " + phaseLabel, accent)}
+          {titleSpan(headerTitle, accent)}
         </div>
         {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-        {!loading && fallbackPhases.map((p) => {
+        {!loading && displayPhases.map((p) => {
           const b = p.playoffs?.bracket;
           const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
           const hasStandings = Object.keys(p.group_stage?.standings || {}).length > 0;
           if (!hasBracket && !hasStandings) return null;
-          const showLabel = fallbackPhases.length > 1;
+          const showLabel = !group && displayPhases.length > 1;
           return (
             <div key={p.tournament_id}>
               {showLabel && (
@@ -5530,7 +5584,7 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
                 </div>
               )}
               {hasStandings && <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />}
-              {hasBracket && renderBracketSection(b, accent, phase === "group_stage" || phase === "swiss")}
+              {hasBracket && renderBracketSection(b, accent, isGroupPhase)}
             </div>
           );
         })}
