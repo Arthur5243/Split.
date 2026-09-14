@@ -273,8 +273,7 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
     cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
-    rlBracketShow: "Voir le Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Phase de groupes", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketPlayIn: "Play-In", rlBracketNoEvent: "Aucun event RL disponible",
-    rlFormatMajor: "16 équipes → 4 groupes de 4 → 12 en Playoffs → 1 Champion", rlFormatWorldsPlayIn: "8 équipes → 4 qualifiées rejoignent le Group Stage", rlFormatWorldsGroups: "16 équipes → 4 groupes de 4 → 12 en Playoffs", rlFormatWorldsPlayoffs: "12 équipes → Bracket Elimination → 1 Champion du Monde",
+    rlBracketShow: "Voir le Bracket", rlBracketRLCS: "RLCS", rlBracketKickOff: "Kick-Off", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketNoEvent: "Aucun event RL disponible",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
@@ -357,8 +356,7 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
     cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
-    rlBracketShow: "View Bracket", rlBracketRLCS: "RLCS", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketRegional: "Regional", rlBracketGroupStage: "Group Stage", rlBracketPlayoffs: "Playoffs", rlBracketSwiss: "Swiss Stage", rlBracketPlayIn: "Play-In", rlBracketNoEvent: "No RL event available",
-    rlFormatMajor: "16 teams → 4 groups of 4 → 12 to Playoffs → 1 Champion", rlFormatWorldsPlayIn: "8 teams → 4 qualify for Group Stage", rlFormatWorldsGroups: "16 teams → 4 groups of 4 → 12 to Playoffs", rlFormatWorldsPlayoffs: "12 teams → Elimination Bracket → 1 World Champion",
+    rlBracketShow: "View Bracket", rlBracketRLCS: "RLCS", rlBracketKickOff: "Kick-Off", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketNoEvent: "No RL event available",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
@@ -5376,57 +5374,26 @@ function matchPhaseToTournament(phase, tournament) {
 }
 
 const RL_BRACKET_COMPS = [
-  { key: "rlcs", labelKey: "rlBracketRLCS", color: "#4A90D9", icon: "🏎" },
-  { key: "major", labelKey: "rlBracketMajor", color: "#FFD700", icon: "🏆" },
-  { key: "worlds", labelKey: "rlBracketWorlds", color: "#E040FB", icon: "🌍" },
-  { key: "regional", labelKey: "rlBracketRegional", color: "#4CAF50", icon: "🗺" },
+  { key: "rlcs", labelKey: "rlBracketRLCS", color: "#4A90D9" },
+  { key: "kickoff", labelKey: "rlBracketKickOff", color: "#4CAF50" },
+  { key: "major", labelKey: "rlBracketMajor", color: "#FFD700" },
+  { key: "worlds", labelKey: "rlBracketWorlds", color: "#E040FB" },
 ];
-
-function getRLPhases(compKey) {
-  if (compKey === "worlds") {
-    return [
-      { key: "play_in", labelKey: "rlBracketPlayIn", formatKey: "rlFormatWorldsPlayIn" },
-      { key: "group_stage", labelKey: "rlBracketGroupStage", formatKey: "rlFormatWorldsGroups" },
-      { key: "playoffs", labelKey: "rlBracketPlayoffs", formatKey: "rlFormatWorldsPlayoffs" },
-    ];
-  }
-  if (compKey === "major") {
-    return [
-      { key: "group_stage", labelKey: "rlBracketGroupStage", formatKey: "rlFormatMajor" },
-      { key: "playoffs", labelKey: "rlBracketPlayoffs" },
-    ];
-  }
-  return [
-    { key: "group_stage", labelKey: "rlBracketGroupStage" },
-    { key: "playoffs", labelKey: "rlBracketPlayoffs" },
-  ];
-}
-
-function matchPhaseToTournamentRL(phase, tournament) {
-  const tName = (tournament.name || "").toLowerCase();
-  if (phase.key === "play_in" && (tName.includes("play-in") || tName.includes("play in") || tName.includes("playin"))) return true;
-  if (phase.key === "swiss" && (tName.includes("swiss") || tName.includes("stage") || tName.includes("group"))) return true;
-  if (phase.key === "playoffs" && (tName.includes("playoff") || tName.includes("final") || tName.includes("bracket") || tName.includes("champions"))) return true;
-  if (phase.key === "group_stage" && (tName.includes("group") || tName.includes("swiss") || tName.includes("round robin") || tName.includes("regular") || tName.includes("stage")) && !tName.includes("play-in") && !tName.includes("play in") && !tName.includes("playin")) return true;
-  return false;
-}
 
 function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
-  const [phase, setPhase] = useState(null);
-  const [group, setGroup] = useState(null);
+  const [tournamentId, setTournamentId] = useState(null);
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase, group]);
+  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, tournamentId]);
 
   const goBack = () => {
-    if (group) setGroup(null);
-    else if (phase) setPhase(null);
+    if (tournamentId) setTournamentId(null);
     else if (comp) { setComp(null); setSerie(null); }
     else onBack();
   };
@@ -5441,12 +5408,16 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
     } catch (e) { /* silent */ }
   };
 
-  const selectSerie = async (s) => {
-    setSerie(s);
-    const cacheKey = "rl:" + s.serie_id;
+  const selectComp = async (compKey) => {
+    setComp(compKey);
+    const events = rlEvents ? (rlEvents[compKey] || []) : [];
+    const best = events.find((e) => e.status === "running") || events[0] || null;
+    if (!best) return;
+    setSerie(best);
+    const cacheKey = "rl:" + best.serie_id;
     if (bracketData[cacheKey]) return;
     setLoading(true);
-    try { await fetchRlBracket(s.serie_id); } finally { setLoading(false); }
+    try { await fetchRlBracket(best.serie_id); } finally { setLoading(false); }
   };
 
   useEffect(() => {
@@ -5457,15 +5428,19 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
 
   const currentData = serie ? bracketData["rl:" + serie.serie_id] : null;
 
-  const renderBracketSection = (bracket, accentColor, isGroupStage) => {
+  const renderBracketSection = (bracket, accentColor) => {
     if (!bracket) return null;
-    return <>
+    const hasUpper = bracket.upper?.length > 0;
+    const hasLower = bracket.lower?.length > 0;
+    const hasGF = bracket.grand_final?.length > 0;
+    if (!hasUpper && !hasLower && !hasGF) return null;
+    return (
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasUpper && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasLower && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
+        {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
       </DragScroll>
-    </>;
+    );
   };
 
   const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
@@ -5491,8 +5466,9 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
   const compInfo = RL_BRACKET_COMPS.find((c) => c.key === comp);
   const accent = compInfo?.color || "#4A90D9";
 
-  if (comp && phase) {
-    if (!serie && !loading) {
+  if (comp && tournamentId && currentData) {
+    const tPhase = (currentData.phases || []).find(p => p.tournament_id === tournamentId);
+    if (!tPhase) {
       return (
         <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
@@ -5500,155 +5476,75 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
         </div>
       );
     }
-    if (!serie || !currentData) {
-      return (
-        <div style={pageStylePlain}>
-          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>
-        </div>
-      );
-    }
-    const phases = getRLPhases(comp);
-    const phaseInfo = phases.find((p) => p.key === phase);
-    const phaseLabel = phaseInfo ? (T[phaseInfo.labelKey] || phaseInfo.key) : phase;
-    const formatText = phaseInfo?.formatKey ? T[phaseInfo.formatKey] : null;
+    const b = tPhase.playoffs?.bracket;
+    const hasStandings = Object.keys(tPhase.group_stage?.standings || {}).length > 0;
+    const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(tPhase.name, accent)}</div>
+        {hasStandings && <GroupStandings standings={tPhase.group_stage.standings} accent={accent} T={T} />}
+        {hasBracket && renderBracketSection(b, accent)}
+        {!hasStandings && !hasBracket && (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
+        )}
+      </div>
+    );
+  }
 
-    const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournamentRL({ key: phase }, p));
-    const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
-
-    const isGroupPhase = phase === "group_stage" || phase === "swiss";
-    const hasMultipleGroups = isGroupPhase && fallbackPhases.length > 1;
-
-    if (hasMultipleGroups && !group) {
-      return (
-        <div style={pageStylePlain}>
-          <div style={headerStyle}>{backBtn()}{titleSpan(serie.title + " · " + phaseLabel, accent)}</div>
-          {formatText && (
-            <div style={{ margin: "12px 16px 0", padding: "8px 12px", background: `${accent}08`, border: `1px solid ${accent}18`, borderRadius: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: "#888", letterSpacing: "0.02em" }}>{formatText}</span>
-            </div>
-          )}
+  if (comp) {
+    const tournaments = currentData?.phases || [];
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>{backBtn()}{titleSpan(serie?.title || (T[compInfo?.labelKey] || comp), accent)}</div>
+        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        {!loading && tournaments.length === 0 && (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
+        )}
+        {!loading && tournaments.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
-            {fallbackPhases.map((p) => {
-              const teams = Object.values(p.group_stage?.standings || {}).flat();
-              const teamNames = teams.map(t => t.name).filter(Boolean).slice(0, 4);
+            {tournaments.map((t) => {
+              const matchCount = t.total_matches || 0;
+              const teams = Object.values(t.group_stage?.standings || {}).flat();
+              const teamNames = teams.map(tm => tm.name).filter(Boolean).slice(0, 5);
               return (
-                <button key={p.tournament_id} onClick={() => setGroup(p.tournament_id)} style={{
+                <button key={t.tournament_id} onClick={() => setTournamentId(t.tournament_id)} style={{
                   background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
                   border: `1px solid ${accent}20`,
-                  borderRadius: 10, padding: "18px 16px", cursor: "pointer",
-                  display: "flex", flexDirection: "column", gap: 8,
+                  borderRadius: 10, padding: "16px 16px", cursor: "pointer",
+                  display: "flex", flexDirection: "column", gap: 6,
                   boxShadow: `0 2px 12px ${accent}08`,
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                      <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.name}</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{t.name}</span>
                     </div>
-                    <ChevronRight size={16} color="#444" />
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {matchCount > 0 && <span style={{ fontSize: 10, color: "#555" }}>{matchCount} matchs</span>}
+                      <ChevronRight size={16} color="#444" />
+                    </div>
                   </div>
                   {teamNames.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 13 }}>
                       {teamNames.map((name) => (
                         <span key={name} style={{ fontSize: 10, fontWeight: 600, color: "#777", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)" }}>{name}</span>
                       ))}
-                      {teams.length > 4 && <span style={{ fontSize: 10, color: "#555" }}>+{teams.length - 4}</span>}
+                      {teams.length > 5 && <span style={{ fontSize: 10, color: "#555" }}>+{teams.length - 5}</span>}
                     </div>
                   )}
                 </button>
               );
             })}
           </div>
-        </div>
-      );
-    }
-
-    const displayPhases = group ? fallbackPhases.filter(p => p.tournament_id === group) : fallbackPhases;
-
-    const hasAnyContent = displayPhases.some((p) => {
-      const b = p.playoffs?.bracket;
-      const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
-      const hasGroup = p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0;
-      return hasBracket || hasGroup;
-    });
-
-    const groupPhase = group ? displayPhases[0] : null;
-    const headerTitle = group && groupPhase ? serie.title + " · " + groupPhase.name : serie.title + " · " + phaseLabel;
-
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>
-          {backBtn()}
-          {titleSpan(headerTitle, accent)}
-        </div>
-        {formatText && !group && (
-          <div style={{ margin: "12px 16px 0", padding: "8px 12px", background: `${accent}08`, border: `1px solid ${accent}18`, borderRadius: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: "#888", letterSpacing: "0.02em" }}>{formatText}</span>
-          </div>
-        )}
-        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-        {!loading && displayPhases.map((p) => {
-          const b = p.playoffs?.bracket;
-          const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
-          const hasStandings = Object.keys(p.group_stage?.standings || {}).length > 0;
-          if (!hasBracket && !hasStandings) return null;
-          const showLabel = !group && displayPhases.length > 1;
-          return (
-            <div key={p.tournament_id}>
-              {showLabel && (
-                <div style={{ padding: "16px 16px 0" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
-                    <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
-                    <span style={{ fontSize: 10, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{p.name}</span>
-                  </div>
-                </div>
-              )}
-              {hasStandings && <GroupStandings standings={p.group_stage.standings} accent={accent} T={T} />}
-              {hasBracket && renderBracketSection(b, accent, isGroupPhase)}
-            </div>
-          );
-        })}
-        {!loading && !hasAnyContent && (
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
         )}
       </div>
     );
   }
 
-  if (comp && !phase) {
-    const events = rlEvents ? (rlEvents[comp] || []) : [];
-    const bestEvent = events.find((e) => e.status === "running") || events[0] || null;
-    const serieName = bestEvent?.title || serie?.title || "";
-    const phases = getRLPhases(comp);
-
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
-          {phases.map((p) => (
-            <button key={p.key} onClick={() => { if (bestEvent && !serie) selectSerie(bestEvent); setPhase(p.key); }} style={{
-              background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-              border: `1px solid ${accent}20`,
-              borderRadius: 10, padding: "18px 16px", cursor: "pointer",
-              display: "flex", flexDirection: "column", gap: 6,
-              boxShadow: `0 2px 12px ${accent}08`,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                  <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
-                </div>
-                <ChevronRight size={16} color="#444" />
-              </div>
-              {p.formatKey && T[p.formatKey] && (
-                <span style={{ fontSize: 10, color: "#666", paddingLeft: 13, textAlign: "left" }}>{T[p.formatKey]}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const availableComps = RL_BRACKET_COMPS.filter(c => {
+    const events = rlEvents ? (rlEvents[c.key] || []) : [];
+    return events.length > 0;
+  });
 
   return (
     <div style={pageStylePlain}>
@@ -5656,18 +5552,17 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
         {backBtn(onBack)}
         {titleSpan("Bracket Rocket League")}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
-        {RL_BRACKET_COMPS.map((c) => {
+      <div style={{ display: "grid", gridTemplateColumns: availableComps.length > 2 ? "1fr 1fr" : "1fr", gap: 10, padding: "20px 16px" }}>
+        {availableComps.map((c) => {
           const events = rlEvents ? (rlEvents[c.key] || []) : [];
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => setComp(c.key)} style={{
+            <button key={c.key} onClick={() => selectComp(c.key)} style={{
               background: `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)`,
               border: `1px solid ${c.color}30`,
               borderRadius: 12, padding: "32px 12px", cursor: "pointer",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
               boxShadow: `0 4px 20px ${c.color}10`,
-              transition: "transform 0.15s",
               position: "relative",
             }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>

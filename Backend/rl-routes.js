@@ -305,9 +305,8 @@ function classifyRLCompetition(leagueName, serieName) {
 
   if (combined.includes("major")) return "major";
   if (combined.includes("world") || combined.includes("championship")) return "worlds";
-  if (combined.includes("regional") || combined.includes("open")) return "regional";
-  if (combined.includes("rlcs")) return "rlcs";
-  if (combined.includes("elemental")) return "elemental";
+  if (combined.includes("kick-off") || combined.includes("kickoff") || combined.includes("kick off")) return "kickoff";
+  if (combined.includes("rlcs") || combined.includes("elemental") || combined.includes("regional") || combined.includes("open")) return "rlcs";
   return null;
 }
 
@@ -320,19 +319,18 @@ router.get("/api/rl-events", async (req, res) => {
     const all = await pandaFetch("/" + RL_SLUG + "/series?sort=-begin_at&per_page=100");
     const deduped = all || [];
 
-    const result = { rlcs: [], major: [], worlds: [], regional: [] };
+    const result = { rlcs: [], major: [], worlds: [], kickoff: [] };
 
     for (const s of deduped) {
       const leagueName = s.league?.name || "";
       const serieName = s.full_name || s.name || "";
       const comp = classifyRLCompetition(leagueName, serieName);
-      if (!comp) continue;
+      if (!comp || !result[comp]) continue;
 
-      const bucket = comp === "rlcs" || comp === "elemental" ? "rlcs" :
-        comp === "major" ? "major" :
-        comp === "worlds" ? "worlds" :
-        comp === "regional" ? "regional" : null;
-      if (!bucket) continue;
+      const tournaments = (s.tournaments || []).map(t => ({
+        id: t.id,
+        name: t.name || "",
+      }));
 
       const info = {
         serie_id: s.id,
@@ -344,9 +342,10 @@ router.get("/api/rl-events", async (req, res) => {
         tier: (s.tier || "").toLowerCase(),
         type: comp,
         year: s.year,
+        tournaments,
       };
 
-      result[bucket].push(info);
+      result[comp].push(info);
     }
 
     for (const key of Object.keys(result)) {
