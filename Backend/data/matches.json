@@ -700,6 +700,34 @@
     "match_id": 2603
   },
   {
+    "pandascore_id": 1689150,
+    "tournament_id": "PANDA_21939",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Quarterfinal 2: Havoc & Yonder GC vs LNG GC",
+    "team1": "Havoc & Yonder GC",
+    "team2": "LNG Esports GC",
+    "score": "2-0",
+    "winner": "Havoc & Yonder GC",
+    "match_id": 2604
+  },
+  {
+    "pandascore_id": 1689149,
+    "tournament_id": "PANDA_21939",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Quarterfinal 1: NE.GC vs VLG GC",
+    "team1": "Nova Esports GC",
+    "team2": "VLG GC",
+    "score": "2-0",
+    "winner": "Nova Esports GC",
+    "match_id": 2605
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
