@@ -388,27 +388,14 @@ function classifyRLMatchRound(series) {
 
 function detectRLTournamentType(tName, parsedMatches) {
   const n = (tName || "").toLowerCase();
-  if (/group|swiss|round.?robin|pool/i.test(n)) return "group_stage";
-  if (/play.?in|playin/i.test(n)) return "play_in";
-  if (/playoff|bracket|elimination/i.test(n)) return "playoffs";
   const explicitCount = parsedMatches.filter(m => m.explicit_bracket).length;
-  if (parsedMatches.length > 0 && explicitCount > parsedMatches.length * 0.5) return "playoffs";
-  if (parsedMatches.length > 0 && explicitCount === 0) return "group_stage";
-  return "playoffs";
-}
-
-function detectGroups(tName, matches) {
-  const groupMap = {};
-  for (const m of matches) {
-    const rn = (m.round || "").toLowerCase();
-    let group = null;
-    const gMatch = rn.match(/group\s*([a-d])/i);
-    if (gMatch) group = "Group " + gMatch[1].toUpperCase();
-    if (!group) group = tName || "Group";
-    if (!groupMap[group]) groupMap[group] = [];
-    groupMap[group].push(m);
-  }
-  return groupMap;
+  const hasBracketMatches = parsedMatches.length > 0 && explicitCount > parsedMatches.length * 0.3;
+  if (/group/i.test(n)) return { type: "group", order: 0, display: hasBracketMatches ? "bracket" : "standings" };
+  if (/play.?in|playin/i.test(n)) return { type: "play_in", order: 1, display: "bracket" };
+  if (/swiss|round.?robin|pool/i.test(n)) return { type: "group_stage", order: 0, display: "standings" };
+  if (hasBracketMatches) return { type: "playoffs", order: 2, display: "bracket" };
+  if (parsedMatches.length > 0 && explicitCount === 0) return { type: "group_stage", order: 0, display: "standings" };
+  return { type: "playoffs", order: 2, display: "bracket" };
 }
 
 function roundDisplayNameRL(bracket, sort) {
@@ -528,53 +515,51 @@ router.get("/api/rl-bracket/:serieId", async (req, res) => {
         });
       }
 
-      const tType = detectRLTournamentType(tName, allParsed);
+      const tInfo = detectRLTournamentType(tName, allParsed);
 
-      let standings = {};
+      const bracketMatches = allParsed.filter(m => m.explicit_bracket);
       let bracket = null;
+      if (bracketMatches.length > 0) {
+        bracket = buildRLBracket(bracketMatches);
+      } else if (allParsed.length > 0 && tInfo.display === "bracket") {
+        bracket = buildRLBracket(allParsed);
+      }
+      const hasBracket = bracket && (bracket.upper.length > 0 || bracket.lower.length > 0 || bracket.grand_final.length > 0);
 
-      if (tType === "group_stage" || tType === "play_in") {
-        const groups = detectGroups(tName, allParsed);
-        for (const [groupName, groupMatches] of Object.entries(groups)) {
-          const teamStats = {};
-          for (const m of groupMatches) {
-            for (const team of [m.team1, m.team2]) {
-              const name = team.name || "TBD";
-              if (name === "TBD") continue;
-              if (!teamStats[name]) teamStats[name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
-              const completed = (m.status || "").toLowerCase() === "finished";
-              if (completed) {
-                if (team.is_winner) teamStats[name].wins++;
-                else teamStats[name].losses++;
-                const score = parseInt(team.score, 10) || 0;
-                teamStats[name].maps_won += score;
-                const other = team === m.team1 ? m.team2 : m.team1;
-                teamStats[name].maps_lost += parseInt(other.score, 10) || 0;
-              }
+      const standings = {};
+      if (tInfo.display === "standings" || !hasBracket) {
+        const teamStats = {};
+        for (const m of allParsed) {
+          for (const team of [m.team1, m.team2]) {
+            const name = team.name || "TBD";
+            if (name === "TBD") continue;
+            if (!teamStats[name]) teamStats[name] = { wins: 0, losses: 0, maps_won: 0, maps_lost: 0 };
+            const completed = (m.status || "").toLowerCase() === "finished";
+            if (completed) {
+              if (team.is_winner) teamStats[name].wins++;
+              else teamStats[name].losses++;
+              const score = parseInt(team.score, 10) || 0;
+              teamStats[name].maps_won += score;
+              const other = team === m.team1 ? m.team2 : m.team1;
+              teamStats[name].maps_lost += parseInt(other.score, 10) || 0;
             }
           }
-          if (Object.keys(teamStats).length > 0) {
-            standings[groupName] = Object.entries(teamStats)
-              .map(([name, s]) => ({ name, ...s, points: s.wins * 3 }))
-              .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
-          }
         }
-      } else {
-        bracket = buildRLBracket(allParsed.filter(m => m.explicit_bracket));
-        if (!bracket.upper.length && !bracket.lower.length && !bracket.grand_final.length) {
-          bracket = buildRLBracket(allParsed);
+        if (Object.keys(teamStats).length > 0) {
+          standings[tName] = Object.entries(teamStats)
+            .map(([name, s]) => ({ name, ...s, points: s.wins * 3 }))
+            .sort((a, b) => b.points - a.points || (b.maps_won - b.maps_lost) - (a.maps_won - a.maps_lost));
         }
       }
-
-      const typeOrder = tType === "group_stage" ? 0 : tType === "play_in" ? 1 : 2;
 
       phases.push({
         tournament_id: tId,
         name: tName,
-        type: tType,
-        type_order: typeOrder,
+        type: tInfo.type,
+        type_order: tInfo.order,
+        display: tInfo.display,
         standings: Object.keys(standings).length > 0 ? standings : null,
-        bracket,
+        bracket: hasBracket ? bracket : null,
         total_matches: matches.length,
       });
     }

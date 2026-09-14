@@ -5506,9 +5506,9 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
               const matchCount = t.total_matches || 0;
               const teams = t.standings ? Object.values(t.standings).flat() : [];
               const teamNames = teams.map(tm => tm.name).filter(Boolean).slice(0, 5);
-              const isGroup = t.type === "group_stage" || t.type === "play_in";
-              const typeLabel = t.type === "group_stage" ? "Groups" : t.type === "play_in" ? "Play-In" : "Playoffs";
-              const typeColor = isGroup ? "#4A90D9" : "#FFD700";
+              const typeLabel = t.type === "group" ? "Group" : t.type === "group_stage" ? "Groups" : t.type === "play_in" ? "Play-In" : "Playoffs";
+              const displayIcon = t.display === "bracket" || t.bracket ? "Bracket" : "Standings";
+              const typeColor = t.type === "playoffs" ? "#FFD700" : t.type === "play_in" ? "#E040FB" : "#4A90D9";
               return (
                 <button key={t.tournament_id} onClick={() => setTournamentId(t.tournament_id)} style={{
                   background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
