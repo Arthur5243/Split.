@@ -5004,7 +5004,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
-  const pageStylePlain = { height: "100vh", backgroundColor: "#0a0a0a", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" };
+  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -5452,7 +5452,7 @@ function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetch
     </>;
   };
 
-  const pageStylePlain = { height: "100vh", backgroundColor: "#0a0a0a", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" };
+  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
@@ -5659,7 +5659,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     </>;
   };
 
-  const pageStylePlain = { height: "100vh", backgroundColor: "#0a0a0a", overflowY: "auto", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" };
+  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
