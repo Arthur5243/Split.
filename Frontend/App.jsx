@@ -273,7 +273,6 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
     cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
-    rlBracketShow: "Voir le Bracket", rlBracketRLCS: "RLCS", rlBracketKickOff: "Kick-Off", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketNoEvent: "Aucun event RL disponible",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
@@ -356,7 +355,6 @@ const STR = {
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
     cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
-    rlBracketShow: "View Bracket", rlBracketRLCS: "RLCS", rlBracketKickOff: "Kick-Off", rlBracketMajor: "Major", rlBracketWorlds: "Worlds", rlBracketNoEvent: "No RL event available",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
@@ -5388,214 +5386,6 @@ function matchPhaseToTournament(phase, tournament) {
   return false;
 }
 
-const RL_BRACKET_COMPS = [
-  { key: "rlcs", labelKey: "rlBracketRLCS", color: "#4A90D9" },
-  { key: "kickoff", labelKey: "rlBracketKickOff", color: "#4CAF50" },
-  { key: "major", labelKey: "rlBracketMajor", color: "#FFD700" },
-  { key: "worlds", labelKey: "rlBracketWorlds", color: "#E040FB" },
-];
-
-function RLBracketPage({ rlEvents, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
-  const [comp, setComp] = useState(null);
-  const [serie, setSerie] = useState(null);
-  const [tournamentId, setTournamentId] = useState(null);
-  const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
-  }, [prefetchedBrackets]);
-
-  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, tournamentId]);
-
-  const goBack = () => {
-    if (tournamentId) setTournamentId(null);
-    else if (comp) { setComp(null); setSerie(null); }
-    else onBack();
-  };
-
-  const fetchRlBracket = async (serieId) => {
-    try {
-      const res = await fetch(API_BASE + "/api/rl-bracket/" + serieId);
-      if (res.ok) {
-        const data = await res.json();
-        setBracketData((prev) => ({ ...prev, ["rl:" + serieId]: data }));
-      }
-    } catch (e) { /* silent */ }
-  };
-
-  const selectComp = async (compKey) => {
-    setComp(compKey);
-    const events = rlEvents ? (rlEvents[compKey] || []) : [];
-    const best = events.find((e) => e.status === "running") || events[0] || null;
-    if (!best) return;
-    setSerie(best);
-    const cacheKey = "rl:" + best.serie_id;
-    if (bracketData[cacheKey]) return;
-    setLoading(true);
-    try { await fetchRlBracket(best.serie_id); } finally { setLoading(false); }
-  };
-
-  useEffect(() => {
-    if (!serie) return;
-    const id = setInterval(() => fetchRlBracket(serie.serie_id), 45000);
-    return () => clearInterval(id);
-  }, [serie]);
-
-  const currentData = serie ? bracketData["rl:" + serie.serie_id] : null;
-
-  const renderBracketSection = (bracket, accentColor) => {
-    if (!bracket) return null;
-    const hasUpper = bracket.upper?.length > 0;
-    const hasLower = bracket.lower?.length > 0;
-    const hasGF = bracket.grand_final?.length > 0;
-    if (!hasUpper && !hasLower && !hasGF) return null;
-    return (
-      <DragScroll>
-        {hasUpper && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs bracketType="upper" predictions={predictions} onLiveClick={onLiveClick} />}
-        {hasLower && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs bracketType="lower" predictions={predictions} onLiveClick={onLiveClick} />}
-        {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs bracketType="gf" qualifiedLabel={T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
-      </DragScroll>
-    );
-  };
-
-  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
-  const headerStyle = {
-    display: "flex", alignItems: "center", gap: 12,
-    padding: "16px 16px 14px",
-    background: "#0A0A0A",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    position: "sticky", top: 0, zIndex: 20,
-  };
-  const backBtn = (fn) => (
-    <button onClick={fn || goBack} style={{
-      background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
-      color: "#999", cursor: "pointer", padding: 6,
-      borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center",
-      width: 32, height: 32, flexShrink: 0,
-    }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-  );
-  const titleSpan = (text, color) => (
-    <span style={{ fontSize: 15, fontWeight: 800, color: color || "#fff", letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text}</span>
-  );
-
-  const compInfo = RL_BRACKET_COMPS.find((c) => c.key === comp);
-  const accent = compInfo?.color || "#4A90D9";
-
-  if (comp && tournamentId && currentData) {
-    const tPhase = (currentData.phases || []).find(p => p.tournament_id === tournamentId);
-    if (!tPhase) {
-      return (
-        <div style={pageStylePlain}>
-          <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
-        </div>
-      );
-    }
-    const hasStandings = tPhase.standings && Object.keys(tPhase.standings).length > 0;
-    const b = tPhase.bracket;
-    const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>{backBtn()}{titleSpan(tPhase.name, accent)}</div>
-        {hasStandings && <GroupStandings standings={tPhase.standings} accent={accent} T={T} />}
-        {hasBracket && renderBracketSection(b, accent)}
-        {!hasStandings && !hasBracket && (
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
-        )}
-      </div>
-    );
-  }
-
-  if (comp) {
-    const tournaments = currentData?.phases || [];
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>{backBtn()}{titleSpan(serie?.title || (T[compInfo?.labelKey] || comp), accent)}</div>
-        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
-        {!loading && tournaments.length === 0 && (
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.rlBracketNoEvent}</div>
-        )}
-        {!loading && tournaments.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
-            {tournaments.map((t) => {
-              const matchCount = t.total_matches || 0;
-              const teams = t.standings ? Object.values(t.standings).flat() : [];
-              const teamNames = teams.map(tm => tm.name).filter(Boolean).slice(0, 5);
-              const typeLabel = t.type === "group" ? "Group" : t.type === "group_stage" ? "Groups" : t.type === "play_in" ? "Play-In" : "Playoffs";
-              const displayIcon = t.display === "bracket" || t.bracket ? "Bracket" : "Standings";
-              const typeColor = t.type === "playoffs" ? "#FFD700" : t.type === "play_in" ? "#E040FB" : "#4A90D9";
-              return (
-                <button key={t.tournament_id} onClick={() => setTournamentId(t.tournament_id)} style={{
-                  background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-                  border: `1px solid ${accent}20`,
-                  borderRadius: 10, padding: "16px 16px", cursor: "pointer",
-                  display: "flex", flexDirection: "column", gap: 6,
-                  boxShadow: `0 2px 12px ${accent}08`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                      <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{t.name}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 8, fontWeight: 800, color: typeColor, border: `1px solid ${typeColor}44`, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{typeLabel}</span>
-                      {matchCount > 0 && <span style={{ fontSize: 10, color: "#555" }}>{matchCount} matchs</span>}
-                      <ChevronRight size={16} color="#444" />
-                    </div>
-                  </div>
-                  {teamNames.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 13 }}>
-                      {teamNames.map((name) => (
-                        <span key={name} style={{ fontSize: 10, fontWeight: 600, color: "#777", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.06)" }}>{name}</span>
-                      ))}
-                      {teams.length > 5 && <span style={{ fontSize: 10, color: "#555" }}>+{teams.length - 5}</span>}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const availableComps = RL_BRACKET_COMPS.filter(c => {
-    const events = rlEvents ? (rlEvents[c.key] || []) : [];
-    return events.length > 0;
-  });
-
-  return (
-    <div style={pageStylePlain}>
-      <div style={headerStyle}>
-        {backBtn(onBack)}
-        {titleSpan("Bracket Rocket League")}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: availableComps.length > 2 ? "1fr 1fr" : "1fr", gap: 10, padding: "20px 16px" }}>
-        {availableComps.map((c) => {
-          const events = rlEvents ? (rlEvents[c.key] || []) : [];
-          const hasRunning = events.some((e) => e.status === "running");
-          return (
-            <button key={c.key} onClick={() => selectComp(c.key)} style={{
-              background: `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)`,
-              border: `1px solid ${c.color}30`,
-              borderRadius: 12, padding: "32px 12px", cursor: "pointer",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: `0 4px 20px ${c.color}10`,
-              position: "relative",
-            }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
-              {hasRunning && (
-                <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
@@ -6244,10 +6034,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, rlEvents, showRlBracketPage, setShowRlBracketPage, prefetchedBrackets }) {
-  if (showRlBracketPage) {
-    return <RLBracketPage rlEvents={rlEvents} onBack={() => setShowRlBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowRlBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
-  }
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints }) {
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -6328,15 +6115,6 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
             </button>
           );
         })}
-      </div>
-
-      <div className="flex items-center gap-4 px-4 pb-2">
-        <button
-          onClick={() => setShowRlBracketPage(true)}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "#4A90D9", fontSize: 15, fontWeight: 700, padding: 0 }}
-        >
-          {T.rlBracketShow}
-        </button>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -9241,8 +9019,6 @@ export default function ClutchApp() {
   const [showBracketPage, setShowBracketPage] = useState(false);
   const [cs2Events, setCs2Events] = useState(null);
   const [showCs2BracketPage, setShowCs2BracketPage] = useState(false);
-  const [rlEvents, setRlEvents] = useState(null);
-  const [showRlBracketPage, setShowRlBracketPage] = useState(false);
   const [prefetchedBrackets, setPrefetchedBrackets] = useState({});
 
   const T = currentLang === "fr" ? STR.fr : { ...STR.fr, ...(STR[currentLang] || {}) };
@@ -9496,21 +9272,6 @@ export default function ClutchApp() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    async function loadRlEvents() {
-      try {
-        const res = await fetch(API_BASE + "/api/rl-events");
-        if (!res.ok) return;
-        const data = await res.json();
-        setRlEvents(data);
-      } catch (e) { /* silencieux */ }
-    }
-    loadRlEvents();
-    const interval = setInterval(loadRlEvents, 15 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-
   const [newsImageReady, setNewsImageReady] = useState(false);
   const [splashMinDone, setSplashMinDone] = useState(false);
   useEffect(() => {
@@ -9602,35 +9363,6 @@ export default function ClutchApp() {
     const interval = setInterval(prefetchCs2, 45000);
     return () => clearInterval(interval);
   }, [cs2Events]);
-
-  useEffect(() => {
-    if (!rlEvents) return;
-    const allSeries = [];
-    for (const bucket of Object.values(rlEvents)) {
-      if (Array.isArray(bucket)) {
-        for (const s of bucket) {
-          if (s.serie_id && (s.status === "running" || s.status === "upcoming")) {
-            allSeries.push(s.serie_id);
-          }
-        }
-      }
-    }
-    if (allSeries.length === 0) return;
-    async function prefetchRl() {
-      await Promise.all(allSeries.map(async (sid) => {
-        try {
-          const res = await fetch(API_BASE + "/api/rl-bracket/" + sid);
-          if (res.ok) {
-            const data = await res.json();
-            setPrefetchedBrackets(prev => ({ ...prev, ["rl:" + sid]: data }));
-          }
-        } catch (e) { /* silent */ }
-      }));
-    }
-    prefetchRl();
-    const interval = setInterval(prefetchRl, 45000);
-    return () => clearInterval(interval);
-  }, [rlEvents]);
 
   const allTeams = React.useMemo(() => {
     const set = [];
@@ -10147,10 +9879,6 @@ export default function ClutchApp() {
               changeScore={changeScore}
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.rl || 0}
-              rlEvents={rlEvents}
-              showRlBracketPage={showRlBracketPage}
-              setShowRlBracketPage={setShowRlBracketPage}
-              prefetchedBrackets={prefetchedBrackets}
             />
           </div>
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}
