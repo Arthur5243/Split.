@@ -8812,7 +8812,7 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
-  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); if (tab === "__close__") return; setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
+  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); if (tab === "__close__") return; setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
   useEffect(() => {
     function onCreatePost(e) {
       setAppPostPrefill(e.detail?.text || "");
