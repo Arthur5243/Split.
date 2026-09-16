@@ -205,13 +205,18 @@ async function fetchRLGameScore(gameId, team1Id, team2Id) {
   try {
     game = await pandaFetch("/" + RL_SLUG + "/games/" + gameId);
   } catch (e) {
+    console.log(`[rl-game-detail] game ${gameId} → fetch error: ${e.message}`);
     return null;
   }
-  if (!game || game.finished !== true) return null;
+  if (!game || game.finished !== true) {
+    console.log(`[rl-game-detail] game ${gameId} → not finished or null`);
+    return null;
+  }
   const teams = Array.isArray(game.teams) ? game.teams : [];
   const s1 = teams.find((t) => String(t.team_id || t.id) === String(team1Id));
   const s2 = teams.find((t) => String(t.team_id || t.id) === String(team2Id));
   if (s1 && s2 && s1.score != null && s2.score != null) {
+    console.log(`[rl-game-detail] game ${gameId} → teams: ${s1.score}-${s2.score}`);
     return { score1: s1.score, score2: s2.score };
   }
   const sides = [game.counter_terrorists, game.terrorists, game.blue, game.orange].filter(Boolean);
@@ -220,8 +225,12 @@ async function fetchRLGameScore(gameId, team1Id, team2Id) {
   if (side1 && side2) {
     const sc1 = side1.round_score ?? side1.score;
     const sc2 = side2.round_score ?? side2.score;
-    if (sc1 != null && sc2 != null) return { score1: sc1, score2: sc2 };
+    if (sc1 != null && sc2 != null) {
+      console.log(`[rl-game-detail] game ${gameId} → sides: ${sc1}-${sc2}`);
+      return { score1: sc1, score2: sc2 };
+    }
   }
+  console.log(`[rl-game-detail] game ${gameId} → NO SCORE FOUND. Keys: ${Object.keys(game).join(",")}, teams: ${JSON.stringify(teams.map(t => ({id: t.team_id || t.id, score: t.score})))}, blue: ${JSON.stringify(game.blue)}, orange: ${JSON.stringify(game.orange)}`);
   return null;
 }
 
@@ -233,11 +242,17 @@ async function fetchDetailedGameScores(m) {
   const played = games
     .filter((g) => g && g.status === "finished")
     .sort((a, b) => (a.position || 0) - (b.position || 0));
-  if (played.length === 0) return null;
+  if (played.length === 0) {
+    console.log(`[rl-detail] ${t1.name} vs ${t2.name} → 0 finished games out of ${games.length} total`);
+    return null;
+  }
+  console.log(`[rl-detail] ${t1.name} vs ${t2.name} → ${played.length} finished games, fetching details...`);
   const results = [];
+  let detailFound = 0;
   for (const g of played) {
     const detail = await fetchRLGameScore(g.id, t1.id, t2.id);
     if (detail) {
+      detailFound++;
       results.push({ game: "Game " + (results.length + 1), score1: detail.score1, score2: detail.score2 });
     } else {
       results.push({
@@ -248,6 +263,7 @@ async function fetchDetailedGameScores(m) {
     }
     await sleep(150);
   }
+  console.log(`[rl-detail] ${t1.name} vs ${t2.name} → ${detailFound}/${played.length} games got real scores`);
   return results;
 }
 
