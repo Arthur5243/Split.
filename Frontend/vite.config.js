@@ -8,7 +8,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       "/api": {
-        target: "https://backend-svc-production-a9ac.up.railway.app",
+        target: "https://backend-svc-production-41e0.up.railway.app",
         changeOrigin: true,
         secure: true,
       },

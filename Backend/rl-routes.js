@@ -11,7 +11,6 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import {
   cachedFetch,
-  pandaFetch,
   sleep,
   classifyTeamRegion,
 } from "./cs2-scores.js";
@@ -200,73 +199,6 @@ router.get("/api/rl-live", async (req, res) => {
 let rlResultsCache = { data: null, at: 0 };
 const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
 
-async function fetchRLGameScore(gameId, team1Id, team2Id) {
-  let game;
-  try {
-    game = await pandaFetch("/" + RL_SLUG + "/games/" + gameId);
-  } catch (e) {
-    console.log(`[rl-game-detail] game ${gameId} → fetch error: ${e.message}`);
-    return null;
-  }
-  if (!game || game.finished !== true) {
-    console.log(`[rl-game-detail] game ${gameId} → not finished or null`);
-    return null;
-  }
-  const teams = Array.isArray(game.teams) ? game.teams : [];
-  const s1 = teams.find((t) => String(t.team_id || t.id) === String(team1Id));
-  const s2 = teams.find((t) => String(t.team_id || t.id) === String(team2Id));
-  if (s1 && s2 && s1.score != null && s2.score != null) {
-    console.log(`[rl-game-detail] game ${gameId} → teams: ${s1.score}-${s2.score}`);
-    return { score1: s1.score, score2: s2.score };
-  }
-  const sides = [game.counter_terrorists, game.terrorists, game.blue, game.orange].filter(Boolean);
-  const side1 = sides.find((s) => String(s.id) === String(team1Id));
-  const side2 = sides.find((s) => String(s.id) === String(team2Id));
-  if (side1 && side2) {
-    const sc1 = side1.round_score ?? side1.score;
-    const sc2 = side2.round_score ?? side2.score;
-    if (sc1 != null && sc2 != null) {
-      console.log(`[rl-game-detail] game ${gameId} → sides: ${sc1}-${sc2}`);
-      return { score1: sc1, score2: sc2 };
-    }
-  }
-  console.log(`[rl-game-detail] game ${gameId} → NO SCORE FOUND. Keys: ${Object.keys(game).join(",")}, teams: ${JSON.stringify(teams.map(t => ({id: t.team_id || t.id, score: t.score})))}, blue: ${JSON.stringify(game.blue)}, orange: ${JSON.stringify(game.orange)}`);
-  return null;
-}
-
-async function fetchDetailedGameScores(m) {
-  const t1 = m.opponents?.[0]?.opponent;
-  const t2 = m.opponents?.[1]?.opponent;
-  if (!t1 || !t2) return null;
-  const games = Array.isArray(m.games) ? m.games : [];
-  const played = games
-    .filter((g) => g && g.status === "finished")
-    .sort((a, b) => (a.position || 0) - (b.position || 0));
-  if (played.length === 0) {
-    console.log(`[rl-detail] ${t1.name} vs ${t2.name} → 0 finished games out of ${games.length} total`);
-    return null;
-  }
-  console.log(`[rl-detail] ${t1.name} vs ${t2.name} → ${played.length} finished games, fetching details...`);
-  const results = [];
-  let detailFound = 0;
-  for (const g of played) {
-    const detail = await fetchRLGameScore(g.id, t1.id, t2.id);
-    if (detail) {
-      detailFound++;
-      results.push({ game: "Game " + (results.length + 1), score1: detail.score1, score2: detail.score2 });
-    } else {
-      results.push({
-        game: "Game " + (results.length + 1),
-        score1: g.winner && String(g.winner.id) === String(t1.id) ? 1 : 0,
-        score2: g.winner && String(g.winner.id) === String(t2.id) ? 1 : 0,
-      });
-    }
-    await sleep(150);
-  }
-  console.log(`[rl-detail] ${t1.name} vs ${t2.name} → ${detailFound}/${played.length} games got real scores`);
-  return results;
-}
-
 function buildFallbackGameScores(m) {
   const t1 = m.opponents?.[0]?.opponent;
   const t2 = m.opponents?.[1]?.opponent;
@@ -303,7 +235,7 @@ router.get("/api/rl-results", async (req, res) => {
       if (manual) {
         m.game_scores = manual;
       } else {
-        m.game_scores = await fetchDetailedGameScores(m) || buildFallbackGameScores(m);
+        m.game_scores = buildFallbackGameScores(m);
       }
     }
 
@@ -344,34 +276,6 @@ function toPandaScoreShapeRL(m, index) {
       : [],
   };
 }
-
-router.get("/api/rl-diag-game", async (req, res) => {
-  try {
-    const data = await cachedFetch("rl-results", "/" + RL_SLUG + "/matches/past?per_page=5");
-    const m = (data || []).find(x => x.games && x.games.length > 0 && x.games.some(g => g.status === "finished"));
-    if (!m) return res.json({ error: "no match with finished games" });
-    const g = m.games.find(x => x.status === "finished");
-    const t1 = m.opponents?.[0]?.opponent;
-    const t2 = m.opponents?.[1]?.opponent;
-    const results = {};
-    const paths = [
-      "/" + RL_SLUG + "/games/" + g.id,
-      "/games/" + g.id,
-      "/" + RL_SLUG + "/matches/" + m.id,
-    ];
-    for (const p of paths) {
-      try {
-        const raw = await pandaFetch(p);
-        results[p] = { status: "ok", keys: Object.keys(raw), teams: raw.teams, blue: raw.blue, orange: raw.orange, games: raw.games?.slice(0, 2) };
-      } catch (e) {
-        results[p] = { status: "error", message: e.message };
-      }
-    }
-    res.json({ matchTeams: (t1?.name || "?") + " vs " + (t2?.name || "?"), matchId: m.id, gameId: g.id, results });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 router.get("/api/rl-match-history", (req, res) => {
   try {
