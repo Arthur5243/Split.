@@ -200,6 +200,57 @@ router.get("/api/rl-live", async (req, res) => {
 let rlResultsCache = { data: null, at: 0 };
 const RL_RESULTS_CACHE_TTL = 5 * 60 * 1000;
 
+async function fetchRLGameScore(gameId, team1Id, team2Id) {
+  let game;
+  try {
+    game = await pandaFetch("/" + RL_SLUG + "/games/" + gameId);
+  } catch (e) {
+    return null;
+  }
+  if (!game || game.finished !== true) return null;
+  const teams = Array.isArray(game.teams) ? game.teams : [];
+  const s1 = teams.find((t) => String(t.team_id || t.id) === String(team1Id));
+  const s2 = teams.find((t) => String(t.team_id || t.id) === String(team2Id));
+  if (s1 && s2 && s1.score != null && s2.score != null) {
+    return { score1: s1.score, score2: s2.score };
+  }
+  const sides = [game.counter_terrorists, game.terrorists, game.blue, game.orange].filter(Boolean);
+  const side1 = sides.find((s) => String(s.id) === String(team1Id));
+  const side2 = sides.find((s) => String(s.id) === String(team2Id));
+  if (side1 && side2) {
+    const sc1 = side1.round_score ?? side1.score;
+    const sc2 = side2.round_score ?? side2.score;
+    if (sc1 != null && sc2 != null) return { score1: sc1, score2: sc2 };
+  }
+  return null;
+}
+
+async function fetchDetailedGameScores(m) {
+  const t1 = m.opponents?.[0]?.opponent;
+  const t2 = m.opponents?.[1]?.opponent;
+  if (!t1 || !t2) return null;
+  const games = Array.isArray(m.games) ? m.games : [];
+  const played = games
+    .filter((g) => g && g.status === "finished")
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
+  if (played.length === 0) return null;
+  const results = [];
+  for (const g of played) {
+    const detail = await fetchRLGameScore(g.id, t1.id, t2.id);
+    if (detail) {
+      results.push({ game: "Game " + (results.length + 1), score1: detail.score1, score2: detail.score2 });
+    } else {
+      results.push({
+        game: "Game " + (results.length + 1),
+        score1: g.winner && String(g.winner.id) === String(t1.id) ? 1 : 0,
+        score2: g.winner && String(g.winner.id) === String(t2.id) ? 1 : 0,
+      });
+    }
+    await sleep(150);
+  }
+  return results;
+}
+
 function buildFallbackGameScores(m) {
   const t1 = m.opponents?.[0]?.opponent;
   const t2 = m.opponents?.[1]?.opponent;
@@ -233,10 +284,11 @@ router.get("/api/rl-results", async (req, res) => {
 
       const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2) : null;
       const manual = scraped || findManualGameScores(t1, t2, dateStr);
-      if (!manual && t1 && t2) {
-        console.log(`[rl] no scores for "${t1}" vs "${t2}" (${dateStr}) → fallback`);
+      if (manual) {
+        m.game_scores = manual;
+      } else {
+        m.game_scores = await fetchDetailedGameScores(m) || buildFallbackGameScores(m);
       }
-      m.game_scores = manual || buildFallbackGameScores(m);
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };
