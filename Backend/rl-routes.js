@@ -345,6 +345,33 @@ function toPandaScoreShapeRL(m, index) {
   };
 }
 
+router.get("/api/rl-diag-game", async (req, res) => {
+  try {
+    const data = await cachedFetch("rl-results", "/" + RL_SLUG + "/matches/past?per_page=5");
+    const m = (data || []).find(x => x.games && x.games.length > 0 && x.games.some(g => g.status === "finished"));
+    if (!m) return res.json({ error: "no match with finished games" });
+    const g = m.games.find(x => x.status === "finished");
+    const t1 = m.opponents?.[0]?.opponent;
+    const t2 = m.opponents?.[1]?.opponent;
+    let rawGame = null;
+    try { rawGame = await pandaFetch("/" + RL_SLUG + "/games/" + g.id); } catch (e) { return res.json({ error: e.message }); }
+    res.json({
+      matchTeams: (t1?.name || "?") + " vs " + (t2?.name || "?"),
+      gameId: g.id,
+      team1Id: t1?.id,
+      team2Id: t2?.id,
+      rawGameKeys: rawGame ? Object.keys(rawGame) : null,
+      rawGameTeams: rawGame?.teams,
+      rawGameBlue: rawGame?.blue,
+      rawGameOrange: rawGame?.orange,
+      rawGameWinner: rawGame?.winner,
+      rawGameFinished: rawGame?.finished,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.get("/api/rl-match-history", (req, res) => {
   try {
     if (!existsSync(RL_MATCHES_PATH)) {
