@@ -353,20 +353,21 @@ router.get("/api/rl-diag-game", async (req, res) => {
     const g = m.games.find(x => x.status === "finished");
     const t1 = m.opponents?.[0]?.opponent;
     const t2 = m.opponents?.[1]?.opponent;
-    let rawGame = null;
-    try { rawGame = await pandaFetch("/" + RL_SLUG + "/games/" + g.id); } catch (e) { return res.json({ error: e.message }); }
-    res.json({
-      matchTeams: (t1?.name || "?") + " vs " + (t2?.name || "?"),
-      gameId: g.id,
-      team1Id: t1?.id,
-      team2Id: t2?.id,
-      rawGameKeys: rawGame ? Object.keys(rawGame) : null,
-      rawGameTeams: rawGame?.teams,
-      rawGameBlue: rawGame?.blue,
-      rawGameOrange: rawGame?.orange,
-      rawGameWinner: rawGame?.winner,
-      rawGameFinished: rawGame?.finished,
-    });
+    const results = {};
+    const paths = [
+      "/" + RL_SLUG + "/games/" + g.id,
+      "/games/" + g.id,
+      "/" + RL_SLUG + "/matches/" + m.id,
+    ];
+    for (const p of paths) {
+      try {
+        const raw = await pandaFetch(p);
+        results[p] = { status: "ok", keys: Object.keys(raw), teams: raw.teams, blue: raw.blue, orange: raw.orange, games: raw.games?.slice(0, 2) };
+      } catch (e) {
+        results[p] = { status: "error", message: e.message };
+      }
+    }
+    res.json({ matchTeams: (t1?.name || "?") + " vs " + (t2?.name || "?"), matchId: m.id, gameId: g.id, results });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
