@@ -2223,9 +2223,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [frozenBgH, setFrozenBgH] = useState(null);
   useLayoutEffect(() => {
     if (cardRef.current && !expanded) {
-      setFrozenBgH(cardRef.current.offsetHeight);
+      const h = cardRef.current.offsetHeight;
+      if (h > 0) setFrozenBgH(h);
     }
-  }, [expanded]);
+  });
 
   // Suit quels champs de score par map ont été "quittés" (blur) par
   // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
