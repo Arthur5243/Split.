@@ -232,11 +232,7 @@ router.get("/api/rl-results", async (req, res) => {
 
       const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2) : null;
       const manual = scraped || findManualGameScores(t1, t2, dateStr);
-      if (manual) {
-        m.game_scores = manual;
-      } else {
-        m.game_scores = buildFallbackGameScores(m);
-      }
+      m.game_scores = manual || null;
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };

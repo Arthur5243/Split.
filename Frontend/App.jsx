@@ -1457,7 +1457,11 @@ function transformMatchRL(m) {
     score1,
     score2,
     tier: m.tier || (m.league && m.league.name) || null,
-    map_scores: m.game_scores ? m.game_scores.map((g) => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
+    map_scores: (() => {
+      if (!m.game_scores) return null;
+      const hasReal = m.game_scores.some(g => g.score1 > 1 || g.score2 > 1);
+      return hasReal ? m.game_scores.map((g) => ({ map: null, score1: g.score1, score2: g.score2 })) : null;
+    })(),
     number_of_games: m.number_of_games || 5,
     streamUrl: m.stream_url || null,
   };
