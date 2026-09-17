@@ -146,72 +146,179 @@ async function findMatches() {
   const live = [];
   const completed = [];
 
-  $(".match, .infobox_matches_content").each((_, el) => {
-    const $el = $(el);
-    const statusText = $el
-      .find(".versus-status, .match-countdown, .timer-object")
-      .text()
-      .toUpperCase();
-    const isLive = statusText.includes("LIVE");
+  // Helper: parse a single .match-info element into a match entry
+  function parseMatchInfo($el) {
+    // Team names from opponent spans
+    const opponents = $el.find(".match-info-header-opponent .name");
+    const team1 = opponents.eq(0).text().trim();
+    const team2 = opponents.eq(1).text().trim();
 
-    const scoreText = $el.find(".versus .versus-score, .versus-score").text().trim();
-    const hasScore = /\d+\s*[-–:]\s*\d+/.test(scoreText);
-    const isCompleted = !isLive && hasScore;
-
-    if (!isLive && !isCompleted) return;
-
-    const team1 = $el
-      .find(".team-left, .team-template-text")
-      .eq(0)
+    // Score from the scoreholder (e.g. "3 : 1" when completed, "vs" when upcoming)
+    const scoreText = $el
+      .find(".match-info-header-scoreholder-score")
       .text()
       .trim();
-    const team2 = $el
-      .find(".team-right, .team-template-text")
-      .eq(1)
-      .text()
-      .trim();
+
+    // Tournament page link
     const pageLink = $el
-      .find("a[href*='/rocketleague/']")
+      .find(".match-info-tournament a[href*='/rocketleague/']")
       .first()
       .attr("href");
 
-    if (pageLink && team1 && team2) {
-      const entry = {
-        page: pageLink.replace(`/${WIKI}/`, ""),
-        team1,
-        team2,
-      };
-      if (isLive) live.push(entry);
-      else completed.push(entry);
+    // Detect LIVE from countdown area text
+    const countdownText = $el
+      .find(".match-info-countdown")
+      .text()
+      .toUpperCase();
+    const isLive = countdownText.includes("LIVE");
+
+    // Check for a completed numeric score like "3 : 1"
+    const hasScore = /\d+\s*[:–-]\s*\d+/.test(scoreText);
+
+    return { team1, team2, scoreText, pageLink, isLive, hasScore };
+  }
+
+  // Section 1: Upcoming / Live matches (data-toggle-area-content="1" or no toggle wrapper)
+  $('[data-toggle-area-content="1"] .match-info, ' +
+    '.match-info').each((_, el) => {
+    const $el = $(el);
+    // Skip if inside the completed section — we handle it separately
+    if ($el.closest('[data-toggle-area-content="2"]').length) return;
+
+    const m = parseMatchInfo($el);
+    if (!m.isLive || !m.team1 || !m.team2) return;
+
+    const page = m.pageLink
+      ? m.pageLink.replace(`/${WIKI}/`, "")
+      : null;
+    if (page) {
+      live.push({ page, team1: m.team1, team2: m.team2 });
     }
   });
+
+  // Section 2: Completed matches (data-toggle-area-content="2")
+  $('[data-toggle-area-content="2"] .match-info').each((_, el) => {
+    const $el = $(el);
+    const m = parseMatchInfo($el);
+    if (!m.hasScore || !m.team1 || !m.team2) return;
+
+    const page = m.pageLink
+      ? m.pageLink.replace(`/${WIKI}/`, "")
+      : null;
+    if (page) {
+      completed.push({ page, team1: m.team1, team2: m.team2 });
+    }
+  });
+
+  // Also pick up live matches from the completed section (rare but possible)
+  $('[data-toggle-area-content="2"] .match-info').each((_, el) => {
+    const $el = $(el);
+    const m = parseMatchInfo($el);
+    if (!m.isLive || !m.team1 || !m.team2) return;
+
+    const page = m.pageLink
+      ? m.pageLink.replace(`/${WIKI}/`, "")
+      : null;
+    if (page) {
+      // Avoid duplicates
+      if (!live.some(l => l.page === page && l.team1 === m.team1 && l.team2 === m.team2)) {
+        live.push({ page, team1: m.team1, team2: m.team2 });
+      }
+    }
+  });
+
+  // Fallback: if no toggle sections found, scan all .match-info elements
+  if (live.length === 0 && completed.length === 0) {
+    $(".match-info").each((_, el) => {
+      const $el = $(el);
+      const m = parseMatchInfo($el);
+      if (!m.team1 || !m.team2 || !m.pageLink) return;
+
+      const page = m.pageLink.replace(`/${WIKI}/`, "");
+
+      if (m.isLive) {
+        live.push({ page, team1: m.team1, team2: m.team2 });
+      } else if (m.hasScore) {
+        completed.push({ page, team1: m.team1, team2: m.team2 });
+      }
+    });
+  }
 
   return { live, completed };
 }
 
-async function getGameScores(pageName) {
+async function getGameScores(pageName, team1, team2) {
   const html = await apiParse(pageName);
   const $ = load(html);
-  const games = [];
 
-  $(".brkts-popup-body-game").each((i, el) => {
-    const $el = $(el);
-    const scores = $el
-      .find(".brkts-popup-body-game-score, .score")
-      .map((_, s) => $(s).text().trim())
-      .get()
-      .filter((s) => s !== "");
+  const norm = (s) =>
+    (s || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .trim()
+      .toLowerCase();
+  const t1 = norm(team1);
+  const t2 = norm(team2);
 
-    if (scores.length >= 2) {
-      games.push({
-        game: `Game ${i + 1}`,
-        score1: Number(scores[0]) || 0,
-        score2: Number(scores[1]) || 0,
-      });
-    }
+  let bestGames = [];
+
+  $(".brkts-popup").each((_, popup) => {
+    const $popup = $(popup);
+    const headerOpps = $popup.find(".brkts-popup-header-opponent");
+    if (headerOpps.length < 2) return;
+
+    const oppName1 = norm(headerOpps.eq(0).text());
+    const oppName2 = norm(headerOpps.eq(1).text());
+
+    const match12 =
+      (oppName1.includes(t1) || t1.includes(oppName1)) &&
+      (oppName2.includes(t2) || t2.includes(oppName2));
+    const match21 =
+      (oppName1.includes(t2) || t2.includes(oppName1)) &&
+      (oppName2.includes(t1) || t1.includes(oppName2));
+    if (!match12 && !match21) return;
+
+    const swap = match21;
+    const games = [];
+
+    $popup.find(".brkts-popup-body-game").each((i, el) => {
+      const $el = $(el);
+      const spaced = $el.find(".brkts-popup-spaced");
+      if (spaced.length < 2) return;
+
+      const leftText = spaced
+        .eq(0)
+        .clone()
+        .children()
+        .remove()
+        .end()
+        .text()
+        .trim();
+      const rightText = spaced
+        .eq(spaced.length - 1)
+        .clone()
+        .children()
+        .remove()
+        .end()
+        .text()
+        .trim();
+
+      const left = parseInt(leftText, 10);
+      const right = parseInt(rightText, 10);
+
+      if (!isNaN(left) && !isNaN(right)) {
+        games.push({
+          game: `Game ${i + 1}`,
+          score1: swap ? right : left,
+          score2: swap ? left : right,
+        });
+      }
+    });
+
+    if (games.length > 0) bestGames = games;
   });
 
-  return games;
+  return bestGames;
 }
 
 function isRealScore(games) {
@@ -230,7 +337,7 @@ async function runOnce() {
   for (const match of live) {
     try {
       await sleep(30000);
-      const games = await getGameScores(match.page);
+      const games = await getGameScores(match.page, match.team1, match.team2);
       if (games.length > 0) {
         const key = normalize(match.team1) + ":" + normalize(match.team2);
         rlScrapedScores.set(key, {
@@ -267,7 +374,7 @@ async function runOnce() {
 
     try {
       await sleep(30000);
-      const games = await getGameScores(match.page);
+      const games = await getGameScores(match.page, match.team1, match.team2);
       if (games.length > 0 && isRealScore(games)) {
         persistScore(match.team1, match.team2, games);
         console.log(
