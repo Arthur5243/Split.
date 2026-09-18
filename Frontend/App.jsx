@@ -2455,7 +2455,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {!regionsAboveLogo && showRegion1 && (
               <span style={{ background: team1RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4 }}>{team1RegionCode}</span>
             )}
-            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "16px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
@@ -2513,7 +2513,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {!regionsAboveLogo && showRegion2 && (
               <span style={{ background: team2RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4 }}>{team2RegionCode}</span>
             )}
-            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "14px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "16px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
           </span>
         </div>
       </div>
@@ -2523,12 +2523,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       ) : (
         <div className="px-4 pb-2 flex items-center justify-center gap-3" style={{ position: "relative" }}>
           <div className="flex flex-col items-center gap-1">
-            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team1}</span>
+            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team1}</span>
             <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
           </div>
           <span style={{ color: hasBg ? "#ccc" : "#444", fontWeight: 900, fontSize: "18px", ...txtStW }}>–</span>
           <div className="flex flex-col items-center gap-1">
-            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "9.5px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team2}</span>
+            <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team2}</span>
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
           {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
@@ -8110,7 +8110,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
                           {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                         </div>
-                        <span className="font-bold truncate" style={{ fontSize: "9px", color: uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}{isMe ? " (toi)" : ""}</span>
+                        <span className="font-bold truncate" style={{ fontSize: "9px", color: isMe ? "#CCF71D" : uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}</span>
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-1.5" style={{ position: "relative" }}>
                         {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
@@ -9768,8 +9768,8 @@ export default function ClutchApp() {
   ];
 
   return (
-    <div className="flex items-center justify-center p-4" style={{ background: "#000", minHeight: "700px" }}>
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "min(820px, 92vh)", background: "#000", borderRadius: "44px", boxShadow: "0 0 0 2px #262626, 0 20px 60px rgba(0,0,0,0.6)" }}>
+    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100vh" }}>
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000" }}>
 
         {!splashDone && (
           <div style={{
