@@ -9,7 +9,7 @@
  * 3. Build: npm run build && npx cap sync android
  */
 
-const INTERSTITIAL_AD_UNIT = "ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ"; // Replace with your real ad unit ID
+const INTERSTITIAL_AD_UNIT = "ca-app-pub-7218024010278471/4702203856";
 const TEST_AD_UNIT = "ca-app-pub-3940256099942544/1033173712"; // Google test interstitial
 
 let admobPlugin = null;
@@ -38,10 +38,8 @@ async function showInterstitial() {
   if (!initialized || !admobPlugin) return false;
   try {
     await admobPlugin.prepareInterstitial({
-      adId: INTERSTITIAL_AD_UNIT === "ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ"
-        ? TEST_AD_UNIT
-        : INTERSTITIAL_AD_UNIT,
-      isTesting: INTERSTITIAL_AD_UNIT === "ca-app-pub-XXXXXXXXXXXXXXXX/ZZZZZZZZZZ",
+      adId: INTERSTITIAL_AD_UNIT,
+      isTesting: false,
     });
     await admobPlugin.showInterstitial();
     console.log("[admob] interstitial shown");

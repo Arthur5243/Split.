@@ -7,8 +7,8 @@
   },
   "plugins": {
     "AdMob": {
-      "appIdAndroid": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
-      "initializeForTesting": true
+      "appIdAndroid": "ca-app-pub-7218024010278471~9658569952",
+      "initializeForTesting": false
     }
   }
 }
