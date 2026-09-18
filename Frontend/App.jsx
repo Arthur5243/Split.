@@ -5062,9 +5062,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   // --- Autre competitions view ---
   if (showAutre) {
     const autreComps = [
-      { name: "VCT Challengers", desc: "Ligues régionales Tier 2", color: "#4FC3F7", regions: ["EMEA", "Pacific", "Americas", "CN"] },
-      { name: "Game Changers", desc: "Circuit compétitif féminin", color: "#E040FB", regions: ["EMEA", "Pacific", "Americas", "BR", "LATAM", "JP", "KR", "CN"] },
-      { name: "VCT Ascension", desc: "Promotion vers la ligue internationale", color: "#FFB74D", regions: ["EMEA", "Pacific", "Americas"] },
+      { name: "VCT Challengers", desc: "Ligues régionales Tier 2", color: "#4FC3F7", regions: ["EMEA", "Pacific", "Americas", "CN"], url: "https://liquipedia.net/valorant/VCT/2026/Challengers" },
+      { name: "Game Changers", desc: "Circuit compétitif féminin", color: "#E040FB", regions: ["EMEA", "Pacific", "Americas"], url: "https://liquipedia.net/valorant/VCT/2026/Game_Changers" },
+      { name: "VCT Ascension", desc: "Promotion vers la ligue internationale", color: "#FFB74D", regions: ["EMEA", "Pacific", "Americas"], url: "https://liquipedia.net/valorant/VCT/2026/Ascension" },
     ];
     return (
       <div style={pageStylePlain}>
@@ -5074,10 +5074,13 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
         </div>
         <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
           {autreComps.map((c) => (
-            <div key={c.name} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+            <button key={c.name} onClick={() => window.open(c.url, "_blank")} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+                </div>
+                <ChevronRight size={14} color="#555" />
               </div>
               <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -5085,7 +5088,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
                   <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
                 ))}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -5572,9 +5575,9 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   // --- Autre CS2 competitions view ---
   if (showAutre) {
     const autreComps = [
-      { name: "ESL Challenger", desc: "Circuit Tier 2 ESL", color: "#00BFFF", regions: ["Europe", "NA", "Asia", "Oceania"] },
-      { name: "BLAST Rising", desc: "Développement de talents BLAST", color: "#FF6B00", regions: ["Europe", "Americas"] },
-      { name: "CCT", desc: "Champions Cup Tour", color: "#4CAF50", regions: ["Europe", "South America", "Online"] },
+      { name: "ESL Challenger", desc: "Circuit Tier 2 ESL", color: "#00BFFF", regions: ["Europe", "NA", "Asia"], url: "https://liquipedia.net/counterstrike/ESL/Challenger" },
+      { name: "BLAST Rising", desc: "Développement de talents BLAST", color: "#FF6B00", regions: ["Europe", "Americas"], url: "https://liquipedia.net/counterstrike/BLAST/Rising" },
+      { name: "CCT", desc: "Champions Cup Tour", color: "#4CAF50", regions: ["Europe", "South America"], url: "https://liquipedia.net/counterstrike/Champions_Cup_Tour" },
     ];
     return (
       <div style={pageStylePlain}>
@@ -5584,10 +5587,13 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         </div>
         <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
           {autreComps.map((c) => (
-            <div key={c.name} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+            <button key={c.name} onClick={() => window.open(c.url, "_blank")} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
+                  <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+                </div>
+                <ChevronRight size={14} color="#555" />
               </div>
               <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -5595,7 +5601,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
                   <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
                 ))}
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
