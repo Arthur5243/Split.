@@ -3,329 +3,147 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Split — Pronostics Esports</title>
-<meta name="description" content="Pronostics esports en temps réel. Valorant, CS2, Rocket League. Gratuit.">
+<title>Split — Installe l'app</title>
+<meta name="description" content="Pronostics esports en temps réel. Valorant, CS2, Rocket League.">
 <meta name="theme-color" content="#C4F000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Inter:wght@400;500&display=swap">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --bg:#050507;
-    --surface:#0d0d12;
-    --surface2:#15151c;
-    --accent:#C4F000;
-    --accent-dim:#9cc000;
-    --text:#eaeaea;
-    --text-mid:#888;
-    --text-dim:#555;
-    --radius:14px;
-  }
-  html{scroll-behavior:smooth}
+  html,body{height:100%;overflow:hidden}
   body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',system-ui,-apple-system,sans-serif;
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-    overflow-x:hidden;
+    background:#050507;
+    color:#eaeaea;
+    font-family:'Inter',system-ui,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;
+    position:relative;
   }
 
-  /* ── HERO ── */
-  .hero{
-    min-height:100dvh;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;
-    padding:60px 20px 40px;
-    position:relative;
-    overflow:hidden;
-  }
-  .hero::before{
-    content:'';position:absolute;inset:0;
-    background:
-      radial-gradient(ellipse 60% 50% at 50% 0%,rgba(196,240,0,.10) 0%,transparent 70%),
-      radial-gradient(ellipse 40% 60% at 20% 80%,rgba(196,240,0,.04) 0%,transparent 60%);
+  /* glow */
+  body::before{
+    content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);
+    width:600px;height:600px;
+    background:radial-gradient(circle,rgba(196,240,0,.08) 0%,transparent 70%);
     pointer-events:none;
   }
 
-  .logo-mark{
-    width:72px;height:72px;border-radius:18px;
-    background:linear-gradient(135deg,var(--accent),#a8d600);
+  .card{
+    position:relative;z-index:1;
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+    max-width:380px;width:100%;
+  }
+
+  .logo{
+    width:68px;height:68px;border-radius:16px;
+    background:linear-gradient(135deg,#C4F000,#a0c800);
     display:grid;place-items:center;
-    font-family:'Outfit',sans-serif;font-weight:900;font-size:32px;color:#000;
-    margin-bottom:28px;
-    box-shadow:0 0 60px rgba(196,240,0,.25);
+    font-family:'Outfit',sans-serif;font-weight:900;font-size:30px;color:#000;
+    margin-bottom:24px;
+    box-shadow:0 0 50px rgba(196,240,0,.2);
   }
 
-  .hero h1{
+  h1{
     font-family:'Outfit',sans-serif;font-weight:900;
-    font-size:clamp(2.6rem,7vw,4.2rem);
-    line-height:1.05;letter-spacing:-0.03em;
-    color:#fff;
-    margin-bottom:14px;
+    font-size:28px;line-height:1.15;letter-spacing:-0.02em;
+    color:#fff;margin-bottom:8px;
   }
-  .hero h1 span{color:var(--accent)}
+  h1 span{color:#C4F000}
 
-  .hero .tagline{
-    font-size:clamp(1rem,2.5vw,1.2rem);
-    color:var(--text-mid);max-width:420px;
-    margin-bottom:36px;
+  .sub{
+    font-size:14px;color:#777;line-height:1.5;
+    margin-bottom:32px;
   }
 
-  .cta-group{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;max-width:320px}
+  .games{
+    display:flex;gap:16px;margin-bottom:32px;
+  }
+  .game{
+    display:flex;align-items:center;gap:6px;
+    font-family:'Outfit',sans-serif;font-weight:600;font-size:13px;color:#666;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .dot-v{background:#ff4654}
+  .dot-c{background:#f5a623}
+  .dot-r{background:#0085ff}
 
-  .btn-primary{
+  .btn{
     display:flex;align-items:center;justify-content:center;gap:10px;
-    width:100%;padding:16px 28px;
-    background:var(--accent);color:#000;
-    font-family:'Outfit',sans-serif;font-weight:800;font-size:17px;
+    width:100%;padding:16px 24px;
+    background:#C4F000;color:#000;
+    font-family:'Outfit',sans-serif;font-weight:800;font-size:16px;
     border:none;border-radius:50px;cursor:pointer;
     text-decoration:none;
     transition:transform .15s,box-shadow .15s;
+    margin-bottom:12px;
   }
-  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(196,240,0,.3)}
-  .btn-primary:active{transform:translateY(0)}
-  .btn-primary svg{width:22px;height:22px;flex-shrink:0}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(196,240,0,.25)}
+  .btn:active{transform:translateY(0)}
+  .btn svg{width:20px;height:20px}
 
-  .btn-secondary{
+  .btn-ghost{
     display:flex;align-items:center;justify-content:center;gap:8px;
     width:100%;padding:14px 24px;
-    background:transparent;color:var(--text);
-    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
-    border:1.5px solid #2a2a35;border-radius:50px;cursor:pointer;
+    background:transparent;color:#aaa;
+    font-family:'Inter',sans-serif;font-weight:500;font-size:13px;
+    border:1px solid #1e1e28;border-radius:50px;cursor:pointer;
     text-decoration:none;transition:border-color .2s;
+    margin-bottom:24px;
   }
-  .btn-secondary:hover{border-color:var(--accent-dim)}
+  .btn-ghost:hover{border-color:#C4F000;color:#ccc}
 
-  .hero .note{font-size:12px;color:var(--text-dim);margin-top:16px}
+  .hint{
+    font-size:11.5px;color:#444;line-height:1.5;
+    max-width:300px;
+  }
+  .hint strong{color:#666}
 
-  .scroll-hint{
-    position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
-    color:var(--text-dim);font-size:12px;
-    display:flex;flex-direction:column;align-items:center;gap:4px;
-    animation:bob 2s ease-in-out infinite;
-  }
-  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .ios-hint{display:none}
 
-  /* ── GAMES BAR ── */
-  .games-bar{
-    display:flex;justify-content:center;gap:32px;
-    padding:40px 20px;
-    border-top:1px solid #141419;border-bottom:1px solid #141419;
-  }
-  .game-pill{
-    display:flex;align-items:center;gap:8px;
-    font-family:'Outfit',sans-serif;font-weight:600;font-size:15px;
-    color:var(--text-mid);
-  }
-  .game-dot{width:8px;height:8px;border-radius:50%}
-  .game-dot.valo{background:#ff4654}
-  .game-dot.cs{background:#f5a623}
-  .game-dot.rl{background:#0085ff}
-
-  /* ── FEATURES ── */
-  .features{
-    max-width:900px;margin:0 auto;
-    padding:80px 20px;
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-    gap:20px;
-  }
-  .feat{
-    background:var(--surface);
-    border:1px solid #1a1a22;
-    border-radius:var(--radius);
-    padding:28px 24px;
-  }
-  .feat-icon{
-    width:40px;height:40px;border-radius:10px;
-    background:var(--surface2);
-    display:grid;place-items:center;
-    margin-bottom:16px;font-size:20px;
-  }
-  .feat h3{
-    font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;
-    color:#fff;margin-bottom:6px;
-  }
-  .feat p{font-size:13.5px;color:var(--text-mid);line-height:1.5}
-
-  /* ── HOW ── */
-  .how{
-    max-width:640px;margin:0 auto;
-    padding:0 20px 80px;
-    text-align:center;
-  }
-  .how h2{
-    font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2rem);
-    color:#fff;margin-bottom:12px;
-  }
-  .how .sub{color:var(--text-mid);font-size:15px;margin-bottom:40px}
-
-  .steps{
-    display:flex;flex-direction:column;gap:24px;
-    text-align:left;
-  }
-  .step{
-    display:flex;gap:16px;align-items:flex-start;
-  }
-  .step-num{
-    flex-shrink:0;width:36px;height:36px;border-radius:10px;
-    background:var(--surface2);border:1px solid #1e1e28;
-    display:grid;place-items:center;
-    font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;
-    color:var(--accent);
-  }
-  .step-text strong{
-    display:block;font-family:'Outfit',sans-serif;font-weight:700;font-size:15px;
-    color:#fff;margin-bottom:2px;
-  }
-  .step-text span{font-size:13.5px;color:var(--text-mid)}
-
-  /* ── INSTALL BANNER (shows for iOS) ── */
-  .ios-tip{
-    display:none;
-    max-width:500px;margin:0 auto;
-    padding:0 20px 60px;text-align:center;
-  }
-  .ios-tip.show{display:block}
-  .ios-tip-box{
-    background:var(--surface);border:1px solid #1a1a22;border-radius:var(--radius);
-    padding:24px;
-  }
-  .ios-tip-box p{font-size:14px;color:var(--text-mid);line-height:1.6}
-  .ios-tip-box strong{color:#fff}
-
-  /* ── FOOTER ── */
-  footer{
-    border-top:1px solid #141419;
-    padding:32px 20px;text-align:center;
-    font-size:12px;color:var(--text-dim);
-  }
-  footer a{color:var(--text-mid);text-decoration:none}
-  footer a:hover{color:var(--accent)}
-
-  /* ── responsive ── */
-  @media(max-width:500px){
-    .games-bar{gap:20px}
-    .game-pill span{display:none}
+  @media(max-width:400px){
+    h1{font-size:24px}
+    .games{gap:12px}
   }
 </style>
 </head>
 <body>
 
-<!-- ============================================
-  IMPORTANT : Remplace APP_URL par l'URL de ton app
-  Exemple : https://split-esports.up.railway.app
-============================================= -->
+<div class="card">
+  <div class="logo">S</div>
+  <h1>Pronostics<br><span>esport</span> en direct</h1>
+  <p class="sub">Parie sur Valorant, CS2 et Rocket League. Gratuit.</p>
 
-<section class="hero">
-  <div class="logo-mark">S</div>
-  <h1>Parie sur<br>l'<span>esport</span></h1>
-  <p class="tagline">Pronostics en temps réel sur Valorant, CS2 et Rocket League. Gratuit, sans inscription Play Store.</p>
-
-  <div class="cta-group">
-    <a href="APP_URL" class="btn-primary" id="installBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Installer Split
-    </a>
-    <a href="APP_URL" class="btn-secondary">
-      Ouvrir dans le navigateur
-    </a>
+  <div class="games">
+    <div class="game"><div class="dot dot-v"></div>Valorant</div>
+    <div class="game"><div class="dot dot-c"></div>CS2</div>
+    <div class="game"><div class="dot dot-r"></div>RL</div>
   </div>
-  <p class="note">Aucun store requis — installe direct depuis ton navigateur</p>
 
-  <div class="scroll-hint">
-    <span>En savoir plus</span>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-  </div>
-</section>
+  <a href="https://frontend-svc-production-3e6d.up.railway.app" class="btn" id="mainBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Installer Split
+  </a>
 
-<div class="games-bar">
-  <div class="game-pill"><div class="game-dot valo"></div> <span>Valorant</span></div>
-  <div class="game-pill"><div class="game-dot cs"></div> <span>CS2</span></div>
-  <div class="game-pill"><div class="game-dot rl"></div> <span>Rocket League</span></div>
+  <a href="https://frontend-svc-production-3e6d.up.railway.app" class="btn-ghost">
+    Ouvrir dans le navigateur
+  </a>
+
+  <p class="hint android-hint">
+    Clique sur <strong>Installer</strong> — la bannière d'installation apparaît automatiquement.
+  </p>
+  <p class="hint ios-hint">
+    Dans Safari, appuie sur <strong>Partager</strong> puis <strong>"Sur l'écran d'accueil"</strong>.
+  </p>
 </div>
-
-<section class="features">
-  <div class="feat">
-    <div class="feat-icon">&#9889;</div>
-    <h3>Matchs en direct</h3>
-    <p>Scores live, formats BO1/BO3/BO5, résultats map par map. Tout en temps réel.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-icon">&#127942;</div>
-    <h3>Classement mondial</h3>
-    <p>Grimpe dans le leaderboard. Gagne des points sur chaque prono correct.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-icon">&#128202;</div>
-    <h3>Pourcentages Elo</h3>
-    <p>Algorithme maison : Elo, head-to-head, tier des tournois. Pas du pif.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-icon">&#128293;</div>
-    <h3>Streaks & Récompenses</h3>
-    <p>Série de pronos corrects, coffres quotidiens, quêtes. Plus tu joues, plus tu gagnes.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-icon">&#127760;</div>
-    <h3>7 langues</h3>
-    <p>Français, English, Español, Italiano, 日本語, Deutsch, 中文. Pour tout le monde.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-icon">&#128241;</div>
-    <h3>App installable</h3>
-    <p>Ajoute Split à ton écran d'accueil. Se lance comme une vraie app, hors ligne inclus.</p>
-  </div>
-</section>
-
-<section class="how">
-  <h2>Comment installer</h2>
-  <p class="sub">Pas besoin du Play Store ou de l'App Store</p>
-
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-text">
-        <strong>Ouvre Split dans ton navigateur</strong>
-        <span>Chrome sur Android, Safari sur iPhone</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-text">
-        <strong id="step2Title">Clique sur "Installer"</strong>
-        <span id="step2Desc">La bannière d'installation apparaît automatiquement sur Chrome Android</span>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-text">
-        <strong>C'est prêt</strong>
-        <span>Split est sur ton écran d'accueil, comme n'importe quelle app</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="ios-tip" id="iosTip">
-  <div class="ios-tip-box">
-    <p>Sur <strong>iPhone / iPad</strong>, ouvre Split dans <strong>Safari</strong>, appuie sur le bouton <strong>Partager</strong> (carré avec flèche) puis <strong>"Sur l'écran d'accueil"</strong>.</p>
-  </div>
-</div>
-
-<footer>
-  &copy; 2024-2026 Split &mdash; <a href="APP_URL">Ouvrir l'app</a>
-</footer>
 
 <script>
 (function(){
-  // Detect iOS
-  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  if(isIOS){
-    document.getElementById('iosTip').classList.add('show');
-    document.getElementById('step2Title').textContent = 'Ajoute à l\'écran d\'accueil';
-    document.getElementById('step2Desc').textContent = 'Dans Safari : Partager → "Sur l\'écran d\'accueil"';
+  var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(iOS){
+    document.querySelector('.android-hint').style.display = 'none';
+    document.querySelector('.ios-hint').style.display = 'block';
   }
 })();
 </script>
