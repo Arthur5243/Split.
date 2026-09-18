@@ -8804,6 +8804,54 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
+function AdInterstitial({ onClose }) {
+  const [elapsed, setElapsed] = useState(0);
+  const [fading, setFading] = useState(false);
+  const SKIP_AFTER = 3;
+  const AUTO_CLOSE = 10;
+
+  useEffect(() => {
+    const iv = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    if (elapsed >= AUTO_CLOSE) { setFading(true); setTimeout(onClose, 400); }
+  }, [elapsed]);
+
+  const canSkip = elapsed >= SKIP_AFTER;
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 11000, background: "rgba(0,0,0,0.95)",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      opacity: fading ? 0 : 1, transition: "opacity 0.4s ease",
+    }}>
+      <div style={{ width: "min(340px, 88%)", background: "#111", borderRadius: 20, overflow: "hidden", border: "1px solid #222" }}>
+        <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <span style={{ fontSize: 32 }}>📢</span>
+          <p style={{ color: "#aaa", fontSize: 11, fontWeight: 600, textAlign: "center" }}>Espace publicitaire</p>
+          <p style={{ color: "#555", fontSize: 9 }}>Votre annonce ici</p>
+        </div>
+        <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ width: "100%", height: 3, background: "#222", borderRadius: 2, position: "relative", marginRight: 12 }}>
+            <div style={{ height: "100%", background: "#CCF71D", borderRadius: 2, width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
+          </div>
+          {canSkip ? (
+            <button onClick={() => { setFading(true); setTimeout(onClose, 300); }} style={{ background: "#222", border: "1px solid #333", borderRadius: 8, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+              Passer ✕
+            </button>
+          ) : (
+            <span style={{ color: "#555", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
+              {SKIP_AFTER - elapsed}s
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -9036,6 +9084,14 @@ export default function ClutchApp() {
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user") && !localStorage.getItem("split_skip_auth"));
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const adCooldownRef = useRef(0);
+  const tabSwitchCountRef = useRef(0);
+  const triggerAd = useCallback(() => {
+    if (Date.now() - adCooldownRef.current < 60000) return;
+    adCooldownRef.current = Date.now();
+    setShowAd(true);
+  }, []);
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
     window.addEventListener("beforeinstallprompt", handler);
@@ -9058,7 +9114,14 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
-  function doTabSwitch(tab) { setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null); if (tab === "__close__") return; setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setActiveTab(tab); }
+  function doTabSwitch(tab) {
+    setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
+    if (tab === "__close__") return;
+    setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false);
+    tabSwitchCountRef.current++;
+    if (tabSwitchCountRef.current % 4 === 0) triggerAd();
+    setActiveTab(tab);
+  }
   useEffect(() => {
     function onCreatePost(e) {
       setAppPostPrefill(e.detail?.text || "");
@@ -9820,6 +9883,7 @@ export default function ClutchApp() {
             const streakResult = updateStreak();
             setStreak(streakResult);
             if (streakResult.earned) setStreakPopup(streakResult);
+            setTimeout(() => triggerAd(), 1200);
             const isValo = upcomingMatches.some(m => String(m.id) === String(matchId)) || liveMatches.some(m => String(m.id) === String(matchId));
             const isCs2 = cs2UpcomingMatches.some(m => String(m.id) === String(matchId)) || cs2LiveMatches.some(m => String(m.id) === String(matchId));
             const isRl = rlUpcomingMatches.some(m => String(m.id) === String(matchId)) || rlLiveMatches.some(m => String(m.id) === String(matchId));
@@ -10294,6 +10358,7 @@ export default function ClutchApp() {
             </div>
           </div>
         )}
+        {showAd && <AdInterstitial onClose={() => setShowAd(false)} />}
       </div>
 
       <style>{`
