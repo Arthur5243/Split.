@@ -2,7 +2,7 @@
   "name": "Split — Esports Predictions",
   "short_name": "Split",
   "description": "Pronostics esports en temps réel. Valorant, CS2, Rocket League.",
-  "start_url": "/",
+  "start_url": "/app.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#060607",
