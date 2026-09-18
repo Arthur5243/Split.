@@ -4472,7 +4472,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, predictions, onLiveClick, bracketType }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
@@ -4634,18 +4634,19 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
                   {[m.team1, m.team2].map((team, ti) => {
                     const isWinner = done && team?.is_winner;
                     const hasTeam = team?.name && team.name !== "TBD";
+                    const qualified = bothQualify ? hasTeam : isWinner;
                     return (
                       <div key={ti} style={{
                         display: "flex", alignItems: "center", gap: 6,
-                        background: hasTeam ? (isWinner ? "rgba(204,247,29,0.08)" : "rgba(255,255,255,0.04)") : "transparent",
-                        border: hasTeam ? (isWinner ? "1px solid rgba(204,247,29,0.25)" : "1px solid rgba(255,255,255,0.08)") : "none",
+                        background: hasTeam ? (qualified ? "rgba(204,247,29,0.08)" : "rgba(255,255,255,0.04)") : "transparent",
+                        border: hasTeam ? (qualified ? "1px solid rgba(204,247,29,0.25)" : "1px solid rgba(255,255,255,0.08)") : "none",
                         borderRadius: 8, padding: hasTeam ? "3px 8px" : "3px 8px",
                       }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: isWinner ? "#fff" : hasTeam ? "#aaa" : "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: qualified ? "#fff" : hasTeam ? "#aaa" : "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
                           {team?.name || "TBD"}
                         </span>
-                        {isWinner && (
-                          <span style={{ background: "#CCF71D", color: "#000", fontSize: 7, fontWeight: 800, padding: "2px 6px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>QUALIFIED</span>
+                        {qualified && (
+                          <span style={{ background: "#CCF71D", color: "#000", fontSize: 7, fontWeight: 800, padding: "2px 6px", borderRadius: 20, letterSpacing: "0.04em", flexShrink: 0 }}>{qualifiedLabel || "QUALIFIÉ"}</span>
                         )}
                       </div>
                     );
@@ -5053,7 +5054,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
       <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
         {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel bothQualify={!isGroupStage} predictions={predictions} onLiveClick={onLiveClick} />}
       </DragScroll>
     </>;
   };
