@@ -316,7 +316,7 @@ const STR = {
     settingsNotifRegions: "Régions",
     settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
-    settingsPseudo: "Pseudo", settingsPlan: "Forfait", settingsPlanFree: "Gratuit", settingsPlanDesc: "Tu utilises le forfait gratuit.", settingsNotifications: "Notifications", settingsLogout: "Déconnexion", settingsForgotPwd: "Mot de passe oublié ?", settingsForgotSent: "Fonctionnalité bientôt disponible.", settingsChangePwd: "Modifier", settingsPwdPlaceholder: "••••••••", settingsRewards: "Récompenses", settingsRewardsDesc: "Bientôt disponible — gagne des récompenses en pronostiquant !", rewardsTitle: "Récompenses", rewardsGoal: "Première récompense débloquée à 1 000 inscrits !", rewardsRegistered: "inscrits",
+    settingsPseudo: "Pseudo", settingsPlan: "Forfait", settingsPlanFree: "Gratuit", settingsPlanDesc: "Tu utilises le forfait gratuit.", settingsNotifications: "Notifications", settingsLogout: "Déconnexion", settingsForgotPwd: "Mot de passe oublié ?", settingsForgotSent: "Fonctionnalité bientôt disponible.", settingsChangePwd: "Modifier", settingsPwdPlaceholder: "••••••••", settingsRewards: "Récompenses", settingsRewardsDesc: "Bientôt disponible — gagne des récompenses en pronostiquant !", settingsReferral: "Parrainage", settingsReferralDesc: "Invite tes amis et gagnez chacun 200 XP !", settingsReferralCode: "Ton code", settingsReferralCopied: "Copié !", settingsReferralCount: "amis parrainés", settingsReferralEnter: "Entrer un code de parrainage", settingsReferralApply: "Appliquer", settingsReferralSuccess: "+200 XP gagnés !", settingsReferralError: "Code invalide ou déjà utilisé", rewardsTitle: "Récompenses", rewardsGoal: "Première récompense débloquée à 1 000 inscrits !", rewardsRegistered: "inscrits",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
@@ -398,7 +398,7 @@ const STR = {
     settingsNotifRegions: "Regions",
     settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
-    settingsPseudo: "Username", settingsPlan: "Plan", settingsPlanFree: "Free", settingsPlanDesc: "You're on the free plan.", settingsNotifications: "Notifications", settingsLogout: "Log out", settingsForgotPwd: "Forgot password?", settingsForgotSent: "Feature coming soon.", settingsChangePwd: "Change", settingsPwdPlaceholder: "••••••••", settingsRewards: "Rewards", settingsRewardsDesc: "Coming soon — earn rewards by predicting!", rewardsTitle: "Rewards", rewardsGoal: "First reward unlocked at 1,000 registered users!", rewardsRegistered: "registered",
+    settingsPseudo: "Username", settingsPlan: "Plan", settingsPlanFree: "Free", settingsPlanDesc: "You're on the free plan.", settingsNotifications: "Notifications", settingsLogout: "Log out", settingsForgotPwd: "Forgot password?", settingsForgotSent: "Feature coming soon.", settingsChangePwd: "Change", settingsPwdPlaceholder: "••••••••", settingsRewards: "Rewards", settingsRewardsDesc: "Coming soon — earn rewards by predicting!", settingsReferral: "Referral", settingsReferralDesc: "Invite your friends and both earn 200 XP!", settingsReferralCode: "Your code", settingsReferralCopied: "Copied!", settingsReferralCount: "friends referred", settingsReferralEnter: "Enter a referral code", settingsReferralApply: "Apply", settingsReferralSuccess: "+200 XP earned!", settingsReferralError: "Invalid or already used code", rewardsTitle: "Rewards", rewardsGoal: "First reward unlocked at 1,000 registered users!", rewardsRegistered: "registered",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
@@ -478,7 +478,7 @@ const STR = {
     settingsNotifRegions: "Regiones",
     settingsFavTeam: "Equipo favorito", settingsFavTeamNone: "Ningún equipo seleccionado", settingsAccount: "Cuenta",
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
-    settingsPseudo: "Nombre de usuario", settingsPlan: "Plan", settingsPlanFree: "Gratis", settingsPlanDesc: "Estás en el plan gratuito.", settingsNotifications: "Notificaciones", settingsLogout: "Cerrar sesión", settingsForgotPwd: "¿Olvidaste tu contraseña?", settingsForgotSent: "Función próximamente.", settingsChangePwd: "Cambiar", settingsPwdPlaceholder: "••••••••", settingsRewards: "Recompensas", settingsRewardsDesc: "Próximamente — ¡gana recompensas pronosticando!", rewardsTitle: "Recompensas", rewardsGoal: "¡Primera recompensa al llegar a 1.000 inscritos!", rewardsRegistered: "inscritos",
+    settingsPseudo: "Nombre de usuario", settingsPlan: "Plan", settingsPlanFree: "Gratis", settingsPlanDesc: "Estás en el plan gratuito.", settingsNotifications: "Notificaciones", settingsLogout: "Cerrar sesión", settingsForgotPwd: "¿Olvidaste tu contraseña?", settingsForgotSent: "Función próximamente.", settingsChangePwd: "Cambiar", settingsPwdPlaceholder: "••••••••", settingsRewards: "Recompensas", settingsRewardsDesc: "Próximamente — ¡gana recompensas pronosticando!", settingsReferral: "Referido", settingsReferralDesc: "¡Invita a tus amigos y ganen 200 XP cada uno!", settingsReferralCode: "Tu código", settingsReferralCopied: "¡Copiado!", settingsReferralCount: "amigos referidos", settingsReferralEnter: "Ingresa un código de referido", settingsReferralApply: "Aplicar", settingsReferralSuccess: "¡+200 XP ganados!", settingsReferralError: "Código inválido o ya usado", rewardsTitle: "Recompensas", rewardsGoal: "¡Primera recompensa al llegar a 1.000 inscritos!", rewardsRegistered: "inscritos",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
     statusUpcoming: "Próximos partidos",
@@ -542,7 +542,7 @@ const STR = {
     settingsNotifRegions: "Regioni",
     settingsFavTeam: "Squadra preferita", settingsFavTeamNone: "Nessuna squadra selezionata", settingsAccount: "Account",
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
-    settingsPseudo: "Nome utente", settingsPlan: "Piano", settingsPlanFree: "Gratuito", settingsPlanDesc: "Stai usando il piano gratuito.", settingsNotifications: "Notifiche", settingsLogout: "Esci", settingsForgotPwd: "Password dimenticata?", settingsForgotSent: "Funzionalità in arrivo.", settingsChangePwd: "Modifica", settingsPwdPlaceholder: "••••••••", settingsRewards: "Premi", settingsRewardsDesc: "In arrivo — guadagna premi pronosticando!", rewardsTitle: "Premi", rewardsGoal: "Primo premio sbloccato a 1.000 iscritti!", rewardsRegistered: "iscritti",
+    settingsPseudo: "Nome utente", settingsPlan: "Piano", settingsPlanFree: "Gratuito", settingsPlanDesc: "Stai usando il piano gratuito.", settingsNotifications: "Notifiche", settingsLogout: "Esci", settingsForgotPwd: "Password dimenticata?", settingsForgotSent: "Funzionalità in arrivo.", settingsChangePwd: "Modifica", settingsPwdPlaceholder: "••••••••", settingsRewards: "Premi", settingsRewardsDesc: "In arrivo — guadagna premi pronosticando!", settingsReferral: "Referral", settingsReferralDesc: "Invita i tuoi amici e guadagnate entrambi 200 XP!", settingsReferralCode: "Il tuo codice", settingsReferralCopied: "Copiato!", settingsReferralCount: "amici invitati", settingsReferralEnter: "Inserisci un codice referral", settingsReferralApply: "Applica", settingsReferralSuccess: "+200 XP guadagnati!", settingsReferralError: "Codice non valido o già usato", rewardsTitle: "Premi", rewardsGoal: "Primo premio sbloccato a 1.000 iscritti!", rewardsRegistered: "iscritti",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
     statusUpcoming: "Prossime partite",
@@ -606,7 +606,7 @@ const STR = {
     settingsNotifRegions: "地域",
     settingsFavTeam: "お気に入りチーム", settingsFavTeamNone: "チーム未選択", settingsAccount: "アカウント",
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
-    settingsPseudo: "ユーザー名", settingsPlan: "プラン", settingsPlanFree: "無料", settingsPlanDesc: "無料プランをご利用中です。", settingsNotifications: "通知", settingsLogout: "ログアウト", settingsForgotPwd: "パスワードをお忘れですか？", settingsForgotSent: "近日公開予定です。", settingsChangePwd: "変更", settingsPwdPlaceholder: "••••••••", settingsRewards: "リワード", settingsRewardsDesc: "近日公開 — 予想して報酬をゲット！", rewardsTitle: "リワード", rewardsGoal: "登録者1,000人で初リワード解禁！", rewardsRegistered: "人登録済み",
+    settingsPseudo: "ユーザー名", settingsPlan: "プラン", settingsPlanFree: "無料", settingsPlanDesc: "無料プランをご利用中です。", settingsNotifications: "通知", settingsLogout: "ログアウト", settingsForgotPwd: "パスワードをお忘れですか？", settingsForgotSent: "近日公開予定です。", settingsChangePwd: "変更", settingsPwdPlaceholder: "••••••••", settingsRewards: "リワード", settingsRewardsDesc: "近日公開 — 予想して報酬をゲット！", settingsReferral: "紹介", settingsReferralDesc: "友達を招待して200 XPずつゲット！", settingsReferralCode: "あなたのコード", settingsReferralCopied: "コピー済み！", settingsReferralCount: "人紹介済み", settingsReferralEnter: "紹介コードを入力", settingsReferralApply: "適用", settingsReferralSuccess: "+200 XP獲得！", settingsReferralError: "無効または使用済みのコード", rewardsTitle: "リワード", rewardsGoal: "登録者1,000人で初リワード解禁！", rewardsRegistered: "人登録済み",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
     statusUpcoming: "今後の試合",
@@ -670,7 +670,7 @@ const STR = {
     settingsNotifRegions: "Regionen",
     settingsFavTeam: "Lieblingsteam", settingsFavTeamNone: "Kein Team ausgewählt", settingsAccount: "Konto",
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
-    settingsPseudo: "Benutzername", settingsPlan: "Abo", settingsPlanFree: "Kostenlos", settingsPlanDesc: "Du nutzt das kostenlose Abo.", settingsNotifications: "Benachrichtigungen", settingsLogout: "Abmelden", settingsForgotPwd: "Passwort vergessen?", settingsForgotSent: "Funktion kommt bald.", settingsChangePwd: "Ändern", settingsPwdPlaceholder: "••••••••", settingsRewards: "Belohnungen", settingsRewardsDesc: "Kommt bald — verdiene Belohnungen durch Tippen!", rewardsTitle: "Belohnungen", rewardsGoal: "Erste Belohnung bei 1.000 Registrierungen!", rewardsRegistered: "registriert",
+    settingsPseudo: "Benutzername", settingsPlan: "Abo", settingsPlanFree: "Kostenlos", settingsPlanDesc: "Du nutzt das kostenlose Abo.", settingsNotifications: "Benachrichtigungen", settingsLogout: "Abmelden", settingsForgotPwd: "Passwort vergessen?", settingsForgotSent: "Funktion kommt bald.", settingsChangePwd: "Ändern", settingsPwdPlaceholder: "••••••••", settingsRewards: "Belohnungen", settingsRewardsDesc: "Kommt bald — verdiene Belohnungen durch Tippen!", settingsReferral: "Empfehlung", settingsReferralDesc: "Lade deine Freunde ein und verdient jeweils 200 XP!", settingsReferralCode: "Dein Code", settingsReferralCopied: "Kopiert!", settingsReferralCount: "Freunde empfohlen", settingsReferralEnter: "Empfehlungscode eingeben", settingsReferralApply: "Anwenden", settingsReferralSuccess: "+200 XP verdient!", settingsReferralError: "Ungültiger oder bereits verwendeter Code", rewardsTitle: "Belohnungen", rewardsGoal: "Erste Belohnung bei 1.000 Registrierungen!", rewardsRegistered: "registriert",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
     statusUpcoming: "Bevorstehende Spiele",
@@ -734,7 +734,7 @@ const STR = {
     settingsNotifRegions: "地区",
     settingsFavTeam: "喜爱的战队", settingsFavTeamNone: "未选择战队", settingsAccount: "账户",
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
-    settingsPseudo: "用户名", settingsPlan: "套餐", settingsPlanFree: "免费", settingsPlanDesc: "你正在使用免费套餐。", settingsNotifications: "通知", settingsLogout: "退出登录", settingsForgotPwd: "忘记密码？", settingsForgotSent: "功能即将上线。", settingsChangePwd: "修改", settingsPwdPlaceholder: "••••••••", settingsRewards: "奖励", settingsRewardsDesc: "即将上线 — 预测赢取奖励！", rewardsTitle: "奖励", rewardsGoal: "注册满1000人解锁首个奖励！", rewardsRegistered: "已注册",
+    settingsPseudo: "用户名", settingsPlan: "套餐", settingsPlanFree: "免费", settingsPlanDesc: "你正在使用免费套餐。", settingsNotifications: "通知", settingsLogout: "退出登录", settingsForgotPwd: "忘记密码？", settingsForgotSent: "功能即将上线。", settingsChangePwd: "修改", settingsPwdPlaceholder: "••••••••", settingsRewards: "奖励", settingsRewardsDesc: "即将上线 — 预测赢取奖励！", settingsReferral: "推荐", settingsReferralDesc: "邀请好友，双方各获200 XP！", settingsReferralCode: "你的邀请码", settingsReferralCopied: "已复制！", settingsReferralCount: "已邀请好友", settingsReferralEnter: "输入推荐码", settingsReferralApply: "应用", settingsReferralSuccess: "+200 XP获得！", settingsReferralError: "无效或已使用的邀请码", rewardsTitle: "奖励", rewardsGoal: "注册满1000人解锁首个奖励！", rewardsRegistered: "已注册",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
     statusUpcoming: "即将进行的比赛",
@@ -8296,6 +8296,125 @@ function LanguageMenu({ current, onSelect, onClose }) {
   );
 }
 
+function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevStyle, activeSection, setActiveSection }) {
+  const [referralData, setReferralData] = useState(null);
+  const [inputCode, setInputCode] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [applyMsg, setApplyMsg] = useState(null);
+  const [applying, setApplying] = useState(false);
+  const userId = profile?.userId;
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(API_BASE + "/api/referral/" + userId)
+      .then((r) => r.json())
+      .then((d) => setReferralData(d))
+      .catch(() => {});
+  }, [userId]);
+
+  function copyCode() {
+    if (!referralData?.code) return;
+    navigator.clipboard.writeText(referralData.code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function shareCode() {
+    if (!referralData?.code) return;
+    const text = `Rejoins Split et utilise mon code ${referralData.code} pour gagner 200 XP !`;
+    if (navigator.share) {
+      navigator.share({ title: "Split", text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }
+
+  function applyCode() {
+    if (!inputCode.trim() || !userId || applying) return;
+    setApplying(true);
+    setApplyMsg(null);
+    fetch(API_BASE + "/api/referral/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: inputCode.trim(), userId }),
+    })
+      .then((r) => r.json().then((d) => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        if (ok) {
+          setApplyMsg({ type: "success", text: T.settingsReferralSuccess });
+          setInputCode("");
+        } else {
+          setApplyMsg({ type: "error", text: data.error || T.settingsReferralError });
+        }
+      })
+      .catch(() => setApplyMsg({ type: "error", text: T.settingsReferralError }))
+      .finally(() => setApplying(false));
+  }
+
+  const isOpen = activeSection === "referral";
+
+  return (
+    <div style={sectionStyle} className="mb-3">
+      <button onClick={() => setActiveSection(isOpen ? null : "referral")} style={rowStyle} className="w-full">
+        <span style={labelStyle}><UserPlus size={18} color="#CCF71D" />{T.settingsReferral}</span>
+        <ChevronDown size={16} style={{ ...chevStyle, transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }} />
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+          <p style={{ color: "#888", fontSize: "13px", marginTop: 12, marginBottom: 14 }}>{T.settingsReferralDesc}</p>
+
+          {referralData?.code && (
+            <>
+              <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsReferralCode}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
+                  <span style={{ color: "#CCF71D", fontSize: "15px", fontWeight: 800, letterSpacing: "0.12em", padding: "10px 0", fontFamily: "monospace" }}>{referralData.code}</span>
+                </div>
+                <button onClick={copyCode} className="rounded-xl px-3 shrink-0" style={{ background: copied ? "#2d4a0f" : "#222", border: "1px solid " + (copied ? "#CCF71D" : "#2a2a2a"), padding: "10px 14px", transition: "all 0.2s" }}>
+                  {copied ? <CheckCircle size={16} color="#CCF71D" /> : <span style={{ color: "#aaa", fontSize: "12px", fontWeight: 600 }}>Copy</span>}
+                </button>
+                <button onClick={shareCode} className="rounded-xl px-3 shrink-0" style={{ background: "#222", border: "1px solid #2a2a2a", padding: "10px 14px" }}>
+                  <Share2 size={16} color="#aaa" />
+                </button>
+              </div>
+
+              {referralData.count > 0 && (
+                <div className="flex items-center gap-2 mb-3 rounded-xl px-3 py-2.5" style={{ background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.15)" }}>
+                  <Users size={14} color="#CCF71D" />
+                  <span style={{ color: "#CCF71D", fontSize: "13px", fontWeight: 700 }}>{referralData.count}</span>
+                  <span style={{ color: "#888", fontSize: "13px" }}>{T.settingsReferralCount}</span>
+                </div>
+              )}
+            </>
+          )}
+
+          <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, marginTop: 4 }}>{T.settingsReferralEnter}</p>
+          <div className="flex items-center gap-2">
+            <input
+              value={inputCode}
+              onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+              placeholder="XXXXXXXX"
+              maxLength={12}
+              className="flex-1 rounded-xl px-3"
+              style={{ background: "#222", color: "#fff", fontSize: "14px", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "monospace", padding: "10px 12px", border: "1px solid #2a2a2a", outline: "none" }}
+            />
+            <button onClick={applyCode} disabled={applying || !inputCode.trim()} className="rounded-xl px-4 shrink-0" style={{ background: inputCode.trim() ? "#CCF71D" : "#333", color: inputCode.trim() ? "#000" : "#666", fontSize: "13px", fontWeight: 700, padding: "10px 16px", opacity: applying ? 0.6 : 1, transition: "all 0.2s" }}>
+              {T.settingsReferralApply}
+            </button>
+          </div>
+          {applyMsg && (
+            <p style={{ color: applyMsg.type === "success" ? "#CCF71D" : "#ff4655", fontSize: "12px", fontWeight: 600, marginTop: 8 }}>{applyMsg.text}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T, profile }) {
   const allTeams = teams || [];
   const [activeSection, setActiveSection] = useState(null);
@@ -8449,6 +8568,9 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
               </div>
             )}
           </div>
+
+          {/* PARRAINAGE */}
+          <ReferralSection T={T} profile={profile} sectionStyle={sectionStyle} rowStyle={rowStyle} labelStyle={labelStyle} chevStyle={chevStyle} activeSection={activeSection} setActiveSection={setActiveSection} />
 
           {/* DÉCONNEXION */}
           <div style={sectionStyle}>

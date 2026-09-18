@@ -214,3 +214,59 @@ export function createAuthUser({ id, email, passwordHash, pseudo, provider }) {
 export function linkGoogleToUser(userId, email) {
   db.prepare(`UPDATE users SET email = ?, provider = 'google' WHERE id = ?`).run(email, userId);
 }
+
+try {
+  db.exec(`ALTER TABLE users ADD COLUMN referral_code TEXT`);
+} catch {}
+try {
+  db.exec(`CREATE UNIQUE INDEX idx_users_referral ON users(referral_code) WHERE referral_code IS NOT NULL`);
+} catch {}
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS referrals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      referrer_id TEXT NOT NULL,
+      referred_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(referred_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
+  `);
+} catch {}
+
+const REFERRAL_XP_REWARD = 200;
+
+export function ensureReferralCode(userId) {
+  const user = db.prepare(`SELECT referral_code FROM users WHERE id = ?`).get(userId);
+  if (user?.referral_code) return user.referral_code;
+  const code = userId.slice(0, 8).toUpperCase();
+  db.prepare(`UPDATE users SET referral_code = ? WHERE id = ?`).run(code, userId);
+  return code;
+}
+
+export function getUserByReferralCode(code) {
+  return db.prepare(`SELECT * FROM users WHERE referral_code = ?`).get(code);
+}
+
+export function applyReferral(referrerId, referredId) {
+  const existing = db.prepare(`SELECT 1 FROM referrals WHERE referred_id = ?`).get(referredId);
+  if (existing) return false;
+  if (referrerId === referredId) return false;
+  db.prepare(`INSERT INTO referrals (referrer_id, referred_id) VALUES (?, ?)`).run(referrerId, referredId);
+  db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(REFERRAL_XP_REWARD, referrerId);
+  db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`).run(REFERRAL_XP_REWARD, referredId);
+  return true;
+}
+
+export function getReferralCount(userId) {
+  const row = db.prepare(`SELECT COUNT(*) as c FROM referrals WHERE referrer_id = ?`).get(userId);
+  return row?.c || 0;
+}
+
+export function getReferrals(userId) {
+  return db.prepare(`
+    SELECT u.id, u.pseudo, u.avatar, r.created_at FROM referrals r
+    JOIN users u ON u.id = r.referred_id
+    WHERE r.referrer_id = ? ORDER BY r.created_at DESC
+  `).all(userId);
+}

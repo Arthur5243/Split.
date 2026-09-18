@@ -15,6 +15,11 @@ import {
   generateUserId,
   addXp,
   setXpByPseudo,
+  ensureReferralCode,
+  getUserByReferralCode,
+  applyReferral,
+  getReferralCount,
+  getReferrals,
 } from "./social-store.js";
 
 const router = Router();
@@ -99,5 +104,22 @@ router.post("/api/social/xp", (req, res) => {
 });
 
 setXpByPseudo("ggez", 99999);
+
+router.get("/api/referral/:userId", (req, res) => {
+  const code = ensureReferralCode(req.params.userId);
+  const count = getReferralCount(req.params.userId);
+  const list = getReferrals(req.params.userId);
+  res.json({ code, count, referrals: list });
+});
+
+router.post("/api/referral/apply", (req, res) => {
+  const { code, userId } = req.body;
+  if (!code || !userId) return res.status(400).json({ error: "Code et userId requis" });
+  const referrer = getUserByReferralCode(code.toUpperCase());
+  if (!referrer) return res.status(404).json({ error: "Code invalide" });
+  const ok = applyReferral(referrer.id, userId);
+  if (!ok) return res.status(409).json({ error: "Parrainage déjà appliqué" });
+  res.json({ ok: true, xpGained: 200 });
+});
 
 export default router;
