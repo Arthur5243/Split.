@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:init": "npx cap init Split com.split.esports --web-dir dist",
+    "cap:android": "npx cap add android",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android",
+    "apk": "vite build && npx cap sync android && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "lucide-react": "^0.383.0",

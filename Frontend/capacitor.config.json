@@ -1,0 +1,14 @@
+{
+  "appId": "com.split.esports",
+  "appName": "Split",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "AdMob": {
+      "appIdAndroid": "ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY",
+      "initializeForTesting": true
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { initAdMob, showInterstitial, isNative } from "./admob.js";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
@@ -9227,9 +9228,13 @@ export default function ClutchApp() {
   const adShownRef = useRef(false);
   const adTimerRef = useRef(null);
   const tabSwitchCountRef = useRef(0);
-  const triggerAd = useCallback(() => {
+  const triggerAd = useCallback(async () => {
     if (adShownRef.current) return;
     adShownRef.current = true;
+    if (isNative()) {
+      const shown = await showInterstitial();
+      if (shown) return;
+    }
     setShowAd(true);
   }, []);
   useEffect(() => {
@@ -9238,7 +9243,9 @@ export default function ClutchApp() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
   useEffect(() => {
-    if (showAuth || showIntroCards || adShownRef.current) return;
+    if (showAuth || showIntroCards) return;
+    initAdMob();
+    if (adShownRef.current) return;
     const delay = (120 + Math.random() * 60) * 1000;
     adTimerRef.current = setTimeout(() => triggerAd(), delay);
     return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
