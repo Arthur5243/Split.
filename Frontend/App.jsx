@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
-import { initAdMob, showInterstitial, isNative } from "./admob.js";
+import { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID } from "./admob.js";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
@@ -8942,10 +8942,11 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
-// AdMob: replace this placeholder with real ad SDK (Google AdSense for web, or AdMob via Capacitor/native wrapper)
 function AdInterstitial({ onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [fading, setFading] = useState(false);
+  const adSlot = getAdSlotHtml();
+  const adContainerRef = useRef(null);
   const SKIP_AFTER = 5;
   const AUTO_CLOSE = 15;
 
@@ -8958,6 +8959,12 @@ function AdInterstitial({ onClose }) {
     if (elapsed >= AUTO_CLOSE) { setFading(true); setTimeout(onClose, 400); }
   }, [elapsed]);
 
+  useEffect(() => {
+    if (adSlot && adContainerRef.current) {
+      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch {}
+    }
+  }, [adSlot]);
+
   const canSkip = elapsed >= SKIP_AFTER;
 
   return (
@@ -8967,10 +8974,17 @@ function AdInterstitial({ onClose }) {
       opacity: fading ? 0 : 1, transition: "opacity 0.4s ease",
     }}>
       <div style={{ width: "min(340px, 88%)", background: "#111", borderRadius: 20, overflow: "hidden", border: "1px solid #222" }}>
-        <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <span style={{ fontSize: 32 }}>📢</span>
-          <p style={{ color: "#aaa", fontSize: 11, fontWeight: 600, textAlign: "center" }}>Espace publicitaire</p>
-          <p style={{ color: "#555", fontSize: 9 }}>Votre annonce ici</p>
+        <div ref={adContainerRef} style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          {adSlot ? (
+            <ins className="adsbygoogle" style={{ display: "block", width: "100%", height: "100%" }}
+              data-ad-client={adSlot.pubId} data-ad-slot={adSlot.slotId} data-ad-format="auto" data-full-width-responsive="true" />
+          ) : (
+            <>
+              <span style={{ fontSize: 32 }}>📢</span>
+              <p style={{ color: "#aaa", fontSize: 11, fontWeight: 600, textAlign: "center" }}>Espace publicitaire</p>
+              <p style={{ color: "#555", fontSize: 9 }}>Votre annonce ici</p>
+            </>
+          )}
         </div>
         <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ width: "100%", height: 3, background: "#222", borderRadius: 2, position: "relative", marginRight: 12 }}>

@@ -1,53 +1,47 @@
 /**
- * AdMob wrapper for Capacitor.
- * When running inside Capacitor (Android APK), uses real AdMob interstitials.
- * When running in browser, falls back to the built-in placeholder.
+ * Ad integration for Split.
+ *
+ * Uses Google AdSense for web/PWA. The interstitial overlay in App.jsx
+ * renders a real ad slot when AdSense is loaded, or falls back to
+ * the placeholder visual.
  *
  * Setup:
- * 1. npm install @capacitor-community/admob
- * 2. Set your ad unit ID below
- * 3. Build: npm run build && npx cap sync android
+ * 1. Sign up at adsense.google.com
+ * 2. Add your publisher ID and slot ID below
+ * 3. Google will give you a <script> tag — it's already loaded in index.html
  */
 
-const INTERSTITIAL_AD_UNIT = "ca-app-pub-7218024010278471/4702203856";
-const TEST_AD_UNIT = "ca-app-pub-3940256099942544/1033173712"; // Google test interstitial
+const ADSENSE_PUB_ID = ""; // e.g. "ca-pub-7218024010278471"
+const ADSENSE_SLOT_ID = ""; // e.g. "4702203856"
 
-let admobPlugin = null;
-let initialized = false;
+let adReady = false;
 
-function isNative() {
-  return window.Capacitor?.isNativePlatform?.() === true;
+function isAdSenseLoaded() {
+  return typeof window.adsbygoogle !== "undefined";
 }
 
-async function init() {
-  if (initialized || !isNative()) return false;
-  try {
-    const mod = await import("@capacitor-community/admob");
-    admobPlugin = mod.AdMob;
-    await admobPlugin.initialize({ initializeForTesting: false });
-    initialized = true;
-    console.log("[admob] initialized");
-    return true;
-  } catch (e) {
-    console.warn("[admob] init failed:", e.message);
-    return false;
+function initAdMob() {
+  if (!ADSENSE_PUB_ID || !ADSENSE_SLOT_ID) {
+    console.log("[ads] AdSense not configured, using placeholder");
+    return;
   }
+  if (isAdSenseLoaded()) {
+    adReady = true;
+    console.log("[ads] AdSense ready");
+  }
+}
+
+function getAdSlotHtml() {
+  if (!adReady || !ADSENSE_PUB_ID || !ADSENSE_SLOT_ID) return null;
+  return { pubId: ADSENSE_PUB_ID, slotId: ADSENSE_SLOT_ID };
+}
+
+function isNative() {
+  return false;
 }
 
 async function showInterstitial() {
-  if (!initialized || !admobPlugin) return false;
-  try {
-    await admobPlugin.prepareInterstitial({
-      adId: INTERSTITIAL_AD_UNIT,
-      isTesting: false,
-    });
-    await admobPlugin.showInterstitial();
-    console.log("[admob] interstitial shown");
-    return true;
-  } catch (e) {
-    console.warn("[admob] interstitial error:", e.message);
-    return false;
-  }
+  return false;
 }
 
-export { init as initAdMob, showInterstitial, isNative };
+export { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID };
