@@ -9234,7 +9234,7 @@ export default function ClutchApp() {
   const [authUser, setAuthUser] = useState(() => {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
-  const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const [showAuth, setShowAuth] = useState(false);
   const [showIntroCards, setShowIntroCards] = useState(false);
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
