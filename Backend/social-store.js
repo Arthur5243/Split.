@@ -46,6 +46,10 @@ try { db.exec(`ALTER TABLE users ADD COLUMN points_rl INTEGER DEFAULT 0`); } cat
 try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_color TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_title TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_banner TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch {}
+try { db.exec(`CREATE UNIQUE INDEX idx_users_email ON users(email) WHERE email IS NOT NULL`); } catch {}
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_follows_followed ON follows(followed_id);
@@ -194,4 +198,19 @@ export function setXpByPseudo(pseudo, xp) {
 
 export function generateUserId() {
   return crypto.randomUUID();
+}
+
+export function getUserByEmail(email) {
+  return db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
+}
+
+export function createAuthUser({ id, email, passwordHash, pseudo, provider }) {
+  db.prepare(`
+    INSERT INTO users (id, pseudo, pseudo_lower, email, password_hash, provider, points, xp)
+    VALUES (?, ?, ?, ?, ?, ?, 0, 0)
+  `).run(id, pseudo, pseudo.toLowerCase(), email, passwordHash || null, provider || "local");
+}
+
+export function linkGoogleToUser(userId, email) {
+  db.prepare(`UPDATE users SET email = ?, provider = 'google' WHERE id = ?`).run(email, userId);
 }

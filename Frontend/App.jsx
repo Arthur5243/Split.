@@ -8804,6 +8804,154 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
+function AuthScreen({ onAuth }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [pseudo, setPseudo] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [googlePseudo, setGooglePseudo] = useState("");
+  const [googleCred, setGoogleCred] = useState(null);
+
+  const API = import.meta.env.VITE_API_BASE || "";
+
+  const handleSubmit = async () => {
+    setError("");
+    if (mode === "register" && (!pseudo || pseudo.length < 2)) { setError("Pseudo requis (2 caractères min)"); return; }
+    if (!email || !password) { setError("Email et mot de passe requis"); return; }
+    if (mode === "register" && password.length < 6) { setError("6 caractères minimum"); return; }
+    setLoading(true);
+    try {
+      const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
+      const body = mode === "register" ? { email, password, pseudo } : { email, password };
+      const res = await fetch(API + endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Erreur"); setLoading(false); return; }
+      localStorage.setItem("split_token", data.token);
+      localStorage.setItem("split_auth_user", JSON.stringify(data.user));
+      onAuth(data.user);
+    } catch { setError("Erreur réseau"); }
+    setLoading(false);
+  };
+
+  const handleGoogle = async (credential) => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(API + "/api/auth/google", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ credential, pseudo: googlePseudo || undefined }) });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.needsPseudo) { setGoogleCred(credential); setLoading(false); return; }
+        setError(data.error || "Erreur"); setLoading(false); return;
+      }
+      localStorage.setItem("split_token", data.token);
+      localStorage.setItem("split_auth_user", JSON.stringify(data.user));
+      onAuth(data.user);
+    } catch { setError("Erreur réseau"); }
+    setLoading(false);
+  };
+
+  const submitGooglePseudo = async () => {
+    if (!googlePseudo || googlePseudo.length < 2) { setError("Pseudo requis (2 caractères min)"); return; }
+    await handleGoogle(googleCred);
+  };
+
+  useEffect(() => {
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!googleClientId) return;
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.onload = () => {
+      window.google?.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: (response) => handleGoogle(response.credential),
+      });
+      const btnEl = document.getElementById("g-signin-btn");
+      if (btnEl) window.google?.accounts.id.renderButton(btnEl, { theme: "filled_black", size: "large", width: 300, text: "continue_with", locale: "fr" });
+    };
+    document.head.appendChild(s);
+    return () => { try { document.head.removeChild(s); } catch {} };
+  }, []);
+
+  if (googleCred) {
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "min(360px, 90%)" }}>
+          <img src={SPLIT_LOGO} alt="Split" style={{ width: 60, height: 60, objectFit: "contain", margin: "0 auto 20px", display: "block" }} />
+          <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 900, textAlign: "center", marginBottom: 8 }}>Choisis ton pseudo</h2>
+          <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 24 }}>Visible par les autres joueurs</p>
+          {error && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12, textAlign: "center" }}>{error}</div>}
+          <input value={googlePseudo} onChange={e => { setGooglePseudo(e.target.value); setError(""); }} placeholder="Pseudo" style={{ width: "100%", background: "#111", border: "1px solid #333", borderRadius: 12, padding: "14px 16px", color: "#fff", fontSize: 14, marginBottom: 16, outline: "none", boxSizing: "border-box" }} />
+          <button onClick={submitGooglePseudo} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
+            {loading ? "..." : "Confirmer"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+      <div style={{ width: "min(360px, 90%)", paddingTop: 60 }}>
+        <img src={SPLIT_LOGO} alt="Split" style={{ width: 70, height: 70, objectFit: "contain", margin: "0 auto 16px", display: "block" }} />
+        <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 900, textAlign: "center", marginBottom: 4 }}>SPLIT</h1>
+        <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 32 }}>
+          {mode === "login" ? "Connecte-toi pour retrouver tes pronostics" : "Crée ton compte et commence à jouer"}
+        </p>
+
+        <div style={{ display: "flex", background: "#111", borderRadius: 10, padding: 3, marginBottom: 24 }}>
+          {["login", "register"].map(m => (
+            <button key={m} onClick={() => { setMode(m); setError(""); }} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", background: mode === m ? "#1a1a1a" : "transparent", color: mode === m ? "#fff" : "#666", transition: "all 0.15s" }}>
+              {m === "login" ? "Connexion" : "Inscription"}
+            </button>
+          ))}
+        </div>
+
+        {error && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12, textAlign: "center" }}>{error}</div>}
+
+        {mode === "register" && (
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <User size={16} color="#555" style={{ position: "absolute", left: 14, top: 15 }} />
+            <input value={pseudo} onChange={e => { setPseudo(e.target.value); setError(""); }} placeholder="Pseudo" maxLength={20} style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "14px 16px 14px 40px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+          </div>
+        )}
+
+        <div style={{ position: "relative", marginBottom: 12 }}>
+          <Mail size={16} color="#555" style={{ position: "absolute", left: 14, top: 15 }} />
+          <input value={email} onChange={e => { setEmail(e.target.value); setError(""); }} placeholder="Email" type="email" autoComplete="email" style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "14px 16px 14px 40px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+        </div>
+
+        <div style={{ position: "relative", marginBottom: 20 }}>
+          <Lock size={16} color="#555" style={{ position: "absolute", left: 14, top: 15 }} />
+          <input value={password} onChange={e => { setPassword(e.target.value); setError(""); }} placeholder="Mot de passe" type={showPw ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "14px 44px 14px 40px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+          <button onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: 12, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+            {showPw ? <EyeOff size={16} color="#555" /> : <Eye size={16} color="#555" />}
+          </button>
+        </div>
+
+        <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", marginBottom: 16, opacity: loading ? 0.6 : 1 }}>
+          {loading ? "..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <div style={{ flex: 1, height: 1, background: "#222" }} />
+          <span style={{ color: "#555", fontSize: 11, fontWeight: 600 }}>ou</span>
+          <div style={{ flex: 1, height: 1, background: "#222" }} />
+        </div>
+
+        <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }} />
+
+        <button onClick={() => onAuth(null)} style={{ display: "block", margin: "0 auto 40px", background: "none", border: "none", color: "#555", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
+          Continuer sans compte
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ClutchApp() {
   const [activeTab, setActiveTab] = useState("home");
   // Toutes les régions sélectionnées par défaut au chargement (même logique
@@ -8882,6 +9030,10 @@ export default function ClutchApp() {
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [showLanding, setShowLanding] = useState(() => !localStorage.getItem("split_entered"));
+  const [authUser, setAuthUser] = useState(() => {
+    try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
+  });
+  const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user") && !localStorage.getItem("split_skip_auth"));
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
   useEffect(() => {
@@ -9872,7 +10024,13 @@ export default function ClutchApp() {
           }}
         />
       )}
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: showLanding ? "none" : "flex" }}>
+      {!showLanding && showAuth && (
+        <AuthScreen onAuth={(user) => {
+          if (user) { setAuthUser(user); setShowAuth(false); }
+          else { localStorage.setItem("split_skip_auth", "1"); setShowAuth(false); }
+        }} />
+      )}
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: (showLanding || showAuth) ? "none" : "flex" }}>
 
         {!splashDone && (
           <div style={{

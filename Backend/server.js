@@ -23,6 +23,7 @@ import {
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 import { startHltvScraper } from "./hltv-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
+import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
@@ -41,6 +42,7 @@ app.use(oddsRouter);
 app.use(cs2Router);
 app.use(rlRouter);
 app.use(youtubeRouter);
+app.use(authRouter);
 app.use(socialRouter);
 app.use(postsRouter);
 app.use(messagesRouter);
