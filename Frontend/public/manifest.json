@@ -1,0 +1,26 @@
+{
+  "name": "Split — Esports Predictions",
+  "short_name": "Split",
+  "description": "Pronostics esports en temps réel. Valorant, CS2, Rocket League.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#C4F000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/split-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/split-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["games", "sports"],
+  "lang": "fr"
+}

@@ -8725,6 +8725,79 @@ function ScrollToTopButton({ visible, onClick }) {
   );
 }
 
+function LandingPage({ onEnter, onInstall, canInstall }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+      <div style={{ width: "min(390px, 100%)", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+
+        <div style={{ marginTop: 60, marginBottom: 24 }}>
+          <img src={SPLIT_LOGO} alt="Split" style={{ width: 90, height: 90, objectFit: "contain" }} />
+        </div>
+
+        <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", margin: 0, textAlign: "center" }}>SPLIT</h1>
+        <p style={{ color: "#888", fontSize: 14, fontWeight: 500, marginTop: 8, marginBottom: 36, textAlign: "center", lineHeight: 1.5 }}>
+          Pronostics esports en temps réel.<br />Valorant · CS2 · Rocket League.
+        </p>
+
+        <div style={{ display: "flex", gap: 12, marginBottom: 36, justifyContent: "center" }}>
+          {[
+            { img: NAV_VALORANT_IMG, label: "Valorant" },
+            { img: NAV_CSGO_IMG, label: "CS2" },
+            { img: NAV_RL_IMG, label: "Rocket League" },
+          ].map((g) => (
+            <div key={g.label} style={{ width: 90, height: 90, background: "#111", borderRadius: 18, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, border: "1px solid #1a1a1a" }}>
+              <img src={g.img} alt={g.label} style={{ width: 36, height: 36, objectFit: "contain" }} />
+              <span style={{ color: "#aaa", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{g.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
+          {[
+            { icon: "🎯", title: "Pronostics", desc: "Prédit les scores série et par map" },
+            { icon: "⚡", title: "Scores live", desc: "Résultats en temps réel, map par map" },
+            { icon: "🏆", title: "Classement", desc: "Gagne des points, grimpe le leaderboard" },
+            { icon: "🔥", title: "Streak & Quêtes", desc: "Missions quotidiennes, série de jours" },
+          ].map((f) => (
+            <div key={f.title} style={{ display: "flex", alignItems: "center", gap: 14, background: "#0a0a0a", borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
+              <span style={{ fontSize: 22, width: 36, textAlign: "center", flexShrink: 0 }}>{f.icon}</span>
+              <div>
+                <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>{f.title}</p>
+                <p style={{ color: "#666", fontSize: 11, fontWeight: 500, margin: 0, marginTop: 2, lineHeight: 1.3 }}>{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {canInstall && (
+          <button
+            onClick={onInstall}
+            style={{
+              width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 14,
+              padding: "16px", fontSize: 15, fontWeight: 900, cursor: "pointer", marginBottom: 12,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Installer l'app
+          </button>
+        )}
+
+        <button
+          onClick={onEnter}
+          style={{
+            width: "100%", background: canInstall ? "#1a1a1a" : "#CCF71D",
+            color: canInstall ? "#fff" : "#000", border: canInstall ? "1px solid #333" : "none",
+            borderRadius: 14, padding: "16px", fontSize: 15, fontWeight: 900, cursor: "pointer",
+            marginBottom: 40, letterSpacing: "-0.01em",
+          }}
+        >
+          {canInstall ? "Continuer sur le web" : "Entrer"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ClutchApp() {
   const [activeTab, setActiveTab] = useState("home");
   // Toutes les régions sélectionnées par défaut au chargement (même logique
@@ -8802,6 +8875,15 @@ export default function ClutchApp() {
   const [streakExpiredNotif, setStreakExpiredNotif] = useState(null);
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showLanding, setShowLanding] = useState(() => !localStorage.getItem("split_entered"));
+  const deferredPromptRef = useRef(null);
+  const [canInstall, setCanInstall] = useState(false);
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
+    window.addEventListener("beforeinstallprompt", handler);
+    if (window.matchMedia("(display-mode: standalone)").matches) setShowLanding(false);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
   useEffect(() => {
     if (streak.justExpired) {
       const t = setTimeout(() => setStreakExpiredNotif({ lostStreak: streak.lostStreak }), 1500);
@@ -9769,7 +9851,22 @@ export default function ClutchApp() {
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100vh" }}>
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000" }}>
+      {showLanding && (
+        <LandingPage
+          canInstall={canInstall}
+          onEnter={() => { localStorage.setItem("split_entered", "1"); setShowLanding(false); }}
+          onInstall={async () => {
+            const prompt = deferredPromptRef.current;
+            if (!prompt) return;
+            prompt.prompt();
+            const result = await prompt.userChoice;
+            if (result.outcome === "accepted") { localStorage.setItem("split_entered", "1"); setShowLanding(false); }
+            deferredPromptRef.current = null;
+            setCanInstall(false);
+          }}
+        />
+      )}
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: showLanding ? "none" : "flex" }}>
 
         {!splashDone && (
           <div style={{
