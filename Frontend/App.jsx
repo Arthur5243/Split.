@@ -2334,8 +2334,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: hasBg ? "#ccc" : "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
-            {bo === 5 && <span style={{ color: "#e8a735", fontWeight: 800, fontSize: 9, border: "1px solid #e8a73544", borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>BO5</span>}
-            {bo >= 7 && <span style={{ color: "#f87171", fontWeight: 800, fontSize: 9, border: "1px solid #f8717144", borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>BO7</span>}
+            {(() => {
+              const boLabel = bo >= 7 ? "BO7" : bo === 5 ? "BO5" : bo === 1 ? "BO1" : "BO3";
+              const boColor = bo >= 7 ? "#f87171" : bo === 5 ? "#e8a735" : bo === 1 ? "#888" : "#3B82F6";
+              return <span style={{ color: boColor, fontWeight: 800, fontSize: 9, border: `1px solid ${boColor}44`, borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>{boLabel}</span>;
+            })()}
           </span>
           <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "1px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
@@ -7604,6 +7607,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [socialStats, setSocialStats] = useState(null);
   const [eqBadgeTick, setEqBadgeTick] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
   const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
@@ -8063,9 +8067,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   </button>
                 </div>
               )}
-              {profile && leaderboard.length === 0 && score === 0 && (
-                <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>{T.classementSubtitle}</p>
-              )}
               {profile && (() => {
                 function getUserPtsForFilter(u) {
                   if (scoreCats.includes("tout")) return u.points;
@@ -8077,7 +8078,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 }
                 const merged = leaderboard.map(u => ({ ...u, displayPts: getUserPtsForFilter(u) }));
                 const myIdx = merged.findIndex(u => u.id === profile.userId);
-                if (myIdx === -1 && score > 0) {
+                if (myIdx === -1) {
                   merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score, points_valo: pointsPerGame.valo || 0, points_cs2: pointsPerGame.cs2 || 0, points_rl: pointsPerGame.rl || 0, displayPts: score });
                 } else if (myIdx >= 0) {
                   merged[myIdx] = { ...merged[myIdx], displayPts: Math.max(merged[myIdx].displayPts, score) };
@@ -8085,12 +8086,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 merged.sort((a, b) => b.displayPts - a.displayPts);
                 const filtered = merged;
                 if (filtered.length === 0) return null;
-                const top100 = filtered.slice(0, 100);
+                const PAGE_SIZE = 50;
+                const top150 = filtered.slice(0, 150);
+                const totalPages = Math.min(3, Math.ceil(top150.length / PAGE_SIZE));
                 const myRankIdx = filtered.findIndex(u => u.id === profile.userId);
-                const meInTop = myRankIdx >= 0 && myRankIdx < 100;
+                const meInTop = myRankIdx >= 0 && myRankIdx < 150;
                 function renderRow(u, i) {
                   const isMe = u.id === profile.userId;
-                  const rankLogo = getUserRank(u.displayPts);
+                  const rankLogo = getUserRank(u.points);
                   const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
@@ -8138,14 +8141,26 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     </button>
                   );
                 }
+                const pageItems = top150.slice(lbPage * PAGE_SIZE, (lbPage + 1) * PAGE_SIZE);
+                const meOnThisPage = myRankIdx >= lbPage * PAGE_SIZE && myRankIdx < (lbPage + 1) * PAGE_SIZE;
+                const showFixedBar = !meInTop || (!meOnThisPage && myRankIdx >= 0);
                 return (
                   <>
-                    {!meInTop && score > 0 && (
-                      <div className="sticky top-0 z-10 mb-2" style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16, paddingTop: 4, paddingBottom: 4, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}>
+                    {totalPages > 1 && (
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
+                        {Array.from({ length: totalPages }, (_, p) => (
+                          <button key={p} onClick={() => setLbPage(p)} style={{ padding: "6px 16px", borderRadius: 8, fontSize: 12, fontWeight: 800, background: lbPage === p ? "#CCF71D" : "#1a1a1a", color: lbPage === p ? "#000" : "#888", border: lbPage === p ? "none" : "1px solid #2a2a2a", cursor: "pointer" }}>
+                            {p * PAGE_SIZE + 1}–{Math.min((p + 1) * PAGE_SIZE, top150.length)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {pageItems.map((u, i) => renderRow(u, lbPage * PAGE_SIZE + i))}
+                    {showFixedBar && (
+                      <div style={{ position: "sticky", bottom: 0, left: 0, right: 0, marginTop: 8, marginLeft: -16, marginRight: -16, padding: "8px 16px", background: "rgba(10,10,10,0.95)", backdropFilter: "blur(8px)", borderTop: "1px solid #262626", zIndex: 10 }}>
                         {renderRow({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, displayPts: score }, myRankIdx >= 0 ? myRankIdx : filtered.length - 1)}
                       </div>
                     )}
-                    {top100.map((u, i) => renderRow(u, i))}
                   </>
                 );
               })()}
@@ -8926,11 +8941,12 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
+// AdMob: replace this placeholder with real ad SDK (Google AdSense for web, or AdMob via Capacitor/native wrapper)
 function AdInterstitial({ onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [fading, setFading] = useState(false);
-  const SKIP_AFTER = 3;
-  const AUTO_CLOSE = 10;
+  const SKIP_AFTER = 5;
+  const AUTO_CLOSE = 15;
 
   useEffect(() => {
     const iv = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -9114,9 +9130,6 @@ function AuthScreen({ onAuth }) {
 
         <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }} />
 
-        <button onClick={() => onAuth(null)} style={{ display: "block", margin: "0 auto 40px", background: "none", border: "none", color: "#555", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>
-          Continuer sans compte
-        </button>
       </div>
     </div>
   );
@@ -9199,27 +9212,34 @@ export default function ClutchApp() {
   const [streakExpiredNotif, setStreakExpiredNotif] = useState(null);
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
-  const [showLanding, setShowLanding] = useState(() => !localStorage.getItem("split_entered"));
+  const [showLanding] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
-  const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user") && !localStorage.getItem("split_skip_auth"));
+  const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const [showIntroCards, setShowIntroCards] = useState(false);
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
   const [showAd, setShowAd] = useState(false);
-  const adCooldownRef = useRef(0);
+  const adShownRef = useRef(false);
+  const adTimerRef = useRef(null);
   const tabSwitchCountRef = useRef(0);
   const triggerAd = useCallback(() => {
-    if (Date.now() - adCooldownRef.current < 60000) return;
-    adCooldownRef.current = Date.now();
+    if (adShownRef.current) return;
+    adShownRef.current = true;
     setShowAd(true);
   }, []);
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
     window.addEventListener("beforeinstallprompt", handler);
-    if (window.matchMedia("(display-mode: standalone)").matches) setShowLanding(false);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+  useEffect(() => {
+    if (showAuth || showIntroCards || adShownRef.current) return;
+    const delay = (120 + Math.random() * 60) * 1000;
+    adTimerRef.current = setTimeout(() => triggerAd(), delay);
+    return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
+  }, [showAuth, showIntroCards, triggerAd]);
   useEffect(() => {
     if (streak.justExpired) {
       const t = setTimeout(() => setStreakExpiredNotif({ lostStreak: streak.lostStreak }), 1500);
@@ -9241,7 +9261,6 @@ export default function ClutchApp() {
     if (tab === "__close__") return;
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false);
     tabSwitchCountRef.current++;
-    if (tabSwitchCountRef.current % 4 === 0) triggerAd();
     setActiveTab(tab);
   }
   useEffect(() => {
@@ -10005,7 +10024,6 @@ export default function ClutchApp() {
             const streakResult = updateStreak();
             setStreak(streakResult);
             if (streakResult.earned) setStreakPopup(streakResult);
-            setTimeout(() => triggerAd(), 1200);
             const isValo = upcomingMatches.some(m => String(m.id) === String(matchId)) || liveMatches.some(m => String(m.id) === String(matchId));
             const isCs2 = cs2UpcomingMatches.some(m => String(m.id) === String(matchId)) || cs2LiveMatches.some(m => String(m.id) === String(matchId));
             const isRl = rlUpcomingMatches.some(m => String(m.id) === String(matchId)) || rlLiveMatches.some(m => String(m.id) === String(matchId));
@@ -10195,53 +10213,65 @@ export default function ClutchApp() {
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100vh" }}>
-      {showLanding && (
-        <LandingPage
-          canInstall={canInstall}
-          onEnter={() => { localStorage.setItem("split_entered", "1"); setShowLanding(false); }}
-          onInstall={async () => {
-            const prompt = deferredPromptRef.current;
-            if (!prompt) return;
-            prompt.prompt();
-            const result = await prompt.userChoice;
-            if (result.outcome === "accepted") { localStorage.setItem("split_entered", "1"); setShowLanding(false); }
-            deferredPromptRef.current = null;
-            setCanInstall(false);
-          }}
-        />
-      )}
-      {!showLanding && showAuth && (
+      {showAuth && (
         <AuthScreen onAuth={(user) => {
-          if (user) { setAuthUser(user); setShowAuth(false); }
-          else { localStorage.setItem("split_skip_auth", "1"); setShowAuth(false); }
+          if (user) {
+            setAuthUser(user);
+            setShowAuth(false);
+            if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
+          }
         }} />
       )}
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: (showLanding || showAuth) ? "none" : "flex" }}>
+      {showIntroCards && (
+        <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
+          <div style={{ width: "min(390px, 100%)", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ marginTop: 60, marginBottom: 12 }}>
+              <img src={SPLIT_LOGO} alt="Split" style={{ width: 64, height: 64, objectFit: "contain" }} />
+            </div>
+            <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 900, margin: 0, textAlign: "center", letterSpacing: "-0.02em" }}>Bienvenue sur Split</h2>
+            <p style={{ color: "#666", fontSize: 12, fontWeight: 500, marginTop: 6, marginBottom: 32, textAlign: "center" }}>Voici ce qui t'attend</p>
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
+              {[
+                { icon: "🎯", title: "Pronostics", desc: "Prédit les scores série et par map" },
+                { icon: "⚡", title: "Scores live", desc: "Résultats en temps réel, map par map" },
+                { icon: "🏆", title: "Classement", desc: "Gagne des points, grimpe le leaderboard" },
+                { icon: "🔥", title: "Streak & Quêtes", desc: "Missions quotidiennes, série de jours" },
+              ].map((f) => (
+                <div key={f.title} style={{ display: "flex", alignItems: "center", gap: 14, background: "#0a0a0a", borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
+                  <span style={{ fontSize: 22, width: 36, textAlign: "center", flexShrink: 0 }}>{f.icon}</span>
+                  <div>
+                    <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0, lineHeight: 1.3 }}>{f.title}</p>
+                    <p style={{ color: "#666", fontSize: 11, fontWeight: 500, margin: 0, marginTop: 2, lineHeight: 1.3 }}>{f.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => { localStorage.setItem("split_intro_seen", "1"); setShowIntroCards(false); }} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 14, padding: "16px", fontSize: 15, fontWeight: 900, cursor: "pointer", marginBottom: 40, letterSpacing: "-0.01em" }}>
+              C'est parti
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: showAuth ? "none" : "flex" }}>
 
         {!splashDone && (
           <div style={{
             position: "absolute", inset: 0, zIndex: 9999, background: "#000",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            paddingBottom: "60px",
+            gap: 28,
             opacity: splashFading ? 0 : 1, transition: "opacity 0.5s ease-out",
             pointerEvents: splashFading ? "none" : "auto",
           }}>
-            <img src={SPLIT_LOGO} alt="Split" style={{ width: 120, height: 120, objectFit: "contain", marginBottom: 32 }} />
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              {[0, 1, 2, 3].map(i => (
-                <div key={i} style={{
-                  width: 8, height: 8, borderRadius: "50%", background: "#C4F000",
-                  animation: "splashPulse 1.2s ease-in-out infinite",
-                  animationDelay: `${i * 0.15}s`,
-                }} />
-              ))}
+            <div style={{ width: 40, height: 40, border: "3px solid #1a1a1a", borderTop: "3px solid #C4F000", borderRadius: "50%", animation: "setupSpin 0.8s linear infinite" }} />
+            <div style={{ textAlign: "center" }}>
+              <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: 0, letterSpacing: "-0.01em" }}>Chargement des données</p>
+              <p style={{ color: "#555", fontSize: 11, fontWeight: 500, margin: "6px 0 0" }}>Matchs, scores, classement...</p>
             </div>
             <style>{`
-              @keyframes splashPulse {
-                0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-                40% { opacity: 1; transform: scale(1.2); }
+              @keyframes setupSpin {
+                to { transform: rotate(360deg); }
               }
             `}</style>
           </div>
@@ -10384,7 +10414,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a", position: "relative", zIndex: 60 }}>
+        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
