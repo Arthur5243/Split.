@@ -9018,7 +9018,7 @@ function AuthScreen({ onAuth }) {
       localStorage.setItem("split_token", data.token);
       localStorage.setItem("split_auth_user", JSON.stringify(data.user));
       onAuth(data.user);
-    } catch { setError("Erreur réseau"); }
+    } catch (e) { setError("Erreur réseau — vérifie ta connexion"); console.error("[auth]", e); }
     setLoading(false);
   };
 
@@ -9035,7 +9035,7 @@ function AuthScreen({ onAuth }) {
       localStorage.setItem("split_token", data.token);
       localStorage.setItem("split_auth_user", JSON.stringify(data.user));
       onAuth(data.user);
-    } catch { setError("Erreur réseau"); }
+    } catch (e) { setError("Erreur réseau — vérifie ta connexion"); console.error("[auth-google]", e); }
     setLoading(false);
   };
 
@@ -9128,7 +9128,10 @@ function AuthScreen({ onAuth }) {
           <div style={{ flex: 1, height: 1, background: "#222" }} />
         </div>
 
-        <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 40 }} />
+        <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 16 }} />
+        {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+          <p style={{ color: "#333", fontSize: 10, textAlign: "center", marginBottom: 40 }}>Google Sign-In non configuré</p>
+        )}
 
       </div>
     </div>

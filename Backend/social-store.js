@@ -29,7 +29,7 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   );
-  CREATE INDEX IF NOT EXISTS idx_users_pseudo_lower ON users(pseudo_lower);
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_users_pseudo_lower ON users(pseudo_lower);
 
   CREATE TABLE IF NOT EXISTS follows (
     follower_id TEXT NOT NULL,
@@ -202,6 +202,10 @@ export function generateUserId() {
 
 export function getUserByEmail(email) {
   return db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
+}
+
+export function getUserByPseudo(pseudo) {
+  return db.prepare(`SELECT * FROM users WHERE pseudo_lower = ?`).get(pseudo.toLowerCase());
 }
 
 export function createAuthUser({ id, email, passwordHash, pseudo, provider }) {

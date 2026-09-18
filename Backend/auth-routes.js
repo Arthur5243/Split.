@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, createAuthUser, getUser, generateUserId } from "./social-store.js";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId } from "./social-store.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "split-secret-change-me";
@@ -37,6 +37,9 @@ router.post("/api/auth/register", async (req, res) => {
 
     const existing = getUserByEmail(email.toLowerCase());
     if (existing) return res.status(409).json({ error: "Email déjà utilisé" });
+
+    const existingPseudo = getUserByPseudo(pseudo);
+    if (existingPseudo) return res.status(409).json({ error: "Ce pseudo est déjà pris" });
 
     const id = generateUserId();
     const hash = await bcrypt.hash(password, 10);
@@ -87,6 +90,9 @@ router.post("/api/auth/google", async (req, res) => {
     }
 
     if (!pseudo || pseudo.length < 2) return res.status(400).json({ error: "Pseudo requis (2 caractères min)", needsPseudo: true });
+
+    const existingPseudo = getUserByPseudo(pseudo);
+    if (existingPseudo) return res.status(409).json({ error: "Ce pseudo est déjà pris" });
 
     const id = generateUserId();
     createAuthUser({ id, email: email.toLowerCase(), passwordHash: null, pseudo, provider: "google" });
