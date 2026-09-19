@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  *, *::before, *::after {
+    border-color: #000;
+  }
   html, body {
     margin: 0;
     padding: 0;

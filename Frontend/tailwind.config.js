@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       borderColor: {
-        DEFAULT: '#1a1a1a',
+        DEFAULT: '#000000',
       },
     },
   },
