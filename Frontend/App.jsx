@@ -326,6 +326,7 @@ const STR = {
     featProno: "Pronostics", featPronoDesc: "Prédit les scores série et par map", featLive: "Scores live", featLiveDesc: "Résultats en temps réel, map par map", featRank: "Classement", featRankDesc: "Gagne des points, grimpe le leaderboard", featStreak: "Streak & Quêtes", featStreakDesc: "Missions quotidiennes, série de jours",
     confirm: "Confirmer", choosePseudo: "Choisis ton pseudo", visibleToPlayers: "Visible par les autres joueurs",
     authLogin: "Connexion", authRegister: "Inscription", authLoginDesc: "Connecte-toi pour retrouver tes pronostics", authRegisterDesc: "Crée ton compte et commence à jouer", authSignIn: "Se connecter", authCreateAccount: "Créer mon compte", authOr: "ou", authPassword: "Mot de passe", authGoogleNA: "Google Sign-In non configuré", continueWeb: "Continuer sur le web", enter: "Entrer",
+    profileStep: "Étape", profileStepWelcome: "Bienvenue", profileStepIdentity: "Ton identité", profileStepBio: "Bio & équipes", profileStepReady: "Prêt !", profileWelcomeDesc: "Configure ton profil en quelques étapes. Tu pourras tout modifier plus tard.", profileReadyDesc: "Ton profil est prêt. Tu peux le modifier à tout moment depuis le classement.", profileBack: "Retour", profileNext: "Suivant",
     questTitle: "Quêtes", questDaily: "Quotidiennes", questWeekly: "Hebdomadaire", questCompleted: "Terminée", questClaim: "Réclamer", questProgress: "en cours",
     questBetToday: "Fais un pronostic aujourd'hui", questBet2Games: "Pronostique sur 2 jeux différents", questUseAllSlots: "Utilise tes 4 pronos du jour", questViewBracket: "Consulte un bracket", questAddAvatar: "Ajoute une photo de profil", questAddBio: "Rédige ta bio", questChooseFav: "Choisis ton équipe favorite", questInviteFriend: "Invite un ami", questOpenNewTab: "Découvre un nouvel onglet jeu", questViewClassement: "Consulte le classement", questExactScore: "Devine le score exact d'un Bo3", questWeekly5Wins: "Gagne 5 pronos cette semaine", questWeekly3Exact: "3 scores exacts cette semaine",
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
@@ -411,6 +412,7 @@ const STR = {
     featProno: "Predictions", featPronoDesc: "Predict series and map scores", featLive: "Live scores", featLiveDesc: "Real-time results, map by map", featRank: "Standings", featRankDesc: "Earn points, climb the leaderboard", featStreak: "Streak & Quests", featStreakDesc: "Daily missions, day streaks",
     confirm: "Confirm", choosePseudo: "Choose your username", visibleToPlayers: "Visible to other players",
     authLogin: "Log in", authRegister: "Sign up", authLoginDesc: "Log in to find your predictions", authRegisterDesc: "Create your account and start playing", authSignIn: "Log in", authCreateAccount: "Create my account", authOr: "or", authPassword: "Password", authGoogleNA: "Google Sign-In not configured", continueWeb: "Continue on web", enter: "Enter",
+    profileStep: "Step", profileStepWelcome: "Welcome", profileStepIdentity: "Your identity", profileStepBio: "Bio & teams", profileStepReady: "Ready!", profileWelcomeDesc: "Set up your profile in a few steps. You can change everything later.", profileReadyDesc: "Your profile is ready. You can edit it anytime from the standings.", profileBack: "Back", profileNext: "Next",
     questTitle: "Quests", questDaily: "Daily", questWeekly: "Weekly", questCompleted: "Completed", questClaim: "Claim", questProgress: "in progress",
     questBetToday: "Make a prediction today", questBet2Games: "Predict on 2 different games", questUseAllSlots: "Use all 4 daily predictions", questViewBracket: "Check a bracket", questAddAvatar: "Add a profile picture", questAddBio: "Write your bio", questChooseFav: "Choose your favorite team", questInviteFriend: "Invite a friend", questOpenNewTab: "Discover a new game tab", questViewClassement: "Check the standings", questExactScore: "Guess the exact score of a Bo3", questWeekly5Wins: "Win 5 predictions this week", questWeekly3Exact: "3 exact scores this week",
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
@@ -494,6 +496,7 @@ const STR = {
     featProno: "Pronósticos", featPronoDesc: "Predice los marcadores de serie y mapa", featLive: "Marcadores en vivo", featLiveDesc: "Resultados en tiempo real, mapa a mapa", featRank: "Clasificación", featRankDesc: "Gana puntos, escala el ranking", featStreak: "Racha & Misiones", featStreakDesc: "Misiones diarias, racha de días",
     confirm: "Confirmar", choosePseudo: "Elige tu nombre de usuario", visibleToPlayers: "Visible para otros jugadores",
     authLogin: "Iniciar sesión", authRegister: "Registrarse", authLoginDesc: "Inicia sesión para encontrar tus pronósticos", authRegisterDesc: "Crea tu cuenta y empieza a jugar", authSignIn: "Iniciar sesión", authCreateAccount: "Crear mi cuenta", authOr: "o", authPassword: "Contraseña", authGoogleNA: "Google Sign-In no configurado", continueWeb: "Continuar en la web", enter: "Entrar",
+    profileStep: "Paso", profileStepWelcome: "Bienvenido", profileStepIdentity: "Tu identidad", profileStepBio: "Bio y equipos", profileStepReady: "¡Listo!", profileWelcomeDesc: "Configura tu perfil en unos pasos. Podrás cambiarlo todo más tarde.", profileReadyDesc: "Tu perfil está listo. Puedes editarlo en cualquier momento desde la clasificación.", profileBack: "Atrás", profileNext: "Siguiente",
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classifica",
@@ -561,6 +564,7 @@ const STR = {
     featProno: "Pronostici", featPronoDesc: "Prevedi i punteggi serie e mappa", featLive: "Punteggi live", featLiveDesc: "Risultati in tempo reale, mappa per mappa", featRank: "Classifica", featRankDesc: "Guadagna punti, scala la classifica", featStreak: "Streak & Missioni", featStreakDesc: "Missioni giornaliere, serie di giorni",
     confirm: "Conferma", choosePseudo: "Scegli il tuo nome utente", visibleToPlayers: "Visibile agli altri giocatori",
     authLogin: "Accedi", authRegister: "Registrati", authLoginDesc: "Accedi per ritrovare i tuoi pronostici", authRegisterDesc: "Crea il tuo account e inizia a giocare", authSignIn: "Accedi", authCreateAccount: "Crea il mio account", authOr: "o", authPassword: "Password", authGoogleNA: "Google Sign-In non configurato", continueWeb: "Continua sul web", enter: "Entra",
+    profileStep: "Passo", profileStepWelcome: "Benvenuto", profileStepIdentity: "La tua identità", profileStepBio: "Bio e squadre", profileStepReady: "Pronto!", profileWelcomeDesc: "Configura il tuo profilo in pochi passi. Potrai modificare tutto in seguito.", profileReadyDesc: "Il tuo profilo è pronto. Puoi modificarlo in qualsiasi momento dalla classifica.", profileBack: "Indietro", profileNext: "Avanti",
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "ランキング",
@@ -628,6 +632,7 @@ const STR = {
     featProno: "予想", featPronoDesc: "シリーズとマップスコアを予想", featLive: "ライブスコア", featLiveDesc: "リアルタイム結果、マップごと", featRank: "ランキング", featRankDesc: "ポイントを稼いでランクアップ", featStreak: "ストリーク & クエスト", featStreakDesc: "デイリーミッション、連続記録",
     confirm: "確認", choosePseudo: "ユーザー名を選択", visibleToPlayers: "他のプレイヤーに表示されます",
     authLogin: "ログイン", authRegister: "登録", authLoginDesc: "予想を見つけるためにログイン", authRegisterDesc: "アカウントを作成してプレイ開始", authSignIn: "ログイン", authCreateAccount: "アカウント作成", authOr: "または", authPassword: "パスワード", authGoogleNA: "Google Sign-In未設定", continueWeb: "ウェブで続行", enter: "入る",
+    profileStep: "ステップ", profileStepWelcome: "ようこそ", profileStepIdentity: "あなたの情報", profileStepBio: "自己紹介 & チーム", profileStepReady: "準備完了！", profileWelcomeDesc: "数ステップでプロフィールを設定。後からいつでも変更できます。", profileReadyDesc: "プロフィールの準備ができました。ランキングからいつでも編集できます。", profileBack: "戻る", profileNext: "次へ",
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Rangliste",
@@ -695,6 +700,7 @@ const STR = {
     featProno: "Prognosen", featPronoDesc: "Sage Serien- und Map-Ergebnisse voraus", featLive: "Live-Ergebnisse", featLiveDesc: "Echtzeitergebnisse, Map für Map", featRank: "Rangliste", featRankDesc: "Sammle Punkte, steige im Ranking auf", featStreak: "Streak & Quests", featStreakDesc: "Tägliche Missionen, Tagestreaks",
     confirm: "Bestätigen", choosePseudo: "Wähle deinen Benutzernamen", visibleToPlayers: "Für andere Spieler sichtbar",
     authLogin: "Anmelden", authRegister: "Registrieren", authLoginDesc: "Melde dich an, um deine Prognosen zu finden", authRegisterDesc: "Erstelle dein Konto und fang an zu spielen", authSignIn: "Anmelden", authCreateAccount: "Konto erstellen", authOr: "oder", authPassword: "Passwort", authGoogleNA: "Google Sign-In nicht konfiguriert", continueWeb: "Im Web fortfahren", enter: "Eintreten",
+    profileStep: "Schritt", profileStepWelcome: "Willkommen", profileStepIdentity: "Deine Identität", profileStepBio: "Bio & Teams", profileStepReady: "Fertig!", profileWelcomeDesc: "Richte dein Profil in wenigen Schritten ein. Du kannst alles später ändern.", profileReadyDesc: "Dein Profil ist bereit. Du kannst es jederzeit über die Rangliste bearbeiten.", profileBack: "Zurück", profileNext: "Weiter",
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "排行榜",
@@ -762,6 +768,7 @@ const STR = {
     featProno: "竞猜", featPronoDesc: "预测系列赛和地图比分", featLive: "实时比分", featLiveDesc: "实时结果，逐图更新", featRank: "排行榜", featRankDesc: "赚取积分，攀升排名", featStreak: "连胜 & 任务", featStreakDesc: "每日任务，连续天数",
     confirm: "确认", choosePseudo: "选择你的用户名", visibleToPlayers: "对其他玩家可见",
     authLogin: "登录", authRegister: "注册", authLoginDesc: "登录以找到你的竞猜", authRegisterDesc: "创建账户开始游戏", authSignIn: "登录", authCreateAccount: "创建我的账户", authOr: "或", authPassword: "密码", authGoogleNA: "Google登录未配置", continueWeb: "在网页继续", enter: "进入",
+    profileStep: "步骤", profileStepWelcome: "欢迎", profileStepIdentity: "你的身份", profileStepBio: "简介 & 战队", profileStepReady: "准备好了！", profileWelcomeDesc: "几步完成个人资料设置。之后随时可以修改。", profileReadyDesc: "你的个人资料已准备就绪。可随时从排行榜中编辑。", profileBack: "返回", profileNext: "下一步",
   },
 };
 
@@ -4164,8 +4171,8 @@ function DynamicSlider({ predictions, T }) {
 
 function NewsCarousel({ T, splashDone }) {
   const [activeSlide, setActiveSlide] = useState(0);
-  const [ready, setReady] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [ready, setReady] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(2);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
   const slideCount = 2;
@@ -4390,7 +4397,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
                     <User size={14} color="#555" />
                   </div>
                 )}
-                <span style={{ color: user?.pseudo_color || (user ? "#ccc" : "#555"), fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
+                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
               </div>
               <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? `${user.points} pts` : "—"}</span>
             </div>
@@ -6313,24 +6320,18 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
 }
 
 function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T }) {
+  const [step, setStep] = useState(0);
   const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatar, setAvatar] = useState(profile?.avatar || null);
   const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
   const [favCs2, setFavCs2] = useState(profile?.favTeams?.cs2 || "");
   const [favRl, setFavRl] = useState(profile?.favTeams?.rl || "");
-  const [pseudoColor, setPseudoColor] = useState(profile?.pseudoColor || "#ffffff");
   const [bioError, setBioError] = useState(false);
   const fileRef = useRef(null);
-
-  const PSEUDO_COLORS = [
-    "#ffffff","#CCF71D","#FF4655","#3B82F6","#F59E0B","#A855F7","#EC4899",
-    "#10B981","#EF4444","#06B6D4","#F97316","#8B5CF6","#14B8A6",
-    "#E11D48","#FBBF24","#22D3EE","#F472B6","#84CC16",
-  ];
+  const totalSteps = 4;
 
   const bioOk = bio.trim() === "" || validateBio(bio);
-  const canSave = pseudo.trim().length >= 2 && bioOk;
 
   function handleBioChange(e) {
     const v = e.target.value;
@@ -6345,59 +6346,98 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   }
 
   function handleSave() {
-    if (!canSave) return;
-    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl }, pseudoColor });
+    if (pseudo.trim().length < 2 || !bioOk) return;
+    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl }, pseudoColor: "#ffffff" });
   }
 
+  const canNext = step === 0 ? true : step === 1 ? pseudo.trim().length >= 2 : step === 2 ? bioOk : true;
+
+  const stepTitles = [
+    T.profileStepWelcome || "Bienvenue",
+    T.profileStepIdentity || "Ton identité",
+    T.profileStepBio || "Bio & équipes",
+    T.profileStepReady || "Prêt !",
+  ];
+
   return (
-    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", overflow: "hidden" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
-          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.profileTitle}</h2>
-          <button onClick={onClose} className="rounded-full p-1" style={{ background: "#222" }}>
-            <X size={18} color="#888" />
-          </button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#000", display: "flex", flexDirection: "column" }}>
+      <div style={{ flexShrink: 0, padding: "16px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", gap: 6 }}>
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} style={{ width: i === step ? 24 : 8, height: 4, borderRadius: 2, background: i <= step ? "#CCF71D" : "#333", transition: "all 0.3s" }} />
+          ))}
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-6 flex flex-col gap-4" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
-          <div className="flex flex-col items-center">
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "flex-start" }}>{T.profileAvatar}</label>
-            <button onClick={() => fileRef.current?.click()} className="mt-2 rounded-full flex items-center justify-center overflow-hidden" style={{ width: 80, height: 80, background: "#1e1e1e", border: "2px solid #2a2a2a" }}>
-              {avatar ? (
-                <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <Camera size={28} color="#555" />
-              )}
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
-            <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none" }} className="mt-1" />
-          </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Couleur du pseudo</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
-              {PSEUDO_COLORS.map(c => (
-                <button key={c} onClick={() => setPseudoColor(c)} style={{
-                  width: 28, height: 28, borderRadius: "50%", background: c, border: pseudoColor === c ? "3px solid #fff" : "2px solid #333",
-                  cursor: "pointer", boxShadow: pseudoColor === c ? `0 0 10px ${c}66` : "none", transition: "all 0.15s",
-                }} />
-              ))}
+        {profile?.pseudo && <button onClick={onClose} style={{ background: "#222", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button>}
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", flexDirection: "column" }} className="no-scrollbar">
+        <p style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>{T.profileStep || "Étape"} {step + 1}/{totalSteps}</p>
+        <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 900, marginBottom: 24 }}>{stepTitles[step]}</h2>
+
+        {step === 0 && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flex: 1, justifyContent: "center" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #222" }}>
+              <span style={{ fontSize: 36 }}>👋</span>
             </div>
-            <p style={{ color: pseudoColor, fontSize: 13, fontWeight: 800, marginTop: 6 }}>{pseudo || "Pseudo"}</p>
+            <p style={{ color: "#aaa", fontSize: 14, textAlign: "center", lineHeight: 1.5, maxWidth: 280 }}>
+              {T.profileWelcomeDesc || "Configure ton profil en quelques étapes. Tu pourras tout modifier plus tard."}
+            </p>
           </div>
-          <div>
-            <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
-            <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#1e1e1e", border: bioError ? "1px solid #e74c3c" : "1px solid #2a2a2a", color: "#fff", fontSize: "13px", borderRadius: "12px", padding: "10px 14px", width: "100%", outline: "none", resize: "none" }} className="mt-1" />
-            {bioError && <p style={{ color: "#e74c3c", fontSize: "10px", marginTop: "4px" }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
+        )}
+
+        {step === 1 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <button onClick={() => fileRef.current?.click()} style={{ width: 90, height: 90, borderRadius: "50%", background: "#111", border: "2px solid #222", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={30} color="#555" />}
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+              <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>{T.profileAvatar}</p>
+            </div>
+            <div>
+              <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
+              <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#111", border: "1px solid #222", color: "#fff", fontSize: 14, borderRadius: 12, padding: "12px 14px", width: "100%", outline: "none", marginTop: 6, boxSizing: "border-box" }} />
+              {pseudo.trim().length > 0 && pseudo.trim().length < 2 && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>Min. 2 caractères</p>}
+            </div>
           </div>
-          <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
-          <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
-          <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
-          <button onClick={handleSave} disabled={!canSave} className="rounded-xl font-bold w-full py-3 mt-2" style={{ background: canSave ? "#CCF71D" : "#333", color: canSave ? "#000" : "#666", fontSize: "14px" }}>
-            {T.profileSave}
+        )}
+
+        {step === 2 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
+              <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
+              {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
+            </div>
+            <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
+            <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
+            <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
+          </div>
+        )}
+
+        {step === 3 && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, flex: 1, justifyContent: "center" }}>
+            <div style={{ width: 70, height: 70, borderRadius: "50%", overflow: "hidden", background: "#111", border: "2px solid #222", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} color="#555" />}
+            </div>
+            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>{pseudo}</p>
+            {bio && <p style={{ color: "#888", fontSize: 12, textAlign: "center" }}>{bio}</p>}
+            <p style={{ color: "#555", fontSize: 12, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
+              {T.profileReadyDesc || "Ton profil est prêt. Tu peux le modifier à tout moment depuis le classement."}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div style={{ flexShrink: 0, padding: "12px 20px 24px", display: "flex", gap: 10 }}>
+        {step > 0 && (
+          <button onClick={() => setStep(step - 1)} style={{ flex: 1, background: "#1a1a1a", color: "#aaa", border: "1px solid #333", borderRadius: 12, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+            {T.profileBack || "Retour"}
           </button>
-        </div>
+        )}
+        <button onClick={() => { if (step < totalSteps - 1) setStep(step + 1); else handleSave(); }} disabled={!canNext} style={{ flex: step > 0 ? 2 : 1, background: canNext ? "#CCF71D" : "#333", color: canNext ? "#000" : "#666", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: canNext ? "pointer" : "default" }}>
+          {step < totalSteps - 1 ? (T.profileNext || "Suivant") : (T.profileSave)}
+        </button>
       </div>
     </div>
   );
@@ -8140,7 +8180,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
                   const uBadgeEmoji = isMe ? (localStorage.getItem("split_equipped_badge_emoji") || "") : (u.equipped_badge_emoji || "");
                   const uBanner = isMe ? (localStorage.getItem("split_equipped_banner_color") || "") : (u.equipped_banner || "");
-                  const uPseudoColor = isMe ? (profile?.pseudoColor || "#fff") : (u.pseudo_color || "#ccc");
+                  const uPseudoColor = isMe ? "#fff" : "#ccc";
                   return (
                     <button key={u.id} onClick={() => {
                       if (isMe) { setProfileView(true); return; }

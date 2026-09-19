@@ -6,6 +6,7 @@
   *, *::before, *::after {
     border-color: #000;
     outline-color: #000;
+    -webkit-tap-highlight-color: transparent;
   }
   html, body {
     margin: 0;
