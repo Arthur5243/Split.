@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 *, *::before, *::after {
-  border-color: #1a1a1a;
+  border-color: #000;
 }
 
 html, body, #root {
