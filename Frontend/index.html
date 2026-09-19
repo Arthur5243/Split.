@@ -167,17 +167,8 @@ btn.addEventListener('click', async () => {
       btn.style.pointerEvents = 'none';
       btn.style.opacity = '0.7';
     }
-  } else if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
-    window.location.href = APP_URL;
   } else {
-    const ua = navigator.userAgent.toLowerCase();
-    if (ua.includes('firefox')) {
-      alert('Firefox ne supporte pas l\'installation PWA. Utilise Chrome ou Edge pour installer Split.');
-    } else if (ua.includes('safari') && !ua.includes('chrome')) {
-      alert('Sur Safari : appuie sur le bouton Partager puis "Sur l\'écran d\'accueil".');
-    } else {
-      alert('Clique sur l\'icône d\'installation dans la barre d\'adresse de ton navigateur (⊕ ou ⬇), ou utilise le menu ⋮ > "Installer Split".');
-    }
+    window.location.href = APP_URL;
   }
 });
 
