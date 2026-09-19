@@ -10289,10 +10289,8 @@ export default function ClutchApp() {
           }}>
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            <div style={{ position: "relative", width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid #1a1a1a", animation: "splashRing 1.2s linear infinite", borderTopColor: "#FF4655", borderRightColor: "#1B3A4B", borderBottomColor: "transparent", borderLeftColor: "transparent" }} />
-              <img src={SPLIT_LOGO} alt="Split" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 12 }} />
-            </div>
+            <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ width: 180, objectFit: "contain" }} />
+            <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#C4F000", animation: "splashRing 0.9s linear infinite", marginTop: 32 }} />
             <style>{`
               @keyframes splashRing {
                 to { transform: rotate(360deg); }
