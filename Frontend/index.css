@@ -13,6 +13,7 @@
     background: #000;
     overflow: hidden;
     height: 100%;
+    padding-bottom: env(safe-area-inset-bottom);
   }
   #root {
     margin: 0;
