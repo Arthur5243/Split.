@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 
 const SPLIT_LOGO = "/split-logo.png";
+const SPLIT_HEADER_LOGO = "/split-header-logo.png";
 const NEWS_IMAGE = "/news-image.jpg";
 const NEWS_EWC_IMAGE = "/news-ewc.png";
 const REWARDS_BANNER = "/rewards-banner.png";
@@ -8837,10 +8838,7 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <img src={SPLIT_LOGO} alt="Split" style={{ height: "28px", objectFit: "contain", filter: isLight ? "invert(1)" : "none", borderRadius: 6 }} />
-        <span style={{ color: isLight ? "#111" : "#fff", fontSize: 16, fontWeight: 900, letterSpacing: "-0.03em" }}>SPLIT</span>
-      </div>
+      <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "30px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
       </button>
