@@ -1,16 +1,6 @@
-const CACHE_NAME = "split-v1";
-const PRECACHE_URLS = [
-  "/",
-  "/split-logo.png",
-  "/Valo(1).png",
-  "/Cs2(2).png",
-  "/Rl(1).png",
-];
+const CACHE_NAME = "split-v2";
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -39,15 +29,14 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetched = fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      });
-      return cached || fetched;
-    })
+      })
+      .catch(() => caches.match(request))
   );
 });
