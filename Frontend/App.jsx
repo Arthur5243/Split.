@@ -8832,7 +8832,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000", borderBottom: "1px solid " + (isLight ? "#ddd" : "#000") }}>
+    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000", borderBottom: "none", marginBottom: -1, paddingBottom: 1 }}>
       <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <span style={{ fontSize: "14px" }}>{lang.flag}</span>
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
@@ -10436,7 +10436,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around" style={{ background: "#000", borderTop: "1px solid #000", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-stretch justify-around" style={{ background: "#000", borderTop: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)", marginTop: -1, paddingTop: 1 }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
