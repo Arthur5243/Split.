@@ -6,6 +6,7 @@ import {
   Trophy,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   AlertCircle,
   Mail,
   Lock,
@@ -327,6 +328,7 @@ const STR = {
     confirm: "Confirmer", choosePseudo: "Choisis ton pseudo", visibleToPlayers: "Visible par les autres joueurs",
     authLogin: "Connexion", authRegister: "Inscription", authLoginDesc: "Connecte-toi pour retrouver tes pronostics", authRegisterDesc: "Crée ton compte et commence à jouer", authSignIn: "Se connecter", authCreateAccount: "Créer mon compte", authOr: "ou", authPassword: "Mot de passe", authGoogleNA: "Google Sign-In non configuré", continueWeb: "Continuer sur le web", enter: "Entrer",
     profileStep: "Étape", profileStepWelcome: "Bienvenue", profileStepIdentity: "Ton identité", profileStepBio: "Bio & équipes", profileStepReady: "Prêt !", profileWelcomeDesc: "Configure ton profil en quelques étapes. Tu pourras tout modifier plus tard.", profileReadyDesc: "Ton profil est prêt. Tu peux le modifier à tout moment depuis le classement.", profileBack: "Retour", profileNext: "Suivant",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
     questTitle: "Quêtes", questDaily: "Quotidiennes", questWeekly: "Hebdomadaire", questCompleted: "Terminée", questClaim: "Réclamer", questProgress: "en cours",
     questBetToday: "Fais un pronostic aujourd'hui", questBet2Games: "Pronostique sur 2 jeux différents", questUseAllSlots: "Utilise tes 4 pronos du jour", questViewBracket: "Consulte un bracket", questAddAvatar: "Ajoute une photo de profil", questAddBio: "Rédige ta bio", questChooseFav: "Choisis ton équipe favorite", questInviteFriend: "Invite un ami", questOpenNewTab: "Découvre un nouvel onglet jeu", questViewClassement: "Consulte le classement", questExactScore: "Devine le score exact d'un Bo3", questWeekly5Wins: "Gagne 5 pronos cette semaine", questWeekly3Exact: "3 scores exacts cette semaine",
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
@@ -413,6 +415,7 @@ const STR = {
     confirm: "Confirm", choosePseudo: "Choose your username", visibleToPlayers: "Visible to other players",
     authLogin: "Log in", authRegister: "Sign up", authLoginDesc: "Log in to find your predictions", authRegisterDesc: "Create your account and start playing", authSignIn: "Log in", authCreateAccount: "Create my account", authOr: "or", authPassword: "Password", authGoogleNA: "Google Sign-In not configured", continueWeb: "Continue on web", enter: "Enter",
     profileStep: "Step", profileStepWelcome: "Welcome", profileStepIdentity: "Your identity", profileStepBio: "Bio & teams", profileStepReady: "Ready!", profileWelcomeDesc: "Set up your profile in a few steps. You can change everything later.", profileReadyDesc: "Your profile is ready. You can edit it anytime from the standings.", profileBack: "Back", profileNext: "Next",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
     questTitle: "Quests", questDaily: "Daily", questWeekly: "Weekly", questCompleted: "Completed", questClaim: "Claim", questProgress: "in progress",
     questBetToday: "Make a prediction today", questBet2Games: "Predict on 2 different games", questUseAllSlots: "Use all 4 daily predictions", questViewBracket: "Check a bracket", questAddAvatar: "Add a profile picture", questAddBio: "Write your bio", questChooseFav: "Choose your favorite team", questInviteFriend: "Invite a friend", questOpenNewTab: "Discover a new game tab", questViewClassement: "Check the standings", questExactScore: "Guess the exact score of a Bo3", questWeekly5Wins: "Win 5 predictions this week", questWeekly3Exact: "3 exact scores this week",
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
@@ -497,6 +500,7 @@ const STR = {
     confirm: "Confirmar", choosePseudo: "Elige tu nombre de usuario", visibleToPlayers: "Visible para otros jugadores",
     authLogin: "Iniciar sesión", authRegister: "Registrarse", authLoginDesc: "Inicia sesión para encontrar tus pronósticos", authRegisterDesc: "Crea tu cuenta y empieza a jugar", authSignIn: "Iniciar sesión", authCreateAccount: "Crear mi cuenta", authOr: "o", authPassword: "Contraseña", authGoogleNA: "Google Sign-In no configurado", continueWeb: "Continuar en la web", enter: "Entrar",
     profileStep: "Paso", profileStepWelcome: "Bienvenido", profileStepIdentity: "Tu identidad", profileStepBio: "Bio y equipos", profileStepReady: "¡Listo!", profileWelcomeDesc: "Configura tu perfil en unos pasos. Podrás cambiarlo todo más tarde.", profileReadyDesc: "Tu perfil está listo. Puedes editarlo en cualquier momento desde la clasificación.", profileBack: "Atrás", profileNext: "Siguiente",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classifica",
@@ -565,6 +569,7 @@ const STR = {
     confirm: "Conferma", choosePseudo: "Scegli il tuo nome utente", visibleToPlayers: "Visibile agli altri giocatori",
     authLogin: "Accedi", authRegister: "Registrati", authLoginDesc: "Accedi per ritrovare i tuoi pronostici", authRegisterDesc: "Crea il tuo account e inizia a giocare", authSignIn: "Accedi", authCreateAccount: "Crea il mio account", authOr: "o", authPassword: "Password", authGoogleNA: "Google Sign-In non configurato", continueWeb: "Continua sul web", enter: "Entra",
     profileStep: "Passo", profileStepWelcome: "Benvenuto", profileStepIdentity: "La tua identità", profileStepBio: "Bio e squadre", profileStepReady: "Pronto!", profileWelcomeDesc: "Configura il tuo profilo in pochi passi. Potrai modificare tutto in seguito.", profileReadyDesc: "Il tuo profilo è pronto. Puoi modificarlo in qualsiasi momento dalla classifica.", profileBack: "Indietro", profileNext: "Avanti",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "ランキング",
@@ -633,6 +638,7 @@ const STR = {
     confirm: "確認", choosePseudo: "ユーザー名を選択", visibleToPlayers: "他のプレイヤーに表示されます",
     authLogin: "ログイン", authRegister: "登録", authLoginDesc: "予想を見つけるためにログイン", authRegisterDesc: "アカウントを作成してプレイ開始", authSignIn: "ログイン", authCreateAccount: "アカウント作成", authOr: "または", authPassword: "パスワード", authGoogleNA: "Google Sign-In未設定", continueWeb: "ウェブで続行", enter: "入る",
     profileStep: "ステップ", profileStepWelcome: "ようこそ", profileStepIdentity: "あなたの情報", profileStepBio: "自己紹介 & チーム", profileStepReady: "準備完了！", profileWelcomeDesc: "数ステップでプロフィールを設定。後からいつでも変更できます。", profileReadyDesc: "プロフィールの準備ができました。ランキングからいつでも編集できます。", profileBack: "戻る", profileNext: "次へ",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Rangliste",
@@ -701,6 +707,7 @@ const STR = {
     confirm: "Bestätigen", choosePseudo: "Wähle deinen Benutzernamen", visibleToPlayers: "Für andere Spieler sichtbar",
     authLogin: "Anmelden", authRegister: "Registrieren", authLoginDesc: "Melde dich an, um deine Prognosen zu finden", authRegisterDesc: "Erstelle dein Konto und fang an zu spielen", authSignIn: "Anmelden", authCreateAccount: "Konto erstellen", authOr: "oder", authPassword: "Passwort", authGoogleNA: "Google Sign-In nicht konfiguriert", continueWeb: "Im Web fortfahren", enter: "Eintreten",
     profileStep: "Schritt", profileStepWelcome: "Willkommen", profileStepIdentity: "Deine Identität", profileStepBio: "Bio & Teams", profileStepReady: "Fertig!", profileWelcomeDesc: "Richte dein Profil in wenigen Schritten ein. Du kannst alles später ändern.", profileReadyDesc: "Dein Profil ist bereit. Du kannst es jederzeit über die Rangliste bearbeiten.", profileBack: "Zurück", profileNext: "Weiter",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "排行榜",
@@ -769,6 +776,7 @@ const STR = {
     confirm: "确认", choosePseudo: "选择你的用户名", visibleToPlayers: "对其他玩家可见",
     authLogin: "登录", authRegister: "注册", authLoginDesc: "登录以找到你的竞猜", authRegisterDesc: "创建账户开始游戏", authSignIn: "登录", authCreateAccount: "创建我的账户", authOr: "或", authPassword: "密码", authGoogleNA: "Google登录未配置", continueWeb: "在网页继续", enter: "进入",
     profileStep: "步骤", profileStepWelcome: "欢迎", profileStepIdentity: "你的身份", profileStepBio: "简介 & 战队", profileStepReady: "准备好了！", profileWelcomeDesc: "几步完成个人资料设置。之后随时可以修改。", profileReadyDesc: "你的个人资料已准备就绪。可随时从排行榜中编辑。", profileBack: "返回", profileNext: "下一步",
+    rlPlayIn: "Play-In", rlPlayoffs: "Playoffs",
   },
 };
 
@@ -6097,7 +6105,109 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints }) {
+function RlBracketPage({ onBack, T, predictions }) {
+  const [phase, setPhase] = useState(null);
+  const accent = RL_ACCENT;
+
+  const pageStyle = { minHeight: "100%", background: "#000", paddingBottom: 100 };
+  const headerStyle = { display: "flex", alignItems: "center", gap: 10, padding: "16px", position: "sticky", top: 0, background: "#000", zIndex: 10 };
+  const backBtn = () => (
+    <button onClick={() => { if (phase) setPhase(null); else onBack(); }} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+      <ChevronLeft size={18} color="#fff" />
+    </button>
+  );
+
+  const tbdMatch = (id) => ({ match_id: id, team1: { name: "TBD", score: null }, team2: { name: "TBD", score: null }, status: "not_started" });
+
+  const playInBracket = {
+    upper: [
+      { name: "Upper Round 1", matches: [tbdMatch("rl-pi-u1"), tbdMatch("rl-pi-u2"), tbdMatch("rl-pi-u3"), tbdMatch("rl-pi-u4")] },
+      { name: "Upper Semifinals", matches: [tbdMatch("rl-pi-u5"), tbdMatch("rl-pi-u6")] },
+      { name: "Upper Final", matches: [tbdMatch("rl-pi-u7")] },
+    ],
+    lower: [
+      { name: "Lower Round 1", matches: [tbdMatch("rl-pi-l1"), tbdMatch("rl-pi-l2")] },
+      { name: "Lower Round 2", matches: [tbdMatch("rl-pi-l3"), tbdMatch("rl-pi-l4")] },
+      { name: "Lower Final", matches: [tbdMatch("rl-pi-l5")] },
+    ],
+    grand_final: [
+      { name: "Grand Final", matches: [tbdMatch("rl-pi-gf")] },
+    ],
+  };
+
+  const playoffsBracket = {
+    upper: [
+      { name: "Upper Round 1", matches: [tbdMatch("rl-po-u1"), tbdMatch("rl-po-u2"), tbdMatch("rl-po-u3"), tbdMatch("rl-po-u4")] },
+      { name: "Upper Semifinals", matches: [tbdMatch("rl-po-u5"), tbdMatch("rl-po-u6")] },
+      { name: "Upper Final", matches: [tbdMatch("rl-po-u7")] },
+    ],
+    lower: [
+      { name: "Lower Round 1", matches: [tbdMatch("rl-po-l1"), tbdMatch("rl-po-l2")] },
+      { name: "Lower Round 2", matches: [tbdMatch("rl-po-l3"), tbdMatch("rl-po-l4")] },
+      { name: "Lower Semifinals", matches: [tbdMatch("rl-po-l5"), tbdMatch("rl-po-l6")] },
+      { name: "Lower Final", matches: [tbdMatch("rl-po-l7")] },
+    ],
+    grand_final: [
+      { name: "Grand Final", matches: [tbdMatch("rl-po-gf")] },
+    ],
+  };
+
+  const renderBracketSection = (bracket) => (
+    <div style={{ padding: "0 16px" }}>
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} isPlayoffs predictions={predictions} />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" isPlayoffs bracketType="lower" predictions={predictions} />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} predictions={predictions} />}
+    </div>
+  );
+
+  if (!phase) {
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          {backBtn()}
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>RLCS 2026</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+          {[
+            { key: "playin", label: T.rlPlayIn || "Play-In" },
+            { key: "playoffs", label: T.rlPlayoffs || "Playoffs" },
+          ].map((p) => (
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{
+              background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
+              border: `1px solid ${accent}20`, borderRadius: 10, padding: "24px 18px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              boxShadow: `0 2px 12px ${accent}08`,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label}</span>
+              </div>
+              <ChevronRight size={16} color="#555" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const bracket = phase === "playin" ? playInBracket : playoffsBracket;
+  const phaseLabel = phase === "playin" ? (T.rlPlayIn || "Play-In") : (T.rlPlayoffs || "Playoffs");
+
+  return (
+    <div style={pageStyle}>
+      <div style={headerStyle}>
+        {backBtn()}
+        <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>RLCS — {phaseLabel}</span>
+      </div>
+      {renderBracketSection(bracket)}
+    </div>
+  );
+}
+
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, showBracketPage, setShowBracketPage }) {
+  if (showBracketPage) {
+    return <RlBracketPage onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} />;
+  }
   const allSelected = selectedRegions.length === REGIONS_RL.length;
   const showFinished = selectedStatuses[0] === "finished";
 
@@ -6142,6 +6252,9 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
       <PredBadge remainingPreds={remainingPreds} T={T} />
 
       <div className="flex gap-2 px-4 pt-1">
+        <button onClick={() => setShowBracketPage(true)} className="rounded-full" style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: "#161616", color: RL_ACCENT, border: `1px solid ${RL_ACCENT}30` }}>
+          {T.bracketTitle || "Bracket"}
+        </button>
         {["upcoming", "finished"].map((s) => {
           const active = selectedStatuses.includes(s);
           return (
@@ -9365,7 +9478,7 @@ export default function ClutchApp() {
   function doTabSwitch(tab) {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
     if (tab === "__close__") return;
-    setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
+    setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     tabSwitchCountRef.current++;
     setActiveTab(tab);
   }
@@ -9575,6 +9688,7 @@ export default function ClutchApp() {
   const [showBracketPage, setShowBracketPage] = useState(false);
   const [cs2Events, setCs2Events] = useState(null);
   const [showCs2BracketPage, setShowCs2BracketPage] = useState(false);
+  const [showRlBracketPage, setShowRlBracketPage] = useState(false);
   const [prefetchedBrackets, setPrefetchedBrackets] = useState({});
 
   const T = currentLang === "fr" ? STR.fr : { ...STR.fr, ...(STR[currentLang] || {}) };
@@ -10465,6 +10579,8 @@ export default function ClutchApp() {
               changeScore={changeScore}
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.rl || 0}
+              showBracketPage={showRlBracketPage}
+              setShowBracketPage={setShowRlBracketPage}
             />
           </div>
           {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}
