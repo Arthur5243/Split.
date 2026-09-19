@@ -10285,17 +10285,18 @@ export default function ClutchApp() {
           <div style={{
             position: "absolute", inset: 0, zIndex: 9999, background: "#000",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 20,
+            gap: 0,
             opacity: splashFading ? 0 : 1, transition: "opacity 0.5s ease-out",
             pointerEvents: splashFading ? "none" : "auto",
           }}>
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            <img src={SPLIT_LOGO} alt="Split" style={{ width: 64, height: 64, objectFit: "contain" }} />
-            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: "-0.02em" }}>SPLIT</p>
-            <div style={{ width: 28, height: 28, border: "2.5px solid #1a1a1a", borderTop: "2.5px solid #C4F000", borderRadius: "50%", animation: "setupSpin 0.8s linear infinite", marginTop: 8 }} />
+            <div style={{ position: "relative", width: 90, height: 90, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "3px solid #1a1a1a", animation: "splashRing 1.2s linear infinite", borderTopColor: "#FF4655", borderRightColor: "#1B3A4B", borderBottomColor: "transparent", borderLeftColor: "transparent" }} />
+              <img src={SPLIT_LOGO} alt="Split" style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 12 }} />
+            </div>
             <style>{`
-              @keyframes setupSpin {
+              @keyframes splashRing {
                 to { transform: rotate(360deg); }
               }
             `}</style>
