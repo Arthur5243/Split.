@@ -10236,7 +10236,7 @@ export default function ClutchApp() {
   ];
 
   return (
-    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100vh" }}>
+    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {
@@ -10276,7 +10276,7 @@ export default function ClutchApp() {
           </div>
         </div>
       )}
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100vh", background: "#000", display: showAuth ? "none" : "flex" }}>
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100dvh", background: "#000", display: showAuth ? "none" : "flex" }}>
 
         {!splashDone && (
           <div style={{
@@ -10438,7 +10438,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around border-t" style={{ background: "#0a0a0a", borderColor: "#2a2a2a", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-stretch justify-around" style={{ background: "#0a0a0a", borderTop: "1px solid #2a2a2a", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
