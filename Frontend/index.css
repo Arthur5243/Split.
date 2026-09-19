@@ -2,24 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-*, *::before, *::after {
-  border-color: #000;
-}
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #000;
-  overflow: hidden;
-  height: 100%;
-}
-
-#root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: #000;
-  overflow: hidden;
+@layer base {
+  *, *::before, *::after {
+    border-color: #000 !important;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    overflow: hidden;
+    height: 100%;
+  }
+  #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
