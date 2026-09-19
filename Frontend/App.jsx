@@ -10237,7 +10237,7 @@ export default function ClutchApp() {
   ];
 
   return (
-    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {

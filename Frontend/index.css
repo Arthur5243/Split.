@@ -6,18 +6,12 @@
   border-color: #000;
 }
 
-html {
-  background: #000;
-}
-
-body {
+html, body {
   margin: 0;
   padding: 0;
-  padding-top: env(safe-area-inset-top, 0px);
   background: #000;
   overflow: hidden;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
 }
 
 #root {
