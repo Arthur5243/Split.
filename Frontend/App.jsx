@@ -9770,6 +9770,23 @@ export default function ClutchApp() {
   }, [matchesReady, splashMinDone, splashDone, splashFading]);
 
   useEffect(() => {
+    if (window.matchMedia("(display-mode: fullscreen)").matches) return;
+    const goFullscreen = () => {
+      const el = document.documentElement;
+      const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (rfs) rfs.call(el).catch(() => {});
+      document.removeEventListener("click", goFullscreen);
+      document.removeEventListener("touchstart", goFullscreen);
+    };
+    document.addEventListener("click", goFullscreen, { once: true });
+    document.addEventListener("touchstart", goFullscreen, { once: true });
+    return () => {
+      document.removeEventListener("click", goFullscreen);
+      document.removeEventListener("touchstart", goFullscreen);
+    };
+  }, []);
+
+  useEffect(() => {
     const allMatches = [...upcomingMatches, ...liveMatches, ...resultsMatches, ...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches, ...rlUpcomingMatches, ...rlLiveMatches, ...rlResultsMatches];
     const urls = new Set();
     for (const m of allMatches) {
