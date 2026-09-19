@@ -10436,6 +10436,7 @@ export default function ClutchApp() {
           </div>
         )}
 
+        <img src="/nav-separator.webp" alt="" style={{ width: "100%", height: 20, objectFit: "cover", objectPosition: "center top", display: "block", flexShrink: 0, filter: "invert(1)" }} />
         <div className="flex items-stretch justify-around" style={{ background: "#000", border: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)", boxShadow: "0 -2px 0 0 #000", transform: "translateZ(0)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
