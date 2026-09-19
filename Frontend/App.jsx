@@ -4334,7 +4334,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       {/* Circles row: notif + news label + quests */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", transform: "translate(-2px, 4px)" }}>
             <Bell size={14} color="#888" />
           </button>
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
@@ -6252,9 +6252,6 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
       <PredBadge remainingPreds={remainingPreds} T={T} />
 
       <div className="flex gap-2 px-4 pt-1">
-        <button onClick={() => setShowBracketPage(true)} className="rounded-full" style={{ padding: "7px 14px", fontSize: "11px", fontWeight: 700, background: "#161616", color: RL_ACCENT, border: `1px solid ${RL_ACCENT}30` }}>
-          {T.bracketTitle || "Bracket"}
-        </button>
         {["upcoming", "finished"].map((s) => {
           const active = selectedStatuses.includes(s);
           return (
@@ -6291,6 +6288,15 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
             </button>
           );
         })}
+      </div>
+
+      <div className="flex items-center gap-4 px-4 pb-2">
+        <button
+          onClick={() => setShowBracketPage(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", color: RL_ACCENT, fontSize: 15, fontWeight: 700, padding: 0 }}
+        >
+          {T.bracketShow || "Voir le bracket"}
+        </button>
       </div>
 
       <div className="px-4 pb-6 relative">
@@ -8225,10 +8231,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 );
               })()}
             </div>
-            <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
+            <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "76px", background: "#000", display: "block" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "calc(100% + 8px)", height: "calc(100% + 4px)", objectFit: "cover", objectPosition: "left center", marginLeft: "-4px", marginTop: "-2px" }} />
+            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden w-full" style={{ height: "76px", background: "#000", display: "block" }}>
+              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
@@ -8237,7 +8243,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               </div>
             </button>
 
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pt-2 pb-4">
               {SCORE_CATS.map((c) => {
                 const active = scoreCats.includes(c);
                 return (
@@ -8652,13 +8658,13 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   const chevStyle = { color: "#555", transition: "transform 0.2s" };
 
   return (
-    <div style={{ position: "absolute", inset: 0, zIndex: 50 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "85%", borderBottom: "1px solid #222" }}>
+    <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full overflow-hidden" style={{ background: "#111", borderBottom: "1px solid #222" }}>
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1, overscrollBehavior: "contain" }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ maxHeight: "calc(85vh - 100px)", overscrollBehavior: "contain" }}>
 
           {/* COMPTE */}
           <div style={sectionStyle} className="mb-3">
@@ -10427,7 +10433,7 @@ export default function ClutchApp() {
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
     { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
     { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 22 },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 30, imgStyle: { marginTop: -4 } },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
 
@@ -10644,7 +10650,7 @@ export default function ClutchApp() {
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "30px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {item.img ? (
-                    <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 0.9 : 0.38, transition: "opacity 0.15s" }} />
+                    <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 0.9 : 0.38, transition: "opacity 0.15s", ...(item.imgStyle || {}) }} />
                   ) : (
                     <item.Icon size={item.iconSize || 22} color={labelColor} strokeWidth={2.2} />
                   )}
