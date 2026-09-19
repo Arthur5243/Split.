@@ -5,6 +5,7 @@
 @layer base {
   *, *::before, *::after {
     border-color: #000;
+    outline-color: #000;
   }
   html, body {
     margin: 0;

@@ -8832,7 +8832,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000", border: 0, borderStyle: "none" }}>
+    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000", border: "none", boxShadow: isLight ? "none" : "0 2px 0 0 #000", transform: "translateZ(0)" }}>
       <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <span style={{ fontSize: "14px" }}>{lang.flag}</span>
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
@@ -10277,7 +10277,7 @@ export default function ClutchApp() {
           </div>
         </div>
       )}
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100dvh", background: "#000", display: showAuth ? "none" : "flex" }}>
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100dvh", background: "#000", display: showAuth ? "none" : "flex", border: "none", transform: "translateZ(0)" }}>
 
         {!splashDone && (
           <div style={{
@@ -10301,8 +10301,8 @@ export default function ClutchApp() {
 
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
-        <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000", border: 0, borderStyle: "none" }}>
-        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", border: 0, borderStyle: "none" }}>
+        <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000", border: "none", transform: "translateZ(0)" }}>
+        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", border: "none" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -10436,7 +10436,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around" style={{ background: "#000", border: 0, borderStyle: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-stretch justify-around" style={{ background: "#000", border: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)", boxShadow: "0 -2px 0 0 #000", transform: "translateZ(0)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
