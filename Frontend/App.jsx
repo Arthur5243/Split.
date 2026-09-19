@@ -267,7 +267,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programme CS2 2026", cs2CalendarEmpty: "Aucun évènement à afficher.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
-    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Aucun event disponible", bracketTeams: "Équipes", bracketStandings: "Classement", bracketHistory: "Historique", bracketQualified: "Qualifié", bracketPoints: "Points Championship",
+    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Aucun event disponible", bracketTeams: "Équipes", bracketStandings: "Classement", bracketHistory: "Historique", bracketQualified: "Qualifié", bracketDirectQual: "Qualification directe", bracketPoints: "Points Championship",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -349,7 +349,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2 Program 2026", cs2CalendarEmpty: "No events to display.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
-    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "No event available", bracketTeams: "Teams", bracketStandings: "Standings", bracketHistory: "History", bracketQualified: "Qualified", bracketPoints: "Championship Points",
+    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "No event available", bracketTeams: "Teams", bracketStandings: "Standings", bracketHistory: "History", bracketQualified: "Qualified", bracketDirectQual: "Direct Qualification", bracketPoints: "Championship Points",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -431,7 +431,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programa CS2 2026", cs2CalendarEmpty: "Sin eventos para mostrar.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
-    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Sin evento disponible", bracketTeams: "Equipos", bracketStandings: "Clasificación", bracketHistory: "Historial", bracketQualified: "Clasificado", bracketPoints: "Puntos Championship",
+    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Sin evento disponible", bracketTeams: "Equipos", bracketStandings: "Clasificación", bracketHistory: "Historial", bracketQualified: "Clasificado", bracketDirectQual: "Clasificación directa", bracketPoints: "Puntos Championship",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -495,7 +495,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programma CS2 2026", cs2CalendarEmpty: "Nessun evento da mostrare.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
-    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Nessun evento disponibile", bracketTeams: "Squadre", bracketStandings: "Classifica", bracketHistory: "Storico", bracketQualified: "Qualificato", bracketPoints: "Punti Championship",
+    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Nessun evento disponibile", bracketTeams: "Squadre", bracketStandings: "Classifica", bracketHistory: "Storico", bracketQualified: "Qualificato", bracketDirectQual: "Qualificazione diretta", bracketPoints: "Punti Championship",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -559,7 +559,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2カレンダー", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2プログラム 2026", cs2CalendarEmpty: "表示するイベントはありません。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
-    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ", bracketPlayIns: "プレイイン", bracketPlayoffs: "プレイオフ", bracketKickoff: "キックオフ", bracketStage: "ステージ", bracketMasters: "マスターズ", bracketChampions: "チャンピオンズ", bracketNoEvent: "イベントなし", bracketTeams: "チーム", bracketStandings: "順位表", bracketHistory: "履歴", bracketQualified: "出場確定", bracketPoints: "チャンピオンシップポイント",
+    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ", bracketPlayIns: "プレイイン", bracketPlayoffs: "プレイオフ", bracketKickoff: "キックオフ", bracketStage: "ステージ", bracketMasters: "マスターズ", bracketChampions: "チャンピオンズ", bracketNoEvent: "イベントなし", bracketTeams: "チーム", bracketStandings: "順位表", bracketHistory: "履歴", bracketQualified: "出場確定", bracketDirectQual: "直接予選通過", bracketPoints: "チャンピオンシップポイント",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -623,7 +623,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2-Kalender", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2-Programm 2026", cs2CalendarEmpty: "Keine Ereignisse anzuzeigen.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
-    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Kein Event verfügbar", bracketTeams: "Teams", bracketStandings: "Tabelle", bracketHistory: "Verlauf", bracketQualified: "Qualifiziert", bracketPoints: "Championship-Punkte",
+    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Kein Event verfügbar", bracketTeams: "Teams", bracketStandings: "Tabelle", bracketHistory: "Verlauf", bracketQualified: "Qualifiziert", bracketDirectQual: "Direkte Qualifikation", bracketPoints: "Championship-Punkte",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -687,7 +687,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2赛程", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2赛程 2026", cs2CalendarEmpty: "暂无赛事。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
-    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛", bracketPlayIns: "入围赛", bracketPlayoffs: "季后赛", bracketKickoff: "揭幕战", bracketStage: "常规赛", bracketMasters: "大师赛", bracketChampions: "冠军赛", bracketNoEvent: "暂无赛事", bracketTeams: "战队", bracketStandings: "积分榜", bracketHistory: "历史", bracketQualified: "已晋级", bracketPoints: "冠军积分",
+    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛", bracketPlayIns: "入围赛", bracketPlayoffs: "季后赛", bracketKickoff: "揭幕战", bracketStage: "常规赛", bracketMasters: "大师赛", bracketChampions: "冠军赛", bracketNoEvent: "暂无赛事", bracketTeams: "战队", bracketStandings: "积分榜", bracketHistory: "历史", bracketQualified: "已晋级", bracketDirectQual: "直接晋级", bracketPoints: "冠军积分",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -2354,13 +2354,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "14px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", ...txtSt }}
+              style={{ color: "#ff3b3b", fontSize: "14px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", marginTop: 3, ...txtSt }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
             </a>
           ) : useRegionStreamFallback ? (
-            <div style={{ position: "relative" }}>
+            <div style={{ position: "relative", marginTop: 3 }}>
               <button
                 onClick={() => setShowStreamPicker((v) => !v)}
                 className="flex items-center gap-1.5"
@@ -2418,14 +2418,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <button
               onClick={openLiveYT}
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", marginTop: 3 }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
             </button>
           )
         ) : finished ? (
-          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
+          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", marginTop: 3 }}>{T.calendarDone}</span>
         ) : (
           <button onClick={(e) => { e.stopPropagation(); onToggleNotif && onToggleNotif(match.id, notifActive); }} style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
             {notifActive ? (
@@ -4466,10 +4466,10 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
       })}
       {isLive && (
         <div style={{
-          position: "absolute", top: 0, right: 0,
+          position: "absolute", top: 3, right: 0,
           background: "#ff4655", padding: "2px 7px 2px 6px",
           fontSize: 7, fontWeight: 800, color: "#fff", letterSpacing: "0.08em",
-          borderBottomLeftRadius: 5,
+          borderBottomLeftRadius: 5, borderTopRightRadius: 8,
           animation: "bracketLivePulse 2s ease-in-out infinite",
         }}>LIVE</div>
       )}
@@ -4788,7 +4788,7 @@ function ChampionsView({ T, accent }) {
     })();
   }, []);
 
-  if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>;
+  if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
   if (!points) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
   return (
@@ -4841,10 +4841,34 @@ function RegionStandings({ regionKey, accent, T }) {
 
   if (!points || !points[regionKey]) return null;
   const teams = points[regionKey];
-  const visible = expanded ? teams : teams.slice(0, 7);
+  const directlyQualified = teams.slice(0, 2);
+  const rest = teams.slice(2);
+  const visibleRest = expanded ? rest : rest.slice(0, 5);
 
   return (
     <div style={{ padding: "0 16px 24px" }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
+        <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
+        <span style={{ fontSize: 9, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.bracketDirectQual || "Qualification directe"}</span>
+      </div>
+      <div style={{ background: `${accent}08`, borderRadius: 8, overflow: "hidden", border: `1px solid ${accent}20`, marginBottom: 16 }}>
+        {directlyQualified.map((t, i) => (
+          <div key={t.team} style={{
+            display: "grid", gridTemplateColumns: "28px 1fr 50px",
+            padding: "9px 12px",
+            borderBottom: i === 0 ? `1px solid ${accent}15` : "none",
+          }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: accent, fontVariantNumeric: "tabular-nums" }}>{i + 1}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#ddd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 2, height: 10, borderRadius: 1, background: accent, flexShrink: 0 }} />
+              {t.team}
+              <span style={{ fontSize: 7, fontWeight: 800, color: accent, marginLeft: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.bracketQualified}</span>
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: accent, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{t.pts}</span>
+          </div>
+        ))}
+      </div>
+
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
         <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
         <span style={{ fontSize: 9, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.bracketPoints}</span>
@@ -4855,34 +4879,28 @@ function RegionStandings({ regionKey, accent, T }) {
           <span>{T.bracketTeams || "Team"}</span>
           <span style={{ textAlign: "right" }}>PTS</span>
         </div>
-        {visible.map((t, i) => {
-          const qualified = i < 2;
-          return (
-            <div key={t.team} style={{
-              display: "grid", gridTemplateColumns: "28px 1fr 50px",
-              padding: "7px 12px",
-              borderBottom: i < visible.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-              background: qualified ? `${accent}06` : "transparent",
-            }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: qualified ? accent : "#333", fontVariantNumeric: "tabular-nums" }}>{i + 1}</span>
-              <span style={{ fontSize: 11, fontWeight: qualified ? 700 : 500, color: qualified ? "#ddd" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
-                {qualified && <span style={{ width: 2, height: 10, borderRadius: 1, background: accent, flexShrink: 0 }} />}
-                {t.team}
-                {qualified && <span style={{ fontSize: 7, fontWeight: 800, color: accent, marginLeft: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.bracketQualified}</span>}
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 800, color: qualified ? accent : "#444", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{t.pts}</span>
-            </div>
-          );
-        })}
+        {visibleRest.map((t, i) => (
+          <div key={t.team} style={{
+            display: "grid", gridTemplateColumns: "28px 1fr 50px",
+            padding: "7px 12px",
+            borderBottom: i < visibleRest.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+          }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#333", fontVariantNumeric: "tabular-nums" }}>{i + 3}</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {t.team}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: "#444", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{t.pts}</span>
+          </div>
+        ))}
       </div>
-      {teams.length > 7 && (
+      {rest.length > 5 && (
         <button onClick={() => setExpanded(!expanded)} style={{
           width: "100%", marginTop: 8, padding: "8px", cursor: "pointer",
           background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
           borderRadius: 6, fontSize: 10, fontWeight: 700, color: "#555",
           letterSpacing: "0.04em", textTransform: "uppercase",
         }}>
-          {expanded ? "−" : `+ ${teams.length - 7}`}
+          {expanded ? "−" : `+ ${rest.length - 5}`}
         </button>
       )}
     </div>
@@ -5109,7 +5127,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
             <button onClick={() => setHistoryEvent(null)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
             {titleSpan(historyEvent.title)}
           </div>
-          {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+          {loading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
           {renderBracketSection(historyBracketData.playoffs?.bracket, "#C4F000")}
         </div>
       );
@@ -5120,7 +5138,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           <button onClick={() => { setShowHistory(false); setHistoryEvent(null); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
           {titleSpan(T.bracketHistory)}
         </div>
-        {!historyData && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        {!historyData && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
         {historyData && (
           <div style={{ padding: "16px 16px 32px" }}>
             {BRACKET_STAGES.map((s) => {
@@ -5243,7 +5261,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketMasters, "#FFD700")}</div>
-        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        {loading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
         {renderBracketSection(currentData?.playoffs?.bracket, "#FFD700")}
         {!loading && !currentData?.playoffs?.bracket && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>}
       </div>
@@ -5304,7 +5322,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   // --- Step 4 : Show bracket ---
   const renderBracketView = () => {
-    if (loading) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>;
+    if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
     if (!currentData) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
     if (phase === "play_ins") {
@@ -5493,7 +5511,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       return (
         <div style={pageStylePlain}>
           <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>
+          <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>
         </div>
       );
     }
@@ -5517,7 +5535,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           {backBtn()}
           {titleSpan(serie.title + " · " + phaseLabel, accent)}
         </div>
-        {loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>...</div>}
+        {loading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
         {!loading && fallbackPhases.map((p) => {
           const b = p.playoffs?.bracket;
           const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
@@ -8035,9 +8053,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.3)", display: "block" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.7) 100%)" }} />
+            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.4)", display: "block" }}>
+              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center", transform: "translateX(-3px)" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.25) 75%, rgba(0,0,0,0.55) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
                 <span style={{ color: "#bf9b30", fontSize: "12px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{T.settingsRewards}</span>
@@ -8261,7 +8279,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
+        <div className="z-50 flex items-end" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
           <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "80%" }}>
             <div className="relative rounded-t-3xl overflow-hidden" style={{ height: "120px" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
@@ -8832,7 +8850,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000", border: "none", boxShadow: isLight ? "none" : "0 2px 0 0 #000", transform: "translateZ(0)" }}>
+    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000" }}>
       <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <span style={{ fontSize: "14px" }}>{lang.flag}</span>
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
@@ -9284,7 +9302,7 @@ export default function ClutchApp() {
   function doTabSwitch(tab) {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
     if (tab === "__close__") return;
-    setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false);
+    setShowBracketPage(false); setShowCs2BracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     tabSwitchCountRef.current++;
     setActiveTab(tab);
   }
@@ -10237,7 +10255,7 @@ export default function ClutchApp() {
   ];
 
   return (
-    <div className="flex items-center justify-center" style={{ background: "#000", position: "fixed", inset: "-100px", padding: "100px", overflow: "hidden" }}>
+    <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {
@@ -10277,7 +10295,7 @@ export default function ClutchApp() {
           </div>
         </div>
       )}
-      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100dvh", background: "#000", display: showAuth ? "none" : "flex", border: "none", transform: "translateZ(0)" }}>
+      <div className="relative overflow-hidden flex flex-col" style={{ width: "min(390px, 100%)", height: "100dvh", background: "#000", display: showAuth ? "none" : "flex" }}>
 
         {!splashDone && (
           <div style={{
@@ -10301,10 +10319,8 @@ export default function ClutchApp() {
 
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
-        <img src="/nav-separator.webp" alt="" style={{ width: "100%", height: 16, objectFit: "cover", objectPosition: "center bottom", display: "block", flexShrink: 0 }} />
-
-        <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000", border: "none", transform: "translateZ(0)" }}>
-        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", border: "none" }}>
+        <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
+        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -10438,7 +10454,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around" style={{ background: "#000", border: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)", boxShadow: "0 -2px 0 0 #000", transform: "translateZ(0)" }}>
+        <div className="flex items-stretch justify-around" style={{ background: "#000", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
@@ -10454,7 +10470,7 @@ export default function ClutchApp() {
                     <item.Icon size={24} color={labelColor} strokeWidth={2.2} />
                   )}
                   {item.key === "home" && streak.current > 0 && (
-                    <span style={{ position: "absolute", top: -4, right: -12, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
+                    <span style={{ position: "absolute", top: -2, right: -8, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
                       <span style={{ fontSize: 8 }}>&#x1F525;</span>{streak.current}
                     </span>
                   )}
