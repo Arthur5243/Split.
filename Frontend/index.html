@@ -1,6 +1,7 @@
 <!DOCTYPE html>
  <html lang="fr"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>SPLIT — Installer</title>
 <meta name="theme-color" content="#060607">
+<link rel="manifest" href="/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet"> <style> :root { --yellow: #C5F90F; --black: #060607; } * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; } html, body { height:100%; width:100%; overflow:hidden; background:var(--black); font-family: 'Rajdhani', 'Segoe UI', Arial, sans-serif; } body { position:relative; } 
 .bg {
 position:fixed; inset:0; z-index:0;
@@ -148,8 +149,31 @@ letter-spacing:0.3px;
 ```
 
  </div> <script>
-document.getElementById('installBtn').addEventListener('click', () => {
-  window.location.href = '/app.html';
+let deferredPrompt = null;
+const btn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
 });
+
+btn.addEventListener('click', async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === 'accepted') {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé';
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.7';
+    }
+  } else {
+    window.location.href = '/app.html';
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+}
 </script>
 </body> </html>
