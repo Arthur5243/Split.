@@ -4030,7 +4030,7 @@ function PredBadge({ remainingPreds, T }) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#666",    logo: "unranked",          bg: "rgba(100,100,100,0.3)",  border: "rgba(100,100,100,0.2)", maxPct: 1 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "unranked",          bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1 },
   { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
@@ -4072,9 +4072,9 @@ function RankBadgeCompact({ points, onClick }) {
     <button onClick={onClick} className="rounded-xl" style={{ background: rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
       {rank.logo === "unranked" ? (
         <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
-          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="2.5" strokeLinejoin="round"/>
-          <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)"/>
-          <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinejoin="round"/>
+          <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(156,163,175,0.12)"/>
+          <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
         </svg>
       ) : rank.logo ? (
         <img src={rank.logo} alt={rank.name} style={{ width: 22, height: 22, objectFit: "contain", filter: isTop ? "drop-shadow(0 0 6px rgba(56,189,248,0.6))" : "none" }} />
@@ -8837,7 +8837,10 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <img src={SPLIT_LOGO} alt="Split" style={{ height: "35px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <img src={SPLIT_LOGO} alt="Split" style={{ height: "28px", objectFit: "contain", filter: isLight ? "invert(1)" : "none", borderRadius: 6 }} />
+        <span style={{ color: isLight ? "#111" : "#fff", fontSize: 16, fontWeight: 900, letterSpacing: "-0.03em" }}>SPLIT</span>
+      </div>
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
       </button>
@@ -10282,17 +10285,15 @@ export default function ClutchApp() {
           <div style={{
             position: "absolute", inset: 0, zIndex: 9999, background: "#000",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 28,
+            gap: 20,
             opacity: splashFading ? 0 : 1, transition: "opacity 0.5s ease-out",
             pointerEvents: splashFading ? "none" : "auto",
           }}>
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            <div style={{ width: 40, height: 40, border: "3px solid #1a1a1a", borderTop: "3px solid #C4F000", borderRadius: "50%", animation: "setupSpin 0.8s linear infinite" }} />
-            <div style={{ textAlign: "center" }}>
-              <p style={{ color: "#fff", fontSize: 14, fontWeight: 700, margin: 0, letterSpacing: "-0.01em" }}>Chargement des données</p>
-              <p style={{ color: "#555", fontSize: 11, fontWeight: 500, margin: "6px 0 0" }}>Matchs, scores, classement...</p>
-            </div>
+            <img src={SPLIT_LOGO} alt="Split" style={{ width: 64, height: 64, objectFit: "contain" }} />
+            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900, margin: 0, letterSpacing: "-0.02em" }}>SPLIT</p>
+            <div style={{ width: 28, height: 28, border: "2.5px solid #1a1a1a", borderTop: "2.5px solid #C4F000", borderRadius: "50%", animation: "setupSpin 0.8s linear infinite", marginTop: 8 }} />
             <style>{`
               @keyframes setupSpin {
                 to { transform: rotate(360deg); }
@@ -10438,7 +10439,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <div className="flex items-stretch justify-around" style={{ background: "#0a0a0a", borderTop: "1px solid #2a2a2a", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-stretch justify-around" style={{ background: "#000", borderTop: "1px solid #1a1a1a", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
             const labelColor = active ? "#fff" : "#6b6b6b";
