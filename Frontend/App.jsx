@@ -10301,6 +10301,8 @@ export default function ClutchApp() {
 
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
 
+        <img src="/nav-separator.webp" alt="" style={{ width: "100%", height: 16, objectFit: "cover", objectPosition: "center bottom", display: "block", flexShrink: 0 }} />
+
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000", border: "none", transform: "translateZ(0)" }}>
         <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", border: "none" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
@@ -10436,7 +10438,6 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <img src="/nav-separator.webp" alt="" style={{ width: "100%", height: 20, objectFit: "cover", objectPosition: "center top", display: "block", flexShrink: 0, filter: "invert(1)" }} />
         <div className="flex items-stretch justify-around" style={{ background: "#000", border: "none", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)", boxShadow: "0 -2px 0 0 #000", transform: "translateZ(0)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
