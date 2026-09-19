@@ -322,7 +322,10 @@ const STR = {
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
-    yourBet: "Ton pari", replay: "Replay",
+    yourBet: "Ton pari", replay: "Replay", share: "Partager", loading: "Chargement...", connectionError: "Connexion impossible", retryAuto: "Réessai auto dans 60s", noMatch: "Aucun match programmé",
+    featProno: "Pronostics", featPronoDesc: "Prédit les scores série et par map", featLive: "Scores live", featLiveDesc: "Résultats en temps réel, map par map", featRank: "Classement", featRankDesc: "Gagne des points, grimpe le leaderboard", featStreak: "Streak & Quêtes", featStreakDesc: "Missions quotidiennes, série de jours",
+    confirm: "Confirmer", choosePseudo: "Choisis ton pseudo", visibleToPlayers: "Visible par les autres joueurs",
+    authLogin: "Connexion", authRegister: "Inscription", authLoginDesc: "Connecte-toi pour retrouver tes pronostics", authRegisterDesc: "Crée ton compte et commence à jouer", authSignIn: "Se connecter", authCreateAccount: "Créer mon compte", authOr: "ou", authPassword: "Mot de passe", authGoogleNA: "Google Sign-In non configuré", continueWeb: "Continuer sur le web", enter: "Entrer",
     questTitle: "Quêtes", questDaily: "Quotidiennes", questWeekly: "Hebdomadaire", questCompleted: "Terminée", questClaim: "Réclamer", questProgress: "en cours",
     questBetToday: "Fais un pronostic aujourd'hui", questBet2Games: "Pronostique sur 2 jeux différents", questUseAllSlots: "Utilise tes 4 pronos du jour", questViewBracket: "Consulte un bracket", questAddAvatar: "Ajoute une photo de profil", questAddBio: "Rédige ta bio", questChooseFav: "Choisis ton équipe favorite", questInviteFriend: "Invite un ami", questOpenNewTab: "Découvre un nouvel onglet jeu", questViewClassement: "Consulte le classement", questExactScore: "Devine le score exact d'un Bo3", questWeekly5Wins: "Gagne 5 pronos cette semaine", questWeekly3Exact: "3 scores exacts cette semaine",
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
@@ -378,7 +381,7 @@ const STR = {
     betLocked: "Bet locked",
     myPoints: "My points", myPointsSub: "Correct predictions, until login is added",
     placeholderSoon: "Coming soon. We're preparing {label} predictions, check back soon!",
-    classementTitle: "Classement", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
+    classementTitle: "Standings", classementSubtitle: "Best predictors of the season", classementEmptyTitle: "0 ranked users",
     classementEmptySub: "No one has made a prediction yet. Be the first to climb the standings!",
     catFilterLabel: "Categories",
     profileTitle: "My profile", profilePseudo: "Username", profileBio: "Bio", profileAvatar: "Avatar",
@@ -404,7 +407,10 @@ const STR = {
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
-    yourBet: "Your bet", replay: "Replay",
+    yourBet: "Your bet", replay: "Replay", share: "Share", loading: "Loading...", connectionError: "Connection failed", retryAuto: "Auto retry in 60s", noMatch: "No scheduled matches",
+    featProno: "Predictions", featPronoDesc: "Predict series and map scores", featLive: "Live scores", featLiveDesc: "Real-time results, map by map", featRank: "Standings", featRankDesc: "Earn points, climb the leaderboard", featStreak: "Streak & Quests", featStreakDesc: "Daily missions, day streaks",
+    confirm: "Confirm", choosePseudo: "Choose your username", visibleToPlayers: "Visible to other players",
+    authLogin: "Log in", authRegister: "Sign up", authLoginDesc: "Log in to find your predictions", authRegisterDesc: "Create your account and start playing", authSignIn: "Log in", authCreateAccount: "Create my account", authOr: "or", authPassword: "Password", authGoogleNA: "Google Sign-In not configured", continueWeb: "Continue on web", enter: "Enter",
     questTitle: "Quests", questDaily: "Daily", questWeekly: "Weekly", questCompleted: "Completed", questClaim: "Claim", questProgress: "in progress",
     questBetToday: "Make a prediction today", questBet2Games: "Predict on 2 different games", questUseAllSlots: "Use all 4 daily predictions", questViewBracket: "Check a bracket", questAddAvatar: "Add a profile picture", questAddBio: "Write your bio", questChooseFav: "Choose your favorite team", questInviteFriend: "Invite a friend", questOpenNewTab: "Discover a new game tab", questViewClassement: "Check the standings", questExactScore: "Guess the exact score of a Bo3", questWeekly5Wins: "Win 5 predictions this week", questWeekly3Exact: "3 exact scores this week",
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
@@ -458,7 +464,7 @@ const STR = {
     mustWinLastMap: "debe ganar el último mapa",
     mustWinAllMaps: "debe ganar este mapa en un 2-0",
     placeholderSoon: "Próximamente. Estamos preparando los pronósticos de {label}, ¡vuelve pronto!",
-    classementTitle: "Classement", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
+    classementTitle: "Clasificación", classementSubtitle: "Mejores pronosticadores de la temporada", classementEmptyTitle: "0 usuarios clasificados",
     classementEmptySub: "Nadie ha hecho un pronóstico todavía. ¡Sé el primero en subir en la clasificación!",
     catFilterLabel: "Categorías",
     profileTitle: "Mi perfil", profilePseudo: "Apodo", profileBio: "Bio", profileAvatar: "Avatar",
@@ -484,7 +490,10 @@ const STR = {
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
     statusUpcoming: "Próximos partidos",
-    yourBet: "Tu pronóstico", replay: "Replay",
+    yourBet: "Tu pronóstico", replay: "Replay", share: "Compartir", loading: "Cargando...", connectionError: "Conexión fallida", retryAuto: "Reintento auto en 60s", noMatch: "No hay partidos programados",
+    featProno: "Pronósticos", featPronoDesc: "Predice los marcadores de serie y mapa", featLive: "Marcadores en vivo", featLiveDesc: "Resultados en tiempo real, mapa a mapa", featRank: "Clasificación", featRankDesc: "Gana puntos, escala el ranking", featStreak: "Racha & Misiones", featStreakDesc: "Misiones diarias, racha de días",
+    confirm: "Confirmar", choosePseudo: "Elige tu nombre de usuario", visibleToPlayers: "Visible para otros jugadores",
+    authLogin: "Iniciar sesión", authRegister: "Registrarse", authLoginDesc: "Inicia sesión para encontrar tus pronósticos", authRegisterDesc: "Crea tu cuenta y empieza a jugar", authSignIn: "Iniciar sesión", authCreateAccount: "Crear mi cuenta", authOr: "o", authPassword: "Contraseña", authGoogleNA: "Google Sign-In no configurado", continueWeb: "Continuar en la web", enter: "Entrar",
   },
   it: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classifica",
@@ -522,7 +531,7 @@ const STR = {
     mustWinLastMap: "deve vincere l'ultima mappa",
     mustWinAllMaps: "deve vincere questa mappa in un 2-0",
     placeholderSoon: "Presto disponibile. Stiamo preparando i pronostici {label}, torna a trovarci!",
-    classementTitle: "Classement", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
+    classementTitle: "Classifica", classementSubtitle: "Migliori pronosticatori della stagione", classementEmptyTitle: "0 utenti in classifica",
     classementEmptySub: "Nessuno ha ancora fatto un pronostico. Sii il primo a scalare la classifica!",
     catFilterLabel: "Categorie",
     profileTitle: "Il mio profilo", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -548,7 +557,10 @@ const STR = {
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
     statusUpcoming: "Prossime partite",
-    yourBet: "Il tuo pronostico", replay: "Replay",
+    yourBet: "Il tuo pronostico", replay: "Replay", share: "Condividi", loading: "Caricamento...", connectionError: "Connessione fallita", retryAuto: "Riprova auto tra 60s", noMatch: "Nessun match programmato",
+    featProno: "Pronostici", featPronoDesc: "Prevedi i punteggi serie e mappa", featLive: "Punteggi live", featLiveDesc: "Risultati in tempo reale, mappa per mappa", featRank: "Classifica", featRankDesc: "Guadagna punti, scala la classifica", featStreak: "Streak & Missioni", featStreakDesc: "Missioni giornaliere, serie di giorni",
+    confirm: "Conferma", choosePseudo: "Scegli il tuo nome utente", visibleToPlayers: "Visibile agli altri giocatori",
+    authLogin: "Accedi", authRegister: "Registrati", authLoginDesc: "Accedi per ritrovare i tuoi pronostici", authRegisterDesc: "Crea il tuo account e inizia a giocare", authSignIn: "Accedi", authCreateAccount: "Crea il mio account", authOr: "o", authPassword: "Password", authGoogleNA: "Google Sign-In non configurato", continueWeb: "Continua sul web", enter: "Entra",
   },
   ja: {
     navHome: "ホーム", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "ランキング",
@@ -586,7 +598,7 @@ const STR = {
     mustWinLastMap: "が最終マップを勝たなければなりません",
     mustWinAllMaps: "が2-0でこのマップを勝たなければなりません",
     placeholderSoon: "近日公開。{label}の予想機能を準備中です、お楽しみに!",
-    classementTitle: "Classement", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
+    classementTitle: "ランキング", classementSubtitle: "シーズン予想王ランキング", classementEmptyTitle: "ランキング登録者0人",
     classementEmptySub: "まだ誰も予想していません。最初にランキングを駆け上がろう!",
     catFilterLabel: "カテゴリー",
     profileTitle: "マイプロフィール", profilePseudo: "ニックネーム", profileBio: "自己紹介", profileAvatar: "アバター",
@@ -612,7 +624,10 @@ const STR = {
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
     statusUpcoming: "今後の試合",
-    yourBet: "あなたの予想", replay: "リプレイ",
+    yourBet: "あなたの予想", replay: "リプレイ", share: "共有", loading: "読み込み中...", connectionError: "接続失敗", retryAuto: "60秒後に自動再試行", noMatch: "試合予定なし",
+    featProno: "予想", featPronoDesc: "シリーズとマップスコアを予想", featLive: "ライブスコア", featLiveDesc: "リアルタイム結果、マップごと", featRank: "ランキング", featRankDesc: "ポイントを稼いでランクアップ", featStreak: "ストリーク & クエスト", featStreakDesc: "デイリーミッション、連続記録",
+    confirm: "確認", choosePseudo: "ユーザー名を選択", visibleToPlayers: "他のプレイヤーに表示されます",
+    authLogin: "ログイン", authRegister: "登録", authLoginDesc: "予想を見つけるためにログイン", authRegisterDesc: "アカウントを作成してプレイ開始", authSignIn: "ログイン", authCreateAccount: "アカウント作成", authOr: "または", authPassword: "パスワード", authGoogleNA: "Google Sign-In未設定", continueWeb: "ウェブで続行", enter: "入る",
   },
   de: {
     navHome: "Start", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Rangliste",
@@ -650,7 +665,7 @@ const STR = {
     mustWinLastMap: "muss die letzte Map gewinnen",
     mustWinAllMaps: "muss diese Map bei einem 2-0 gewinnen",
     placeholderSoon: "Bald verfügbar. Wir bereiten die {label}-Tipps vor, schau bald wieder vorbei!",
-    classementTitle: "Classement", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
+    classementTitle: "Rangliste", classementSubtitle: "Beste Tipper der Saison", classementEmptyTitle: "0 platzierte Nutzer",
     classementEmptySub: "Noch niemand hat getippt. Sei der Erste in der Rangliste!",
     catFilterLabel: "Kategorien",
     profileTitle: "Mein Profil", profilePseudo: "Nickname", profileBio: "Bio", profileAvatar: "Avatar",
@@ -676,7 +691,10 @@ const STR = {
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
     statusUpcoming: "Bevorstehende Spiele",
-    yourBet: "Dein Tipp", replay: "Replay",
+    yourBet: "Dein Tipp", replay: "Replay", share: "Teilen", loading: "Laden...", connectionError: "Verbindung fehlgeschlagen", retryAuto: "Auto-Wiederholung in 60s", noMatch: "Keine geplanten Spiele",
+    featProno: "Prognosen", featPronoDesc: "Sage Serien- und Map-Ergebnisse voraus", featLive: "Live-Ergebnisse", featLiveDesc: "Echtzeitergebnisse, Map für Map", featRank: "Rangliste", featRankDesc: "Sammle Punkte, steige im Ranking auf", featStreak: "Streak & Quests", featStreakDesc: "Tägliche Missionen, Tagestreaks",
+    confirm: "Bestätigen", choosePseudo: "Wähle deinen Benutzernamen", visibleToPlayers: "Für andere Spieler sichtbar",
+    authLogin: "Anmelden", authRegister: "Registrieren", authLoginDesc: "Melde dich an, um deine Prognosen zu finden", authRegisterDesc: "Erstelle dein Konto und fang an zu spielen", authSignIn: "Anmelden", authCreateAccount: "Konto erstellen", authOr: "oder", authPassword: "Passwort", authGoogleNA: "Google Sign-In nicht konfiguriert", continueWeb: "Im Web fortfahren", enter: "Eintreten",
   },
   cn: {
     navHome: "首页", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "排行榜",
@@ -714,7 +732,7 @@ const STR = {
     mustWinLastMap: "必须赢得最后一张地图",
     mustWinAllMaps: "在2-0中必须赢得此地图",
     placeholderSoon: "敬请期待。{label}竞猜功能筹备中，请稍后再来查看!",
-    classementTitle: "Classement", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
+    classementTitle: "排行榜", classementSubtitle: "本赛季竞猜达人榜", classementEmptyTitle: "0名上榜用户",
     classementEmptySub: "还没有人做出竞猜，快来抢占排行榜第一名!",
     catFilterLabel: "分类",
     profileTitle: "我的资料", profilePseudo: "昵称", profileBio: "简介", profileAvatar: "头像",
@@ -740,7 +758,10 @@ const STR = {
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
     statusUpcoming: "即将进行的比赛",
-    yourBet: "你的竞猜", replay: "回放",
+    yourBet: "你的竞猜", replay: "回放", share: "分享", loading: "加载中...", connectionError: "连接失败", retryAuto: "60秒后自动重试", noMatch: "暂无赛事安排",
+    featProno: "竞猜", featPronoDesc: "预测系列赛和地图比分", featLive: "实时比分", featLiveDesc: "实时结果，逐图更新", featRank: "排行榜", featRankDesc: "赚取积分，攀升排名", featStreak: "连胜 & 任务", featStreakDesc: "每日任务，连续天数",
+    confirm: "确认", choosePseudo: "选择你的用户名", visibleToPlayers: "对其他玩家可见",
+    authLogin: "登录", authRegister: "注册", authLoginDesc: "登录以找到你的竞猜", authRegisterDesc: "创建账户开始游戏", authSignIn: "登录", authCreateAccount: "创建我的账户", authOr: "或", authPassword: "密码", authGoogleNA: "Google登录未配置", continueWeb: "在网页继续", enter: "进入",
   },
 };
 
@@ -2425,7 +2446,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             </button>
           )
         ) : finished ? (
-          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", marginTop: 3 }}>{T.calendarDone}</span>
+          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", marginTop: 6 }}>{T.calendarDone}</span>
         ) : (
           <button onClick={(e) => { e.stopPropagation(); onToggleNotif && onToggleNotif(match.id, notifActive); }} style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
             {notifActive ? (
@@ -5731,7 +5752,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
 
   return (
     <div className="relative">
-      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + glowAccent + "22, transparent 70%)" }} />
+      {/* glow removed */}
       <div className="relative px-4 pt-4 pb-2">
         <div className="flex items-start justify-between">
           <div>
@@ -5946,7 +5967,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
 
   return (
     <div className="relative">
-      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + CS2_ACCENT + "22, transparent 70%)" }} />
+      {/* glow removed */}
       <div className="relative px-4 pt-4 pb-2">
         <div className="flex items-start justify-between">
           <div>
@@ -6095,7 +6116,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
 
   return (
     <div className="relative">
-      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 0%, " + RL_ACCENT + "22, transparent 70%)" }} />
+      {/* glow removed */}
       <div className="relative px-4 pt-4 pb-2">
         <div className="flex items-start justify-between">
           <div>
@@ -7047,7 +7068,7 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         <button onClick={() => onClose()} className="rounded-full p-1.5" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
           <ArrowLeft size={18} color="#ccc" />
         </button>
-        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost || "Créer un post"}</h2>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.createPost}</h2>
         <div style={{ width: 34 }} />
       </div>
 
@@ -7678,7 +7699,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
           </div>
           <button onClick={onEditProfile} className="rounded-lg px-3 py-1.5" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
-            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit || "Modifier"}</span>
+            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit}</span>
           </button>
         </div>
 
@@ -8053,9 +8074,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-4">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "72px", background: "#000", boxShadow: "inset 0 0 0 1px rgba(191,155,48,0.4)", display: "block" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center", transform: "translateX(-3px)" }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.25) 75%, rgba(0,0,0,0.55) 100%)" }} />
+            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden mb-4 w-full" style={{ height: "76px", background: "#000", display: "block" }}>
+              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "calc(100% + 8px)", height: "calc(100% + 4px)", objectFit: "cover", objectPosition: "left center", marginLeft: "-4px", marginTop: "-2px" }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
                 <span style={{ color: "#bf9b30", fontSize: "12px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>{T.settingsRewards}</span>
@@ -8279,9 +8300,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-end" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "80%" }}>
-            <div className="relative rounded-t-3xl overflow-hidden" style={{ height: "120px" }}>
+        <div className="z-50 flex items-start justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingTop: 90 }} onClick={() => setShowRewards(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 120px)", width: "min(370px, 92%)" }}>
+            <div className="relative rounded-t-2xl overflow-hidden" style={{ height: "120px" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
@@ -8478,13 +8499,13 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   const chevStyle = { color: "#555", transition: "transform 0.2s" };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
+    <div style={{ position: "absolute", inset: 0, zIndex: 50 }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "85%", borderBottom: "1px solid #222" }}>
+        <div className="flex items-center justify-between px-5 pt-4 pb-3">
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
         </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1 }}>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ flex: 1, overscrollBehavior: "contain" }}>
 
           {/* COMPTE */}
           <div style={sectionStyle} className="mb-3">
@@ -8850,14 +8871,16 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
   const lang = LANGS.find((l) => l.code === currentLang);
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#000" }}>
-      <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
+    <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#0a0a0a" }}>
+      <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 52 }}>
         <span style={{ fontSize: "14px" }}>{lang.flag}</span>
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "30px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
-      <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818" }}>
+      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+        <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "30px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
+      </div>
+      <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 32 }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
       </button>
     </div>
@@ -8917,10 +8940,10 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
 
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
           {[
-            { icon: "🎯", title: "Pronostics", desc: "Prédit les scores série et par map" },
-            { icon: "⚡", title: "Scores live", desc: "Résultats en temps réel, map par map" },
-            { icon: "🏆", title: "Classement", desc: "Gagne des points, grimpe le leaderboard" },
-            { icon: "🔥", title: "Streak & Quêtes", desc: "Missions quotidiennes, série de jours" },
+            { icon: "🎯", title: T.featProno, desc: T.featPronoDesc },
+            { icon: "⚡", title: T.featLive, desc: T.featLiveDesc },
+            { icon: "🏆", title: T.featRank, desc: T.featRankDesc },
+            { icon: "🔥", title: T.featStreak, desc: T.featStreakDesc },
           ].map((f) => (
             <div key={f.title} style={{ display: "flex", alignItems: "center", gap: 14, background: "#0a0a0a", borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
               <span style={{ fontSize: 22, width: 36, textAlign: "center", flexShrink: 0 }}>{f.icon}</span>
@@ -8954,7 +8977,7 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
             marginBottom: 40, letterSpacing: "-0.01em",
           }}
         >
-          {canInstall ? "Continuer sur le web" : "Entrer"}
+          {canInstall ? T.continueWeb : T.enter}
         </button>
       </div>
     </div>
@@ -9101,12 +9124,12 @@ function AuthScreen({ onAuth }) {
       <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: "min(360px, 90%)" }}>
           <img src={SPLIT_LOGO} alt="Split" style={{ width: 60, height: 60, objectFit: "contain", margin: "0 auto 20px", display: "block" }} />
-          <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 900, textAlign: "center", marginBottom: 8 }}>Choisis ton pseudo</h2>
-          <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 24 }}>Visible par les autres joueurs</p>
+          <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 900, textAlign: "center", marginBottom: 8 }}>{T.choosePseudo}</h2>
+          <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 24 }}>{T.visibleToPlayers}</p>
           {error && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12, textAlign: "center" }}>{error}</div>}
           <input value={googlePseudo} onChange={e => { setGooglePseudo(e.target.value); setError(""); }} placeholder="Pseudo" style={{ width: "100%", background: "#111", border: "1px solid #333", borderRadius: 12, padding: "14px 16px", color: "#fff", fontSize: 14, marginBottom: 16, outline: "none", boxSizing: "border-box" }} />
           <button onClick={submitGooglePseudo} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
-            {loading ? "..." : "Confirmer"}
+            {loading ? "..." : T.confirm}
           </button>
         </div>
       </div>
@@ -9119,13 +9142,13 @@ function AuthScreen({ onAuth }) {
         <img src={SPLIT_LOGO} alt="Split" style={{ width: 70, height: 70, objectFit: "contain", margin: "0 auto 16px", display: "block" }} />
         <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 900, textAlign: "center", marginBottom: 4 }}>SPLIT</h1>
         <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 32 }}>
-          {mode === "login" ? "Connecte-toi pour retrouver tes pronostics" : "Crée ton compte et commence à jouer"}
+          {mode === "login" ? T.authLoginDesc : T.authRegisterDesc}
         </p>
 
         <div style={{ display: "flex", background: "#111", borderRadius: 10, padding: 3, marginBottom: 24 }}>
           {["login", "register"].map(m => (
             <button key={m} onClick={() => { setMode(m); setError(""); }} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", background: mode === m ? "#1a1a1a" : "transparent", color: mode === m ? "#fff" : "#666", transition: "all 0.15s" }}>
-              {m === "login" ? "Connexion" : "Inscription"}
+              {m === "login" ? T.authLogin : T.authRegister}
             </button>
           ))}
         </div>
@@ -9146,25 +9169,25 @@ function AuthScreen({ onAuth }) {
 
         <div style={{ position: "relative", marginBottom: 20 }}>
           <Lock size={16} color="#555" style={{ position: "absolute", left: 14, top: 15 }} />
-          <input value={password} onChange={e => { setPassword(e.target.value); setError(""); }} placeholder="Mot de passe" type={showPw ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "14px 44px 14px 40px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+          <input value={password} onChange={e => { setPassword(e.target.value); setError(""); }} placeholder={T.authPassword} type={showPw ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} style={{ width: "100%", background: "#111", border: "1px solid #222", borderRadius: 12, padding: "14px 44px 14px 40px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
           <button onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: 12, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             {showPw ? <EyeOff size={16} color="#555" /> : <Eye size={16} color="#555" />}
           </button>
         </div>
 
         <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", marginBottom: 16, opacity: loading ? 0.6 : 1 }}>
-          {loading ? "..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+          {loading ? "..." : mode === "login" ? T.authSignIn : T.authCreateAccount}
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1, height: 1, background: "#222" }} />
-          <span style={{ color: "#555", fontSize: 11, fontWeight: 600 }}>ou</span>
+          <span style={{ color: "#555", fontSize: 11, fontWeight: 600 }}>{T.authOr}</span>
           <div style={{ flex: 1, height: 1, background: "#222" }} />
         </div>
 
         <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 16 }} />
         {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
-          <p style={{ color: "#333", fontSize: 10, textAlign: "center", marginBottom: 40 }}>Google Sign-In non configuré</p>
+          <p style={{ color: "#333", fontSize: 10, textAlign: "center", marginBottom: 40 }}>{T.authGoogleNA}</p>
         )}
 
       </div>
@@ -10247,11 +10270,11 @@ export default function ClutchApp() {
   }
 
   const navItems = [
-    { key: "home", label: T.navHome, Icon: Home },
-    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 34 },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 34 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 24 },
-    { key: "classement", label: T.navClassement, Icon: Trophy },
+    { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 22 },
+    { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
 
   return (
@@ -10275,10 +10298,10 @@ export default function ClutchApp() {
             <p style={{ color: "#666", fontSize: 12, fontWeight: 500, marginTop: 6, marginBottom: 32, textAlign: "center" }}>Voici ce qui t'attend</p>
             <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 36 }}>
               {[
-                { icon: "🎯", title: "Pronostics", desc: "Prédit les scores série et par map" },
-                { icon: "⚡", title: "Scores live", desc: "Résultats en temps réel, map par map" },
-                { icon: "🏆", title: "Classement", desc: "Gagne des points, grimpe le leaderboard" },
-                { icon: "🔥", title: "Streak & Quêtes", desc: "Missions quotidiennes, série de jours" },
+                { icon: "🎯", title: T.featProno, desc: T.featPronoDesc },
+                { icon: "⚡", title: T.featLive, desc: T.featLiveDesc },
+                { icon: "🏆", title: T.featRank, desc: T.featRankDesc },
+                { icon: "🔥", title: T.featStreak, desc: T.featStreakDesc },
               ].map((f) => (
                 <div key={f.title} style={{ display: "flex", alignItems: "center", gap: 14, background: "#0a0a0a", borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
                   <span style={{ fontSize: 22, width: 36, textAlign: "center", flexShrink: 0 }}>{f.icon}</span>
@@ -10457,20 +10480,20 @@ export default function ClutchApp() {
         <div className="flex items-stretch justify-around" style={{ background: "#000", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
             const active = activeTab === item.key;
-            const labelColor = active ? "#fff" : "#6b6b6b";
+            const labelColor = active ? "#ddd" : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => {
                 if (appCreatePost) { setPendingTabSwitch(item.key); setShowDraftPrompt(true); return; }
                 doTabSwitch(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
-                <div style={{ height: "34px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                <div style={{ height: "30px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {item.img ? (
-                    <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 1 : 0.42, transition: "opacity 0.15s" }} />
+                    <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 0.9 : 0.38, transition: "opacity 0.15s" }} />
                   ) : (
-                    <item.Icon size={24} color={labelColor} strokeWidth={2.2} />
+                    <item.Icon size={item.iconSize || 22} color={labelColor} strokeWidth={2.2} />
                   )}
                   {item.key === "home" && streak.current > 0 && (
-                    <span style={{ position: "absolute", top: -2, right: -8, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
+                    <span style={{ position: "absolute", top: 0, right: -4, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
                       <span style={{ fontSize: 8 }}>&#x1F525;</span>{streak.current}
                     </span>
                   )}
