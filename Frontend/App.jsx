@@ -2359,7 +2359,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const txtStW = hasBg ? { textShadow: bgSh } : {};
 
   return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
+    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #333", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "none" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-2">
@@ -2372,13 +2372,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: hasBg ? "#ccc" : "#888", fontWeight: 700 }}> • Playoffs</span>
             )}
-            {(() => {
-              const boLabel = bo >= 7 ? "BO7" : bo === 5 ? "BO5" : bo === 1 ? "BO1" : "BO3";
-              const boColor = bo >= 7 ? "#f87171" : bo === 5 ? "#e8a735" : bo === 1 ? "#888" : "#3B82F6";
-              return <span style={{ color: boColor, fontWeight: 800, fontSize: 9, border: `1px solid ${boColor}44`, borderRadius: 4, padding: "1px 5px", marginLeft: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>{boLabel}</span>;
-            })()}
           </span>
-          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "1px" }}>
+          {(() => {
+            const boLabel = bo >= 7 ? "BO7" : bo === 5 ? "BO5" : bo === 1 ? "BO1" : "BO3";
+            const boColor = bo >= 7 ? "#f87171" : bo === 5 ? "#e8a735" : bo === 1 ? "#888" : "#3B82F6";
+            return <span style={{ color: boColor, fontWeight: 800, fontSize: 9, border: `1px solid ${boColor}44`, borderRadius: 4, padding: "1px 5px", marginTop: 3, display: "inline-flex", alignItems: "center" }}>{boLabel}</span>;
+          })()}
+          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2390,7 +2390,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "14px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", marginTop: 3, ...txtSt }}
+              style={{ color: "#ff3b3b", fontSize: "14px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", textDecoration: "none", ...txtSt }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
@@ -2454,14 +2454,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <button
               onClick={openLiveYT}
               className="flex items-center gap-1.5"
-              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic", marginTop: 3 }}
+              style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}
             >
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
             </button>
           )
         ) : finished ? (
-          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", marginTop: 6 }}>{T.calendarDone}</span>
+          <span style={{ color: "#666", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{T.calendarDone}</span>
         ) : (
           <button onClick={(e) => { e.stopPropagation(); onToggleNotif && onToggleNotif(match.id, notifActive); }} style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
             {notifActive ? (
@@ -6165,6 +6165,9 @@ function RlBracketPage({ onBack, T, predictions }) {
         m("rl-po-u1", "Karmine Corp", 4, "Virtus.pro", 2),
         m("rl-po-u2", "FUT Esports", 4, "NRG", 3),
       ]},
+      { name: "Upper Semifinals", matches: [
+        m("rl-po-u3", "Karmine Corp", null, "FUT Esports", null, "not_started"),
+      ]},
     ],
     lower: [
       { name: "Lower Round 1", matches: [
@@ -6179,11 +6182,13 @@ function RlBracketPage({ onBack, T, predictions }) {
       ]},
       { name: "Lower Quarterfinals", matches: [
         m("rl-po-l7", "Team Falcons", null, "NRG", null, "not_started"),
-        m("rl-po-l8", "Virtus.pro", null, "Spacestation Gaming", null, "not_started"),
+        m("rl-po-l8", "Spacestation Gaming", null, "Virtus.pro", null, "not_started"),
       ]},
       { name: "Lower Semifinals", matches: [
-        m("rl-po-l9", "Karmine Corp", null, "TBD", null, "not_started"),
-        m("rl-po-l10", "FUT Esports", null, "TBD", null, "not_started"),
+        tbdMatch("rl-po-l9"),
+      ]},
+      { name: "Lower Final", matches: [
+        tbdMatch("rl-po-l10"),
       ]},
     ],
     grand_final: [
@@ -6193,9 +6198,9 @@ function RlBracketPage({ onBack, T, predictions }) {
 
   const renderBracketSection = (bracket) => (
     <div style={{ padding: "0 16px" }}>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} isPlayoffs predictions={predictions} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" isPlayoffs bracketType="lower" predictions={predictions} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={T.bracketQualified} predictions={predictions} />}
+      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} predictions={predictions} />}
+      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
+      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" predictions={predictions} />}
     </div>
   );
 
@@ -10481,7 +10486,7 @@ export default function ClutchApp() {
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
     { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
     { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 30, imgStyle: { marginTop: -10 } },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 28 },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
 
