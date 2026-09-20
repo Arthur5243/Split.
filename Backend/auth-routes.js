@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId } from "./social-store.js";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount } from "./social-store.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "split-secret-change-me";
@@ -112,6 +112,10 @@ router.get("/api/auth/me", (req, res) => {
   const user = getUser(payload.sub);
   if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
   res.json({ id: user.id, pseudo: user.pseudo, email: user.email, avatar: user.avatar, provider: user.provider });
+});
+
+router.get("/api/auth/count", (_req, res) => {
+  res.json({ count: getUserCount() });
 });
 
 export default router;

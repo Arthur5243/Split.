@@ -2300,7 +2300,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const sameRegion = team1RegionCode && team2RegionCode && team1RegionCode === team2RegionCode;
   const showRegion1 = !sameRegion && team1RegionColor;
   const showRegion2 = !sameRegion && team2RegionColor;
-  const regionsAboveLogo = gameType === "cs2" || (match.league && /champions|masters|lock.in/i.test(match.league));
+  const regionsAboveLogo = gameType === "cs2" || gameType === "rl" || (match.league && /champions|masters|lock.in/i.test(match.league));
   const gameLabel = gameType === "rl" ? "rocket league" : gameType === "cs2" ? "counter strike 2" : "valorant";
   const cs2KickUrl = (() => {
     if (gameType !== "cs2" || !finished) return null;
@@ -2362,7 +2362,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : "1px solid #333", position: "relative" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
-      <div className="flex items-start justify-between px-4 pt-2">
+      <div className="flex items-center justify-between px-4 pt-2">
         <div>
           <span style={{ color: accent, fontSize: "11.5px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
             {match.matchTier && (
@@ -2487,7 +2487,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             {regionsAboveLogo && showRegion1 && (
-              <span style={{ background: team1RegionColor, color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3 }}>{team1RegionCode}</span>
+              <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team1RegionCode}</span>
             )}
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
@@ -2545,7 +2545,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         <div className="flex items-center gap-2 flex-row-reverse">
           <div className="flex flex-col items-center gap-0.5">
             {regionsAboveLogo && showRegion2 && (
-              <span style={{ background: team2RegionColor, color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3 }}>{team2RegionCode}</span>
+              <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team2RegionCode}</span>
             )}
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
@@ -4334,7 +4334,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       {/* Circles row: notif + news label + quests */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", transform: "translate(-2px, 4px)" }}>
+          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
             <Bell size={14} color="#888" />
           </button>
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
@@ -5894,12 +5894,20 @@ const REGIONS_RL = [
   { key: "EUROPE", accent: "#4A90D9" },
   { key: "AMERICAS", accent: "#FF5A1F" },
   { key: "OCEANIA", accent: "#1DE9D8" },
+  { key: "MENA", accent: "#E8A735" },
+  { key: "SAM", accent: "#22C55E" },
+  { key: "APAC", accent: "#A855F7" },
+  { key: "SSA", accent: "#F97316" },
 ];
 
 function regionLabelRL(key, T) {
-  if (key === "EUROPE") return T.rlRegionEurope;
-  if (key === "AMERICAS") return T.rlRegionAmericas;
-  if (key === "OCEANIA") return T.rlRegionOceania;
+  if (key === "EUROPE") return T.rlRegionEurope || "Europe";
+  if (key === "AMERICAS") return T.rlRegionAmericas || "Americas";
+  if (key === "OCEANIA") return T.rlRegionOceania || "Oceania";
+  if (key === "MENA") return "MENA";
+  if (key === "SAM") return "SAM";
+  if (key === "APAC") return "APAC";
+  if (key === "SSA") return "SSA";
   return key;
 }
 
@@ -5911,7 +5919,11 @@ function regionCodeRL(key) {
   if (key === "EUROPE") return "EU";
   if (key === "AMERICAS") return "AM";
   if (key === "OCEANIA") return "OC";
-  return "";
+  if (key === "MENA") return "ME";
+  if (key === "SAM") return "SA";
+  if (key === "APAC") return "AP";
+  if (key === "SSA") return "AF";
+  return key ? key.slice(0, 2).toUpperCase() : "";
 }
 
 function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
@@ -6119,33 +6131,60 @@ function RlBracketPage({ onBack, T, predictions }) {
 
   const tbdMatch = (id) => ({ match_id: id, team1: { name: "TBD", score: null }, team2: { name: "TBD", score: null }, status: "not_started" });
 
+  const m = (id, t1, s1, t2, s2, status = "finished") => ({ match_id: id, team1: { name: t1, score: s1 }, team2: { name: t2, score: s2 }, status });
+
   const playInBracket = {
     upper: [
-      { name: "Upper Round 1", matches: [tbdMatch("rl-pi-u1"), tbdMatch("rl-pi-u2"), tbdMatch("rl-pi-u3"), tbdMatch("rl-pi-u4")] },
-      { name: "Upper Semifinals", matches: [tbdMatch("rl-pi-u5"), tbdMatch("rl-pi-u6")] },
-      { name: "Upper Final", matches: [tbdMatch("rl-pi-u7")] },
+      { name: "Upper Round 1", matches: [
+        m("rl-pi-u1", "Virtus.pro", 3, "Bigodes", 0),
+        m("rl-pi-u2", "Five Fears", 0, "Mate y Tapa", 3),
+        m("rl-pi-u3", "Team Falcons", 3, "FUT Esports", 1),
+        m("rl-pi-u4", "TSM", 2, "R8 Esports", 3),
+      ]},
+      { name: "Upper Semifinals", matches: [
+        m("rl-pi-u5", "Virtus.pro", 3, "Mate y Tapa", 1),
+        m("rl-pi-u6", "Team Falcons", 3, "R8 Esports", 1),
+      ]},
     ],
     lower: [
-      { name: "Lower Round 1", matches: [tbdMatch("rl-pi-l1"), tbdMatch("rl-pi-l2")] },
-      { name: "Lower Round 2", matches: [tbdMatch("rl-pi-l3"), tbdMatch("rl-pi-l4")] },
-      { name: "Lower Final", matches: [tbdMatch("rl-pi-l5")] },
+      { name: "Lower Round 1", matches: [
+        m("rl-pi-l1", "Bigodes", 3, "Five Fears", 1),
+        m("rl-pi-l2", "TSM", 1, "FUT Esports", 3),
+      ]},
+      { name: "Lower Semifinals", matches: [
+        m("rl-pi-l3", "Bigodes", 3, "R8 Esports", 2),
+        m("rl-pi-l4", "Mate y Tapa", 0, "FUT Esports", 3),
+      ]},
     ],
-    grand_final: [
-      { name: "Grand Final", matches: [tbdMatch("rl-pi-gf")] },
-    ],
+    grand_final: [],
   };
 
   const playoffsBracket = {
     upper: [
-      { name: "Upper Round 1", matches: [tbdMatch("rl-po-u1"), tbdMatch("rl-po-u2"), tbdMatch("rl-po-u3"), tbdMatch("rl-po-u4")] },
-      { name: "Upper Semifinals", matches: [tbdMatch("rl-po-u5"), tbdMatch("rl-po-u6")] },
-      { name: "Upper Final", matches: [tbdMatch("rl-po-u7")] },
+      { name: "Upper Quarterfinals", matches: [
+        m("rl-po-u1", "Karmine Corp", 4, "Virtus.pro", 2),
+        m("rl-po-u2", "FUT Esports", 4, "NRG", 3),
+      ]},
     ],
     lower: [
-      { name: "Lower Round 1", matches: [tbdMatch("rl-po-l1"), tbdMatch("rl-po-l2")] },
-      { name: "Lower Round 2", matches: [tbdMatch("rl-po-l3"), tbdMatch("rl-po-l4")] },
-      { name: "Lower Semifinals", matches: [tbdMatch("rl-po-l5"), tbdMatch("rl-po-l6")] },
-      { name: "Lower Final", matches: [tbdMatch("rl-po-l7")] },
+      { name: "Lower Round 1", matches: [
+        m("rl-po-l1", "Man City Esports", 2, "Gentle Mates", 4),
+        m("rl-po-l2", "Team Falcons", 4, "FURIA", 1),
+        m("rl-po-l3", "Twisted Minds", 2, "Spacestation Gaming", 4),
+        m("rl-po-l4", "Shopify Rebellion", 4, "Team Vitality", 1),
+      ]},
+      { name: "Lower Round 2", matches: [
+        m("rl-po-l5", "Gentle Mates", 2, "Spacestation Gaming", 4),
+        m("rl-po-l6", "Team Falcons", 4, "Shopify Rebellion", 1),
+      ]},
+      { name: "Lower Quarterfinals", matches: [
+        m("rl-po-l7", "Team Falcons", null, "NRG", null, "not_started"),
+        m("rl-po-l8", "Virtus.pro", null, "Spacestation Gaming", null, "not_started"),
+      ]},
+      { name: "Lower Semifinals", matches: [
+        m("rl-po-l9", "Karmine Corp", null, "TBD", null, "not_started"),
+        m("rl-po-l10", "FUT Esports", null, "TBD", null, "not_started"),
+      ]},
     ],
     grand_final: [
       { name: "Grand Final", matches: [tbdMatch("rl-po-gf")] },
@@ -7807,11 +7846,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [socialStats, setSocialStats] = useState(null);
   const [eqBadgeTick, setEqBadgeTick] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [lbLoaded, setLbLoaded] = useState(false);
   const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
   const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
-  const registeredCount = leaderboard.length;
+  const [registeredCount, setRegisteredCount] = useState(0);
+  useEffect(() => {
+    fetch(API_BASE + "/api/auth/count").then(r => r.json()).then(d => { if (d.count != null) setRegisteredCount(d.count); }).catch(() => {});
+  }, []);
   const showCreatePost = appCreatePost;
   const setShowCreatePost = setAppCreatePost;
   const postPrefill = appPostPrefill;
@@ -7836,7 +7879,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     }
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) setLeaderboard(d);
-    }).catch(() => {});
+      setLbLoaded(true);
+    }).catch(() => { setLbLoaded(true); });
     fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
       if (Array.isArray(d)) setNexusPosts(d);
     }).catch(() => {});
@@ -8267,7 +8311,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   </button>
                 </div>
               )}
-              {profile && (() => {
+              {profile && !lbLoaded && (
+                <div className="flex justify-center pt-10">
+                  <div style={{ width: 24, height: 24, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#CCF71D", animation: "splashRing 0.9s linear infinite" }} />
+                </div>
+              )}
+              {profile && lbLoaded && (() => {
                 function getUserPtsForFilter(u) {
                   if (scoreCats.includes("tout")) return u.points;
                   let t = 0;
@@ -8459,10 +8508,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-start justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingTop: 90 }} onClick={() => setShowRewards(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 120px)", width: "min(370px, 92%)" }}>
+        <div className="z-50 flex items-end justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 48 }} onClick={() => setShowRewards(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 120px)", width: "min(370px, 92%)", transform: "translateX(-1px)" }}>
             <div className="relative rounded-t-2xl overflow-hidden" style={{ height: "120px" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+              <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -8658,13 +8707,11 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   const chevStyle = { color: "#555", transition: "transform 0.2s" };
 
   return (
-    <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50 }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full overflow-hidden" style={{ background: "#111", borderBottom: "1px solid #222" }}>
-        <div className="flex items-center justify-between px-5 pt-4 pb-3">
-          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
-          <button onClick={onClose}><X size={20} color="#999" /></button>
-        </div>
-        <div className="overflow-y-auto no-scrollbar px-5 pb-6" style={{ maxHeight: "calc(85vh - 100px)", overscrollBehavior: "contain" }}>
+    <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50, background: "#111", display: "flex", flexDirection: "column" }}>
+      <div className="flex items-center justify-between px-5 pt-4 pb-3">
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
+      </div>
+      <div className="overflow-y-auto no-scrollbar px-5 pb-6 flex-1" style={{ overscrollBehavior: "contain" }}>
 
           {/* COMPTE */}
           <div style={sectionStyle} className="mb-3">
@@ -8795,7 +8842,6 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
           </div>
 
         </div>
-      </div>
     </div>
   );
 }
@@ -9071,6 +9117,7 @@ function ScrollToTopButton({ visible, onClick }) {
 }
 
 function LandingPage({ onEnter, onInstall, canInstall }) {
+  const T = STR.fr;
   return (
     <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>
       <div style={{ width: "min(390px, 100%)", padding: "0 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -9216,6 +9263,7 @@ function AuthScreen({ onAuth }) {
   const [showPw, setShowPw] = useState(false);
   const [googlePseudo, setGooglePseudo] = useState("");
   const [googleCred, setGoogleCred] = useState(null);
+  const T = STR.fr;
 
   const API = import.meta.env.VITE_API_BASE || "";
 
@@ -9458,12 +9506,7 @@ export default function ClutchApp() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
   useEffect(() => {
-    if (showAuth || showIntroCards) return;
-    initAdMob();
-    if (adShownRef.current) return;
-    const delay = (120 + Math.random() * 60) * 1000;
-    adTimerRef.current = setTimeout(() => triggerAd(), delay);
-    return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
+    // Ads temporarily disabled
   }, [showAuth, showIntroCards, triggerAd]);
   useEffect(() => {
     if (streak.justExpired) {
@@ -9485,6 +9528,7 @@ export default function ClutchApp() {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
     if (tab === "__close__") return;
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
+    setShowSettings(false); setShowNotifs(false);
     tabSwitchCountRef.current++;
     setActiveTab(tab);
   }
@@ -9520,12 +9564,16 @@ export default function ClutchApp() {
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [currentLang, setCurrentLang] = useState("fr");
-  const [notifGames, setNotifGames] = useState({
-    valorant: { on: false, regions: {}, stages: {} },
-    cs2: { on: false, regions: {}, stages: {} },
-    rl: { on: false, regions: {}, stages: {} },
+  const [notifGames, setNotifGames] = useState(() => {
+    try { const s = JSON.parse(localStorage.getItem("split_notif_games")); if (s) return s; } catch {}
+    return { valorant: { on: false, regions: {}, stages: {} }, cs2: { on: false, regions: {}, stages: {} }, rl: { on: false, regions: {}, stages: {} } };
   });
-  const [matchNotifOverrides, setMatchNotifOverrides] = useState({});
+  const [matchNotifOverrides, setMatchNotifOverrides] = useState(() => {
+    try { const s = JSON.parse(localStorage.getItem("split_notif_overrides")); if (s) return s; } catch {}
+    return {};
+  });
+  useEffect(() => { try { localStorage.setItem("split_notif_games", JSON.stringify(notifGames)); } catch {} }, [notifGames]);
+  useEffect(() => { try { localStorage.setItem("split_notif_overrides", JSON.stringify(matchNotifOverrides)); } catch {} }, [matchNotifOverrides]);
   const [favoriteTeam, setFavoriteTeam] = useState("");
   const [profile, setProfile] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_profile")); } catch { return null; }
@@ -10433,7 +10481,7 @@ export default function ClutchApp() {
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
     { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
     { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 30, imgStyle: { marginTop: -4 } },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 30, imgStyle: { marginTop: -10 } },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
 
@@ -10500,10 +10548,10 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings(true)} />
+        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
-        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
+        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", visibility: splashDone ? "visible" : "hidden" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -10735,7 +10783,7 @@ export default function ClutchApp() {
             </div>
           </div>
         )}
-        {showAd && <AdInterstitial onClose={() => setShowAd(false)} />}
+        {/* Ads temporarily disabled */}
       </div>
 
       <style>{`

@@ -200,6 +200,11 @@ export function generateUserId() {
   return crypto.randomUUID();
 }
 
+export function getUserCount() {
+  const row = db.prepare(`SELECT COUNT(*) as count FROM users`).get();
+  return row ? row.count : 0;
+}
+
 export function getUserByEmail(email) {
   return db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
 }
