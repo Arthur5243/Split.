@@ -932,7 +932,7 @@ function regionLabel(key, T) {
 // peut très bien opposer une équipe EUROPE à une équipe AMERICAS dans un
 // stage commun (Major, IEM, BLAST...).
 const REGIONS_CS2 = [
-  { key: "EUROPE", accent: "#F5D400" },
+  { key: "EUROPE", accent: "#3B82F6" },
   { key: "AMERICAS", accent: "#FF3B30" },
   { key: "ASIA", accent: "#34D058" },
 ];
@@ -4075,7 +4075,11 @@ const RANK_TIERS = [
   { name: "Infinite",      minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05 },
 ];
 
-function getUserRank(points, allUsersPoints) {
+function getUserRank(points, allUsersPoints, forceMax) {
+  if (forceMax) {
+    const top = RANK_TIERS[RANK_TIERS.length - 1];
+    return { ...top, label: top.name, progress: 1, nextPts: null };
+  }
   let tier = RANK_TIERS[0];
   for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
     if (points >= RANK_TIERS[i].minPts) { tier = RANK_TIERS[i]; break; }
@@ -4108,7 +4112,7 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} className="rounded-xl" style={{ background: rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
       {rank.logo === "unranked" ? (
-        <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+        <svg width="22" height="22" viewBox="0 0 48 48" fill="none" style={{ marginTop: -2 }}>
           <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinejoin="round"/>
           <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(156,163,175,0.12)"/>
           <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
@@ -4253,7 +4257,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
-        <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
+        <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -6183,13 +6187,18 @@ function RlBracketPage({ onBack, T, predictions }) {
         m("rl-po-l6", "Team Falcons", 4, "Shopify Rebellion", 1),
       ]},
       { name: "Lower Quarterfinals", matches: [
-        m("rl-po-l7", "Team Falcons", null, "NRG", null, "not_started"),
-        m("rl-po-l8", "Spacestation Gaming", null, "Virtus.pro", null, "not_started"),
+        m("rl-po-l7", "Virtus.pro", 0, "Spacestation Gaming", 4),
+        m("rl-po-l8", "NRG", 1, "Team Falcons", 4),
       ]},
     ],
     grand_final: [
-      { name: "Semifinals", matches: [tbdMatch("rl-po-s1"), tbdMatch("rl-po-s2")] },
-      { name: "Grand Final", matches: [tbdMatch("rl-po-gf")] },
+      { name: "Semifinals", matches: [
+        m("rl-po-s1", "FUT Esports", 2, "Spacestation Gaming", 4),
+        m("rl-po-s2", "Karmine Corp", 1, "Team Falcons", 4),
+      ]},
+      { name: "Grand Final", matches: [
+        m("rl-po-gf", "Spacestation Gaming", 0, "Team Falcons", 4),
+      ]},
     ],
   };
 
@@ -6903,6 +6912,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDism
 
   function addTextLayer() {
     setShowEmojiPicker(false);
+    setShowBgColors(false);
     if (editingTextId) { setEditingTextId(null); saveHistory(); return; }
     const id = Date.now();
     saveHistory();
@@ -7005,6 +7015,18 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDism
   }
   function handleUserImgTouchEnd() { userImgDragRef.current = null; userImgGestureRef.current = null; saveHistory(); }
 
+  function handleUserImgMouseDown(e, id) {
+    e.stopPropagation();
+    setSelectedUserImg(id); setSelectedSticker(null); setSelectedTextId(null);
+    const img = userImages.find(i => i.id === id);
+    if (!img) return;
+    const startX = e.clientX, startY = e.clientY, origX = img.x, origY = img.y;
+    const onMove = (ev) => { setUserImages(prev => prev.map(i => i.id === id ? { ...i, x: origX + (ev.clientX - startX), y: origY + (ev.clientY - startY) } : i)); };
+    const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); saveHistory(); };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "#0a0a0a", touchAction: "none", zIndex: 50 }}>
       <input ref={imgInputRef} type="file" accept="image/*" style={{ display: "none" }} onClick={e => { e.target.value = ""; }} onChange={handleAddImage} />
@@ -7083,6 +7105,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDism
         {userImages.map(ui => (
           <div key={ui.id} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) translate(${ui.x}px, ${ui.y}px) rotate(${ui.rot}deg) scale(${ui.scale})`, transformOrigin: "center center", cursor: "grab", zIndex: 1, outline: selectedUserImg === ui.id ? "2px solid #CCF71D" : "none", borderRadius: 8 }}
             onTouchStart={e => handleUserImgTouchStart(e, ui.id)} onTouchMove={handleUserImgTouchMove} onTouchEnd={handleUserImgTouchEnd}
+            onMouseDown={e => handleUserImgMouseDown(e, ui.id)}
             onClick={e => { e.stopPropagation(); setSelectedUserImg(ui.id); setSelectedSticker(null); setSelectedTextId(null); }}
           >
             <img src={ui.src} style={{ maxWidth: 200, maxHeight: 200, objectFit: "contain", pointerEvents: "none", borderRadius: 8 }} draggable={false} />
@@ -7129,7 +7152,7 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDism
       </div>
 
       {showEmojiPicker && (
-        <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, height: 200, background: "#111", borderTop: "1px solid #222", overflowY: "auto", padding: "8px 12px", zIndex: 4 }}>
+        <div style={{ position: "absolute", bottom: 80, left: 0, right: 0, height: 200, background: "#111", borderTop: "1px solid #222", overflowY: "auto", padding: "8px 12px", zIndex: 4, scrollbarWidth: "none", msOverflowStyle: "none" }} className="no-scrollbar">
           <div style={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             {ALL_EMOJIS.map((em, i) => (
               <button key={i} onClick={() => addSticker(em)} style={{ fontSize: 24, background: "none", border: "none", cursor: "pointer", padding: 4, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{em}</button>
@@ -7159,10 +7182,14 @@ function MatchCardEditor({ image, matchObj, onDone, onClose, onSaveDraft, onDism
       })()}
       {showBgColors && (
         <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, padding: "8px 16px", background: "transparent" }}>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto" }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", alignItems: "center" }}>
             {BG_COLORS.map(c => (
               <button key={c} onClick={() => { saveHistory(); setBgColor(c); setTimeout(saveHistory, 0); }} style={{ width: 28, height: 28, borderRadius: 14, background: c, border: bgColor === c ? "2px solid #CCF71D" : "2px solid #333", cursor: "pointer", flexShrink: 0 }} />
             ))}
+            <label style={{ width: 28, height: 28, borderRadius: 14, border: "2px dashed #555", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+              <span style={{ fontSize: 12, color: "#888", fontWeight: 900 }}>+</span>
+              <input type="color" value={bgColor} onChange={e => { saveHistory(); setBgColor(e.target.value); setTimeout(saveHistory, 0); }} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+            </label>
           </div>
         </div>
       )}
@@ -7842,7 +7869,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
@@ -8042,7 +8069,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {(() => {
           const allPts = leaderboard.map(u => u.points);
-          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
+          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
             <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
@@ -8258,7 +8285,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
               {(() => {
                 const allPts = leaderboard.map(u => u.points);
-                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined);
+                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo);
                 return (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
                     {rank.logo === "unranked" ? (
@@ -8729,7 +8756,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                   <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsEmail}</p>
                   <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#1e1e1e", border: "1px solid #222" }}>
                     <Mail size={14} color="#555" />
-                    <input value="—" readOnly className="flex-1" style={{ background: "transparent", color: "#666", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                    <input value={(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.email || profile?.email || "—"; } catch { return "—"; } })()} readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
                   </div>
                 </div>
                 <div className="mt-3">
@@ -8863,7 +8890,7 @@ function CalendarModal({ onClose, T, lang }) {
             <div key={item.key} className="flex gap-3 pb-5">
               <div className="flex flex-col items-center">
                 <div className="rounded-full" style={{ width: 10, height: 10, background: status === "done" ? "#444" : statusColor, marginTop: 4 }} />
-                {idx < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+                <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />
               </div>
               <div className="flex-1 pb-1">
                 <div className="flex items-center justify-between">
@@ -8903,6 +8930,15 @@ function CalendarModal({ onClose, T, lang }) {
             </div>
             );
           })}
+          <div className="flex gap-3 pb-5">
+            <div className="flex flex-col items-center">
+              <div className="rounded-full" style={{ width: 10, height: 10, background: "#555", marginTop: 4 }} />
+            </div>
+            <div className="flex-1 pb-1">
+              <span className="font-black" style={{ fontSize: "14px", color: "#555" }}>VCT 2027</span>
+              <p style={{ color: "#666", fontSize: "12px", fontStyle: "italic", marginTop: 4 }}>Le prochain calendrier arrive bientôt</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -9064,6 +9100,15 @@ function Cs2CalendarModal({ onClose, T, lang }) {
               </div>
             );
           })}
+          <div className="flex gap-3 pb-5">
+            <div className="flex flex-col items-center">
+              <div className="rounded-full" style={{ width: 10, height: 10, background: "#555", marginTop: 4 }} />
+            </div>
+            <div className="flex-1 pb-1">
+              <span className="font-black" style={{ fontSize: "14px", color: "#555" }}>CS2 2027</span>
+              <p style={{ color: "#666", fontSize: "12px", fontStyle: "italic", marginTop: 4 }}>Le prochain calendrier arrive bientôt</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -9481,6 +9526,13 @@ export default function ClutchApp() {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const isCaffioraDemo = authUser?.email === "caffiora.official@gmail.com";
+  useEffect(() => {
+    if (isCaffioraDemo) {
+      setUserPoints(1789);
+      setUserXp(51000);
+    }
+  }, [isCaffioraDemo]);
   const [showIntroCards, setShowIntroCards] = useState(false);
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
@@ -9543,6 +9595,26 @@ export default function ClutchApp() {
   const [splashFading, setSplashFading] = useState(false);
   const [matchesReady, setMatchesReady] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  useEffect(() => {
+    const notifs = [];
+    for (const m of liveMatches) {
+      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
+    }
+    for (const m of cs2LiveMatches) {
+      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
+    }
+    for (const m of rlLiveMatches) {
+      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
+    }
+    const upcoming = [...upcomingMatches.slice(0, 2), ...cs2UpcomingMatches.slice(0, 2), ...rlUpcomingMatches.slice(0, 1)];
+    for (const m of upcoming) {
+      notifs.push({ type: "info", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} commence bientôt` });
+    }
+    if (notifs.length === 0) {
+      notifs.push({ type: "info", message: "Aucun match en cours — reviens bientôt !" });
+    }
+    setNotifications(notifs);
+  }, [liveMatches, cs2LiveMatches, rlLiveMatches, upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
 
   useEffect(() => {
     localStorage.setItem("split_predictions", JSON.stringify(predictions));
@@ -10009,11 +10081,12 @@ export default function ClutchApp() {
     const tMax = setTimeout(() => { setSplashFading(true); setTimeout(() => setSplashDone(true), 500); }, 3500);
     return () => { clearTimeout(t1); clearTimeout(tMax); clearInterval(retry); };
   }, [splashDone]);
+  const allDataReady = matchesReady && !cs2DataLoading && !rlDataLoading;
   useEffect(() => {
-    if (splashDone || splashFading || !matchesReady || !splashMinDone) return;
+    if (splashDone || splashFading || !allDataReady || !splashMinDone) return;
     setSplashFading(true);
     setTimeout(() => setSplashDone(true), 500);
-  }, [matchesReady, splashMinDone, splashDone, splashFading]);
+  }, [allDataReady, splashMinDone, splashDone, splashFading]);
 
   useEffect(() => {
     const allMatches = [...upcomingMatches, ...liveMatches, ...resultsMatches, ...cs2UpcomingMatches, ...cs2LiveMatches, ...cs2ResultsMatches, ...rlUpcomingMatches, ...rlLiveMatches, ...rlResultsMatches];
@@ -10138,8 +10211,21 @@ export default function ClutchApp() {
       if (pts > 0) history.push({ id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day });
     }
     history.sort((a, b) => (b.day || "").localeCompare(a.day || ""));
+    if (isCaffioraDemo) {
+      const fakeHistory = [
+        { id: "demo1", game: "valo", pts: 5, team1: "Sentinels", team2: "Cloud9", day: "2026-09-20" },
+        { id: "demo2", game: "cs2", pts: 3, team1: "Natus Vincere", team2: "FaZe Clan", day: "2026-09-19" },
+        { id: "demo3", game: "valo", pts: 5, team1: "Fnatic", team2: "Team Liquid", day: "2026-09-18" },
+        { id: "demo4", game: "cs2", pts: 1, team1: "G2 Esports", team2: "Team Vitality", day: "2026-09-17" },
+        { id: "demo5", game: "valo", pts: 3, team1: "DRX", team2: "LOUD", day: "2026-09-16" },
+        { id: "demo6", game: "cs2", pts: 5, team1: "MOUZ", team2: "Team Spirit", day: "2026-09-15" },
+        { id: "demo7", game: "valo", pts: 1, team1: "Paper Rex", team2: "Gen.G", day: "2026-09-14" },
+        { id: "demo8", game: "cs2", pts: 3, team1: "Heroic", team2: "Astralis", day: "2026-09-13" },
+      ];
+      return { exact: 42, bon: 128, parie: 187, history: fakeHistory };
+    }
     return { exact, bon, parie, history };
-  }, [settledMatchIds, predictions, resultsMatches, cs2ResultsMatches]);
+  }, [settledMatchIds, predictions, resultsMatches, cs2ResultsMatches, isCaffioraDemo]);
 
   // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
   // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
@@ -10476,9 +10562,9 @@ export default function ClutchApp() {
 
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
-    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 31 },
-    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 28 },
+    { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 29 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 33 },
+    { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 26 },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
 
@@ -10634,7 +10720,7 @@ export default function ClutchApp() {
               setShowBracketPage={setShowRlBracketPage}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -10790,7 +10876,7 @@ export default function ClutchApp() {
         .dark-scroll::-webkit-scrollbar-track { background: transparent; }
         .dark-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         .dark-scroll { scrollbar-width: thin; scrollbar-color: #333 transparent; }
-        @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+        @keyframes pulseLive { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
         @keyframes bracketLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         @keyframes streakSlide { 0% { transform: translateX(-50%) translateY(-30px); opacity: 0; } 100% { transform: translateX(-50%) translateY(0); opacity: 1; } }
         @keyframes streakFade { 0% { opacity: 1; } 100% { opacity: 0; } }
