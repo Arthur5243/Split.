@@ -25,7 +25,7 @@
         } else if (isInstall) {
           window.__SPLIT_INSTALL_MODE = true;
         } else {
-          location.replace('https://download.splitapp.fr');
+          location.replace('/download');
         }
       })();
     </script>
@@ -45,7 +45,7 @@
               document.getElementById('installSpinner').style.display = 'none';
               setTimeout(function() { location.href = '/'; }, 1500);
             } else {
-              location.replace('https://download.splitapp.fr');
+              location.replace('/download');
             }
           });
         });
@@ -53,7 +53,7 @@
           navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
         setTimeout(function() {
-          if (!done) location.replace('https://download.splitapp.fr');
+          if (!done) location.replace('/download');
         }, 6000);
       }
     </script>

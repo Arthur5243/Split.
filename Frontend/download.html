@@ -174,7 +174,19 @@ btn.addEventListener('click', () => {
     document.getElementById('alreadyPopup').style.display = 'block';
     return;
   }
-  window.location.href = 'https://splitappli.up.railway.app/?install=1';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(r) {
+      deferredPrompt = null;
+      if (r.outcome === 'accepted') {
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+      }
+    });
+  } else {
+    window.location.href = '/?install=1';
+  }
 });
 </script>
 </body> </html>
