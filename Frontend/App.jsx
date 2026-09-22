@@ -4334,7 +4334,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       {/* Circles row: notif + news label + quests */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
+          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", marginLeft: -8, marginTop: -6 }}>
             <Bell size={14} color="#888" />
           </button>
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
@@ -6131,7 +6131,12 @@ function RlBracketPage({ onBack, T, predictions }) {
 
   const tbdMatch = (id) => ({ match_id: id, team1: { name: "TBD", score: null }, team2: { name: "TBD", score: null }, status: "not_started" });
 
-  const m = (id, t1, s1, t2, s2, status = "finished") => ({ match_id: id, team1: { name: t1, score: s1 }, team2: { name: t2, score: s2 }, status });
+  const m = (id, t1, s1, t2, s2, status = "finished") => {
+    const done = status === "finished" || status === "completed";
+    const w1 = done && s1 != null && s2 != null && s1 > s2;
+    const w2 = done && s1 != null && s2 != null && s2 > s1;
+    return { match_id: id, team1: { name: t1, score: s1, is_winner: w1 }, team2: { name: t2, score: s2, is_winner: w2 }, status };
+  };
 
   const playInBracket = {
     upper: [
@@ -6165,9 +6170,6 @@ function RlBracketPage({ onBack, T, predictions }) {
         m("rl-po-u1", "Karmine Corp", 4, "Virtus.pro", 2),
         m("rl-po-u2", "FUT Esports", 4, "NRG", 3),
       ]},
-      { name: "Upper Semifinals", matches: [
-        m("rl-po-u3", "Karmine Corp", null, "FUT Esports", null, "not_started"),
-      ]},
     ],
     lower: [
       { name: "Lower Round 1", matches: [
@@ -6184,14 +6186,9 @@ function RlBracketPage({ onBack, T, predictions }) {
         m("rl-po-l7", "Team Falcons", null, "NRG", null, "not_started"),
         m("rl-po-l8", "Spacestation Gaming", null, "Virtus.pro", null, "not_started"),
       ]},
-      { name: "Lower Semifinals", matches: [
-        tbdMatch("rl-po-l9"),
-      ]},
-      { name: "Lower Final", matches: [
-        tbdMatch("rl-po-l10"),
-      ]},
     ],
     grand_final: [
+      { name: "Semifinals", matches: [tbdMatch("rl-po-s1"), tbdMatch("rl-po-s2")] },
       { name: "Grand Final", matches: [tbdMatch("rl-po-gf")] },
     ],
   };
@@ -8282,8 +8279,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative rounded-xl overflow-hidden w-full" style={{ height: "76px", background: "#000", display: "block" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "contain", objectPosition: "center" }} />
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", background: "#000", display: "block", borderRadius: 14 }}>
+              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
@@ -8316,12 +8313,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   </button>
                 </div>
               )}
-              {profile && !lbLoaded && (
-                <div className="flex justify-center pt-10">
-                  <div style={{ width: 24, height: 24, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#CCF71D", animation: "splashRing 0.9s linear infinite" }} />
-                </div>
-              )}
-              {profile && lbLoaded && (() => {
+              {profile && (() => {
                 function getUserPtsForFilter(u) {
                   if (scoreCats.includes("tout")) return u.points;
                   let t = 0;
@@ -8513,9 +8505,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-end justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 48 }} onClick={() => setShowRewards(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 120px)", width: "min(370px, 92%)", transform: "translateX(-1px)" }}>
-            <div className="relative rounded-t-2xl overflow-hidden" style={{ height: "120px" }}>
+        <div className="z-50 flex items-end justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 24 }} onClick={() => setShowRewards(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 80px)", width: "min(370px, 92%)", transform: "translateX(-1px)", borderRadius: 20 }}>
+            <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
@@ -10485,7 +10477,7 @@ export default function ClutchApp() {
   const navItems = [
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
     { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 28 },
-    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 28 },
+    { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 31 },
     { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 28 },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
