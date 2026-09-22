@@ -146,20 +146,16 @@ letter-spacing:0.3px;
 </div>
 
  </div>
-<div id="openPopup" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);padding:24px;overflow-y:auto">
-  <div style="max-width:380px;margin:auto;margin-top:12vh;background:#111;border:1px solid #222;border-radius:18px;padding:28px 24px;text-align:center">
-    <div style="width:56px;height:56px;border-radius:50%;background:rgba(197,249,15,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#C5F90F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-    </div>
-    <h3 id="openTitle" style="color:#fff;font-size:18px;font-weight:800;margin:0 0 8px">Split est installé !</h3>
-    <p id="openSubtitle" style="color:#aaa;font-size:13px;margin:0 0 20px;line-height:1.5"></p>
-    <div id="openSteps" style="text-align:left;margin:0 0 22px;padding:0 4px"></div>
-    <a href="/" style="display:block;width:100%;padding:14px;background:var(--yellow);color:#000;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;text-align:center">
-      Ouvrir Split
-    </a>
-    <button onclick="document.getElementById('openPopup').style.display='none'" style="margin-top:12px;background:none;border:none;color:#666;font-size:12px;cursor:pointer">Fermer</button>
-  </div>
+<div id="arrowHint" style="display:none;position:fixed;top:8px;right:80px;z-index:1000;text-align:center;animation:bounce 1.5s infinite">
+  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#C5F90F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+  <div style="color:#C5F90F;font-size:12px;font-weight:700;margin-top:2px">Ouvrir l'app</div>
 </div>
+<style>
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+</style>
 <script>
 let deferredPrompt = null;
 const btn = document.getElementById('installBtn');
@@ -175,48 +171,14 @@ window.addEventListener('beforeinstallprompt', function(e) {
   deferredPrompt = e;
 });
 
-function showOpenPopup(justInstalled) {
-  var popup = document.getElementById('openPopup');
-  var title = document.getElementById('openTitle');
-  var subtitle = document.getElementById('openSubtitle');
-  var steps = document.getElementById('openSteps');
-
-  if (justInstalled) {
-    title.textContent = 'Split est installé !';
-    subtitle.textContent = 'L\'app est prête. Voici comment l\'ouvrir :';
-  } else {
-    title.textContent = 'Split est déjà installé';
-    subtitle.textContent = 'Ouvre l\'application depuis ton appareil :';
+setTimeout(function() {
+  if (!deferredPrompt && !isMobile) {
+    document.getElementById('arrowHint').style.display = 'block';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Déjà installé';
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
   }
-
-  if (isMobile) {
-    steps.innerHTML =
-      '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">' +
-        '<div style="min-width:28px;height:28px;border-radius:50%;background:var(--yellow);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">1</div>' +
-        '<p style="color:#ccc;font-size:13px;margin:0;line-height:1.5;padding-top:4px">Appuie sur les <b style="color:#fff">3 petits points ⋮</b> en haut à droite de Chrome</p>' +
-      '</div>' +
-      '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">' +
-        '<div style="min-width:28px;height:28px;border-radius:50%;background:var(--yellow);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">2</div>' +
-        '<p style="color:#ccc;font-size:13px;margin:0;line-height:1.5;padding-top:4px">Clique sur <b style="color:#fff">"Ouvrir dans Split"</b></p>' +
-      '</div>' +
-      '<div style="display:flex;align-items:flex-start;gap:12px">' +
-        '<div style="min-width:28px;height:28px;border-radius:50%;background:var(--yellow);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">3</div>' +
-        '<p style="color:#ccc;font-size:13px;margin:0;line-height:1.5;padding-top:4px">Ou retrouve <b style="color:#fff">Split</b> sur ton écran d\'accueil</p>' +
-      '</div>';
-  } else {
-    steps.innerHTML =
-      '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">' +
-        '<div style="min-width:28px;height:28px;border-radius:50%;background:var(--yellow);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">1</div>' +
-        '<p style="color:#ccc;font-size:13px;margin:0;line-height:1.5;padding-top:4px">Clique sur l\'icône <b style="color:#fff">⬆ dans la barre d\'adresse</b> de Chrome</p>' +
-      '</div>' +
-      '<div style="display:flex;align-items:flex-start;gap:12px">' +
-        '<div style="min-width:28px;height:28px;border-radius:50%;background:var(--yellow);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">2</div>' +
-        '<p style="color:#ccc;font-size:13px;margin:0;line-height:1.5;padding-top:4px">Ou cherche <b style="color:#fff">Split</b> dans tes applications installées</p>' +
-      '</div>';
-  }
-
-  popup.style.display = 'block';
-}
+}, 1500);
 
 btn.addEventListener('click', function() {
   if (deferredPrompt) {
@@ -227,11 +189,11 @@ btn.addEventListener('click', function() {
         btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
         btn.style.pointerEvents = 'none';
         btn.style.opacity = '0.7';
-        showOpenPopup(true);
+        if (!isMobile) {
+          document.getElementById('arrowHint').style.display = 'block';
+        }
       }
     });
-  } else {
-    showOpenPopup(false);
   }
 });
 </script>
