@@ -20,14 +20,41 @@
           || window.navigator.standalone === true;
         var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         var isInstall = location.search.indexOf('install=1') !== -1;
-        if (!isStandalone && !isDev && !isInstall) {
+        if (isInstall) {
+          window.__SPLIT_INSTALL_MODE = true;
+        } else if (!isStandalone && !isDev) {
           location.replace('/download');
         }
       })();
     </script>
   </head>
   <body style="margin:0;padding:0;background:#000;overflow:hidden">
+    <script>
+      if (window.__SPLIT_INSTALL_MODE) {
+        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;gap:20px"><img src="/split-logo.png" alt="Split" style="width:80px;height:80px;object-fit:contain"><div style="font-size:16px;font-weight:700">Installation en cours...</div><div style="width:28px;height:28px;border-radius:50%;border:3px solid #1a1a1a;border-top-color:#C4F000;animation:s .9s linear infinite"></div><style>@keyframes s{to{transform:rotate(360deg)}}</style></div>';
+        var dp = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          dp = e;
+          dp.prompt();
+          dp.userChoice.then(function(r) {
+            if (r.outcome === 'accepted') {
+              document.body.querySelector('div > div').textContent = 'Installé !';
+              setTimeout(function() { location.href = '/'; }, 1500);
+            } else {
+              location.replace('/download');
+            }
+          });
+        });
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        }
+        setTimeout(function() {
+          if (!dp) location.replace('/download');
+        }, 5000);
+      }
+    </script>
     <div id="root"></div>
-    <script type="module" src="/main.jsx"></script>
+    <script>if (!window.__SPLIT_INSTALL_MODE) { document.write('<script type="module" src="/main.jsx"><\/script>'); }</script>
   </body>
 </html>
