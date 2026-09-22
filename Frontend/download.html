@@ -163,8 +163,6 @@ letter-spacing:0.3px;
 <script>
 let deferredPrompt = null;
 const btn = document.getElementById('installBtn');
-const ua = navigator.userAgent;
-const isIOS = /iPad|iPhone|iPod/.test(ua);
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -186,38 +184,7 @@ btn.addEventListener('click', async () => {
       btn.style.pointerEvents = 'none';
       btn.style.opacity = '0.7';
     }
-    return;
-  }
-  if (isIOS) {
-    alert('Sur iPhone/iPad :\n1. Appuie sur Partager (⬆)\n2. "Sur l\'écran d\'accueil"\n3. Ajouter');
-    return;
-  }
-  // Fallback: try getInstalledRelatedApps API
-  if ('getInstalledRelatedApps' in navigator) {
-    try {
-      const apps = await navigator.getInstalledRelatedApps();
-      if (apps.length > 0) {
-        document.getElementById('alreadyPopup').style.display = 'block';
-        return;
-      }
-    } catch(e) {}
-  }
-  // Wait briefly for beforeinstallprompt (fires after page load on some browsers)
-  btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite"></span> Chargement...';
-  await new Promise(r => setTimeout(r, 1500));
-  if (deferredPrompt) {
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg> Installer l\'application';
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    if (outcome === 'accepted') {
-      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
-      btn.style.pointerEvents = 'none';
-      btn.style.opacity = '0.7';
-    }
   } else {
-    // Last resort: still no prompt available — redirect to app
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg> Installer l\'application';
     window.location.href = '/';
   }
 });
@@ -226,5 +193,4 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
 }
 </script>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </body> </html>
