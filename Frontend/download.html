@@ -185,7 +185,9 @@ btn.addEventListener('click', () => {
       }
     });
   } else {
-    window.location.href = '/?install=1';
+    btn.textContent = 'Ouvre cette page dans Chrome pour installer';
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
   }
 });
 </script>
