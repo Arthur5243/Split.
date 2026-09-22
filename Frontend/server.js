@@ -34,20 +34,6 @@ async function tryFile(filePath) {
 async function serve(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   let pathname = decodeURIComponent(url.pathname);
-  const host = (req.headers.host || "").split(":")[0];
-
-  // download.splitapp.fr → always serve download.html
-  if (host === "download.splitapp.fr") {
-    // block manifest + sw so PWA doesn't register on this subdomain
-    if (pathname === "/manifest.json" || pathname === "/sw.js") {
-      res.writeHead(404);
-      return res.end("Not Found");
-    }
-    const asset = await tryFile(join(DIST, pathname));
-    if (asset && pathname !== "/") return sendFile(res, asset);
-    return sendFile(res, join(DIST, "download.html"));
-  }
-
   // Try exact file
   let file = await tryFile(join(DIST, pathname));
   if (file) return sendFile(res, file);
