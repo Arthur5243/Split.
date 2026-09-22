@@ -34,11 +34,14 @@ async function tryFile(filePath) {
 async function serve(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   let pathname = decodeURIComponent(url.pathname);
+  const host = (req.headers.host || "").split(":")[0];
 
-  // /download → download.html
-  if (pathname === "/download" || pathname === "/download/") {
-    const file = await tryFile(join(DIST, "download.html"));
-    if (file) return sendFile(res, file);
+  // download.splitapp.fr → always serve download.html
+  if (host === "download.splitapp.fr") {
+    // still serve static assets (images, css, js, manifest, sw)
+    const asset = await tryFile(join(DIST, pathname));
+    if (asset && pathname !== "/") return sendFile(res, asset);
+    return sendFile(res, join(DIST, "download.html"));
   }
 
   // Try exact file
