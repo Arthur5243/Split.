@@ -20,9 +20,11 @@
           || window.navigator.standalone === true;
         var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         var isInstall = location.search.indexOf('install=1') !== -1;
-        if (isInstall) {
+        if (isStandalone || isDev) {
+          // app installed or dev → load normally
+        } else if (isInstall) {
           window.__SPLIT_INSTALL_MODE = true;
-        } else if (!isStandalone && !isDev) {
+        } else {
           location.replace('https://download.splitapp.fr');
         }
       })();
@@ -31,15 +33,16 @@
   <body style="margin:0;padding:0;background:#000;overflow:hidden">
     <script>
       if (window.__SPLIT_INSTALL_MODE) {
-        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;gap:20px"><img src="/split-logo.png" alt="Split" style="width:80px;height:80px;object-fit:contain"><div style="font-size:16px;font-weight:700">Installation en cours...</div><div style="width:28px;height:28px;border-radius:50%;border:3px solid #1a1a1a;border-top-color:#C4F000;animation:s .9s linear infinite"></div><style>@keyframes s{to{transform:rotate(360deg)}}</style></div>';
-        var dp = null;
+        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;color:#fff;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;gap:20px"><img src="/split-logo.png" alt="Split" style="width:80px;height:80px;object-fit:contain"><div id="installMsg" style="font-size:16px;font-weight:700">Installation en cours...</div><div id="installSpinner" style="width:28px;height:28px;border-radius:50%;border:3px solid #1a1a1a;border-top-color:#C4F000;animation:s .9s linear infinite"></div><style>@keyframes s{to{transform:rotate(360deg)}}</style></div>';
+        var done = false;
         window.addEventListener('beforeinstallprompt', function(e) {
           e.preventDefault();
-          dp = e;
-          dp.prompt();
-          dp.userChoice.then(function(r) {
+          done = true;
+          e.prompt();
+          e.userChoice.then(function(r) {
             if (r.outcome === 'accepted') {
-              document.body.querySelector('div > div:nth-child(2)').textContent = 'Installé !';
+              document.getElementById('installMsg').textContent = 'Installé !';
+              document.getElementById('installSpinner').style.display = 'none';
               setTimeout(function() { location.href = '/'; }, 1500);
             } else {
               location.replace('https://download.splitapp.fr');
@@ -50,8 +53,8 @@
           navigator.serviceWorker.register('/sw.js', { scope: '/' });
         }
         setTimeout(function() {
-          if (!dp) location.replace('https://download.splitapp.fr');
-        }, 5000);
+          if (!done) location.replace('https://download.splitapp.fr');
+        }, 6000);
       }
     </script>
     <div id="root"></div>
