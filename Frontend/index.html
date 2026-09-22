@@ -14,16 +14,6 @@
     <style>
       html, body, #root { background: #000 !important; margin: 0; padding: 0; height: 100%; }
     </style>
-    <script>
-      (function() {
-        var isStandalone = window.matchMedia('(display-mode: standalone)').matches
-          || window.navigator.standalone === true;
-        var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isStandalone && !isDev) {
-          location.replace('/download');
-        }
-      })();
-    </script>
   </head>
   <body style="margin:0;padding:0;background:#000;overflow:hidden">
     <div id="root"></div>
