@@ -146,10 +146,30 @@ letter-spacing:0.3px;
   </div>  
 </div>
 
- </div> <script>
+ </div>
+<div id="installGuide" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);padding:24px;overflow-y:auto">
+  <div style="max-width:400px;margin:60px auto 0;background:#111;border:1px solid #222;border-radius:18px;padding:28px 24px;position:relative">
+    <button onclick="document.getElementById('installGuide').style.display='none'" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1">&times;</button>
+    <h3 id="guideTitle" style="color:#fff;font-size:18px;font-weight:800;margin:0 0 18px;text-align:center"></h3>
+    <div id="guideSteps" style="color:#ccc;font-size:14px;line-height:1.8"></div>
+    <button onclick="window.location.href='/'" style="width:100%;margin-top:20px;padding:14px;background:var(--yellow);color:#000;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">
+      Continuer sur le web
+    </button>
+  </div>
+</div>
+<script>
 let deferredPrompt = null;
 const btn = document.getElementById('installBtn');
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const guideEl = document.getElementById('installGuide');
+const guideTitleEl = document.getElementById('guideTitle');
+const guideStepsEl = document.getElementById('guideSteps');
+const ua = navigator.userAgent;
+const isIOS = /iPad|iPhone|iPod/.test(ua);
+const isMac = /Macintosh/.test(ua);
+const isFirefox = /Firefox/.test(ua);
+const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+const isEdge = /Edg\//.test(ua);
+const isChrome = /Chrome/.test(ua) && !isEdge;
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -163,6 +183,12 @@ if (isStandalone) {
   btn.style.pointerEvents = 'none';
 }
 
+function showGuide(title, steps) {
+  guideTitleEl.textContent = title;
+  guideStepsEl.innerHTML = steps;
+  guideEl.style.display = 'block';
+}
+
 btn.addEventListener('click', async () => {
   if (deferredPrompt) {
     deferredPrompt.prompt();
@@ -174,9 +200,16 @@ btn.addEventListener('click', async () => {
       btn.style.opacity = '0.7';
     }
   } else if (isIOS) {
-    alert('Sur iPhone/iPad :\n1. Appuie sur le bouton Partager (⬆)\n2. Choisis "Sur l\'écran d\'accueil"\n3. Confirme avec "Ajouter"');
+    showGuide('Installer sur iPhone / iPad', '<p><b>1.</b> Appuie sur le bouton <b>Partager</b> ⬆ en bas de Safari</p><p><b>2.</b> Choisis <b>"Sur l\'écran d\'accueil"</b></p><p><b>3.</b> Appuie sur <b>Ajouter</b></p>');
+  } else if (isSafari && isMac) {
+    showGuide('Installer sur Mac (Safari)', '<p><b>1.</b> Dans la barre de menus, clique sur <b>Fichier</b></p><p><b>2.</b> Choisis <b>"Ajouter au Dock"</b></p><p>L\'app Split apparaîtra dans ton Dock !</p>');
+  } else if (isFirefox) {
+    showGuide('Installer sur Firefox', '<p>Firefox ne supporte pas encore l\'installation de PWA directement.</p><p><b>Astuce :</b> Ouvre cette page dans <b>Chrome</b> ou <b>Edge</b> pour l\'installer en un clic.</p><p>Ou ajoute-la en favori avec <b>Ctrl+D</b> pour un accès rapide.</p>');
+  } else if (isChrome || isEdge) {
+    var browser = isEdge ? 'Edge' : 'Chrome';
+    showGuide('Installer sur ' + browser, '<p><b>1.</b> Clique sur l\'icône <b>⋮</b> (menu) en haut à droite</p><p><b>2.</b> Choisis <b>"Installer Split"</b> ou <b>"Installer l\'application"</b></p><p><b>3.</b> Confirme l\'installation</p><p style="color:#888;font-size:12px;margin-top:12px">Tu peux aussi chercher l\'icône d\'installation dans la barre d\'adresse (à droite de l\'URL).</p>');
   } else {
-    window.location.href = '/';
+    showGuide('Installer Split', '<p>Ouvre cette page dans <b>Chrome</b> ou <b>Edge</b> pour installer l\'app en un clic.</p><p>Ou ajoute-la en favori pour un accès rapide.</p>');
   }
 });
 
