@@ -9595,6 +9595,21 @@ export default function ClutchApp() {
   const [splashFading, setSplashFading] = useState(false);
   const [matchesReady, setMatchesReady] = useState(false);
   const [notifications, setNotifications] = useState([]);
+
+  const [upcomingMatches, setUpcomingMatches] = useState([]);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [resultsMatches, setResultsMatches] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState(false);
+
+  const [cs2UpcomingMatches, setCs2UpcomingMatches] = useState([]);
+  const [cs2LiveMatches, setCs2LiveMatches] = useState([]);
+  const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
+
+  const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
+  const [rlLiveMatches, setRlLiveMatches] = useState([]);
+  const [rlResultsMatches, setRlResultsMatches] = useState([]);
+
   useEffect(() => {
     const notifs = [];
     for (const m of liveMatches) {
@@ -9774,21 +9789,9 @@ export default function ClutchApp() {
     return () => window.removeEventListener("split-create-post", onCreatePostNav);
   }, []);
 
-  const [upcomingMatches, setUpcomingMatches] = useState([]);
-  const [liveMatches, setLiveMatches] = useState([]);
-  const [resultsMatches, setResultsMatches] = useState([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [dataError, setDataError] = useState(false);
-
-  const [cs2UpcomingMatches, setCs2UpcomingMatches] = useState([]);
-  const [cs2LiveMatches, setCs2LiveMatches] = useState([]);
-  const [cs2ResultsMatches, setCs2ResultsMatches] = useState([]);
   const [cs2DataLoading, setCs2DataLoading] = useState(true);
   const [cs2DataError, setCs2DataError] = useState(false);
 
-  const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
-  const [rlLiveMatches, setRlLiveMatches] = useState([]);
-  const [rlResultsMatches, setRlResultsMatches] = useState([]);
   const [rlDataLoading, setRlDataLoading] = useState(true);
   const [rlDataError, setRlDataError] = useState(false);
 
