@@ -19,7 +19,8 @@
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches
           || window.navigator.standalone === true;
         var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isStandalone && !isDev) {
+        var isInstall = location.search.indexOf('install=1') !== -1;
+        if (!isStandalone && !isDev && !isInstall) {
           location.replace('/download');
         }
       })();

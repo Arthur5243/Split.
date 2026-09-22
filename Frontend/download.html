@@ -163,12 +163,10 @@ letter-spacing:0.3px;
 let deferredPrompt = null;
 const btn = document.getElementById('installBtn');
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-const originalBtnHTML = btn.innerHTML;
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  btn.innerHTML = originalBtnHTML;
 });
 
 btn.addEventListener('click', async () => {
@@ -186,22 +184,7 @@ btn.addEventListener('click', async () => {
       btn.style.opacity = '0.7';
     }
   } else {
-    btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #000;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite"></span> Chargement...';
-    await new Promise(r => setTimeout(r, 2000));
-    if (deferredPrompt) {
-      btn.innerHTML = originalBtnHTML;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      if (outcome === 'accepted') {
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
-        btn.style.pointerEvents = 'none';
-        btn.style.opacity = '0.7';
-      }
-    } else {
-      btn.innerHTML = originalBtnHTML;
-      document.getElementById('alreadyPopup').style.display = 'block';
-    }
+    window.location.href = '/?install=1';
   }
 });
 
@@ -209,5 +192,4 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
 }
 </script>
-<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 </body> </html>
