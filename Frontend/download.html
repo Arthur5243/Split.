@@ -169,27 +169,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
   deferredPrompt = e;
 });
 
-btn.addEventListener('click', async () => {
+btn.addEventListener('click', () => {
   if (isStandalone) {
     document.getElementById('alreadyPopup').style.display = 'block';
     return;
   }
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    if (outcome === 'accepted') {
-      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
-      btn.style.pointerEvents = 'none';
-      btn.style.opacity = '0.7';
-    }
-  } else {
-    window.location.href = '/?install=1';
-  }
+  window.location.href = 'https://splitappli.up.railway.app/?install=1';
 });
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-}
 </script>
 </body> </html>

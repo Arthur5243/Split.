@@ -38,7 +38,11 @@ async function serve(req, res) {
 
   // download.splitapp.fr → always serve download.html
   if (host === "download.splitapp.fr") {
-    // still serve static assets (images, css, js, manifest, sw)
+    // block manifest + sw so PWA doesn't register on this subdomain
+    if (pathname === "/manifest.json" || pathname === "/sw.js") {
+      res.writeHead(404);
+      return res.end("Not Found");
+    }
     const asset = await tryFile(join(DIST, pathname));
     if (asset && pathname !== "/") return sendFile(res, asset);
     return sendFile(res, join(DIST, "download.html"));
