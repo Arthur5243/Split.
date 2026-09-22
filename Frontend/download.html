@@ -146,16 +146,22 @@ letter-spacing:0.3px;
   </div>  
 </div>
 
-```
-
  </div> <script>
 let deferredPrompt = null;
 const btn = document.getElementById('installBtn');
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 });
+
+if (isStandalone) {
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Déjà installé';
+  btn.style.opacity = '0.7';
+  btn.style.pointerEvents = 'none';
+}
 
 btn.addEventListener('click', async () => {
   if (deferredPrompt) {
@@ -163,10 +169,12 @@ btn.addEventListener('click', async () => {
     const { outcome } = await deferredPrompt.userChoice;
     deferredPrompt = null;
     if (outcome === 'accepted') {
-      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Installé !';
       btn.style.pointerEvents = 'none';
       btn.style.opacity = '0.7';
     }
+  } else if (isIOS) {
+    alert('Sur iPhone/iPad :\n1. Appuie sur le bouton Partager (⬆)\n2. Choisis "Sur l\'écran d\'accueil"\n3. Confirme avec "Ajouter"');
   } else {
     window.location.href = '/';
   }
