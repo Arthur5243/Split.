@@ -3899,7 +3899,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       )}
 
       {openingChest && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.96)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           {chestPhase !== "spinning" && (
             <button onClick={() => { setOpeningChest(null); phaseRef.current = "idle"; }} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer", zIndex: 10 }}>
               <X size={22} color="#666" />
@@ -6217,9 +6217,8 @@ function RlBracketPage({ onBack, T, predictions }) {
     const lbQF = bracket.lower?.[2]?.matches || [];
     const semis = bracket.grand_final?.[0]?.matches || [];
     const gf = bracket.grand_final?.[1]?.matches || [];
-    const cols = [0, CW+CGAP, 2*(CW+CGAP), 3*(CW+CGAP), 4*(CW+CGAP)];
+    const cols = [0, CW+CGAP, 2*(CW+CGAP), 3*(CW+CGAP)];
     const ubBlockH = ubMatches.length * CH + (ubMatches.length - 1) * GAP;
-    const lbR1H = lbR1.length * CH + (lbR1.length - 1) * GAP;
     const ubTop = LH;
     const lbTop = ubTop + ubBlockH + 50;
     const lbR1Ys = lbR1.map((_, i) => lbTop + LH + i * (CH + GAP));
@@ -6230,13 +6229,15 @@ function RlBracketPage({ onBack, T, predictions }) {
       const lbR2Mid = lbR2Ys.length > i ? lbR2Ys[i] : lbTop + LH + i * (CH + GAP);
       return Math.max(ubBottom + i * (CH + GAP), lbR2Mid);
     });
-    const allQFYs = [...ubYs, ...lbQFYs];
     const semiY0 = (ubYs[0] + lbQFYs[0]) / 2;
     const semiY1 = (ubYs[ubYs.length > 1 ? 1 : 0] + lbQFYs[lbQFYs.length > 1 ? 1 : 0]) / 2;
     const semiYs = [semiY0, semiY1];
-    const gfY = (semiYs[0] + semiYs[1]) / 2 + 20;
-    const totalH = Math.max(gfY + CH + 40, lbR1Ys[lbR1Ys.length - 1] + CH + 40, lbQFYs[lbQFYs.length - 1] + CH + 40);
-    const totalW = cols[4] + CW;
+    const mergeX = cols[3] + CW + 25;
+    const bottomMost = Math.max(semiYs[1] + CH, lbR1Ys[lbR1Ys.length - 1] + CH, lbQFYs[lbQFYs.length - 1] + CH);
+    const gfY = bottomMost + 50 + LH;
+    const gfX = cols[3];
+    const totalH = gfY + CH + 40;
+    const totalW = mergeX + 20;
     const accentDim = accent + "55";
     const paths = [];
     ubMatches.forEach((_, i) => {
@@ -6268,19 +6269,18 @@ function RlBracketPage({ onBack, T, predictions }) {
       if (Math.abs(py - sy) < 2) paths.push(`M ${x1} ${py} H ${x2}`);
       else { const d = sy > py ? 1 : -1; paths.push(`M ${x1} ${py} H ${mid-CR} Q ${mid} ${py} ${mid} ${py+d*CR} V ${sy-d*CR} Q ${mid} ${sy} ${mid+CR} ${sy} H ${x2}`); }
     });
-    semis.forEach((_, i) => {
-      const x1 = cols[3] + CW, x2 = cols[4], mid = (x1+x2)/2;
-      const py = semiYs[i] + CH/2, gy = gfY + CH/2;
-      if (Math.abs(py - gy) < 2) paths.push(`M ${x1} ${py} H ${x2}`);
-      else { const d = gy > py ? 1 : -1; paths.push(`M ${x1} ${py} H ${mid-CR} Q ${mid} ${py} ${mid} ${py+d*CR} V ${gy-d*CR} Q ${mid} ${gy} ${mid+CR} ${gy} H ${x2}`); }
-    });
+    const s0y = semiYs[0] + CH/2, s1y = semiYs[1] + CH/2;
+    const sMergeY = (s0y + s1y) / 2;
+    paths.push(`M ${cols[3]+CW} ${s0y} H ${mergeX-CR} Q ${mergeX} ${s0y} ${mergeX} ${s0y+CR} V ${sMergeY}`);
+    paths.push(`M ${cols[3]+CW} ${s1y} H ${mergeX-CR} Q ${mergeX} ${s1y} ${mergeX} ${s1y-CR} V ${sMergeY}`);
+    paths.push(`M ${mergeX} ${sMergeY} V ${gfY+CH/2-CR} Q ${mergeX} ${gfY+CH/2} ${mergeX-CR} ${gfY+CH/2} H ${gfX+CW}`);
     const labels = [
       { x: cols[0], y: lbTop, text: "Lower Round 1" },
       { x: cols[1], y: lbTop, text: "Lower Round 2" },
       { x: cols[2], y: 0, text: "Upper Bracket QF" },
       { x: cols[2], y: lbTop, text: "Lower Bracket QF" },
       { x: cols[3], y: 0, text: "Semifinals" },
-      { x: cols[4], y: 0, text: "Grand Final" },
+      { x: gfX, y: gfY - LH + 4, text: "Grand Final" },
     ];
     const renderCard = (match, x, y) => (
       <div key={match.match_id} style={{ position: "absolute", left: x, top: y, width: CW }}>
@@ -6294,14 +6294,14 @@ function RlBracketPage({ onBack, T, predictions }) {
             {paths.map((d, i) => <path key={i} d={d} fill="none" stroke={accentDim} strokeWidth={1.5} />)}
           </svg>
           {labels.map((l, i) => (
-            <div key={i} style={{ position: "absolute", left: l.x, top: l.y, width: CW, textAlign: "center", fontSize: 8, fontWeight: 800, color: "#666", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>{l.text}</div>
+            <div key={i} style={{ position: "absolute", left: l.x, top: l.y, width: CW, textAlign: "center", fontSize: 8, fontWeight: 800, color: i === labels.length - 1 ? "#FFD700" : "#666", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>{l.text}</div>
           ))}
           {ubMatches.map((m, i) => renderCard(m, cols[2], ubYs[i]))}
           {lbR1.map((m, i) => renderCard(m, cols[0], lbR1Ys[i]))}
           {lbR2.map((m, i) => renderCard(m, cols[1], lbR2Ys[i]))}
           {lbQF.map((m, i) => renderCard(m, cols[2], lbQFYs[i]))}
           {semis.map((m, i) => renderCard(m, cols[3], semiYs[i]))}
-          {gf.map((m, i) => renderCard(m, cols[4], gfY))}
+          {gf.map((m, i) => renderCard(m, gfX, gfY))}
         </div>
       </div>
     );
@@ -6626,84 +6626,86 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   ];
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#000", display: "flex", flexDirection: "column" }}>
-      <div style={{ flexShrink: 0, padding: "16px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <div key={i} style={{ width: i === step ? 24 : 8, height: 4, borderRadius: 2, background: i <= step ? "#CCF71D" : "#333", transition: "all 0.3s" }} />
-          ))}
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={profile?.pseudo ? onClose : undefined}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(370px, 92%)", maxHeight: "85vh", background: "#0a0a0a", border: "1px solid #222", borderRadius: 24, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flexShrink: 0, padding: "16px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", gap: 6 }}>
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div key={i} style={{ width: i === step ? 24 : 8, height: 4, borderRadius: 2, background: i <= step ? "#CCF71D" : "#333", transition: "all 0.3s" }} />
+            ))}
+          </div>
+          {profile?.pseudo && <button onClick={onClose} style={{ background: "#222", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button>}
         </div>
-        {profile?.pseudo && <button onClick={onClose} style={{ background: "#222", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button>}
-      </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", flexDirection: "column" }} className="no-scrollbar">
-        <p style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>{T.profileStep || "Étape"} {step + 1}/{totalSteps}</p>
-        <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 900, marginBottom: 24 }}>{stepTitles[step]}</h2>
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", flexDirection: "column" }} className="no-scrollbar">
+          <p style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>{T.profileStep || "Étape"} {step + 1}/{totalSteps}</p>
+          <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 900, marginBottom: 24 }}>{stepTitles[step]}</h2>
 
-        {step === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flex: 1, justifyContent: "center" }}>
-            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #222" }}>
-              <span style={{ fontSize: 36 }}>👋</span>
+          {step === 0 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flex: 1, justifyContent: "center", padding: "20px 0" }}>
+              <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #222" }}>
+                <span style={{ fontSize: 36 }}>👋</span>
+              </div>
+              <p style={{ color: "#aaa", fontSize: 14, textAlign: "center", lineHeight: 1.5, maxWidth: 280 }}>
+                {T.profileWelcomeDesc || "Configure ton profil en quelques étapes. Tu pourras tout modifier plus tard."}
+              </p>
             </div>
-            <p style={{ color: "#aaa", fontSize: 14, textAlign: "center", lineHeight: 1.5, maxWidth: 280 }}>
-              {T.profileWelcomeDesc || "Configure ton profil en quelques étapes. Tu pourras tout modifier plus tard."}
-            </p>
-          </div>
-        )}
+          )}
 
-        {step === 1 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <button onClick={() => fileRef.current?.click()} style={{ width: 90, height: 90, borderRadius: "50%", background: "#111", border: "2px solid #222", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={30} color="#555" />}
-              </button>
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
-              <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>{T.profileAvatar}</p>
+          {step === 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <button onClick={() => fileRef.current?.click()} style={{ width: 90, height: 90, borderRadius: "50%", background: "#111", border: "2px solid #222", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={30} color="#555" />}
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+                <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>{T.profileAvatar}</p>
+              </div>
+              <div>
+                <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
+                <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#111", border: "1px solid #222", color: "#fff", fontSize: 14, borderRadius: 12, padding: "12px 14px", width: "100%", outline: "none", marginTop: 6, boxSizing: "border-box" }} />
+                {pseudo.trim().length > 0 && pseudo.trim().length < 2 && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>Min. 2 caractères</p>}
+              </div>
             </div>
-            <div>
-              <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
-              <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#111", border: "1px solid #222", color: "#fff", fontSize: 14, borderRadius: 12, padding: "12px 14px", width: "100%", outline: "none", marginTop: 6, boxSizing: "border-box" }} />
-              {pseudo.trim().length > 0 && pseudo.trim().length < 2 && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>Min. 2 caractères</p>}
-            </div>
-          </div>
-        )}
+          )}
 
-        {step === 2 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
-              <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
-              {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
+          {step === 2 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
+                <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
+                {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
+              </div>
+              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
+              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
+              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
             </div>
-            <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
-            <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
-            <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
-          </div>
-        )}
+          )}
 
-        {step === 3 && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, flex: 1, justifyContent: "center" }}>
-            <div style={{ width: 70, height: 70, borderRadius: "50%", overflow: "hidden", background: "#111", border: "2px solid #222", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} color="#555" />}
+          {step === 3 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "20px 0" }}>
+              <div style={{ width: 70, height: 70, borderRadius: "50%", overflow: "hidden", background: "#111", border: "2px solid #222", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} color="#555" />}
+              </div>
+              <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>{pseudo}</p>
+              {bio && <p style={{ color: "#888", fontSize: 12, textAlign: "center" }}>{bio}</p>}
+              <p style={{ color: "#555", fontSize: 12, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
+                {T.profileReadyDesc || "Ton profil est prêt. Tu peux le modifier à tout moment depuis le classement."}
+              </p>
             </div>
-            <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>{pseudo}</p>
-            {bio && <p style={{ color: "#888", fontSize: 12, textAlign: "center" }}>{bio}</p>}
-            <p style={{ color: "#555", fontSize: 12, textAlign: "center", maxWidth: 260, lineHeight: 1.5 }}>
-              {T.profileReadyDesc || "Ton profil est prêt. Tu peux le modifier à tout moment depuis le classement."}
-            </p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <div style={{ flexShrink: 0, padding: "12px 20px 24px", display: "flex", gap: 10 }}>
-        {step > 0 && (
-          <button onClick={() => setStep(step - 1)} style={{ flex: 1, background: "#1a1a1a", color: "#aaa", border: "1px solid #333", borderRadius: 12, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-            {T.profileBack || "Retour"}
+        <div style={{ flexShrink: 0, padding: "12px 20px 20px", display: "flex", gap: 10 }}>
+          {step > 0 && (
+            <button onClick={() => setStep(step - 1)} style={{ flex: 1, background: "#1a1a1a", color: "#aaa", border: "1px solid #333", borderRadius: 12, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+              {T.profileBack || "Retour"}
+            </button>
+          )}
+          <button onClick={() => { if (step < totalSteps - 1) setStep(step + 1); else handleSave(); }} disabled={!canNext} style={{ flex: step > 0 ? 2 : 1, background: canNext ? "#CCF71D" : "#333", color: canNext ? "#000" : "#666", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: canNext ? "pointer" : "default" }}>
+            {step < totalSteps - 1 ? (T.profileNext || "Suivant") : (T.profileSave)}
           </button>
-        )}
-        <button onClick={() => { if (step < totalSteps - 1) setStep(step + 1); else handleSave(); }} disabled={!canNext} style={{ flex: step > 0 ? 2 : 1, background: canNext ? "#CCF71D" : "#333", color: canNext ? "#000" : "#666", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: canNext ? "pointer" : "default" }}>
-          {step < totalSteps - 1 ? (T.profileNext || "Suivant") : (T.profileSave)}
-        </button>
+        </div>
       </div>
     </div>
   );
@@ -7966,7 +7968,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
@@ -8016,30 +8018,82 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     if (appCreatePost) setCarouselSlide(1);
   }, [appCreatePost]);
 
+  const [editMode, setEditMode] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [editAvatar, setEditAvatar] = useState(null);
+  const [editFavValo, setEditFavValo] = useState("");
+  const [editFavCs2, setEditFavCs2] = useState("");
+  const [editFavRl, setEditFavRl] = useState("");
+  const editFileRef = useRef(null);
+
+  function startEdit() {
+    setEditBio(profile?.bio || "");
+    setEditAvatar(profile?.avatar || null);
+    setEditFavValo(profile?.favTeams?.valo || "");
+    setEditFavCs2(profile?.favTeams?.cs2 || "");
+    setEditFavRl(profile?.favTeams?.rl || "");
+    setEditMode(true);
+  }
+
+  function saveEdit() {
+    if (onSaveProfile) {
+      onSaveProfile({ ...profile, bio: editBio.trim(), avatar: editAvatar, favTeams: { valo: editFavValo, cs2: editFavCs2, rl: editFavRl } });
+    }
+    setEditMode(false);
+  }
+
+  function handleEditFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    resizeImage(file, 128, (dataUrl) => setEditAvatar(dataUrl));
+  }
+
   if (profileView && profile) {
     const { exact, bon, parie, history } = profileStats;
+    const displayBio = editMode ? editBio : profile.bio;
+    const displayAvatar = editMode ? editAvatar : profile.avatar;
+    const displayFavValo = editMode ? editFavValo : (profile.favTeams?.valo || "");
+    const displayFavCs2 = editMode ? editFavCs2 : (profile.favTeams?.cs2 || "");
+    const displayFavRl = editMode ? editFavRl : (profile.favTeams?.rl || "");
     return (
       <div className="px-4 pt-6 pb-6">
+        <input ref={editFileRef} type="file" accept="image/*" onChange={handleEditFile} style={{ display: "none" }} />
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => setProfileView(false)} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+            <button onClick={() => { setProfileView(false); setEditMode(false); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
               <ArrowLeft size={18} color="#ccc" />
             </button>
             <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
           </div>
-          <button onClick={onEditProfile} className="rounded-lg px-3 py-1.5" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
-            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit}</span>
-          </button>
+          {editMode ? (
+            <div className="flex gap-2">
+              <button onClick={() => setEditMode(false)} className="rounded-lg px-3 py-1.5" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
+                <span style={{ color: "#888", fontSize: 11, fontWeight: 700 }}>{T.profileBack || "Annuler"}</span>
+              </button>
+              <button onClick={saveEdit} className="rounded-lg px-3 py-1.5" style={{ background: "#CCF71D", border: "none" }}>
+                <span style={{ color: "#000", fontSize: 11, fontWeight: 800 }}>{T.profileSave || "Sauvegarder"}</span>
+              </button>
+            </div>
+          ) : (
+            <button onClick={startEdit} className="rounded-lg px-3 py-1.5" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+              <span style={{ color: "#ccc", fontSize: 11, fontWeight: 700 }}>{T.profileEdit}</span>
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-4 mb-4">
-          <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 72, height: 72, background: "#1e1e1e", border: "2px solid #333", flexShrink: 0 }}>
-            {profile.avatar ? (
-              <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <button onClick={editMode ? () => editFileRef.current?.click() : undefined} style={{ width: 72, height: 72, background: "#1e1e1e", border: editMode ? "2px solid #CCF71D" : "2px solid #333", borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: editMode ? "pointer" : "default", position: "relative", padding: 0 }}>
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <User size={32} color="#555" />
             )}
-          </div>
+            {editMode && (
+              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Camera size={20} color="#fff" />
+              </div>
+            )}
+          </button>
           <div className="flex-1 flex justify-around text-center">
             <button onClick={() => { setShowFriendModal(true); setFriendModalTab("followers"); }} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{socialStats ? socialStats.followers : "–"}</p>
@@ -8056,7 +8110,11 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         </div>
 
-        {profile.bio && <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{profile.bio}</p>}
+        {editMode ? (
+          <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={80} rows={2} placeholder={T.profileBio || "Ajouter une bio..."} style={{ background: "#111", border: "1px solid #CCF71D40", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginBottom: 12, boxSizing: "border-box" }} />
+        ) : (
+          displayBio ? <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{displayBio}</p> : null
+        )}
 
         {(() => {
           const ebId = localStorage.getItem("split_equipped_badge_id") || "";
@@ -8078,13 +8136,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           );
         })()}
 
-        {(profile.favTeams?.valo || profile.favTeams?.cs2 || profile.favTeams?.rl) && (
+        {editMode ? (
+          <div className="mb-3" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
+            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} />
+            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} />
+            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} />
+          </div>
+        ) : (displayFavValo || displayFavCs2 || displayFavRl) && (
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
             <div className="flex gap-2 flex-wrap">
-              {profile.favTeams.valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {profile.favTeams.valo}</span>}
-              {profile.favTeams.cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {profile.favTeams.cs2}</span>}
-              {profile.favTeams.rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {profile.favTeams.rl}</span>}
+              {displayFavValo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {displayFavValo}</span>}
+              {displayFavCs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {displayFavCs2}</span>}
+              {displayFavRl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {displayFavRl}</span>}
             </div>
           </div>
         )}
@@ -10830,7 +10895,7 @@ export default function ClutchApp() {
               setShowBracketPage={setShowRlBracketPage}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
