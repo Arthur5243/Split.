@@ -6202,13 +6202,110 @@ function RlBracketPage({ onBack, T, predictions }) {
     ],
   };
 
-  const renderBracketSection = (bracket) => (
-    <div style={{ padding: "0 16px" }}>
-      {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} predictions={predictions} />}
-      {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
-      {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" predictions={predictions} />}
-    </div>
-  );
+  const renderBracketSection = (bracket, isPlayoffs) => {
+    if (!isPlayoffs) return (
+      <div style={{ padding: "0 16px" }}>
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper} labelColor={accent} predictions={predictions} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" predictions={predictions} />}
+      </div>
+    );
+    const CW = 190, CH = 58, GAP = 14, CGAP = 40, LH = 26, CR = 8;
+    const ubMatches = bracket.upper?.[0]?.matches || [];
+    const lbR1 = bracket.lower?.[0]?.matches || [];
+    const lbR2 = bracket.lower?.[1]?.matches || [];
+    const lbQF = bracket.lower?.[2]?.matches || [];
+    const semis = bracket.grand_final?.[0]?.matches || [];
+    const gf = bracket.grand_final?.[1]?.matches || [];
+    const cols = [0, CW+CGAP, 2*(CW+CGAP), 3*(CW+CGAP), 4*(CW+CGAP)];
+    const ubBlockH = ubMatches.length * CH + (ubMatches.length - 1) * GAP;
+    const lbR1H = lbR1.length * CH + (lbR1.length - 1) * GAP;
+    const ubTop = LH;
+    const lbTop = ubTop + ubBlockH + 50;
+    const lbR1Ys = lbR1.map((_, i) => lbTop + LH + i * (CH + GAP));
+    const lbR2Ys = lbR2.map((_, i) => (lbR1Ys[i*2] + lbR1Ys[i*2+1]) / 2);
+    const ubYs = ubMatches.map((_, i) => ubTop + i * (CH + GAP));
+    const lbQFYs = lbQF.map((_, i) => {
+      const ubBottom = ubYs[ubYs.length - 1] + CH + 30;
+      const lbR2Mid = lbR2Ys.length > i ? lbR2Ys[i] : lbTop + LH + i * (CH + GAP);
+      return Math.max(ubBottom + i * (CH + GAP), lbR2Mid);
+    });
+    const allQFYs = [...ubYs, ...lbQFYs];
+    const semiY0 = (ubYs[0] + lbQFYs[0]) / 2;
+    const semiY1 = (ubYs[ubYs.length > 1 ? 1 : 0] + lbQFYs[lbQFYs.length > 1 ? 1 : 0]) / 2;
+    const semiYs = [semiY0, semiY1];
+    const gfY = (semiYs[0] + semiYs[1]) / 2 + 20;
+    const totalH = Math.max(gfY + CH + 40, lbR1Ys[lbR1Ys.length - 1] + CH + 40, lbQFYs[lbQFYs.length - 1] + CH + 40);
+    const totalW = cols[4] + CW;
+    const accentDim = accent + "55";
+    const paths = [];
+    ubMatches.forEach((_, i) => {
+      const x1 = cols[2] + CW, x2 = cols[3], mid = (x1+x2)/2;
+      const y = ubYs[i] + CH/2, sy = semiYs[i] + CH/2;
+      if (Math.abs(y - sy) < 2) paths.push(`M ${x1} ${y} H ${x2}`);
+      else { const d = sy > y ? 1 : -1; paths.push(`M ${x1} ${y} H ${mid-CR} Q ${mid} ${y} ${mid} ${y+d*CR} V ${sy-d*CR} Q ${mid} ${sy} ${mid+CR} ${sy} H ${x2}`); }
+    });
+    lbR1.forEach((_, i) => {
+      if (i % 2 === 0 && lbR2Ys[Math.floor(i/2)] !== undefined) {
+        const x1 = cols[0] + CW, x2 = cols[1], mid = (x1+x2)/2;
+        const tY = lbR1Ys[i] + CH/2, bY = lbR1Ys[i+1] + CH/2, mY = (tY+bY)/2;
+        paths.push(`M ${x1} ${tY} H ${mid-CR} Q ${mid} ${tY} ${mid} ${tY+CR} V ${mY}`);
+        paths.push(`M ${x1} ${bY} H ${mid-CR} Q ${mid} ${bY} ${mid} ${bY-CR} V ${mY}`);
+        paths.push(`M ${mid} ${mY} H ${x2}`);
+      }
+    });
+    lbR2.forEach((_, i) => {
+      if (lbQFYs[i] !== undefined) {
+        const x1 = cols[1] + CW, x2 = cols[2], mid = (x1+x2)/2;
+        const py = lbR2Ys[i] + CH/2, cy = lbQFYs[i] + CH/2;
+        if (Math.abs(py - cy) < 2) paths.push(`M ${x1} ${py} H ${x2}`);
+        else { const d = cy > py ? 1 : -1; paths.push(`M ${x1} ${py} H ${mid-CR} Q ${mid} ${py} ${mid} ${py+d*CR} V ${cy-d*CR} Q ${mid} ${cy} ${mid+CR} ${cy} H ${x2}`); }
+      }
+    });
+    lbQF.forEach((_, i) => {
+      const x1 = cols[2] + CW, x2 = cols[3], mid = (x1+x2)/2;
+      const py = lbQFYs[i] + CH/2, sy = semiYs[i] + CH/2;
+      if (Math.abs(py - sy) < 2) paths.push(`M ${x1} ${py} H ${x2}`);
+      else { const d = sy > py ? 1 : -1; paths.push(`M ${x1} ${py} H ${mid-CR} Q ${mid} ${py} ${mid} ${py+d*CR} V ${sy-d*CR} Q ${mid} ${sy} ${mid+CR} ${sy} H ${x2}`); }
+    });
+    semis.forEach((_, i) => {
+      const x1 = cols[3] + CW, x2 = cols[4], mid = (x1+x2)/2;
+      const py = semiYs[i] + CH/2, gy = gfY + CH/2;
+      if (Math.abs(py - gy) < 2) paths.push(`M ${x1} ${py} H ${x2}`);
+      else { const d = gy > py ? 1 : -1; paths.push(`M ${x1} ${py} H ${mid-CR} Q ${mid} ${py} ${mid} ${py+d*CR} V ${gy-d*CR} Q ${mid} ${gy} ${mid+CR} ${gy} H ${x2}`); }
+    });
+    const labels = [
+      { x: cols[0], y: lbTop, text: "Lower Round 1" },
+      { x: cols[1], y: lbTop, text: "Lower Round 2" },
+      { x: cols[2], y: 0, text: "Upper Bracket QF" },
+      { x: cols[2], y: lbTop, text: "Lower Bracket QF" },
+      { x: cols[3], y: 0, text: "Semifinals" },
+      { x: cols[4], y: 0, text: "Grand Final" },
+    ];
+    const renderCard = (match, x, y) => (
+      <div key={match.match_id} style={{ position: "absolute", left: x, top: y, width: CW }}>
+        <BracketMatchCard match={match} accent={accent} prediction={predictions && predictions[match.match_id]} />
+      </div>
+    );
+    return (
+      <div style={{ padding: "0 16px" }}>
+        <div style={{ position: "relative", width: totalW, height: totalH, minWidth: totalW }}>
+          <svg style={{ position: "absolute", inset: 0, width: totalW, height: totalH, pointerEvents: "none" }}>
+            {paths.map((d, i) => <path key={i} d={d} fill="none" stroke={accentDim} strokeWidth={1.5} />)}
+          </svg>
+          {labels.map((l, i) => (
+            <div key={i} style={{ position: "absolute", left: l.x, top: l.y, width: CW, textAlign: "center", fontSize: 8, fontWeight: 800, color: "#666", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>{l.text}</div>
+          ))}
+          {ubMatches.map((m, i) => renderCard(m, cols[2], ubYs[i]))}
+          {lbR1.map((m, i) => renderCard(m, cols[0], lbR1Ys[i]))}
+          {lbR2.map((m, i) => renderCard(m, cols[1], lbR2Ys[i]))}
+          {lbQF.map((m, i) => renderCard(m, cols[2], lbQFYs[i]))}
+          {semis.map((m, i) => renderCard(m, cols[3], semiYs[i]))}
+          {gf.map((m, i) => renderCard(m, cols[4], gfY))}
+        </div>
+      </div>
+    );
+  };
 
   if (!phase) {
     return (
@@ -6249,7 +6346,7 @@ function RlBracketPage({ onBack, T, predictions }) {
         {backBtn()}
         <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>RLCS — {phaseLabel}</span>
       </div>
-      {renderBracketSection(bracket)}
+      {renderBracketSection(bracket, phase === "playoffs")}
     </div>
   );
 }
