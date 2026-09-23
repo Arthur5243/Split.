@@ -1,4 +1,4 @@
-const CACHE_NAME = "split-v6";
+const CACHE_NAME = "split-v7";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">
@@ -64,19 +64,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
-    if (request.url.includes("/download")) {
-      event.respondWith(fetch(request).catch(() => caches.match("/_offline")));
-      return;
-    }
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match("/_offline"))
-    );
+    event.respondWith(fetch(request).catch(() => caches.match("/_offline")));
     return;
   }
 
