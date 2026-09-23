@@ -1,4 +1,4 @@
-const CACHE_NAME = "split-v3";
+const CACHE_NAME = "split-v4";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">
@@ -64,6 +64,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
+    if (request.url.includes("/download")) {
+      event.respondWith(fetch(request).catch(() => caches.match("/_offline")));
+      return;
+    }
     event.respondWith(
       fetch(request)
         .then((response) => {
