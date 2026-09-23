@@ -1,4 +1,4 @@
-const CACHE_NAME = "split-v4";
+const CACHE_NAME = "split-v5";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">
