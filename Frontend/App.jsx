@@ -4517,14 +4517,15 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType, padStart }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
+  const pad = padStart || 0;
   const ROUND_RENAME = { "upper quarterfinals": "Upper Round 1", "upper semifinals": "Upper Semifinals", "upper final": "Upper Final", "lower round 1": "Lower Round 1", "lower round 2": "Lower Round 2", "lower round 3": "Lower Round 3", "lower round 4": "Lower Round 4", "lower final": "Lower Final" };
   if (isPlayoffs) rounds = rounds.map(r => ({ ...r, name: ROUND_RENAME[r.name.toLowerCase()] || r.name }));
 
   const showQ = qualifiedLabel != null;
-  const numCols = rounds.length + (showQ ? 1 : 0);
+  const numCols = rounds.length + pad + (showQ ? 1 : 0);
 
   const maxMatches = Math.max(...rounds.map((r) => r.matches.length));
   const slotH = CARD_H + BASE_GAP;
@@ -4562,8 +4563,8 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
   for (let ri = 1; ri < rounds.length; ri++) {
     const pCount = rounds[ri - 1].matches.length;
     const cCount = rounds[ri].matches.length;
-    const x1 = (ri - 1) * (CARD_W + COL_GAP) + CARD_W;
-    const x2 = ri * (CARD_W + COL_GAP);
+    const x1 = (ri - 1 + pad) * (CARD_W + COL_GAP) + CARD_W;
+    const x2 = (ri + pad) * (CARD_W + COL_GAP);
     const xMid = (x1 + x2) / 2;
 
     if (pCount === 2 * cCount) {
@@ -4605,8 +4606,8 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
   if (showQ && !qualifiedIsLabel) {
     const lastRi = rounds.length - 1;
     const qCol = rounds.length;
-    const x1 = lastRi * (CARD_W + COL_GAP) + CARD_W;
-    const x2 = qCol * (CARD_W + COL_GAP);
+    const x1 = (lastRi + pad) * (CARD_W + COL_GAP) + CARD_W;
+    const x2 = (qCol + pad) * (CARD_W + COL_GAP);
     for (let mi = 0; mi < rounds[lastRi].matches.length; mi++) {
       const y = yPositions[lastRi][mi] + CARD_H / 2 + LABEL_H;
       svgPaths.push(`M ${x1} ${y} H ${x2}`);
@@ -4643,14 +4644,14 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
         {rounds.map((round, ri) => (
           <React.Fragment key={ri}>
             <div style={{
-              position: "absolute", left: ri * (CARD_W + COL_GAP), top: 0, width: CARD_W,
+              position: "absolute", left: (ri + pad) * (CARD_W + COL_GAP), top: 0, width: CARD_W,
               textAlign: "center", fontSize: 9, fontWeight: 800,
               color: "#666", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap",
             }}>
               {round.name}
             </div>
             {round.matches.map((m, mi) => (
-              <div key={m.match_id || mi} style={{ position: "absolute", left: ri * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
+              <div key={m.match_id || mi} style={{ position: "absolute", left: (ri + pad) * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
                 <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} onLiveClick={onLiveClick} />
               </div>
             ))}
@@ -4659,7 +4660,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
         {showQ && qualifiedIsLabel && (
           <>
             <div style={{
-              position: "absolute", left: rounds.length * (CARD_W + COL_GAP), top: 0, width: CARD_W,
+              position: "absolute", left: (rounds.length + pad) * (CARD_W + COL_GAP), top: 0, width: CARD_W,
               textAlign: "center", fontSize: 9, fontWeight: 800,
               color: accent, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap",
             }}>
@@ -4671,7 +4672,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
               return (
                 <div key={"q" + mi} style={{
                   position: "absolute",
-                  left: rounds.length * (CARD_W + COL_GAP),
+                  left: (rounds.length + pad) * (CARD_W + COL_GAP),
                   top: yPositions[rounds.length - 1][mi] + LABEL_H,
                   width: CARD_W, height: CARD_H,
                   display: "flex", flexDirection: "column", justifyContent: "center", gap: 4,
@@ -4704,7 +4705,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
         {showQ && !qualifiedIsLabel && (
           <>
             <div style={{
-              position: "absolute", left: rounds.length * (CARD_W + COL_GAP), top: 0, width: CARD_W,
+              position: "absolute", left: (rounds.length + pad) * (CARD_W + COL_GAP), top: 0, width: CARD_W,
               textAlign: "center", fontSize: 9, fontWeight: 800,
               color: accent, textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap",
             }}>
@@ -4715,7 +4716,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
               return (
                 <div key={"q" + mi} style={{
                   position: "absolute",
-                  left: rounds.length * (CARD_W + COL_GAP),
+                  left: (rounds.length + pad) * (CARD_W + COL_GAP),
                   top: yPositions[rounds.length - 1][mi] + (CARD_H - QUAL_H) / 2 + LABEL_H,
                   width: CARD_W, height: QUAL_H,
                   display: "flex", alignItems: "center", gap: 8,
@@ -6192,7 +6193,7 @@ function RlBracketPage({ onBack, T, predictions }) {
       ]},
     ],
     grand_final: [
-      { name: "Semifinals", matches: [
+      { name: "Lower Semifinals", matches: [
         m("rl-po-s1", "FUT Esports", 2, "Spacestation Gaming", 4),
         m("rl-po-s2", "Karmine Corp", 1, "Team Falcons", 4),
       ]},
@@ -6215,7 +6216,7 @@ function RlBracketPage({ onBack, T, predictions }) {
     const gfRounds = bracket.grand_final?.[1] ? [bracket.grand_final[1]] : [];
     return (
       <div style={{ padding: "0 16px" }}>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper || "Upper Bracket"} labelColor={accent} predictions={predictions} />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper || "Upper Bracket"} labelColor={accent} predictions={predictions} padStart={2} />}
         {lowerRounds.length > 0 && <BracketTree rounds={lowerRounds} accent={accent} label={T.bracketLower || "Lower Bracket"} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
         {gfRounds.length > 0 && <BracketTree rounds={gfRounds} accent={accent} label={T.bracketGrandFinal || "Grande Finale"} labelColor="#FFD700" predictions={predictions} />}
       </div>
