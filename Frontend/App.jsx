@@ -6210,13 +6210,13 @@ function RlBracketPage({ onBack, T, predictions }) {
         {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accent} label={T.bracketGrandFinal} labelColor="#FFD700" predictions={predictions} />}
       </div>
     );
-    const semisRounds = bracket.grand_final?.[0] ? [bracket.grand_final[0]] : [];
+    const lowerRounds = [...(bracket.lower || [])];
+    if (bracket.grand_final?.[0]) lowerRounds.push(bracket.grand_final[0]);
     const gfRounds = bracket.grand_final?.[1] ? [bracket.grand_final[1]] : [];
     return (
       <div style={{ padding: "0 16px" }}>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper || "Upper Bracket"} labelColor={accent} predictions={predictions} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accent} label={T.bracketLower || "Lower Bracket"} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
-        {semisRounds.length > 0 && <BracketTree rounds={semisRounds} accent={accent} label={T.bracketSemifinals || "Demi-finales"} labelColor="#A855F7" predictions={predictions} />}
+        {lowerRounds.length > 0 && <BracketTree rounds={lowerRounds} accent={accent} label={T.bracketLower || "Lower Bracket"} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
         {gfRounds.length > 0 && <BracketTree rounds={gfRounds} accent={accent} label={T.bracketGrandFinal || "Grande Finale"} labelColor="#FFD700" predictions={predictions} />}
       </div>
     );
