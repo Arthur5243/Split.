@@ -6212,13 +6212,11 @@ function RlBracketPage({ onBack, T, predictions }) {
       </div>
     );
     const lowerRounds = [...(bracket.lower || [])];
-    if (bracket.grand_final?.[0]) lowerRounds.push(bracket.grand_final[0]);
-    const gfRounds = bracket.grand_final?.[1] ? [bracket.grand_final[1]] : [];
+    if (bracket.grand_final) bracket.grand_final.forEach(r => lowerRounds.push(r));
     return (
       <div style={{ padding: "0 16px" }}>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accent} label={T.bracketUpper || "Upper Bracket"} labelColor={accent} predictions={predictions} padStart={2} />}
         {lowerRounds.length > 0 && <BracketTree rounds={lowerRounds} accent={accent} label={T.bracketLower || "Lower Bracket"} labelColor="#ff4655" bracketType="lower" predictions={predictions} />}
-        {gfRounds.length > 0 && <BracketTree rounds={gfRounds} accent={accent} label={T.bracketGrandFinal || "Grande Finale"} labelColor="#FFD700" predictions={predictions} />}
       </div>
     );
   };
@@ -6473,9 +6471,16 @@ function resizeImage(file, maxSize, cb) {
 function TeamSearchSelect({ value, onChange, teams, label, T }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(""); } };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
   const filtered = teams.filter((t) => t.toLowerCase().includes(search.toLowerCase()));
   return (
-    <div>
+    <div ref={ref}>
       <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
       <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
         <span className="truncate">{value || "—"}</span>

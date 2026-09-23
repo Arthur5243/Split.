@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="/split-logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <style>
-      html, body, #root { background: #000 !important; margin: 0; padding: 0; height: 100%; }
+      html, body, #root { background: #000 !important; margin: 0; padding: 0; height: 100%; touch-action: pan-x pan-y; }
     </style>
     <script>
       (function() {
@@ -22,6 +22,9 @@
         if (!isStandalone && !isDev) {
           location.replace('/download');
         }
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
       })();
     </script>
   </head>
