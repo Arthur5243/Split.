@@ -4252,7 +4252,7 @@ function NewsCarousel({ T, splashDone }) {
   return (
     <div
       className="relative rounded-2xl overflow-hidden mb-6"
-      style={{ height: "150px", background: "#000", touchAction: "pan-y" }}
+      style={{ height: "150px", background: "linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%)", backgroundSize: "200% 100%", animation: imagesLoaded < 1 ? "shimmer 1.5s infinite" : "none", touchAction: "pan-y" }}
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
@@ -8532,7 +8532,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-end justify-center" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 24 }} onClick={() => setShowRewards(false)}>
+        <div className="z-50 flex items-end justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 24 }} onClick={() => setShowRewards(false)}>
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 80px)", width: "min(370px, 92%)", transform: "translateX(-1px)", borderRadius: 20 }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
@@ -9350,6 +9350,7 @@ function AuthScreen({ onAuth }) {
     await handleGoogle(googleCred);
   };
 
+  const googleReadyRef = useRef(false);
   useEffect(() => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!googleClientId) return;
@@ -9361,12 +9362,14 @@ function AuthScreen({ onAuth }) {
         client_id: googleClientId,
         callback: (response) => handleGoogle(response.credential),
       });
-      const btnEl = document.getElementById("g-signin-btn");
-      if (btnEl) window.google?.accounts.id.renderButton(btnEl, { theme: "filled_black", size: "large", width: 300, text: "continue_with", locale: "fr" });
+      googleReadyRef.current = true;
     };
     document.head.appendChild(s);
     return () => { try { document.head.removeChild(s); } catch {} };
   }, []);
+  const triggerGoogleSignIn = () => {
+    if (googleReadyRef.current) window.google?.accounts.id.prompt();
+  };
 
   if (googleCred) {
     return (
@@ -9434,8 +9437,12 @@ function AuthScreen({ onAuth }) {
           <div style={{ flex: 1, height: 1, background: "#222" }} />
         </div>
 
-        <div id="g-signin-btn" style={{ display: "flex", justifyContent: "center", marginBottom: 16 }} />
-        {!import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+          <button onClick={triggerGoogleSignIn} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#111", border: "1px solid #222", borderRadius: 12, padding: "13px 16px", cursor: "pointer", marginBottom: 16 }}>
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.01 24.01 0 0 0 0 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{T.settingsGoogle}</span>
+          </button>
+        ) : (
           <p style={{ color: "#333", fontSize: 10, textAlign: "center", marginBottom: 40 }}>{T.authGoogleNA}</p>
         )}
 
@@ -9555,7 +9562,10 @@ export default function ClutchApp() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
   useEffect(() => {
-    // Ads temporarily disabled
+    if (showAuth || showIntroCards) return;
+    const delay = 120000 + Math.random() * 60000;
+    adTimerRef.current = setTimeout(triggerAd, delay);
+    return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
   }, [showAuth, showIntroCards, triggerAd]);
   useEffect(() => {
     if (streak.justExpired) {
@@ -10869,7 +10879,7 @@ export default function ClutchApp() {
             </div>
           </div>
         )}
-        {/* Ads temporarily disabled */}
+        {showAd && <AdInterstitial onClose={() => setShowAd(false)} />}
       </div>
 
       <style>{`
@@ -10886,6 +10896,7 @@ export default function ClutchApp() {
         @keyframes flameGlow { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,107,0,0.4)); } 50% { transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(255,107,0,0.7)); } }
         @keyframes scoreReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
       `}</style>
     </div>
   );
