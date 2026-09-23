@@ -120,6 +120,45 @@ letter-spacing:0.3px;
 .content { gap:2.6vh; padding: 3vh 6vw; }
 .headline { font-size: clamp(22px, 5.4vh, 34px); }
 }
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.75);
+  z-index:2000; align-items:flex-end; justify-content:center;
+  animation: fadeIn .2s ease;
+}
+.modal-overlay.active { display:flex; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-card {
+  background:#1A1A1A; border-radius:20px 20px 0 0; padding:28px 24px 36px;
+  max-width:420px; width:100%; color:#E0E0D8;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+@media (min-width:521px) {
+  .modal-overlay { align-items:center; }
+  .modal-card { border-radius:20px; margin:20px; }
+}
+.modal-title { font-size:18px; font-weight:800; color:#fff; margin:0 0 18px; text-align:center; }
+.modal-step { display:flex; align-items:flex-start; gap:14px; margin:0 0 16px; font-size:14px; line-height:1.5; }
+.modal-step-num {
+  flex-shrink:0; width:28px; height:28px; border-radius:50%;
+  background:var(--yellow); color:#0D0D0B; font-weight:800; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+}
+.modal-step-icon { font-size:20px; }
+.modal-close {
+  display:block; width:100%; margin-top:20px; padding:14px;
+  border:none; border-radius:12px; background:#2A2A28; color:#fff;
+  font-family:inherit; font-size:15px; font-weight:700; cursor:pointer;
+}
+.modal-close:active { opacity:.7; }
+.modal-copy-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:12px; padding:10px 18px; border:2px solid var(--yellow); border-radius:10px;
+  background:transparent; color:var(--yellow); font-family:inherit;
+  font-size:13px; font-weight:700; cursor:pointer;
+}
+.modal-copy-btn:active { opacity:.7; }
+.modal-note { font-size:12px; color:#9C9C93; margin-top:14px; text-align:center; line-height:1.4; }
 </style>
  </head> <body> <div class="bg"></div> <div class="grain"></div> <div class="vignette"></div> <div class="content"> 
 
@@ -146,6 +185,15 @@ letter-spacing:0.3px;
 </div>
 
  </div>
+
+<div id="installModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-title" id="modalTitle"></div>
+    <div id="modalBody"></div>
+    <button class="modal-close" id="modalClose">Fermer</button>
+  </div>
+</div>
+
 <div id="arrowHint" style="display:none;position:fixed;top:8px;right:200px;z-index:1000;text-align:center;animation:bounce 1.5s infinite">
   <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#C5F90F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
   <div style="color:#C5F90F;font-size:12px;font-weight:700;margin-top:2px">Ouvrir l'app</div>
@@ -157,14 +205,21 @@ letter-spacing:0.3px;
 }
 </style>
 <script>
-let deferredPrompt = null;
-const btn = document.getElementById('installBtn');
-const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+var btn = document.getElementById('installBtn');
+var modal = document.getElementById('installModal');
+var modalTitle = document.getElementById('modalTitle');
+var modalBody = document.getElementById('modalBody');
+var modalClose = document.getElementById('modalClose');
+var deferredPrompt = null;
 
-// Redirect to app if running inside PWA (multiple checks)
+var ua = navigator.userAgent || '';
+var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+var isAndroid = /Android/i.test(ua);
+var isSafari = /Safari/i.test(ua) && !/Chrome|CriOS|FxiOS|EdgiOS|OPR/i.test(ua);
+var isMobile = isIOS || isAndroid;
+
 function goToAppIfStandalone() {
-  if (window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true) {
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
     window.location.replace('/');
     return true;
   }
@@ -180,14 +235,72 @@ window.addEventListener('beforeinstallprompt', function(e) {
   deferredPrompt = e;
 });
 
-setTimeout(function() {
-  if (!deferredPrompt && !isMobile) {
-    document.getElementById('arrowHint').style.display = 'block';
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Déjà installé';
-    btn.style.opacity = '0.7';
-    btn.style.pointerEvents = 'none';
-  }
-}, 1500);
+function showModal(title, html) {
+  modalTitle.textContent = title;
+  modalBody.innerHTML = html;
+  modal.classList.add('active');
+}
+function hideModal() { modal.classList.remove('active'); }
+modalClose.addEventListener('click', hideModal);
+modal.addEventListener('click', function(e) { if (e.target === modal) hideModal(); });
+
+function step(n, icon, text) {
+  return '<div class="modal-step"><div class="modal-step-num">' + n + '</div><div><span class="modal-step-icon">' + icon + '</span> ' + text + '</div></div>';
+}
+
+function showIOSSafari() {
+  showModal('Installer sur iPhone',
+    step(1, '⬆️', 'Appuie sur l\'icône <b>Partager</b> <span style="font-size:18px">⎙</span> en bas de l\'écran') +
+    step(2, '➕', 'Défile vers le bas et appuie sur <b>"Sur l\'écran d\'accueil"</b>') +
+    step(3, '✅', 'Appuie sur <b>"Ajouter"</b> en haut à droite') +
+    '<div class="modal-note">L\'app apparaîtra sur ton écran d\'accueil comme une vraie application.</div>'
+  );
+}
+
+function showIOSOther() {
+  showModal('Installer sur iPhone',
+    '<div style="text-align:center;margin-bottom:16px;font-size:14px;line-height:1.6">Pour installer Split, ouvre cette page dans <b>Safari</b> puis suis les instructions.</div>' +
+    '<div style="text-align:center"><button class="modal-copy-btn" id="copyLinkBtn">📋 Copier le lien</button></div>' +
+    step(1, '🌐', 'Ouvre <b>Safari</b> et colle le lien') +
+    step(2, '⬆️', 'Appuie sur <b>Partager</b> puis <b>"Sur l\'écran d\'accueil"</b>') +
+    '<div class="modal-note">Seul Safari permet d\'installer des apps web sur iOS.</div>'
+  );
+  setTimeout(function() {
+    var cb = document.getElementById('copyLinkBtn');
+    if (cb) cb.addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(function() {
+        cb.innerHTML = '✅ Lien copié !';
+      });
+    });
+  }, 50);
+}
+
+function showAndroidOther() {
+  showModal('Installer l\'application',
+    step(1, '⋮', 'Appuie sur le <b>menu</b> ⋮ en haut à droite') +
+    step(2, '📲', 'Appuie sur <b>"Installer l\'application"</b> ou <b>"Ajouter à l\'écran d\'accueil"</b>') +
+    step(3, '✅', 'Confirme en appuyant sur <b>"Installer"</b>') +
+    '<div class="modal-note">Si l\'option n\'apparaît pas, essaie avec Chrome ou Edge.</div>'
+  );
+}
+
+function showDesktopOther() {
+  showModal('Installer l\'application',
+    '<div style="text-align:center;margin-bottom:16px;font-size:14px;line-height:1.6">Pour installer Split sur ton PC, utilise <b>Chrome</b> ou <b>Edge</b>.</div>' +
+    step(1, '🌐', 'Ouvre cette page dans <b>Chrome</b> ou <b>Edge</b>') +
+    step(2, '📥', 'Clique sur l\'icône d\'installation dans la <b>barre d\'adresse</b>') +
+    step(3, '✅', 'Clique sur <b>"Installer"</b>') +
+    '<div style="text-align:center;margin-top:12px"><button class="modal-copy-btn" id="copyLinkBtn2">📋 Copier le lien</button></div>'
+  );
+  setTimeout(function() {
+    var cb = document.getElementById('copyLinkBtn2');
+    if (cb) cb.addEventListener('click', function() {
+      navigator.clipboard.writeText(window.location.href).then(function() {
+        cb.innerHTML = '✅ Lien copié !';
+      });
+    });
+  }, 50);
+}
 
 btn.addEventListener('click', function() {
   if (deferredPrompt) {
@@ -201,7 +314,23 @@ btn.addEventListener('click', function() {
         setTimeout(function() { window.location.replace('/'); }, 1000);
       }
     });
+    return;
   }
+  if (isIOS && isSafari) return showIOSSafari();
+  if (isIOS) return showIOSOther();
+  if (isAndroid) return showAndroidOther();
+  showDesktopOther();
 });
+
+setTimeout(function() {
+  if (!deferredPrompt && !isMobile) {
+    var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (standalone) {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Déjà installé';
+      btn.style.opacity = '0.7';
+      btn.style.pointerEvents = 'none';
+    }
+  }
+}, 1500);
 </script>
 </body> </html>
