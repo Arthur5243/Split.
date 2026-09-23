@@ -1,23 +1,19 @@
 /**
- * RL Live Scraper — PandaScore match discovery + Liquipedia game scores.
+ * RL Live Scraper — PandaScore + Liquipedia + Twitch.
  *
  * PandaScore discovers live/finished RL matches (reliable API).
- * Liquipedia bracket popups provide per-game goal scores.
- * PandaScore returns 404 for /rl/games/{id}, so Liquipedia is the
- * only source of real goal-per-game data.
+ * Liquipedia provides per-game goal scores (wikitext + HTML bracket).
+ * Twitch detects live streams (Rocket Baguette, rocketleague) to
+ * boost poll frequency from 60s to 30s during broadcasts.
  *
- * Flow:
- * 1. Poll PandaScore every ~60s for live + recently finished RL matches
- * 2. Map each match to its Liquipedia tournament page
- * 3. Fetch & cache Liquipedia pages (1 req/30s rate limit, 2min cache)
- * 4. Extract game-by-game goal scores from bracket popups
- * 5. Persist scores for finished matches to survive restarts
+ * Scores are keyed by team1:team2:date to handle rematches correctly.
  */
 
 import { load } from "cheerio";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { getGameScoresFromLiquipedia } from "./liquipedia-rl-scores.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
@@ -43,6 +39,45 @@ const LIQUIPEDIA_MIN_INTERVAL_MS = 32_000;
 let consecutiveErrors = 0;
 const MAX_BACKOFF_MS = 10 * 60 * 1000;
 const BASE_INTERVAL_MS = 60_000;
+const LIVE_INTERVAL_MS = 30_000;
+
+// --- Twitch live detection (Rocket Baguette + official rocketleague) ---
+const TWITCH_GQL = "https://gql.twitch.tv/gql";
+const TWITCH_CLIENT_ID = "kimne78kx3ncx6brgo4mv6wki5h1ko";
+const RL_TWITCH_CHANNELS = ["rocketbaguette", "rocketleague"];
+let twitchStreamLive = false;
+let lastTwitchCheck = 0;
+const TWITCH_CHECK_INTERVAL_MS = 90_000;
+
+async function checkTwitchStreams() {
+  if (Date.now() - lastTwitchCheck < TWITCH_CHECK_INTERVAL_MS) return twitchStreamLive;
+  lastTwitchCheck = Date.now();
+  try {
+    const queries = RL_TWITCH_CHANNELS.map(login => ({
+      query: `query { user(login: "${login}") { stream { id game { name } } } }`
+    }));
+    const res = await fetch(TWITCH_GQL, {
+      method: "POST",
+      headers: { "Client-ID": TWITCH_CLIENT_ID, "Content-Type": "application/json" },
+      body: JSON.stringify(queries),
+    });
+    if (!res.ok) { twitchStreamLive = false; return false; }
+    const results = await res.json();
+    const live = results.some(r => {
+      const stream = r?.data?.user?.stream;
+      if (!stream) return false;
+      const game = (stream.game?.name || "").toLowerCase();
+      return game.includes("rocket league") || game === "";
+    });
+    if (live !== twitchStreamLive) {
+      console.log(`[liquipedia-rl] Twitch RL streams: ${live ? "LIVE → poll 30s" : "offline → poll 60s"}`);
+    }
+    twitchStreamLive = live;
+    return live;
+  } catch {
+    return twitchStreamLive;
+  }
+}
 
 function normalize(s) {
   return (s || "")
@@ -50,6 +85,19 @@ function normalize(s) {
     .replace(/[̀-ͯ]/g, "")
     .trim()
     .toLowerCase();
+}
+
+function makeKey(team1, team2, dateStr) {
+  const t1 = normalize(team1);
+  const t2 = normalize(team2);
+  const d = dateStr || "";
+  return t1 < t2 ? `${t1}:${t2}:${d}` : `${t2}:${t1}:${d}`;
+}
+
+function isTeamOrder(team1, team2, keyTeam1) {
+  return normalize(team1) <= normalize(team2)
+    ? normalize(team1) === normalize(keyTeam1)
+    : normalize(team2) === normalize(keyTeam1);
 }
 
 // --- Persistence ---
@@ -60,8 +108,8 @@ function loadPersistedScores() {
     const raw = readFileSync(PERSISTED_SCORES_PATH, "utf8");
     const entries = JSON.parse(raw);
     for (const e of entries) {
-      const key = normalize(e.t1) + ":" + normalize(e.t2) + ":" + (e.date || "");
-      persistedScores.set(key, e.games);
+      const key = makeKey(e.t1, e.t2, e.date);
+      persistedScores.set(key, { t1: e.t1, t2: e.t2, games: e.games });
     }
     console.log(`[liquipedia-rl] ${persistedScores.size} scores persistés chargés`);
   } catch (e) {
@@ -72,9 +120,9 @@ function loadPersistedScores() {
 function savePersistedScores() {
   try {
     const entries = [];
-    for (const [key, games] of persistedScores) {
-      const parts = key.split(":");
-      entries.push({ t1: parts[0], t2: parts[1], date: parts[2] || null, games });
+    for (const [key, data] of persistedScores) {
+      const date = key.split(":").pop() || null;
+      entries.push({ t1: data.t1, t2: data.t2, date, games: data.games });
     }
     writeFileSync(PERSISTED_SCORES_PATH, JSON.stringify(entries, null, 2), "utf8");
   } catch (e) {
@@ -83,11 +131,11 @@ function savePersistedScores() {
 }
 
 function persistScore(team1, team2, games, date) {
-  const key = normalize(team1) + ":" + normalize(team2) + ":" + (date || "");
+  const key = makeKey(team1, team2, date);
   if (persistedScores.has(key)) return;
-  persistedScores.set(key, games);
+  persistedScores.set(key, { t1: team1, t2: team2, games });
   savePersistedScores();
-  console.log(`[liquipedia-rl] persisté: ${team1} vs ${team2} → ${games.map(g => g.score1 + "-" + g.score2).join(", ")}`);
+  console.log(`[liquipedia-rl] persisté: ${team1} vs ${team2} (${date || "?"}) → ${games.map(g => g.score1 + "-" + g.score2).join(", ")}`);
 }
 
 // --- Score lookup (called by rl-routes.js) ---
@@ -95,15 +143,34 @@ function persistScore(team1, team2, games, date) {
 function getRL_ScrapedScores(team1Name, team2Name, dateHint) {
   const q1 = normalize(team1Name);
   const q2 = normalize(team2Name);
-
   const now = Date.now();
+
+  // 1. Check live scraped scores (with date preference)
+  let bestLive = null;
   for (const [, entry] of rlScrapedScores) {
     if (now - entry.scrapedAt > SCRAPED_TTL_MS) continue;
     const t1 = normalize(entry.team1);
     const t2 = normalize(entry.team2);
     if ((t1 === q1 && t2 === q2) || (t1 === q2 && t2 === q1)) {
-      const swap = t1 === q2;
-      return entry.games.map((g) => ({
+      if (dateHint && entry.dateStr === dateHint) {
+        const swap = t1 === q2;
+        return entry.games.map((g) => ({
+          game: g.game,
+          score1: swap ? g.score2 : g.score1,
+          score2: swap ? g.score1 : g.score2,
+        }));
+      }
+      if (!bestLive) bestLive = entry;
+    }
+  }
+
+  // 2. Check persisted scores (date-aware key)
+  if (dateHint) {
+    const exactKey = makeKey(team1Name, team2Name, dateHint);
+    const persisted = persistedScores.get(exactKey);
+    if (persisted) {
+      const swap = normalize(persisted.t1) !== q1;
+      return persisted.games.map((g) => ({
         game: g.game,
         score1: swap ? g.score2 : g.score1,
         score2: swap ? g.score1 : g.score2,
@@ -111,13 +178,23 @@ function getRL_ScrapedScores(team1Name, team2Name, dateHint) {
     }
   }
 
-  for (const [key, games] of persistedScores) {
-    const parts = key.split(":");
-    const t1 = parts[0];
-    const t2 = parts[1];
+  // 3. Fall back to live scraped without date match
+  if (bestLive) {
+    const swap = normalize(bestLive.team1) === q2;
+    return bestLive.games.map((g) => ({
+      game: g.game,
+      score1: swap ? g.score2 : g.score1,
+      score2: swap ? g.score1 : g.score2,
+    }));
+  }
+
+  // 4. Fall back to any persisted match (no date)
+  for (const [, data] of persistedScores) {
+    const t1 = normalize(data.t1);
+    const t2 = normalize(data.t2);
     if ((t1 === q1 && t2 === q2) || (t1 === q2 && t2 === q1)) {
       const swap = t1 === q2;
-      return games.map((g) => ({
+      return data.games.map((g) => ({
         game: g.game,
         score1: swap ? g.score2 : g.score1,
         score2: swap ? g.score1 : g.score2,
@@ -144,12 +221,14 @@ async function pandaFetch(path, attempt = 0) {
 
 function extractMatch(m) {
   return {
+    id: m.id,
     team1: m.opponents[0].opponent.name,
     team2: m.opponents[1].opponent.name,
     league: m.league,
     serie: m.serie,
     tournament: m.tournament,
     dateStr: m.begin_at ? m.begin_at.slice(0, 10) : null,
+    status: m.status,
   };
 }
 
@@ -170,33 +249,64 @@ async function findRecentlyFinished() {
 
 // --- Tournament → Liquipedia page mapping ---
 
-function guessLiquipediaPage(match) {
+function guessLiquipediaPages(match) {
+  const pages = [];
   const leagueSlug = (match.league?.slug || "").toLowerCase();
   const leagueName = (match.league?.name || "").toLowerCase();
   const serieName = match.serie?.full_name || match.serie?.name || "";
   const tournamentName = match.tournament?.name || "";
+  const tournSlug = (match.tournament?.slug || "").toLowerCase();
+  const serieSlug = (match.serie?.slug || "").toLowerCase();
 
-  if (leagueSlug.includes("rlcs") || leagueName.includes("rlcs") ||
-    leagueName.includes("rocket league championship")) {
-    const y = (serieName.match(/\d{4}/) || tournamentName.match(/\d{4}/) || [])[0]
-      || new Date().getFullYear().toString();
-    return `Rocket_League_Championship_Series/${y}`;
-  }
+  const y = (serieName.match(/\d{4}/) || tournamentName.match(/\d{4}/) || [])[0]
+    || new Date().getFullYear().toString();
 
   if (leagueSlug.includes("esports-world-cup") || leagueName.includes("esports world cup") ||
     leagueName.includes("ewc") || tournamentName.toLowerCase().includes("esports world cup")) {
-    const y = (serieName.match(/\d{4}/) || tournamentName.match(/\d{4}/) || [])[0]
-      || new Date().getFullYear().toString();
-    return `Esports_World_Cup/${y}/Rocket_League`;
+    pages.push(`Esports_World_Cup/${y}/Rocket_League`);
+    return pages;
   }
 
-  const tournSlug = (match.tournament?.slug || "").toLowerCase();
-  if (tournSlug.includes("rlcs")) {
-    const y = (tournSlug.match(/\d{4}/) || [])[0] || new Date().getFullYear().toString();
-    return `Rocket_League_Championship_Series/${y}`;
+  if (leagueSlug.includes("rlcs") || leagueName.includes("rlcs") ||
+    leagueName.includes("rocket league championship") || tournSlug.includes("rlcs")) {
+
+    const tn = tournamentName.toLowerCase();
+    const sn = serieName.toLowerCase();
+
+    if (tn.includes("major") || sn.includes("major")) {
+      const majorNum = (tn.match(/major\s*(\d)/) || sn.match(/major\s*(\d)/) || [])[1];
+      if (majorNum) {
+        pages.push(`Rocket_League_Championship_Series/${y}/Major_${majorNum}`);
+      }
+      pages.push(`Rocket_League_Championship_Series/${y}/Major_1`);
+      pages.push(`Rocket_League_Championship_Series/${y}/Major_2`);
+    }
+
+    if (tn.includes("world") || sn.includes("world")) {
+      pages.push(`Rocket_League_Championship_Series/${y}/World_Championship`);
+    }
+
+    const regionMap = {
+      "europe": "Europe", "eu": "Europe",
+      "north america": "North_America", "na": "North_America",
+      "south america": "South_America", "sam": "South_America",
+      "middle east": "Middle_East_and_North_Africa", "mena": "Middle_East_and_North_Africa",
+      "oceania": "Oceania", "oce": "Oceania",
+      "asia": "Asia-Pacific", "apac": "Asia-Pacific",
+      "sub-saharan africa": "Sub-Saharan_Africa", "ssa": "Sub-Saharan_Africa",
+    };
+
+    for (const [kw, regionSlug] of Object.entries(regionMap)) {
+      if (tn.includes(kw) || sn.includes(kw) || tournSlug.includes(kw) || serieSlug.includes(kw)) {
+        pages.push(`Rocket_League_Championship_Series/${y}/${regionSlug}`);
+        break;
+      }
+    }
+
+    pages.push(`Rocket_League_Championship_Series/${y}`);
   }
 
-  return null;
+  return pages;
 }
 
 // --- Liquipedia API with rate limiting + cache ---
@@ -233,7 +343,7 @@ async function apiParse(pageName) {
   return html;
 }
 
-// --- Game score extraction from bracket popups ---
+// --- Game score extraction from bracket popups (HTML fallback) ---
 
 function getGameScoresFromHtml(html, team1, team2) {
   const $ = load(html);
@@ -295,63 +405,98 @@ function isRealScore(games) {
 }
 
 function isAlreadyPersisted(team1, team2, dateStr) {
-  const k1 = normalize(team1) + ":" + normalize(team2) + ":" + (dateStr || "");
-  const k2 = normalize(team2) + ":" + normalize(team1) + ":" + (dateStr || "");
-  if (persistedScores.has(k1) || persistedScores.has(k2)) return true;
-  for (const existing of persistedScores.keys()) {
-    if (existing.startsWith(normalize(team1) + ":" + normalize(team2) + ":") ||
-      existing.startsWith(normalize(team2) + ":" + normalize(team1) + ":")) return true;
+  const key = makeKey(team1, team2, dateStr);
+  return persistedScores.has(key);
+}
+
+function storeScrapedScore(match, games, label) {
+  const scrapedKey = `${normalize(match.team1)}:${normalize(match.team2)}:${match.dateStr || ""}`;
+  rlScrapedScores.set(scrapedKey, {
+    team1: match.team1,
+    team2: match.team2,
+    dateStr: match.dateStr,
+    games,
+    scrapedAt: Date.now(),
+  });
+  console.log(
+    `[liquipedia-rl] [${label}] ${match.team1} vs ${match.team2} (${match.dateStr || "?"}) →`,
+    games.map(g => `${g.game}: ${g.score1}-${g.score2}`).join(" | ")
+  );
+}
+
+async function tryWikitextScores(match) {
+  try {
+    const tournamentName = match.tournament?.name || match.league?.name || "";
+    const serieName = match.serie?.full_name || match.serie?.name || "";
+    const games = await getGameScoresFromLiquipedia(
+      match.team1, match.team2, tournamentName, match.dateStr, serieName
+    );
+    return games;
+  } catch (err) {
+    console.log(`[liquipedia-rl] wikitext fallback erreur: ${err.message}`);
+    return null;
+  }
+}
+
+async function tryHtmlBracketScores(match) {
+  const pages = guessLiquipediaPages(match);
+  if (pages.length === 0) return null;
+
+  for (const pageName of pages) {
+    try {
+      const html = await apiParse(pageName);
+      const games = getGameScoresFromHtml(html, match.team1, match.team2);
+      if (games.length > 0) return games;
+    } catch (err) {
+      if (err.message.includes("429")) throw err;
+      console.log(`[liquipedia-rl] html(${pageName}): ${err.message}`);
+    }
+  }
+  return null;
+}
+
+async function scrapeMatch(match, label) {
+  // Try HTML bracket popups first (faster, no search needed)
+  let games = null;
+  try {
+    games = await tryHtmlBracketScores(match);
+  } catch (err) {
+    if (err.message.includes("429")) throw err;
+  }
+
+  // Fallback to wikitext parsing (uses Liquipedia search, more reliable)
+  if (!games || games.length === 0) {
+    games = await tryWikitextScores(match);
+  }
+
+  if (games && games.length > 0) {
+    storeScrapedScore(match, games, label);
+    if (isRealScore(games)) {
+      persistScore(match.team1, match.team2, games, match.dateStr);
+    }
+    return true;
   }
   return false;
 }
 
-async function scrapeMatchGroup(pageMatches, label) {
-  for (const [pageName, matches] of pageMatches) {
-    try {
-      const html = await apiParse(pageName);
-      for (const match of matches) {
-        const games = getGameScoresFromHtml(html, match.team1, match.team2);
-        if (games.length > 0) {
-          const key = normalize(match.team1) + ":" + normalize(match.team2);
-          rlScrapedScores.set(key, {
-            team1: match.team1,
-            team2: match.team2,
-            page: pageName,
-            games,
-            scrapedAt: Date.now(),
-          });
-          console.log(
-            `[liquipedia-rl] [${label}] ${match.team1} vs ${match.team2} →`,
-            games.map(g => `${g.game}: ${g.score1}-${g.score2}`).join(" | ")
-          );
-          if (isRealScore(games)) {
-            persistScore(match.team1, match.team2, games, match.dateStr);
-          }
-        }
-      }
-    } catch (err) {
-      console.error(`[liquipedia-rl] erreur ${pageName}:`, err.message);
-    }
-  }
-}
-
-function groupByPage(matches) {
-  const grouped = new Map();
-  for (const match of matches) {
-    const page = guessLiquipediaPage(match);
-    if (!page) continue;
-    if (!grouped.has(page)) grouped.set(page, []);
-    grouped.get(page).push(match);
-  }
-  return grouped;
-}
-
 async function runOnce() {
-  const liveMatches = await findLiveMatches();
-  console.log(`[liquipedia-rl] ${liveMatches.length} match(s) live`);
+  await checkTwitchStreams();
 
+  const liveMatches = await findLiveMatches();
   if (liveMatches.length > 0) {
-    await scrapeMatchGroup(groupByPage(liveMatches), "live");
+    console.log(`[liquipedia-rl] ${liveMatches.length} match(s) live`);
+  }
+
+  for (const match of liveMatches) {
+    try {
+      await scrapeMatch(match, "live");
+    } catch (err) {
+      if (err.message.includes("429")) {
+        console.log("[liquipedia-rl] rate-limited, arrêt du cycle");
+        return;
+      }
+      console.error(`[liquipedia-rl] live erreur ${match.team1} vs ${match.team2}:`, err.message);
+    }
   }
 
   try {
@@ -360,12 +505,23 @@ async function runOnce() {
 
     if (toFetch.length > 0) {
       console.log(`[liquipedia-rl] ${toFetch.length} match(s) finis à scraper`);
-      await scrapeMatchGroup(groupByPage(toFetch), "finished");
+      for (const match of toFetch) {
+        try {
+          await scrapeMatch(match, "finished");
+        } catch (err) {
+          if (err.message.includes("429")) {
+            console.log("[liquipedia-rl] rate-limited, arrêt du cycle");
+            return;
+          }
+          console.error(`[liquipedia-rl] finished erreur ${match.team1} vs ${match.team2}:`, err.message);
+        }
+      }
     }
   } catch (err) {
     console.error("[liquipedia-rl] erreur recently finished:", err.message);
   }
 
+  // Cleanup expired in-memory scores
   const now = Date.now();
   for (const [key, entry] of rlScrapedScores) {
     if (now - entry.scrapedAt > SCRAPED_TTL_MS) {
@@ -375,16 +531,17 @@ async function runOnce() {
 }
 
 function getNextInterval() {
-  if (consecutiveErrors === 0) return BASE_INTERVAL_MS;
+  const base = twitchStreamLive ? LIVE_INTERVAL_MS : BASE_INTERVAL_MS;
+  if (consecutiveErrors === 0) return base;
   return Math.min(
-    BASE_INTERVAL_MS * Math.pow(2, consecutiveErrors),
+    base * Math.pow(2, consecutiveErrors),
     MAX_BACKOFF_MS
   );
 }
 
 function startRlScraper() {
   loadPersistedScores();
-  console.log("[liquipedia-rl] démarrage, PandaScore + Liquipedia (poll ~60s)");
+  console.log("[liquipedia-rl] démarrage, PandaScore + Liquipedia + Twitch (poll 30-60s)");
 
   async function loop() {
     try {
@@ -403,4 +560,6 @@ function startRlScraper() {
   setTimeout(loop, 12000);
 }
 
-export { startRlScraper, getRL_ScrapedScores, rlScrapedScores };
+function isRlStreamLive() { return twitchStreamLive; }
+
+export { startRlScraper, getRL_ScrapedScores, rlScrapedScores, isRlStreamLive };

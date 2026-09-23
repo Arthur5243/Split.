@@ -182,8 +182,9 @@ router.get("/api/rl-live", async (req, res) => {
       if (m.status === "running") {
         const t1 = m.opponents?.[0]?.opponent?.name;
         const t2 = m.opponents?.[1]?.opponent?.name;
+        const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
         if (t1 && t2) {
-          const scraped = getRL_ScrapedScores(t1, t2);
+          const scraped = getRL_ScrapedScores(t1, t2, dateStr);
           if (scraped) enriched.live_game_scores = scraped;
         }
       }
@@ -230,9 +231,10 @@ router.get("/api/rl-results", async (req, res) => {
       const t2 = m.opponents?.[1]?.opponent?.name;
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
-      const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2) : null;
+      const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null;
       const manual = scraped || findManualGameScores(t1, t2, dateStr);
-      m.game_scores = manual || null;
+      const fallback = manual || buildFallbackGameScores(m);
+      m.game_scores = fallback || null;
     }
 
     rlResultsCache = { data: enriched, at: Date.now() };
