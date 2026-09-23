@@ -319,7 +319,7 @@ const STR = {
     settingsNotifRegions: "Régions",
     settingsFavTeam: "Équipe favorite", settingsFavTeamNone: "Aucune équipe sélectionnée", settingsAccount: "Compte",
     settingsGoogle: "Continuer avec Google", settingsOr: "ou", settingsEmail: "Adresse e-mail", settingsPassword: "Mot de passe", settingsLogin: "Connexion",
-    settingsPseudo: "Pseudo", settingsPlan: "Forfait", settingsPlanFree: "Gratuit", settingsPlanDesc: "Tu utilises le forfait gratuit.", settingsNotifications: "Notifications", settingsLogout: "Déconnexion", settingsForgotPwd: "Mot de passe oublié ?", settingsForgotSent: "Fonctionnalité bientôt disponible.", settingsChangePwd: "Modifier", settingsPwdPlaceholder: "••••••••", settingsRewards: "Récompenses", settingsRewardsDesc: "Bientôt disponible — gagne des récompenses en pronostiquant !", settingsReferral: "Parrainage", settingsReferralDesc: "Invite tes amis et gagnez chacun 200 XP !", settingsReferralCode: "Ton code", settingsReferralCopied: "Copié !", settingsReferralCount: "amis parrainés", settingsReferralEnter: "Entrer un code de parrainage", settingsReferralApply: "Appliquer", settingsReferralSuccess: "+200 XP gagnés !", settingsReferralError: "Code invalide ou déjà utilisé", rewardsTitle: "Récompenses", rewardsGoal: "Première récompense débloquée à 1 000 inscrits !", rewardsRegistered: "inscrits",
+    settingsPseudo: "Pseudo", settingsPlan: "Forfait", settingsPlanFree: "Gratuit", settingsPlanDesc: "Tu utilises le forfait gratuit.", settingsNotifications: "Notifications", settingsLogout: "Déconnexion", settingsForgotPwd: "Mot de passe oublié ?", settingsForgotSent: "Fonctionnalité bientôt disponible.", settingsChangePwd: "Modifier", settingsPwdPlaceholder: "••••••••", settingsRewards: "Récompenses", settingsRewardsDesc: "Bientôt disponible — gagne des récompenses en pronostiquant !", settingsReferral: "Parrainage", settingsReferralDesc: "Invite tes amis et gagnez chacun 200 XP !", settingsReferralCode: "Ton code", settingsReferralCopied: "Copié !", settingsReferralCount: "amis parrainés", settingsReferralEnter: "Entrer un code de parrainage", settingsReferralApply: "Appliquer", settingsReferralSuccess: "+200 XP gagnés !", settingsReferralError: "Code invalide ou déjà utilisé", rewardsTitle: "Récompenses", rewardsGoal: "Première récompense débloquée à 1 000 téléchargements !", rewardsRegistered: "téléchargements",
     calendarModalTitle: "Calendrier VCT 2026", calendarDone: "Terminé", calendarSoon: "Bientôt", calendarLive: "En cours",
     calendarShowDetail: "Voir le détail par région", calendarHideDetail: "Masquer le détail",
     statusUpcoming: "Matchs à venir",
@@ -406,7 +406,7 @@ const STR = {
     settingsNotifRegions: "Regions",
     settingsFavTeam: "Favorite team", settingsFavTeamNone: "No team selected", settingsAccount: "Account",
     settingsGoogle: "Continue with Google", settingsOr: "or", settingsEmail: "Email address", settingsPassword: "Password", settingsLogin: "Log in",
-    settingsPseudo: "Username", settingsPlan: "Plan", settingsPlanFree: "Free", settingsPlanDesc: "You're on the free plan.", settingsNotifications: "Notifications", settingsLogout: "Log out", settingsForgotPwd: "Forgot password?", settingsForgotSent: "Feature coming soon.", settingsChangePwd: "Change", settingsPwdPlaceholder: "••••••••", settingsRewards: "Rewards", settingsRewardsDesc: "Coming soon — earn rewards by predicting!", settingsReferral: "Referral", settingsReferralDesc: "Invite your friends and both earn 200 XP!", settingsReferralCode: "Your code", settingsReferralCopied: "Copied!", settingsReferralCount: "friends referred", settingsReferralEnter: "Enter a referral code", settingsReferralApply: "Apply", settingsReferralSuccess: "+200 XP earned!", settingsReferralError: "Invalid or already used code", rewardsTitle: "Rewards", rewardsGoal: "First reward unlocked at 1,000 registered users!", rewardsRegistered: "registered",
+    settingsPseudo: "Username", settingsPlan: "Plan", settingsPlanFree: "Free", settingsPlanDesc: "You're on the free plan.", settingsNotifications: "Notifications", settingsLogout: "Log out", settingsForgotPwd: "Forgot password?", settingsForgotSent: "Feature coming soon.", settingsChangePwd: "Change", settingsPwdPlaceholder: "••••••••", settingsRewards: "Rewards", settingsRewardsDesc: "Coming soon — earn rewards by predicting!", settingsReferral: "Referral", settingsReferralDesc: "Invite your friends and both earn 200 XP!", settingsReferralCode: "Your code", settingsReferralCopied: "Copied!", settingsReferralCount: "friends referred", settingsReferralEnter: "Enter a referral code", settingsReferralApply: "Apply", settingsReferralSuccess: "+200 XP earned!", settingsReferralError: "Invalid or already used code", rewardsTitle: "Rewards", rewardsGoal: "First reward unlocked at 1,000 downloads!", rewardsRegistered: "downloads",
     calendarModalTitle: "VCT 2026 Calendar", calendarDone: "Finished", calendarSoon: "Coming soon", calendarLive: "Live now",
     calendarShowDetail: "Show detail by region", calendarHideDetail: "Hide detail",
     statusUpcoming: "Upcoming matches",
@@ -491,7 +491,7 @@ const STR = {
     settingsNotifRegions: "Regiones",
     settingsFavTeam: "Equipo favorito", settingsFavTeamNone: "Ningún equipo seleccionado", settingsAccount: "Cuenta",
     settingsGoogle: "Continuar con Google", settingsOr: "o", settingsEmail: "Correo electrónico", settingsPassword: "Contraseña", settingsLogin: "Iniciar sesión",
-    settingsPseudo: "Nombre de usuario", settingsPlan: "Plan", settingsPlanFree: "Gratis", settingsPlanDesc: "Estás en el plan gratuito.", settingsNotifications: "Notificaciones", settingsLogout: "Cerrar sesión", settingsForgotPwd: "¿Olvidaste tu contraseña?", settingsForgotSent: "Función próximamente.", settingsChangePwd: "Cambiar", settingsPwdPlaceholder: "••••••••", settingsRewards: "Recompensas", settingsRewardsDesc: "Próximamente — ¡gana recompensas pronosticando!", settingsReferral: "Referido", settingsReferralDesc: "¡Invita a tus amigos y ganen 200 XP cada uno!", settingsReferralCode: "Tu código", settingsReferralCopied: "¡Copiado!", settingsReferralCount: "amigos referidos", settingsReferralEnter: "Ingresa un código de referido", settingsReferralApply: "Aplicar", settingsReferralSuccess: "¡+200 XP ganados!", settingsReferralError: "Código inválido o ya usado", rewardsTitle: "Recompensas", rewardsGoal: "¡Primera recompensa al llegar a 1.000 inscritos!", rewardsRegistered: "inscritos",
+    settingsPseudo: "Nombre de usuario", settingsPlan: "Plan", settingsPlanFree: "Gratis", settingsPlanDesc: "Estás en el plan gratuito.", settingsNotifications: "Notificaciones", settingsLogout: "Cerrar sesión", settingsForgotPwd: "¿Olvidaste tu contraseña?", settingsForgotSent: "Función próximamente.", settingsChangePwd: "Cambiar", settingsPwdPlaceholder: "••••••••", settingsRewards: "Recompensas", settingsRewardsDesc: "Próximamente — ¡gana recompensas pronosticando!", settingsReferral: "Referido", settingsReferralDesc: "¡Invita a tus amigos y ganen 200 XP cada uno!", settingsReferralCode: "Tu código", settingsReferralCopied: "¡Copiado!", settingsReferralCount: "amigos referidos", settingsReferralEnter: "Ingresa un código de referido", settingsReferralApply: "Aplicar", settingsReferralSuccess: "¡+200 XP ganados!", settingsReferralError: "Código inválido o ya usado", rewardsTitle: "Recompensas", rewardsGoal: "¡Primera recompensa al llegar a 1.000 descargas!", rewardsRegistered: "descargas",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Finalizado", calendarSoon: "Próximamente", calendarLive: "En curso",
     calendarShowDetail: "Ver detalle por región", calendarHideDetail: "Ocultar detalle",
     statusUpcoming: "Próximos partidos",
@@ -560,7 +560,7 @@ const STR = {
     settingsNotifRegions: "Regioni",
     settingsFavTeam: "Squadra preferita", settingsFavTeamNone: "Nessuna squadra selezionata", settingsAccount: "Account",
     settingsGoogle: "Continua con Google", settingsOr: "oppure", settingsEmail: "Indirizzo email", settingsPassword: "Password", settingsLogin: "Accedi",
-    settingsPseudo: "Nome utente", settingsPlan: "Piano", settingsPlanFree: "Gratuito", settingsPlanDesc: "Stai usando il piano gratuito.", settingsNotifications: "Notifiche", settingsLogout: "Esci", settingsForgotPwd: "Password dimenticata?", settingsForgotSent: "Funzionalità in arrivo.", settingsChangePwd: "Modifica", settingsPwdPlaceholder: "••••••••", settingsRewards: "Premi", settingsRewardsDesc: "In arrivo — guadagna premi pronosticando!", settingsReferral: "Referral", settingsReferralDesc: "Invita i tuoi amici e guadagnate entrambi 200 XP!", settingsReferralCode: "Il tuo codice", settingsReferralCopied: "Copiato!", settingsReferralCount: "amici invitati", settingsReferralEnter: "Inserisci un codice referral", settingsReferralApply: "Applica", settingsReferralSuccess: "+200 XP guadagnati!", settingsReferralError: "Codice non valido o già usato", rewardsTitle: "Premi", rewardsGoal: "Primo premio sbloccato a 1.000 iscritti!", rewardsRegistered: "iscritti",
+    settingsPseudo: "Nome utente", settingsPlan: "Piano", settingsPlanFree: "Gratuito", settingsPlanDesc: "Stai usando il piano gratuito.", settingsNotifications: "Notifiche", settingsLogout: "Esci", settingsForgotPwd: "Password dimenticata?", settingsForgotSent: "Funzionalità in arrivo.", settingsChangePwd: "Modifica", settingsPwdPlaceholder: "••••••••", settingsRewards: "Premi", settingsRewardsDesc: "In arrivo — guadagna premi pronosticando!", settingsReferral: "Referral", settingsReferralDesc: "Invita i tuoi amici e guadagnate entrambi 200 XP!", settingsReferralCode: "Il tuo codice", settingsReferralCopied: "Copiato!", settingsReferralCount: "amici invitati", settingsReferralEnter: "Inserisci un codice referral", settingsReferralApply: "Applica", settingsReferralSuccess: "+200 XP guadagnati!", settingsReferralError: "Codice non valido o già usato", rewardsTitle: "Premi", rewardsGoal: "Primo premio sbloccato a 1.000 download!", rewardsRegistered: "download",
     calendarModalTitle: "Calendario VCT 2026", calendarDone: "Concluso", calendarSoon: "In arrivo", calendarLive: "In corso",
     calendarShowDetail: "Vedi dettagli per regione", calendarHideDetail: "Nascondi dettagli",
     statusUpcoming: "Prossime partite",
@@ -629,7 +629,7 @@ const STR = {
     settingsNotifRegions: "地域",
     settingsFavTeam: "お気に入りチーム", settingsFavTeamNone: "チーム未選択", settingsAccount: "アカウント",
     settingsGoogle: "Googleで続ける", settingsOr: "または", settingsEmail: "メールアドレス", settingsPassword: "パスワード", settingsLogin: "ログイン",
-    settingsPseudo: "ユーザー名", settingsPlan: "プラン", settingsPlanFree: "無料", settingsPlanDesc: "無料プランをご利用中です。", settingsNotifications: "通知", settingsLogout: "ログアウト", settingsForgotPwd: "パスワードをお忘れですか？", settingsForgotSent: "近日公開予定です。", settingsChangePwd: "変更", settingsPwdPlaceholder: "••••••••", settingsRewards: "リワード", settingsRewardsDesc: "近日公開 — 予想して報酬をゲット！", settingsReferral: "紹介", settingsReferralDesc: "友達を招待して200 XPずつゲット！", settingsReferralCode: "あなたのコード", settingsReferralCopied: "コピー済み！", settingsReferralCount: "人紹介済み", settingsReferralEnter: "紹介コードを入力", settingsReferralApply: "適用", settingsReferralSuccess: "+200 XP獲得！", settingsReferralError: "無効または使用済みのコード", rewardsTitle: "リワード", rewardsGoal: "登録者1,000人で初リワード解禁！", rewardsRegistered: "人登録済み",
+    settingsPseudo: "ユーザー名", settingsPlan: "プラン", settingsPlanFree: "無料", settingsPlanDesc: "無料プランをご利用中です。", settingsNotifications: "通知", settingsLogout: "ログアウト", settingsForgotPwd: "パスワードをお忘れですか？", settingsForgotSent: "近日公開予定です。", settingsChangePwd: "変更", settingsPwdPlaceholder: "••••••••", settingsRewards: "リワード", settingsRewardsDesc: "近日公開 — 予想して報酬をゲット！", settingsReferral: "紹介", settingsReferralDesc: "友達を招待して200 XPずつゲット！", settingsReferralCode: "あなたのコード", settingsReferralCopied: "コピー済み！", settingsReferralCount: "人紹介済み", settingsReferralEnter: "紹介コードを入力", settingsReferralApply: "適用", settingsReferralSuccess: "+200 XP獲得！", settingsReferralError: "無効または使用済みのコード", rewardsTitle: "リワード", rewardsGoal: "1,000ダウンロードで初リワード解禁！", rewardsRegistered: "ダウンロード",
     calendarModalTitle: "VCT 2026 カレンダー", calendarDone: "終了", calendarSoon: "開催予定", calendarLive: "開催中",
     calendarShowDetail: "地域別の詳細を見る", calendarHideDetail: "詳細を隠す",
     statusUpcoming: "今後の試合",
@@ -698,7 +698,7 @@ const STR = {
     settingsNotifRegions: "Regionen",
     settingsFavTeam: "Lieblingsteam", settingsFavTeamNone: "Kein Team ausgewählt", settingsAccount: "Konto",
     settingsGoogle: "Weiter mit Google", settingsOr: "oder", settingsEmail: "E-Mail-Adresse", settingsPassword: "Passwort", settingsLogin: "Anmelden",
-    settingsPseudo: "Benutzername", settingsPlan: "Abo", settingsPlanFree: "Kostenlos", settingsPlanDesc: "Du nutzt das kostenlose Abo.", settingsNotifications: "Benachrichtigungen", settingsLogout: "Abmelden", settingsForgotPwd: "Passwort vergessen?", settingsForgotSent: "Funktion kommt bald.", settingsChangePwd: "Ändern", settingsPwdPlaceholder: "••••••••", settingsRewards: "Belohnungen", settingsRewardsDesc: "Kommt bald — verdiene Belohnungen durch Tippen!", settingsReferral: "Empfehlung", settingsReferralDesc: "Lade deine Freunde ein und verdient jeweils 200 XP!", settingsReferralCode: "Dein Code", settingsReferralCopied: "Kopiert!", settingsReferralCount: "Freunde empfohlen", settingsReferralEnter: "Empfehlungscode eingeben", settingsReferralApply: "Anwenden", settingsReferralSuccess: "+200 XP verdient!", settingsReferralError: "Ungültiger oder bereits verwendeter Code", rewardsTitle: "Belohnungen", rewardsGoal: "Erste Belohnung bei 1.000 Registrierungen!", rewardsRegistered: "registriert",
+    settingsPseudo: "Benutzername", settingsPlan: "Abo", settingsPlanFree: "Kostenlos", settingsPlanDesc: "Du nutzt das kostenlose Abo.", settingsNotifications: "Benachrichtigungen", settingsLogout: "Abmelden", settingsForgotPwd: "Passwort vergessen?", settingsForgotSent: "Funktion kommt bald.", settingsChangePwd: "Ändern", settingsPwdPlaceholder: "••••••••", settingsRewards: "Belohnungen", settingsRewardsDesc: "Kommt bald — verdiene Belohnungen durch Tippen!", settingsReferral: "Empfehlung", settingsReferralDesc: "Lade deine Freunde ein und verdient jeweils 200 XP!", settingsReferralCode: "Dein Code", settingsReferralCopied: "Kopiert!", settingsReferralCount: "Freunde empfohlen", settingsReferralEnter: "Empfehlungscode eingeben", settingsReferralApply: "Anwenden", settingsReferralSuccess: "+200 XP verdient!", settingsReferralError: "Ungültiger oder bereits verwendeter Code", rewardsTitle: "Belohnungen", rewardsGoal: "Erste Belohnung bei 1.000 Downloads!", rewardsRegistered: "Downloads",
     calendarModalTitle: "VCT-2026-Kalender", calendarDone: "Beendet", calendarSoon: "Bevorstehend", calendarLive: "Läuft gerade",
     calendarShowDetail: "Details nach Region anzeigen", calendarHideDetail: "Details ausblenden",
     statusUpcoming: "Bevorstehende Spiele",
@@ -767,7 +767,7 @@ const STR = {
     settingsNotifRegions: "地区",
     settingsFavTeam: "喜爱的战队", settingsFavTeamNone: "未选择战队", settingsAccount: "账户",
     settingsGoogle: "使用Google继续", settingsOr: "或", settingsEmail: "电子邮箱", settingsPassword: "密码", settingsLogin: "登录",
-    settingsPseudo: "用户名", settingsPlan: "套餐", settingsPlanFree: "免费", settingsPlanDesc: "你正在使用免费套餐。", settingsNotifications: "通知", settingsLogout: "退出登录", settingsForgotPwd: "忘记密码？", settingsForgotSent: "功能即将上线。", settingsChangePwd: "修改", settingsPwdPlaceholder: "••••••••", settingsRewards: "奖励", settingsRewardsDesc: "即将上线 — 预测赢取奖励！", settingsReferral: "推荐", settingsReferralDesc: "邀请好友，双方各获200 XP！", settingsReferralCode: "你的邀请码", settingsReferralCopied: "已复制！", settingsReferralCount: "已邀请好友", settingsReferralEnter: "输入推荐码", settingsReferralApply: "应用", settingsReferralSuccess: "+200 XP获得！", settingsReferralError: "无效或已使用的邀请码", rewardsTitle: "奖励", rewardsGoal: "注册满1000人解锁首个奖励！", rewardsRegistered: "已注册",
+    settingsPseudo: "用户名", settingsPlan: "套餐", settingsPlanFree: "免费", settingsPlanDesc: "你正在使用免费套餐。", settingsNotifications: "通知", settingsLogout: "退出登录", settingsForgotPwd: "忘记密码？", settingsForgotSent: "功能即将上线。", settingsChangePwd: "修改", settingsPwdPlaceholder: "••••••••", settingsRewards: "奖励", settingsRewardsDesc: "即将上线 — 预测赢取奖励！", settingsReferral: "推荐", settingsReferralDesc: "邀请好友，双方各获200 XP！", settingsReferralCode: "你的邀请码", settingsReferralCopied: "已复制！", settingsReferralCount: "已邀请好友", settingsReferralEnter: "输入推荐码", settingsReferralApply: "应用", settingsReferralSuccess: "+200 XP获得！", settingsReferralError: "无效或已使用的邀请码", rewardsTitle: "奖励", rewardsGoal: "下载满1000次解锁首个奖励！", rewardsRegistered: "次下载",
     calendarModalTitle: "VCT 2026赛程日历", calendarDone: "已结束", calendarSoon: "即将开始", calendarLive: "进行中",
     calendarShowDetail: "查看各赛区详情", calendarHideDetail: "收起详情",
     statusUpcoming: "即将进行的比赛",
@@ -7410,14 +7410,14 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 0, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           {(!drafts || drafts.length === 0) && <p style={{ color: "#555", fontSize: "13px", textAlign: "center", padding: "40px 0" }}>Aucun brouillon</p>}
           {drafts?.map(draft => (
-            <div key={draft.id} style={{ borderBottom: "1px solid #1e1e1e", padding: "12px 16px" }}>
+            <div key={draft.id} onClick={() => onLoadDraft?.(draft)} style={{ borderBottom: "1px solid #1e1e1e", padding: "12px 16px", cursor: "pointer" }}>
               {draft.image && <img src={draft.image} alt="" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 10, marginBottom: 8 }} />}
               {draft.content && <p style={{ color: "#ddd", fontSize: "13px", lineHeight: 1.5, marginBottom: 8 }}>{draft.content.length > 120 ? draft.content.slice(0, 120) + "..." : draft.content}</p>}
               <div className="flex items-center justify-between">
                 <span style={{ color: "#555", fontSize: "10px" }}>{new Date(draft.date).toLocaleDateString()}</span>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => onLoadDraft?.(draft)} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Charger</button>
-                  <button onClick={() => onDeleteDraft?.(draft.id)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Trash2 size={14} color="#ef4444" /></button>
+                  <button onClick={(e) => { e.stopPropagation(); onLoadDraft?.(draft); }} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 8, padding: "6px 14px", fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Charger</button>
+                  <button onClick={(e) => { e.stopPropagation(); onDeleteDraft?.(draft.id); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><Trash2 size={14} color="#ef4444" /></button>
                 </div>
               </div>
             </div>
@@ -8090,65 +8090,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         </div>
 
-        {(() => {
-          const streakData = loadStreak();
-          const myRank = leaderboard.findIndex(u => u.id === profile?.userId) + 1;
-          const badgeStats = { exact, bon, parie, rank: myRank, streak: streakData.best };
-          const unlocked = ACHIEVEMENT_BADGES.filter(b => b.check(badgeStats));
-          const locked = ACHIEVEMENT_BADGES.filter(b => !b.check(badgeStats));
-          const equippedId = localStorage.getItem("split_equipped_badge_id") || "";
-          const handleEquip = (b) => {
-            if (equippedId === b.id) {
-              localStorage.removeItem("split_equipped_badge_id");
-              localStorage.removeItem("split_equipped_badge");
-              localStorage.removeItem("split_equipped_badge_emoji");
-            } else {
-              localStorage.setItem("split_equipped_badge_id", b.id);
-              localStorage.setItem("split_equipped_badge", b.name);
-              localStorage.setItem("split_equipped_badge_emoji", b.emoji);
-            }
-            setEqBadgeTick(t => t + 1);
-          };
-          return (
-            <div className="mb-5">
-              <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Badges ({unlocked.length}/{ACHIEVEMENT_BADGES.length})</p>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {unlocked.map(b => {
-                  const isEquipped = equippedId === b.id;
-                  return (
-                    <div key={b.id} onClick={() => handleEquip(b)} style={{ cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div style={{
-                        width: 52, height: 52, borderRadius: "50%",
-                        background: `radial-gradient(circle at 30% 30%, ${b.color}30, ${b.color}10)`,
-                        border: isEquipped ? `2.5px solid ${b.color}` : `2px solid ${b.color}50`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: isEquipped ? `0 0 12px ${b.color}40` : "none",
-                        position: "relative"
-                      }}>
-                        <span style={{ fontSize: 22 }}>{b.emoji}</span>
-                        {isEquipped && <span style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: "#CCF71D", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#000", border: "2px solid #0d0d0d" }}>✓</span>}
-                      </div>
-                      <span style={{ color: b.color, fontSize: 8, fontWeight: 800, textAlign: "center", maxWidth: 56, lineHeight: 1.2 }}>{b.name}</span>
-                    </div>
-                  );
-                })}
-                {locked.map(b => (
-                  <div key={b.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, opacity: 0.35 }}>
-                    <div style={{
-                      width: 52, height: 52, borderRadius: "50%",
-                      background: "#1a1a1a",
-                      border: "2px solid #333",
-                      display: "flex", alignItems: "center", justifyContent: "center"
-                    }}>
-                      <span style={{ fontSize: 22, filter: "grayscale(1)" }}>{b.emoji}</span>
-                    </div>
-                    <span style={{ color: "#555", fontSize: 8, fontWeight: 800, textAlign: "center", maxWidth: 56, lineHeight: 1.2 }}>{b.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
 
         {(() => {
           const allPts = leaderboard.map(u => u.points);
@@ -8786,11 +8727,18 @@ function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevS
   );
 }
 
-function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T, profile }) {
+function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T, profile, onLogout, onDeleteAccount, onChangePseudo }) {
   const allTeams = teams || [];
   const [activeSection, setActiveSection] = useState(null);
   const [showPwd, setShowPwd] = useState(false);
-  const [forgotMsg, setForgotMsg] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [editPseudo, setEditPseudo] = useState(false);
+  const [newPseudo, setNewPseudo] = useState(profile?.pseudo || "");
+  const [pseudoMsg, setPseudoMsg] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const GAMES = [
     { key: "valorant", label: "Valorant", img: NAV_VALORANT_IMG, accent: "#FF4655",
@@ -8830,10 +8778,36 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
               <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
                 <div className="mt-3">
                   <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsPseudo}</p>
-                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
-                    <User size={14} color="#666" />
-                    <input value={profile?.pseudo || ""} readOnly className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
-                  </div>
+                  {editPseudo ? (
+                    <div>
+                      <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #CCF71D40" }}>
+                        <User size={14} color="#CCF71D" />
+                        <input value={newPseudo} onChange={e => setNewPseudo(e.target.value)} maxLength={20} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={async () => {
+                          if (newPseudo.trim().length < 2) { setPseudoMsg("Pseudo trop court"); return; }
+                          try {
+                            const token = localStorage.getItem("split_auth_token");
+                            const r = await fetch(API_BASE + "/api/auth/pseudo", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ pseudo: newPseudo.trim() }) });
+                            const d = await r.json();
+                            if (r.ok) { onChangePseudo(d.pseudo); setEditPseudo(false); setPseudoMsg(""); }
+                            else setPseudoMsg(d.error || "Erreur");
+                          } catch { setPseudoMsg("Erreur réseau"); }
+                        }} style={{ background: "#CCF71D", color: "#000", fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 10, border: "none" }}>Sauvegarder</button>
+                        <button onClick={() => { setEditPseudo(false); setNewPseudo(profile?.pseudo || ""); setPseudoMsg(""); }} style={{ background: "#333", color: "#888", fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 10, border: "none" }}>Annuler</button>
+                      </div>
+                      {pseudoMsg && <p style={{ color: "#ff4655", fontSize: 11, marginTop: 4 }}>{pseudoMsg}</p>}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 rounded-xl px-3 flex-1" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
+                        <User size={14} color="#666" />
+                        <input value={profile?.pseudo || ""} readOnly className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
+                      </div>
+                      <button onClick={() => { setEditPseudo(true); setNewPseudo(profile?.pseudo || ""); }} style={{ background: "#222", color: "#CCF71D", fontSize: 11, fontWeight: 700, padding: "8px 12px", borderRadius: 10, border: "1px solid #CCF71D30", whiteSpace: "nowrap" }}>Modifier</button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-3">
                   <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsEmail}</p>
@@ -8851,10 +8825,48 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                       {showPwd ? <EyeOff size={16} color="#666" /> : <Eye size={16} color="#666" />}
                     </button>
                   </div>
-                  <button onClick={() => setForgotMsg(true)} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, marginTop: 8, background: "none", border: "none" }}>
+                  <button onClick={async () => {
+                    if (forgotLoading) return;
+                    setForgotLoading(true);
+                    try {
+                      const email = (() => { try { return JSON.parse(localStorage.getItem("split_auth_user"))?.email; } catch { return null; } })();
+                      if (!email) { setForgotMsg("Email introuvable"); setForgotLoading(false); return; }
+                      const r = await fetch(API_BASE + "/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+                      const d = await r.json();
+                      if (r.ok) setForgotMsg("Lien de réinitialisation envoyé !");
+                      else setForgotMsg(d.error || "Erreur");
+                    } catch { setForgotMsg("Erreur réseau"); }
+                    setForgotLoading(false);
+                  }} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, marginTop: 8, background: "none", border: "none" }}>
                     {T.settingsForgotPwd}
                   </button>
-                  {forgotMsg && <p style={{ color: "#888", fontSize: "11px", marginTop: 4 }}>{T.settingsForgotSent}</p>}
+                  {forgotMsg && <p style={{ color: "#888", fontSize: "11px", marginTop: 4 }}>{forgotMsg}</p>}
+                </div>
+                <div className="mt-4 pt-3" style={{ borderTop: "1px solid #262626" }}>
+                  {!deleteConfirm ? (
+                    <button onClick={() => setDeleteConfirm(true)} style={{ color: "#ff4655", fontSize: 13, fontWeight: 700, background: "none", border: "none" }}>Supprimer mon compte</button>
+                  ) : (
+                    <div>
+                      <p style={{ color: "#ff4655", fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Cette action est irréversible.</p>
+                      {(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.provider !== "google"; } catch { return true; } })() && (
+                        <input type="password" placeholder="Confirme ton mot de passe" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} style={{ background: "#222", border: "1px solid #2a2a2a", color: "#fff", fontSize: 13, padding: "8px 12px", borderRadius: 10, width: "100%", outline: "none", marginBottom: 8, boxSizing: "border-box" }} />
+                      )}
+                      <div className="flex gap-2">
+                        <button onClick={async () => {
+                          setDeleteError("");
+                          try {
+                            const token = localStorage.getItem("split_auth_token");
+                            const r = await fetch(API_BASE + "/api/auth/account", { method: "DELETE", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ password: deletePassword }) });
+                            const d = await r.json();
+                            if (r.ok) onDeleteAccount();
+                            else setDeleteError(d.error || "Erreur");
+                          } catch { setDeleteError("Erreur réseau"); }
+                        }} style={{ background: "#ff4655", color: "#fff", fontSize: 12, fontWeight: 800, padding: "8px 16px", borderRadius: 10, border: "none" }}>Supprimer</button>
+                        <button onClick={() => { setDeleteConfirm(false); setDeletePassword(""); setDeleteError(""); }} style={{ background: "#333", color: "#888", fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 10, border: "none" }}>Annuler</button>
+                      </div>
+                      {deleteError && <p style={{ color: "#ff4655", fontSize: 11, marginTop: 4 }}>{deleteError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -8943,7 +8955,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
 
           {/* DÉCONNEXION */}
           <div style={sectionStyle}>
-            <button style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
+            <button onClick={onLogout} style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
               <span style={{ ...labelStyle, color: "#ff4655" }}><LogOut size={18} color="#ff4655" />{T.settingsLogout}</span>
             </button>
           </div>
@@ -9207,8 +9219,8 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-        <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "30px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
+      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer" }} onClick={() => window.location.reload()}>
+        <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "24px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
       </div>
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 32 }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
@@ -10904,6 +10916,32 @@ export default function ClutchApp() {
             teams={allTeams}
             T={T}
             profile={profile}
+            onLogout={() => {
+              localStorage.removeItem("split_auth_token");
+              localStorage.removeItem("split_auth_user");
+              localStorage.removeItem("split_profile");
+              setProfile(null);
+              setShowSettings(false);
+              setActiveTab("valorant");
+            }}
+            onDeleteAccount={() => {
+              localStorage.removeItem("split_auth_token");
+              localStorage.removeItem("split_auth_user");
+              localStorage.removeItem("split_profile");
+              setProfile(null);
+              setShowSettings(false);
+              setActiveTab("valorant");
+            }}
+            onChangePseudo={(newPseudo) => {
+              setProfile(p => {
+                const updated = { ...p, pseudo: newPseudo };
+                localStorage.setItem("split_profile", JSON.stringify(updated));
+                const authUser = JSON.parse(localStorage.getItem("split_auth_user") || "{}");
+                authUser.pseudo = newPseudo;
+                localStorage.setItem("split_auth_user", JSON.stringify(authUser));
+                return updated;
+              });
+            }}
           />
         )}
         {showProfile && (

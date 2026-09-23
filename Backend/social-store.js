@@ -279,3 +279,39 @@ export function getReferrals(userId) {
     WHERE r.referrer_id = ? ORDER BY r.created_at DESC
   `).all(userId);
 }
+
+export function updatePseudo(userId, newPseudo) {
+  db.prepare(`UPDATE users SET pseudo = ?, pseudo_lower = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(newPseudo, newPseudo.toLowerCase(), userId);
+}
+
+export function deleteUser(userId) {
+  db.prepare(`DELETE FROM follows WHERE follower_id = ? OR followed_id = ?`).run(userId, userId);
+  db.prepare(`DELETE FROM profile_views WHERE viewer_id = ? OR viewed_id = ?`).run(userId, userId);
+  db.prepare(`DELETE FROM referrals WHERE referrer_id = ? OR referred_id = ?`).run(userId, userId);
+  try { db.prepare(`DELETE FROM post_likes WHERE user_id = ?`).run(userId); } catch {}
+  try { db.prepare(`DELETE FROM post_comments WHERE user_id = ?`).run(userId); } catch {}
+  try { db.prepare(`DELETE FROM posts WHERE user_id = ?`).run(userId); } catch {}
+  db.prepare(`DELETE FROM users WHERE id = ?`).run(userId);
+}
+
+try { db.exec(`ALTER TABLE users ADD COLUMN reset_token TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN reset_token_expires TEXT`); } catch {}
+
+export function setResetToken(email, token, expiresAt) {
+  db.prepare(`UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE email = ?`)
+    .run(token, expiresAt, email);
+}
+
+export function getUserByResetToken(token) {
+  return db.prepare(`SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > datetime('now')`).get(token);
+}
+
+export function clearResetToken(userId) {
+  db.prepare(`UPDATE users SET reset_token = NULL, reset_token_expires = NULL WHERE id = ?`).run(userId);
+}
+
+export function updatePassword(userId, passwordHash) {
+  db.prepare(`UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(passwordHash, userId);
+}
