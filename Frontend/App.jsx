@@ -137,8 +137,9 @@ async function fetchYouTubeLive(team1, team2, game) {
 // Catégories de jeux affichées dans le classement
 const CATS = ["VALORANT", "CSGO", "RL"];
 const SCORE_CATS = ["tout","valo","cs2","rl"];
-const BIO_BLOCKED_WORDS = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier"];
-const BIO_LINK_RE = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|discord\.|twitch\.|twitter\.|instagram\./i;
+const BIO_BLOCKED_WORDS = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier","fuck","shit","ass","dick","cock","pussy","bitch","nigga","nigger","retard","whore","slut","cunt","porn","hentai","sexe","sex","nude","nudes","onlyfans","fap","branlette","branle","sodomie","viol","rape","penis","vagin","anus","orgasm","ejacul","masturb","prostitut","escort","milf","fetish","anal","oral","threesome","gangbang","creampie","cul","nichon","chatte","cougar","dominat","bdsm","bondage"];
+const BIO_LINK_RE = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|\.net|\.org|\.co|\.me|\.app|\.dev|\.xyz|discord\.|twitch\.|twitter\.|instagram\.|tiktok\.|snapchat\.|telegram\.|whatsapp\.|youtube\.|t\.me|bit\.ly|linktr\.ee|@[a-zA-Z]/i;
+const BIO_AD_RE = /\b(promo|code|reduc|gratuit|free|giveaway|cashapp|paypal|venmo|crypto|bitcoin|eth|solana|nft|mint|airdrop|dm\s*(me|moi)|follow|abonne|sub|boost)\b/i;
 
 // Logos d'équipe personnalisés (fallback si l'API PandaScore n'en fournit pas) ;
 // utilisés en priorité sur match.team1Logo/team2Logo quand présents ci-dessous.
@@ -305,7 +306,9 @@ const STR = {
     profileSave: "Enregistrer", profileEdit: "Modifier", profileCreate: "Crée ton profil",
     profileCreateSub: "Choisis un pseudo, un avatar et tes équipes favorites pour apparaître au classement.",
     scoreTout: "TOUT", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    bioError: "Pas de liens, insultes ou gros mots.",
+    bioError: "Pas de liens, insultes ou contenu inapproprié.",
+    noTeam: "Sans équipe", profileSkip: "Passer cette étape →",
+    doubleBackToQuit: "Appuie encore pour quitter",
     profileAmis: "Amis", profileTop: "Top", profilePoint: "Point",
     profileModify: "Modifier le profil", profileHistory: "Historique :", profileFavLabel: "Équipes préférées",
     profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
@@ -392,7 +395,8 @@ const STR = {
     profileSave: "Save", profileEdit: "Edit", profileCreate: "Create your profile",
     profileCreateSub: "Pick a username, an avatar and your favorite teams to appear in the standings.",
     scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
-    bioError: "No links, insults or profanity.",
+    bioError: "No links, insults or inappropriate content.",
+    noTeam: "No team", profileSkip: "Skip this step →",
     profileAmis: "Friends", profileTop: "Top", profilePoint: "Point",
     profileModify: "Edit profile", profileHistory: "History:", profileFavLabel: "Favorite teams",
     profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
@@ -2359,7 +2363,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const txtStW = hasBg ? { textShadow: bgSh } : {};
 
   return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#141414", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #333", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "none" }}>
+    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#181818", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #2a2a2a", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "0 2px 8px rgba(0,0,0,0.4)" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-2">
@@ -4388,7 +4392,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#141414", border: "1px solid #262626" }}>
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#161616", border: "1px solid #2a2a2a" }}>
         {[0, 1, 2].map((i) => {
           const user = top3[i];
           const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
@@ -6444,7 +6448,8 @@ const SCORE_CAT_KEYS = {
 
 function validateBio(text) {
   if (BIO_LINK_RE.test(text)) return false;
-  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (BIO_AD_RE.test(text)) return false;
+  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[0@3€$!1|]/g, m => ({ "0": "o", "@": "a", "3": "e", "€": "e", "$": "s", "!": "i", "1": "i", "|": "l" })[m] || m);
   return !BIO_BLOCKED_WORDS.some((w) => lower.includes(w));
 }
 
@@ -6468,7 +6473,7 @@ function resizeImage(file, maxSize, cb) {
   reader.readAsDataURL(file);
 }
 
-function TeamSearchSelect({ value, onChange, teams, label, T }) {
+function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef(null);
@@ -6478,12 +6483,18 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
-  const filtered = teams.filter((t) => t.toLowerCase().includes(search.toLowerCase()));
+  const filtered = search ? teams.filter((t) => t.toLowerCase().includes(search.toLowerCase())) : teams;
+  const SANS_EQUIPE = T.noTeam || "Sans équipe";
+  const getLogo = (name) => {
+    if (!teamLogoCache) return null;
+    const key = Object.keys(teamLogoCache).find(k => k.toLowerCase() === name.toLowerCase());
+    return key ? teamLogoCache[key] : null;
+  };
   return (
     <div ref={ref}>
       <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
-        <span className="truncate">{value || "—"}</span>
+      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value && value !== "__none__" ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
+        <span className="truncate flex items-center gap-2">{value === "__none__" ? SANS_EQUIPE : value || "—"}</span>
         <ChevronDown size={14} color="#666" />
       </button>
       {open && (
@@ -6492,13 +6503,19 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
             <Search size={14} color="#666" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." autoFocus style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", outline: "none", flex: 1 }} />
           </div>
-          <div className="dark-scroll" style={{ maxHeight: "140px", overflowY: "auto" }}>
-            <button onClick={() => { onChange(""); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: "#666", fontSize: "12px" }}>—</button>
-            {filtered.map((t) => (
-              <button key={t} onClick={() => { onChange(t); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2" style={{ color: t === value ? "#CCF71D" : "#ccc", fontSize: "12px", background: t === value ? "#222" : "transparent" }}>
-                {t}
-              </button>
-            ))}
+          <div className="dark-scroll" style={{ maxHeight: "200px", overflowY: "auto" }}>
+            <button onClick={() => { onChange("__none__"); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2.5 flex items-center gap-2" style={{ color: value === "__none__" ? "#CCF71D" : "#888", fontSize: "12px", background: value === "__none__" ? "#222" : "transparent" }}>
+              {SANS_EQUIPE}
+            </button>
+            {filtered.map((t) => {
+              const logo = getLogo(t);
+              return (
+                <button key={t} onClick={() => { onChange(t); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2 flex items-center gap-2.5" style={{ color: t === value ? "#CCF71D" : "#ccc", fontSize: "12px", background: t === value ? "#222" : "transparent" }}>
+                  {logo ? <img src={logo} alt="" style={{ width: 20, height: 20, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} /> : <div style={{ width: 20, height: 20, borderRadius: 4, background: "#333", flexShrink: 0 }} />}
+                  <span className="truncate">{t}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -6506,8 +6523,8 @@ function TeamSearchSelect({ value, onChange, teams, label, T }) {
   );
 }
 
-function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T }) {
-  const [step, setStep] = useState(0);
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache }) {
+  const [step, setStep] = useState(profile?.pseudo ? 0 : 0);
   const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatar, setAvatar] = useState(profile?.avatar || null);
@@ -6533,8 +6550,11 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   }
 
   function handleSave() {
-    if (pseudo.trim().length < 2 || !bioOk) return;
-    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: favValo, cs2: favCs2, rl: favRl }, pseudoColor: "#ffffff" });
+    if (pseudo.trim().length < 2) return;
+    const cleanValo = favValo === "__none__" ? "" : favValo;
+    const cleanCs2 = favCs2 === "__none__" ? "" : favCs2;
+    const cleanRl = favRl === "__none__" ? "" : favRl;
+    onSave({ pseudo: pseudo.trim(), bio: bio.trim(), avatar, favTeams: { valo: cleanValo, cs2: cleanCs2, rl: cleanRl }, pseudoColor: "#ffffff" });
   }
 
   const canNext = step === 0 ? true : step === 1 ? pseudo.trim().length >= 2 : step === 2 ? bioOk : true;
@@ -6595,11 +6615,11 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
               <div>
                 <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profileBio}</label>
                 <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
-                {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou gros mots."}</p>}
+                {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou contenu inapproprié."}</p>}
               </div>
-              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} />
-              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} />
-              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} />
+              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} teamLogoCache={teamLogoCache} />
+              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} teamLogoCache={teamLogoCache} />
+              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} teamLogoCache={teamLogoCache} />
             </div>
           )}
 
@@ -6617,15 +6637,22 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
           )}
         </div>
 
-        <div style={{ flexShrink: 0, padding: "12px 20px 20px", display: "flex", gap: 10 }}>
-          {step > 0 && (
-            <button onClick={() => setStep(step - 1)} style={{ flex: 1, background: "#1a1a1a", color: "#aaa", border: "1px solid #333", borderRadius: 12, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-              {T.profileBack || "Retour"}
+        <div style={{ flexShrink: 0, padding: "12px 20px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", gap: 10 }}>
+            {step > 0 && (
+              <button onClick={() => setStep(step - 1)} style={{ flex: 1, background: "#1a1a1a", color: "#aaa", border: "1px solid #333", borderRadius: 12, padding: "14px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                {T.profileBack || "Retour"}
+              </button>
+            )}
+            <button onClick={() => { if (step < totalSteps - 1) setStep(step + 1); else handleSave(); }} disabled={!canNext} style={{ flex: step > 0 ? 2 : 1, background: canNext ? "#CCF71D" : "#333", color: canNext ? "#000" : "#666", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: canNext ? "pointer" : "default" }}>
+              {step < totalSteps - 1 ? (T.profileNext || "Suivant") : (T.profileSave)}
+            </button>
+          </div>
+          {step === 2 && !profile?.pseudo && (
+            <button onClick={() => setStep(3)} style={{ background: "none", border: "none", color: "#666", fontSize: 12, cursor: "pointer", padding: "6px 0" }}>
+              {T.profileSkip || "Passer cette étape →"}
             </button>
           )}
-          <button onClick={() => { if (step < totalSteps - 1) setStep(step + 1); else handleSave(); }} disabled={!canNext} style={{ flex: step > 0 ? 2 : 1, background: canNext ? "#CCF71D" : "#333", color: canNext ? "#000" : "#666", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: canNext ? "pointer" : "default" }}>
-            {step < totalSteps - 1 ? (T.profileNext || "Suivant") : (T.profileSave)}
-          </button>
         </div>
       </div>
     </div>
@@ -7889,13 +7916,13 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
   const [eqBadgeTick, setEqBadgeTick] = useState(0);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [lbLoaded, setLbLoaded] = useState(false);
+  const [leaderboard, setLeaderboard] = useState(prefetchedLeaderboard || []);
+  const [lbLoaded, setLbLoaded] = useState(!!prefetchedLeaderboard);
   const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
   const [carouselSlide, setCarouselSlide] = useState(0);
@@ -7956,7 +7983,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     setEditMode(true);
   }
 
+  const editBioOk = editBio.trim() === "" || validateBio(editBio);
+
   function saveEdit() {
+    if (!editBioOk) return;
     if (onSaveProfile) {
       onSaveProfile({ ...profile, bio: editBio.trim(), avatar: editAvatar, favTeams: { valo: editFavValo, cs2: editFavCs2, rl: editFavRl } });
     }
@@ -8032,7 +8062,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
 
         {editMode ? (
-          <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={80} rows={2} placeholder={T.profileBio || "Ajouter une bio..."} style={{ background: "#111", border: "1px solid #CCF71D40", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginBottom: 12, boxSizing: "border-box" }} />
+          <div style={{ marginBottom: 12 }}>
+            <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} maxLength={80} rows={2} placeholder={T.profileBio || "Ajouter une bio..."} style={{ background: "#111", border: editBioOk ? "1px solid #CCF71D40" : "1px solid #e74c3c", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", boxSizing: "border-box" }} />
+            {!editBioOk && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou contenu inapproprié."}</p>}
+          </div>
         ) : (
           displayBio ? <p style={{ color: "#ccc", fontSize: "13px" }} className="mb-3">{displayBio}</p> : null
         )}
@@ -8060,17 +8093,28 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {editMode ? (
           <div className="mb-3" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
-            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} />
-            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} />
-            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} />
+            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={teamLogoCache} />
+            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={teamLogoCache} />
+            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={teamLogoCache} />
           </div>
         ) : (displayFavValo || displayFavCs2 || displayFavRl) && (
           <div className="mb-3">
-            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
-            <div className="flex gap-2 flex-wrap">
-              {displayFavValo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {displayFavValo}</span>}
-              {displayFavCs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {displayFavCs2}</span>}
-              {displayFavRl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {displayFavRl}</span>}
+            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
+            <div className="flex flex-col gap-2">
+              {[
+                { team: displayFavValo, game: "Valorant", color: "#ff4655", bg: "#1a1a2e", border: "#2a2a3e" },
+                { team: displayFavCs2, game: "CS2", color: "#f0a500", bg: "#1e1e1a", border: "#2e2e2a" },
+                { team: displayFavRl, game: "RL", color: "#3B82F6", bg: "#1a1e2e", border: "#2a2e3e" },
+              ].filter(x => x.team && x.team !== "__none__").map(({ team, game, color, bg, border }) => {
+                const logo = teamLogoCache ? teamLogoCache[Object.keys(teamLogoCache).find(k => k.toLowerCase() === team.toLowerCase()) || ""] : null;
+                return (
+                  <div key={game} className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: bg, border: `1px solid ${border}` }}>
+                    <span style={{ color, fontSize: 10, fontWeight: 800, textTransform: "uppercase", minWidth: 52 }}>{game}</span>
+                    {logo && <img src={logo} alt="" style={{ width: 22, height: 22, objectFit: "contain", borderRadius: 4 }} />}
+                    <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{team}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -9446,6 +9490,8 @@ function AuthScreen({ onAuth }) {
   };
 
   const googleReadyRef = useRef(false);
+  const googleBtnRef = useRef(null);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   useEffect(() => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!googleClientId) return;
@@ -9458,12 +9504,20 @@ function AuthScreen({ onAuth }) {
         callback: (response) => handleGoogle(response.credential),
       });
       googleReadyRef.current = true;
+      if (isIOS && googleBtnRef.current) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, { type: "standard", theme: "filled_black", size: "large", text: "continue_with", width: 320 });
+      }
     };
     document.head.appendChild(s);
     return () => { try { document.head.removeChild(s); } catch {} };
   }, []);
   const triggerGoogleSignIn = () => {
-    if (googleReadyRef.current) window.google?.accounts.id.prompt();
+    if (!googleReadyRef.current) return;
+    if (isIOS) {
+      if (googleBtnRef.current) googleBtnRef.current.querySelector("[role=button]")?.click();
+    } else {
+      window.google?.accounts.id.prompt();
+    }
   };
 
   if (googleCred) {
@@ -9533,10 +9587,18 @@ function AuthScreen({ onAuth }) {
         </div>
 
         {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-          <button onClick={triggerGoogleSignIn} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#111", border: "1px solid #222", borderRadius: 12, padding: "13px 16px", cursor: "pointer", marginBottom: 16 }}>
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.01 24.01 0 0 0 0 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{T.settingsGoogle}</span>
-          </button>
+          <>
+            {isIOS ? (
+              <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+                <div ref={googleBtnRef} style={{ minHeight: 44 }} />
+              </div>
+            ) : (
+              <button onClick={triggerGoogleSignIn} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, background: "#111", border: "1px solid #222", borderRadius: 12, padding: "13px 16px", cursor: "pointer", marginBottom: 16 }}>
+                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.01 24.01 0 0 0 0 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                <span style={{ color: "#fff", fontSize: 14, fontWeight: 700 }}>{T.settingsGoogle}</span>
+              </button>
+            )}
+          </>
         ) : (
           <p style={{ color: "#333", fontSize: 10, textAlign: "center", marginBottom: 40 }}>{T.authGoogleNA}</p>
         )}
@@ -9678,6 +9740,7 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
+  const lastBackRef = useRef(0);
   function doTabSwitch(tab) {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
     if (tab === "__close__") return;
@@ -9685,7 +9748,34 @@ export default function ClutchApp() {
     setShowSettings(false); setShowNotifs(false);
     tabSwitchCountRef.current++;
     setActiveTab(tab);
+    try { history.pushState({ tab }, "", ""); } catch {}
   }
+  useEffect(() => {
+    try { history.replaceState({ tab: "home" }, "", ""); } catch {}
+    const onBack = (e) => {
+      const overlays = [showMessages, showSettings, showNotifs, showFriendModal, showQuestModal, showRewardsModal, profileView, showProfile, showCalendar, showCs2Calendar];
+      if (overlays.some(Boolean)) {
+        setShowMessages(false); setShowSettings(false); setShowNotifs(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowProfile(false); setShowCalendar(false); setShowCs2Calendar(false);
+        history.pushState({ tab: activeTab }, "", "");
+        return;
+      }
+      if (activeTab !== "home") {
+        setActiveTab("home");
+        history.pushState({ tab: "home" }, "", "");
+        return;
+      }
+      const now = Date.now();
+      if (now - lastBackRef.current < 2000) {
+        window.close();
+      } else {
+        lastBackRef.current = now;
+        setStreakPopup({ type: "back", message: T.doubleBackToQuit || "Appuie encore pour quitter" });
+        setTimeout(() => setStreakPopup(p => p?.type === "back" ? null : p), 2000);
+      }
+    };
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  }, [activeTab, showMessages, showSettings, showNotifs, showFriendModal, showQuestModal, showRewardsModal, profileView, showProfile, showCalendar, showCs2Calendar]);
   useEffect(() => {
     function onCreatePost(e) {
       setAppPostPrefill(e.detail?.text || "");
@@ -9714,6 +9804,13 @@ export default function ClutchApp() {
   const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
   const [rlLiveMatches, setRlLiveMatches] = useState([]);
   const [rlResultsMatches, setRlResultsMatches] = useState([]);
+
+  const [prefetchedLeaderboard, setPrefetchedLeaderboard] = useState(null);
+  useEffect(() => {
+    fetch((import.meta.env.VITE_API_BASE || "") + "/api/social/leaderboard").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setPrefetchedLeaderboard(d);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const notifs = [];
@@ -10828,7 +10925,7 @@ export default function ClutchApp() {
               setShowBracketPage={setShowRlBracketPage}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -10953,6 +11050,7 @@ export default function ClutchApp() {
             cs2Teams={cs2AllTeams}
             rlTeams={rlAllTeams}
             T={T}
+            teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }}
           />
         )}
         {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}

@@ -11,16 +11,15 @@
   html, body {
     margin: 0;
     padding: 0;
-    background: #000;
+    background: #070709;
     overflow: hidden;
     height: 100%;
-
   }
   #root {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #000;
+    background: #070709;
     overflow: hidden;
   }
 }

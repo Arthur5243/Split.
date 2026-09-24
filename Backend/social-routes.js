@@ -24,10 +24,21 @@ import {
 
 const router = Router();
 
+const BIO_BLOCKED_SERVER = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier","fuck","shit","dick","cock","pussy","bitch","nigga","nigger","whore","slut","cunt","porn","hentai","sexe","nude","nudes","onlyfans","branlette","branle","sodomie","viol","rape","penis","vagin","prostitut","escort","milf","anal","threesome","gangbang","chatte"];
+const BIO_LINK_SERVER = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|\.net|\.org|discord\.|twitch\.|twitter\.|instagram\.|tiktok\.|telegram\.|t\.me|bit\.ly|linktr\.ee|@[a-zA-Z]/i;
+
+function validateBioServer(text) {
+  if (!text || !text.trim()) return true;
+  if (BIO_LINK_SERVER.test(text)) return false;
+  const lower = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return !BIO_BLOCKED_SERVER.some((w) => lower.includes(w));
+}
+
 router.post("/api/social/register", (req, res) => {
   const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner } = req.body;
   if (!id || !pseudo) return res.status(400).json({ error: "id and pseudo required" });
-  upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner });
+  const cleanBio = bio && !validateBioServer(bio) ? "" : bio;
+  upsertUser({ id, pseudo, avatar, bio: cleanBio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner });
   res.json({ ok: true });
 });
 
