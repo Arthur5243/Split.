@@ -338,7 +338,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
     nexiumBox: "Nexium Box", nexiumOpen: "Ouvrir", nexiumRare: "Rare", nexiumEpic: "Épique", nexiumLegendary: "Légendaire", nexiumUltra: "Ultra", nexiumNew: "Nouveau !", nexiumOwned: "Possédé",
     cashprizeTitle: "Cashprize", cashprizeRules: "Top 1, 2 et 3 gagnent un cashprize !", cashprizeUnlock: "Disponible à partir de 1 000 installations", cashprizeInstalls: "installations", cashprizeWinners: "Gagnants",
-    predLimit: "Tout est joué !", predRemaining: "pronos dispo", predActive: "pronos actifs", predLimitPopup: "Tu as utilisé tes 4 pronos du jour. Reviens demain ou attends qu'un match se termine !",
+    predLimit: "Tout est joué !", predRemaining: "pronos dispo", predActive: "pronos actifs", predLimitPopup: "Tu as utilisé tes 5 pronos du jour. Reviens demain ou attends qu'un match se termine !",
     slideMatchDay: "Match du jour", slideCommunity: "ont parié sur", slideCountdown: "Compte à rebours",
     rewardsFree: "Récompenses", rewardsCash: "Cashprize",
     inventoryTitle: "Inventaire", inventoryEmpty: "Aucun objet pour le moment",
@@ -427,7 +427,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
     nexiumBox: "Nexium Box", nexiumOpen: "Open", nexiumRare: "Rare", nexiumEpic: "Epic", nexiumLegendary: "Legendary", nexiumUltra: "Ultra", nexiumNew: "New!", nexiumOwned: "Owned",
     cashprizeTitle: "Cash Prize", cashprizeRules: "Top 1, 2, and 3 win a cash prize!", cashprizeUnlock: "Available from 1,000 installs", cashprizeInstalls: "installs", cashprizeWinners: "Winners",
-    predLimit: "All played!", predRemaining: "left", predActive: "active predictions", predLimitPopup: "You've used all 4 predictions for today. Come back tomorrow or wait for a match to finish!",
+    predLimit: "All played!", predRemaining: "left", predActive: "active predictions", predLimitPopup: "You've used all 5 predictions for today. Come back tomorrow or wait for a match to finish!",
     slideMatchDay: "Match of the day", slideCommunity: "bet on", slideCountdown: "Countdown",
     rewardsFree: "Rewards", rewardsCash: "Cash Prize",
     inventoryTitle: "Inventory", inventoryEmpty: "No items yet",
@@ -2233,7 +2233,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5 }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -2568,7 +2568,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
       {finished ? null : tbd ? (
         <div className="px-4 pb-2 text-center" style={{ color: hasBg ? "#bbb" : "#666", fontSize: "11px", ...txtStW }}>{T.teamsTbc}</div>
       ) : (
-        <div className="px-4 pb-2 flex items-center justify-center gap-3" style={{ position: "relative" }}>
+        <div className="px-4 pb-2 flex items-center justify-center gap-3" style={{ position: "relative" }} onClick={() => { if (betLocked && !lockedByTime && remainingPreds <= 0 && onLimitReached) onLimitReached(); }}>
           <div className="flex flex-col items-center gap-1">
             <span style={{ color: hasBg ? "#ddd" : "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", ...txtStW }}>{match.team1}</span>
             <SeriesScoreInput ref={seriesARef} value={seriesA} onChange={(v) => onSeriesChange(match.id, "seriesA", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesBRef.current && seriesBRef.current.focus()} otherValue={seriesB} maxDigit={winsNeeded} />
@@ -4189,8 +4189,9 @@ function DynamicSlider({ predictions, T }) {
 
 function NewsCarousel({ T, splashDone }) {
   const [activeSlide, setActiveSlide] = useState(0);
-  const [ready, setReady] = useState(true);
-  const [imagesLoaded, setImagesLoaded] = useState(2);
+  const [ready, setReady] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [imgErrors, setImgErrors] = useState([false, false]);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
   const slideCount = 2;
@@ -4199,13 +4200,13 @@ function NewsCarousel({ T, splashDone }) {
     let cancelled = false;
     const imgs = [NEWS_IMAGE, NEWS_EWC_IMAGE];
     let loaded = 0;
-    imgs.forEach(src => {
+    imgs.forEach((src, idx) => {
       const img = new Image();
       img.src = src;
-      const done = () => { loaded++; if (!cancelled) setImagesLoaded(loaded); };
-      img.onload = done;
-      img.onerror = done;
-      if (img.complete) done();
+      img.onload = () => { loaded++; if (!cancelled) setImagesLoaded(loaded); };
+      img.onerror = () => { loaded++; if (!cancelled) { setImgErrors(p => { const n = [...p]; n[idx] = true; return n; }); setImagesLoaded(loaded); } };
+      if (img.complete && img.naturalWidth > 0) { loaded++; if (!cancelled) setImagesLoaded(loaded); }
+      else if (img.complete) { loaded++; if (!cancelled) { setImgErrors(p => { const n = [...p]; n[idx] = true; return n; }); setImagesLoaded(loaded); } }
     });
     return () => { cancelled = true; };
   }, []);
@@ -4222,6 +4223,8 @@ function NewsCarousel({ T, splashDone }) {
       const id = requestAnimationFrame(() => setReady(true));
       return () => cancelAnimationFrame(id);
     }
+    const fallback = setTimeout(() => setReady(true), 2000);
+    return () => clearTimeout(fallback);
   }, [imagesLoaded]);
 
   const resetTimer = useCallback(() => {
@@ -4262,8 +4265,8 @@ function NewsCarousel({ T, splashDone }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none" }}>
-        <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4273,8 +4276,8 @@ function NewsCarousel({ T, splashDone }) {
           <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
         </div>
       </div>
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none" }}>
-        <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} />
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
+        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
@@ -5725,7 +5728,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -5855,7 +5858,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} onLimitReached={onLimitReached} />
             </React.Fragment>
           );
         })}
@@ -5937,7 +5940,7 @@ function regionCodeRL(key) {
   return key ? key.slice(0, 2).toUpperCase() : "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
   if (showCs2BracketPage) {
     return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -6101,6 +6104,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
                 notifActive={isMatchNotifOn(m.id, m.region)}
                 onToggleNotif={toggleMatchNotif}
                 remainingPreds={remainingPreds}
+                onLimitReached={onLimitReached}
               />
             </React.Fragment>
           );
@@ -6271,7 +6275,7 @@ function RlBracketPage({ onBack, T, predictions }) {
   );
 }
 
-function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, showBracketPage, setShowBracketPage }) {
+function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, T, lang, upcoming, live, results, loading, error, isMatchNotifOn, toggleMatchNotif, toggleExpand, teamLogoCache, predictions, onSeriesChange, changeScore, remainingPreds, gamePoints, showBracketPage, setShowBracketPage, onLimitReached }) {
   if (showBracketPage) {
     return <RlBracketPage onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} />;
   }
@@ -6396,6 +6400,7 @@ function RlTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, 
                 notifActive={isMatchNotifOn(m.id, m.team1Region || m.team2Region)}
                 onToggleNotif={toggleMatchNotif}
                 remainingPreds={remainingPreds}
+                onLimitReached={onLimitReached}
               />
             </React.Fragment>
           );
@@ -7918,7 +7923,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
@@ -7927,7 +7932,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [lbLoaded, setLbLoaded] = useState(!!prefetchedLeaderboard);
   const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
-  const [carouselSlide, setCarouselSlide] = useState(0);
   const carouselDragX = useRef(null);
   const [registeredCount, setRegisteredCount] = useState(0);
   useEffect(() => {
@@ -7940,7 +7944,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const postMatchCard = appPostMatchCard;
   const setPostMatchCard = setAppPostMatchCard;
   const [nexusPosts, setNexusPosts] = useState([]);
-  const [communityTab, setCommunityTab] = useState("feed");
+  const communityTab = communityNavTab === "nexus" ? "feed" : communityNavTab;
   const [communityMsgs, setCommunityMsgs] = useState([]);
   const [communityInput, setCommunityInput] = useState("");
   const communityEndRef = useRef(null);
@@ -8031,10 +8035,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         <input ref={editFileRef} type="file" accept="image/*" onChange={handleEditFile} style={{ display: "none" }} />
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <button onClick={() => { setProfileView(false); setEditMode(false); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+            <button onClick={() => { setProfileView(false); setEditMode(false); if (profileOpenedFrom === "community") setCarouselSlide(1); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
               <ArrowLeft size={18} color="#ccc" />
             </button>
-            <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{T.profileTitle}</h1>
+            <h1 className="font-black text-white" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{profile.pseudo || T.profileTitle}</h1>
           </div>
           {editMode ? (
             <div className="flex gap-2">
@@ -8120,18 +8124,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         ) : (displayFavValo || displayFavCs2 || displayFavRl) && (
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
-            <div className="flex flex-col gap-2">
+            <div className="flex justify-around gap-2">
               {[
-                { team: displayFavValo, game: "Valorant", color: "#ff4655", bg: "#1a1a2e", border: "#2a2a3e" },
-                { team: displayFavCs2, game: "CS2", color: "#f0a500", bg: "#1e1e1a", border: "#2e2e2a" },
-                { team: displayFavRl, game: "RL", color: "#3B82F6", bg: "#1a1e2e", border: "#2a2e3e" },
-              ].filter(x => x.team && x.team !== "__none__").map(({ team, game, color, bg, border }) => {
-                const logo = teamLogoCache ? teamLogoCache[Object.keys(teamLogoCache).find(k => k.toLowerCase() === team.toLowerCase()) || ""] : null;
+                { team: displayFavValo, game: "Valorant", color: "#ff4655" },
+                { team: displayFavCs2, game: "CS2", color: "#f0a500" },
+                { team: displayFavRl, game: "RL", color: "#3B82F6" },
+              ].map(({ team, game, color }) => {
+                const hasTeam = team && team !== "__none__";
+                const logo = hasTeam && teamLogoCache ? teamLogoCache[Object.keys(teamLogoCache).find(k => k.toLowerCase() === team.toLowerCase()) || ""] : null;
                 return (
-                  <div key={game} className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: bg, border: `1px solid ${border}` }}>
-                    <span style={{ color, fontSize: 10, fontWeight: 800, textTransform: "uppercase", minWidth: 52 }}>{game}</span>
-                    {logo && <img src={logo} alt="" style={{ width: 22, height: 22, objectFit: "contain", borderRadius: 4 }} />}
-                    <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{team}</span>
+                  <div key={game} className="flex flex-col items-center gap-1.5 flex-1 rounded-xl py-3" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                    <span style={{ color, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>{game}</span>
+                    <div className="flex items-center justify-center" style={{ width: 36, height: 36 }}>
+                      {logo ? <img src={logo} alt="" style={{ width: 32, height: 32, objectFit: "contain" }} /> : <Shield size={24} color="#333" />}
+                    </div>
+                    {hasTeam && <span style={{ color: "#ccc", fontSize: 10, fontWeight: 600, textAlign: "center", maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{team}</span>}
                   </div>
                 );
               })}
@@ -8162,13 +8169,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           return (
             <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
               {rank.logo === "unranked" ? (
-                <svg width="120" height="120" viewBox="0 0 48 48" fill="none">
+                <svg width="80" height="80" viewBox="0 0 48 48" fill="none">
                   <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="1.5" strokeLinejoin="round"/>
                   <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)" stroke="#444" strokeWidth="0.5"/>
                   <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
                 </svg>
               ) : rank.logo ? (
-                <img src={rank.logo} alt={rank.name} style={{ width: 120, height: 120, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
+                <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
               ) : (
                 <Shield size={80} color="#666" />
               )}
@@ -8354,7 +8361,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   return (
     <div style={{ position: "relative", overflow: "hidden", minHeight: "100%" }}>
       {/* Slide labels */}
-      <div className="flex items-center justify-center gap-4 pt-3 pb-1">
+      <div className="flex items-center justify-center gap-4 pt-2 pb-0">
         {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
           <button key={i} onClick={() => setCarouselSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
             <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
@@ -8542,53 +8549,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {/* SLIDE 2: Community */}
         <div style={{ width: "50%", flexShrink: 0 }}>
           <div className="px-4 pt-2 pb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-black text-white" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.communityTitle || "Communauté"}</h2>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 rounded-full px-3 py-1" style={{ background: "rgba(204,247,29,0.1)", border: "1px solid rgba(204,247,29,0.2)" }}>
-                  <Trophy size={12} color="#CCF71D" />
-                  <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 800 }}>{score}</span>
-                  <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{T.communityPoints || "pts"}</span>
-                </div>
-                <button onClick={() => setShowMessages(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-                  <MessageCircle size={16} color="#ccc" />
-                </button>
-              </div>
-            </div>
 
-            {/* Community sub-tabs */}
-            <div className="flex gap-1 mb-3 rounded-xl p-1" style={{ background: "#111" }}>
-              {["feed", "discussion", "create"].map(tab => (
-                <button key={tab} onClick={() => { if (tab === "create") { setShowCreatePost(true); return; } setCommunityTab(tab); }} className="flex-1 rounded-lg py-2 text-center" style={{ fontSize: "11px", fontWeight: 700, background: communityTab === tab && tab !== "create" ? "#222" : "transparent", color: communityTab === tab && tab !== "create" ? "#fff" : tab === "create" ? "#CCF71D" : "#666", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
-                  {tab === "feed" ? (T.communityFeed || "Feed") : tab === "discussion" ? (T.communityDiscussion || "Discussion") : (T.communityCreate || "Créer")}
-                </button>
-              ))}
-            </div>
-
-            {/* Friends row */}
-            <div className="flex items-start gap-3 mb-3">
-              <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="flex flex-col items-center shrink-0">
-                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 48, height: 48, background: "#1e1e1e", border: "2px solid #CCF71D" }}>
-                  {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
-                </div>
-                <span style={{ color: "#fff", fontSize: "9px", fontWeight: 700, marginTop: 3 }}>{profile?.pseudo || "Toi"}</span>
-              </button>
-              <div className="flex gap-2.5 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
-                {friendsList.length === 0 && (
-                  <p style={{ color: "#555", fontSize: "11px", alignSelf: "center", padding: "8px 0" }}>{T.friendEmpty}</p>
-                )}
-                {friendsList.map(f => (
-                  <button key={f.id} onClick={() => { setSpectatorUser({ id: f.id, pseudo: f.pseudo, avatar: f.avatar, points: f.points || 0, bio: f.bio }); fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); }} className="flex flex-col items-center shrink-0" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 44, height: 44, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
-                      {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
-                    </div>
-                    <span className="truncate" style={{ color: "#aaa", fontSize: "8px", fontWeight: 600, marginTop: 2, maxWidth: 44, textAlign: "center" }}>{f.pseudo}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Feed content */}
+            {/* Feed / Nexus content */}
             {communityTab === "feed" && (
               <div className="flex flex-col gap-3">
                 {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
@@ -8668,7 +8630,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-end justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 24 }} onClick={() => setShowRewards(false)}>
+        <div className="z-50 flex items-end justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 80 }} onClick={() => setShowRewards(false)}>
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 80px)", width: "min(370px, 92%)", transform: "translateX(-1px)", borderRadius: 20 }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
@@ -9322,8 +9284,9 @@ function Cs2CalendarModal({ onClose, T, lang }) {
   );
 }
 
-function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
+function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, onRefresh }) {
   const lang = LANGS.find((l) => l.code === currentLang);
+  const [spinning, setSpinning] = useState(false);
   return (
     <div className="flex items-center justify-between px-4 py-2.5 relative z-20" style={{ background: isLight ? "#EDEDED" : "#0a0a0a" }}>
       <button onClick={onOpenLang} className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 52 }}>
@@ -9331,8 +9294,9 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings }) {
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer" }} onClick={() => window.location.reload()}>
+      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => { if (spinning) return; setSpinning(true); if (onRefresh) onRefresh(); setTimeout(() => setSpinning(false), 1500); }}>
         <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "24px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
+        {spinning && <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid transparent", borderTopColor: "#CCF71D", animation: "splashRing 0.6s linear infinite" }} />}
       </div>
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 32 }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
@@ -9808,6 +9772,9 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
+  const [carouselSlide, setCarouselSlide] = useState(0);
+  const [communityNavTab, setCommunityNavTab] = useState("nexus");
+  const [profileOpenedFrom, setProfileOpenedFrom] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
@@ -10044,6 +10011,74 @@ export default function ClutchApp() {
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: 0, behavior: "smooth" });
     setShowScrollTop(false);
+  }
+
+  async function handleRefresh() {
+    async function fj(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+    setActiveTab("home");
+    setCarouselSlide(0);
+    setTimeout(() => { const el = scrollRef.current; if (el) el.scrollTop = 0; }, 50);
+    try {
+      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
+        fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
+        fj("/api/cs2-upcoming"), fj("/api/cs2-live"), fj("/api/cs2-results"), fj("/api/cs2-match-history").catch(() => null),
+        fj("/api/rl-upcoming"), fj("/api/rl-live"), fj("/api/rl-results"), fj("/api/rl-match-history").catch(() => null),
+        fj("/api/social/leaderboard").catch(() => null),
+      ]);
+      const vUpT = Array.isArray(vUp) ? vUp.map(transformMatch).filter(m => m.region) : [];
+      const vLiT = Array.isArray(vLi) ? vLi.map(transformMatch).filter(m => m.region) : [];
+      const vPaT = Array.isArray(vPa) ? vPa.map(transformMatch).filter(m => m.region) : [];
+      const vHistT = Array.isArray(vHist) ? vHist.map(transformMatch).filter(m => m.region) : [];
+      const vFinished = vHistT.length > vPaT.length ? vHistT : vPaT;
+      setUpcomingMatches(attachComputedOdds(vUpT, vFinished));
+      setLiveMatches(attachComputedOdds(vLiT, vFinished));
+      setResultsMatches((() => {
+        const elo = computeEloRatings(vFinished, tierWeight);
+        return vPaT.map(m => {
+          const h = vFinished.filter(x => String(x.id) !== String(m.id));
+          const o = computeMatchOddsElo(m, h, elo);
+          return { ...m, ...o };
+        });
+      })());
+      const cUpT = Array.isArray(cUp) ? cUp.map(transformMatchCS2) : [];
+      const cLiT = Array.isArray(cLi) ? cLi.map(transformMatchCS2) : [];
+      const cPaT = Array.isArray(cPa) ? cPa.map(transformMatchCS2) : [];
+      const cHistT = Array.isArray(cHist) ? cHist.map(transformMatchCS2) : [];
+      const cFinished = cHistT.length > cPaT.length ? cHistT : cPaT;
+      const now = Date.now();
+      const cUpFut = cUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      setCs2UpcomingMatches(attachComputedOdds(cUpFut, cFinished, tierWeightCS2));
+      setCs2LiveMatches(attachComputedOdds(cLiT, cFinished, tierWeightCS2));
+      setCs2ResultsMatches((() => {
+        const elo = computeEloRatings(cFinished, tierWeightCS2);
+        return cPaT.map(m => {
+          const h = cFinished.filter(x => String(x.id) !== String(m.id));
+          const o = computeMatchOddsElo(m, h, elo);
+          return { ...m, ...o };
+        });
+      })());
+      const rUpT = Array.isArray(rUp) ? rUp.map(transformMatchRL) : [];
+      const rLiT = Array.isArray(rLi) ? rLi.map(transformMatchRL) : [];
+      const rPaT = Array.isArray(rPa) ? rPa.map(transformMatchRL) : [];
+      const rHistT = Array.isArray(rHist) ? rHist.map(transformMatchRL) : [];
+      const rFinished = rHistT.length > rPaT.length ? rHistT : rPaT;
+      const rUpFut = rUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      setRlUpcomingMatches(attachComputedOdds(rUpFut, rFinished, tierWeightRL));
+      setRlLiveMatches(attachComputedOdds(rLiT, rFinished, tierWeightRL));
+      setRlResultsMatches((() => {
+        const elo = computeEloRatings(rFinished, tierWeightRL);
+        return rPaT.map(m => {
+          const h = rFinished.filter(x => String(x.id) !== String(m.id));
+          const o = computeMatchOddsElo(m, h, elo);
+          return { ...m, ...o };
+        });
+      })());
+      if (Array.isArray(lb)) setLeaderboard(lb);
+    } catch (e) {}
   }
 
   useEffect(() => {
@@ -10833,13 +10868,20 @@ export default function ClutchApp() {
     });
   }
 
-  const navItems = [
+  const mainNavItems = [
     { key: "home", label: T.navHome, Icon: Home, iconSize: 22 },
     { key: "valorant", label: T.navValorant, img: NAV_VALORANT_IMG, imgSize: 29 },
     { key: "csgo", label: T.navCsgo, img: NAV_CSGO_IMG, imgSize: 33 },
     { key: "rocketleague", label: T.navRl, img: NAV_RL_IMG, imgSize: 26 },
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
+  const communityNavItems = [
+    { key: "nexus", label: "Nexus", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
+    { key: "discussion", label: "Discussion", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
+    { key: "post", label: "Post", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+  ];
+  const isInCommunity = activeTab === "classement" && carouselSlide === 1;
+  const navItems = isInCommunity ? communityNavItems : mainNavItems;
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
@@ -10904,7 +10946,7 @@ export default function ClutchApp() {
           </div>
         )}
 
-        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} />
+        <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} onRefresh={handleRefresh} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
         <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", visibility: splashDone ? "visible" : "hidden" }}>
@@ -10937,6 +10979,7 @@ export default function ClutchApp() {
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
+              onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
           <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
@@ -10965,6 +11008,7 @@ export default function ClutchApp() {
               remainingPreds={remainingPreds}
               gamePoints={pointsPerGame.cs2 || 0}
               prefetchedBrackets={prefetchedBrackets}
+              onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
           <div style={{ display: activeTab === "rocketleague" ? "block" : "none" }}>
@@ -10991,9 +11035,10 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.rl || 0}
               showBracketPage={showRlBracketPage}
               setShowBracketPage={setShowRlBracketPage}
+              onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => setShowProfile(true)} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={setProfileView} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -11045,15 +11090,22 @@ export default function ClutchApp() {
 
         <div className="flex items-stretch justify-around" style={{ background: "#000", position: "relative", zIndex: 60, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {navItems.map((item) => {
-            const active = activeTab === item.key;
-            const labelColor = active ? "#ddd" : "#6b6b6b";
+            const active = isInCommunity ? communityNavTab === item.key : activeTab === item.key;
+            const labelColor = active ? (isInCommunity ? "#CCF71D" : "#ddd") : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => {
+                if (isInCommunity) {
+                  if (item.key === "post") { setAppCreatePost(true); setCommunityNavTab("post"); }
+                  else setCommunityNavTab(item.key);
+                  return;
+                }
                 if (appCreatePost) { setPendingTabSwitch(item.key); setShowDraftPrompt(true); return; }
                 doTabSwitch(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "30px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-                  {item.img ? (
+                  {item.svgIcon ? (
+                    item.svgIcon(labelColor)
+                  ) : item.img ? (
                     <img src={item.img} alt={item.label} style={{ width: (item.imgSize || 24) + "px", height: (item.imgSize || 24) + "px", objectFit: "contain", opacity: active ? 0.9 : 0.38, transition: "opacity 0.15s", ...(item.imgStyle || {}) }} />
                   ) : (
                     <item.Icon size={item.iconSize || 22} color={labelColor} strokeWidth={2.2} />

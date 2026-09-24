@@ -315,3 +315,18 @@ export function updatePassword(userId, passwordHash) {
   db.prepare(`UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`)
     .run(passwordHash, userId);
 }
+
+export function cleanupOldAccounts(keepPseudos = []) {
+  const today = new Date().toISOString().slice(0, 10);
+  const placeholders = keepPseudos.map(() => "?").join(",");
+  const keepClause = keepPseudos.length > 0 ? `AND pseudo_lower NOT IN (${placeholders})` : "";
+  const staleUsers = db.prepare(
+    `SELECT id FROM users WHERE date(updated_at) < ? ${keepClause}`
+  ).all(today, ...keepPseudos.map(p => p.toLowerCase()));
+  let deleted = 0;
+  for (const u of staleUsers) {
+    deleteUser(u.id);
+    deleted++;
+  }
+  return deleted;
+}

@@ -20,6 +20,7 @@ import {
   applyReferral,
   getReferralCount,
   getReferrals,
+  cleanupOldAccounts,
 } from "./social-store.js";
 
 const router = Router();
@@ -131,6 +132,15 @@ router.post("/api/referral/apply", (req, res) => {
   const ok = applyReferral(referrer.id, userId);
   if (!ok) return res.status(409).json({ error: "Parrainage déjà appliqué" });
   res.json({ ok: true, xpGained: 200 });
+});
+
+router.post("/api/admin/cleanup-accounts", (req, res) => {
+  const { secret } = req.body;
+  if (secret !== (process.env.ADMIN_SECRET || "split-admin-2024")) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  const deleted = cleanupOldAccounts(["AGZGZEGEZ"]);
+  res.json({ ok: true, deleted });
 });
 
 export default router;
