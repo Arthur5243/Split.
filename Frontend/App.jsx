@@ -8359,17 +8359,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   }
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", minHeight: "100%" }}>
-      {/* Slide labels */}
-      <div className="flex items-center justify-center gap-4 pt-2 pb-0">
-        {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
-          <button key={i} onClick={() => setCarouselSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
-            <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
-          </button>
-        ))}
+    <div style={{ minHeight: "100%" }}>
+      {/* Sticky Classement / Communauté header */}
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#000", paddingBottom: 2 }}>
+        <div className="flex items-center justify-center gap-4 pt-2 pb-0">
+          {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
+            <button key={i} onClick={() => setCarouselSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
+              <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Carousel track */}
+      {/* Carousel wrapper */}
+      <div style={{ position: "relative", overflow: "hidden" }}>
       <div
         style={{ display: "flex", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: "transform 0.35s ease", touchAction: "pan-y" }}
         onPointerDown={onCarouselDown}
@@ -8495,7 +8498,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
                         {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                       </div>
-                      {rankLogo.logo && rankLogo.logo !== "unranked" ? (
+                      {rankLogo.logo === "unranked" ? (
+                        <svg width={logoSize} height={logoSize} viewBox="0 0 48 48" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
+                          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinejoin="round"/>
+                          <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
+                        </svg>
+                      ) : rankLogo.logo ? (
                         uBanner ? (
                           <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: "1px solid rgba(255,255,255,0.1)" }}>
                             <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
@@ -8553,6 +8561,45 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             {/* Feed / Nexus content */}
             {communityTab === "feed" && (
               <div className="flex flex-col gap-3">
+                {/* Profile mini-card */}
+                {profile && (
+                  <button onClick={() => setProfileView(true)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "#0e0e0e", borderRadius: 14, border: "1px solid #1a1a1a", cursor: "pointer", textAlign: "left" }}>
+                    <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: "2px solid #CCF71D", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1e1e1e" }}>
+                      {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{profile.pseudo}</p>
+                      <p style={{ color: "#888", fontSize: 11, margin: 0 }}>{userPoints} pts</p>
+                    </div>
+                    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{socialStats?.followers || 0}</p>
+                        <p style={{ color: "#666", fontSize: 9, margin: 0 }}>{T.friendTabFollowers}</p>
+                      </div>
+                      <div style={{ textAlign: "center" }}>
+                        <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{socialStats?.following || 0}</p>
+                        <p style={{ color: "#666", fontSize: 9, margin: 0 }}>{T.friendTabFollowing}</p>
+                      </div>
+                    </div>
+                  </button>
+                )}
+                {/* Follower bubbles */}
+                {friendsList.length > 0 && (
+                  <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 0 6px" }} className="no-scrollbar">
+                    {friendsList.map(f => (
+                      <button key={f.id} onClick={() => {
+                        fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+                          setSpectatorUser({ ...f, ...d }); setSpectatorStats(d);
+                        }).catch(() => { setSpectatorUser(f); });
+                      }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", flexShrink: 0, minWidth: 52, padding: 0 }}>
+                        <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: "2px solid #2a2a2a", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                        </div>
+                        <span style={{ color: "#aaa", fontSize: 9, fontWeight: 600, maxWidth: 52, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", display: "block" }}>{f.pseudo}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
                 {nexusPosts.map(p => (
                   <div key={p.id} style={{ background: "#0e0e0e", borderRadius: 12, overflow: "hidden", border: "1px solid #1a1a1a" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
@@ -8586,24 +8633,64 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
                   </div>
                 ))}
+                {/* Suggestions when few posts */}
+                {nexusPosts.length < 3 && profile && (() => {
+                  const suggestions = leaderboard.filter(u => u.id !== profile.userId && !friendsList.some(f => f.id === u.id)).slice(0, 5);
+                  if (suggestions.length === 0) return null;
+                  return (
+                    <div style={{ marginTop: 4 }}>
+                      <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Suggestions</p>
+                      {suggestions.map(u => (
+                        <button key={u.id} onClick={() => {
+                          fetch(API_BASE + "/api/social/profile/" + u.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+                            setSpectatorUser({ ...u, ...d }); setSpectatorStats(d);
+                          }).catch(() => { setSpectatorUser(u); });
+                        }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #1a1a1a", width: "100%", background: "none", border: "none", borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: "#1a1a1a", cursor: "pointer", textAlign: "left" }}>
+                          <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ color: "#fff", fontSize: 12, fontWeight: 700, margin: 0 }}>{u.pseudo}</p>
+                            <p style={{ color: "#666", fontSize: 10, margin: 0 }}>{u.points} pts</p>
+                          </div>
+                          <span style={{ color: "#CCF71D", fontSize: 10, fontWeight: 700 }}>Voir</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
             {/* Discussion content */}
             {communityTab === "discussion" && (
-              <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 320px)" }}>
-                <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 180px)" }}>
+                <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
                   {communityMsgs.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>{T.communityNoMsg || "Aucun message"}</p>}
                   {communityMsgs.map(m => {
                     const isMe = m.user_id === profile?.userId;
                     return (
                       <div key={m.id} className="flex items-start gap-2" style={{ flexDirection: isMe ? "row-reverse" : "row" }}>
-                        <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
+                        <button onClick={() => {
+                          if (m.user_id && m.user_id !== profile?.userId) {
+                            fetch(API_BASE + "/api/social/profile/" + m.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+                              setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar, ...d }); setSpectatorStats(d);
+                            }).catch(() => { setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar }); });
+                          } else if (isMe) { setProfileView(true); }
+                        }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
                           {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
-                        </div>
+                        </button>
                         <div style={{ maxWidth: "75%" }}>
                           <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "9px", fontWeight: 700 }}>{m.pseudo}</span>
-                          <div style={{ background: isMe ? "rgba(204,247,29,0.1)" : "#161616", border: isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px", marginTop: 2 }}>
+                          <div
+                            onClick={() => {
+                              if (isMe && confirm("Supprimer ce message ?")) {
+                                fetch(API_BASE + "/api/messages/community/" + m.id, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+                                  .then(() => setCommunityMsgs(prev => prev.filter(x => x.id !== m.id))).catch(() => {});
+                              }
+                            }}
+                            style={{ background: isMe ? "rgba(204,247,29,0.1)" : "#161616", border: isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px", marginTop: 2, cursor: isMe ? "pointer" : "default" }}
+                          >
                             <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>{m.content}</p>
                           </div>
                           <span style={{ color: "#444", fontSize: "8px", marginTop: 2, display: "block" }}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
@@ -8613,7 +8700,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   })}
                   <div ref={communityEndRef} />
                 </div>
-                <div className="flex items-center gap-2 mt-2" style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
+                <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
                   <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
                   <button onClick={sendCommunityMsg} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
                     <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
@@ -8624,14 +8711,16 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         </div>
       </div>
+      </div>
 
       {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
 
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 
       {showRewards && (
-        <div className="z-50 flex items-end justify-center" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", paddingBottom: 80 }} onClick={() => setShowRewards(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 80px)", width: "min(370px, 92%)", transform: "translateX(-1px)", borderRadius: 20 }}>
+        <div className="z-50 flex flex-col" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)" }} onClick={() => setShowRewards(false)}>
+          <div style={{ flex: 1, minHeight: 100 }} />
+          <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
               <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
@@ -8661,6 +8750,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               </div>
             </div>
           </div>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(370px, 92%)", margin: "0 auto", background: "#1a1a1a", flexShrink: 0, minHeight: 56 }} />
         </div>
       )}
     </div>
@@ -10014,15 +10104,18 @@ export default function ClutchApp() {
     setShowScrollTop(false);
   }
 
+  const [refreshing, setRefreshing] = useState(false);
+
   async function handleRefresh() {
     async function fj(path) {
       const res = await fetch(API_BASE + path);
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
     }
+    setRefreshing(true);
     setActiveTab("home");
     setCarouselSlide(0);
-    setTimeout(() => { const el = scrollRef.current; if (el) el.scrollTop = 0; }, 50);
+    const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
       const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
         fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
@@ -10080,6 +10173,7 @@ export default function ClutchApp() {
       })());
       if (Array.isArray(lb)) setLeaderboard(lb);
     } catch (e) {}
+    setTimeout(() => setRefreshing(false), 600);
   }
 
   useEffect(() => {
@@ -10877,7 +10971,7 @@ export default function ClutchApp() {
     { key: "classement", label: T.navClassement, Icon: Trophy, iconSize: 22 },
   ];
   const communityNavItems = [
-    { key: "nexus", label: "Nexus", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> },
+    { key: "nexus", label: "Nexus", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M3.5 7.5h17M3.5 16.5h17"/></svg> },
     { key: "discussion", label: "Discussion", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
     { key: "post", label: "Post", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   ];
@@ -10944,6 +11038,11 @@ export default function ClutchApp() {
                 to { transform: rotate(360deg); }
               }
             `}</style>
+          </div>
+        )}
+        {refreshing && (
+          <div style={{ position: "absolute", inset: 0, zIndex: 9998, background: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#C4F000", animation: "splashRing 0.9s linear infinite" }} />
           </div>
         )}
 
