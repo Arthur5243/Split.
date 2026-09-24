@@ -17,12 +17,6 @@
     </style>
     <script>
       (function() {
-        var isStandalone = window.matchMedia('(display-mode: standalone)').matches
-          || window.navigator.standalone === true;
-        var isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        if (!isStandalone && !isDev) {
-          location.replace('/download');
-        }
         document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
         document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
         document.addEventListener('touchmove', function(e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
