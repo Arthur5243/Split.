@@ -8022,7 +8022,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [specMenu, setSpecMenu] = useState(false);
   const [specInfoPopup, setSpecInfoPopup] = useState(false);
   const [followersList, setFollowersList] = useState([]);
-  const [discussionSubTab, setDiscussionSubTab] = useState("community");
+  const [discussionSubTab, setDiscussionSubTab] = useState("private");
   const [dmConversations, setDmConversations] = useState([]);
   const [dmActivePeer, setDmActivePeer] = useState(null);
   const [dmMessages, setDmMessages] = useState([]);
@@ -8130,6 +8130,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
   async function sendDmMsg() {
     if (!dmInput.trim() || !dmActivePeer || !profile?.userId || !dmCryptoKeys) return;
+    const isFriend = friendsList.some(f => f.id === dmActivePeer.partnerId);
+    if (!isFriend && containsBadWords(dmInput)) return;
     setDmSending(true);
     try {
       const keyResp = await fetch(API_BASE + "/api/messages/keys/" + dmActivePeer.partnerId).then(r => r.json());
@@ -8143,8 +8145,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     } catch {} finally { setDmSending(false); }
   }
 
+  function containsBadWords(text) {
+    const stripped = text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]/g, "");
+    return BIO_BLOCKED_WORDS.some(w => stripped.includes(w.normalize("NFD").replace(/[̀-ͯ]/g, "")));
+  }
+
   function sendCommunityMsg() {
     if (!communityInput.trim() || !profile?.userId) return;
+    if (containsBadWords(communityInput)) return;
     fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: communityInput.trim() }) })
       .then(r => r.json()).then(d => {
         if (d.id) setCommunityMsgs(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: communityInput.trim(), created_at: new Date().toISOString() }]);
@@ -8726,33 +8734,29 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             {/* ===== NEXUS ===== */}
             {communityTab === "nexus" && (
               <div className="flex flex-col gap-3">
-                {/* Own profile — centered */}
-                {profile && (
-                  <button onClick={() => setProfileView(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 0 10px", background: "none", border: "none", cursor: "pointer", width: "100%" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #CCF71D", display: "flex", alignItems: "center", justifyContent: "center", background: "#1e1e1e" }}>
-                      {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={22} color="#555" />}
-                    </div>
-                    <p style={{ color: "#fff", fontSize: 14, fontWeight: 800, margin: 0 }}>{profile.pseudo}</p>
-                  </button>
-                )}
-
-                {/* Friends & followers bubbles */}
-                {(friendsList.length > 0 || followersList.length > 0) && (
-                  <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 0 6px" }} className="no-scrollbar">
-                    {[...friendsList, ...followersList.filter(fl => !friendsList.some(fr => fr.id === fl.id))].map(f => (
-                      <button key={f.id} onClick={() => {
-                        fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
-                          setSpectatorUser({ ...f, ...d }); setSpectatorStats(d);
-                        }).catch(() => { setSpectatorUser(f); });
-                      }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", flexShrink: 0, minWidth: 52, padding: 0 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: friendsList.some(fr => fr.id === f.id) ? "2px solid #CCF71D" : "2px solid #2a2a2a", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
-                        </div>
-                        <span style={{ color: "#aaa", fontSize: 9, fontWeight: 600, maxWidth: 52, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", display: "block" }}>{f.pseudo}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* Stories row: own profile first (left), then friends, then followers */}
+                <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "8px 0 6px" }} className="no-scrollbar">
+                  {profile && (
+                    <button onClick={() => setProfileView(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", flexShrink: 0, minWidth: 52, padding: 0 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #CCF71D", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
+                      </div>
+                      <span style={{ color: "#fff", fontSize: 9, fontWeight: 700, maxWidth: 56, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", display: "block" }}>{profile.pseudo}</span>
+                    </button>
+                  )}
+                  {[...friendsList, ...followersList.filter(fl => !friendsList.some(fr => fr.id === fl.id))].map(f => (
+                    <button key={f.id} onClick={() => {
+                      fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+                        setSpectatorUser({ ...f, ...d }); setSpectatorStats(d);
+                      }).catch(() => { setSpectatorUser(f); });
+                    }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", flexShrink: 0, minWidth: 52, padding: 0 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: friendsList.some(fr => fr.id === f.id) ? "2px solid #CCF71D" : "2px solid #555", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
+                      </div>
+                      <span style={{ color: "#aaa", fontSize: 9, fontWeight: 600, maxWidth: 56, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", display: "block" }}>{f.pseudo}</span>
+                    </button>
+                  ))}
+                </div>
 
                 {/* Posts feed: friends → followers → suggestions (1 per 10) */}
                 {(() => {
@@ -8811,21 +8815,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
             {/* ===== DISCUSSION ===== */}
             {communityTab === "discussion" && (
-              <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 180px)" }}>
-                {/* Sub-tabs: Communautaire / Privée */}
+              <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 180px)", overflow: "hidden" }}>
+                {/* Sub-tabs: Principal (DMs) first, then Général (community) */}
                 <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", marginBottom: 8, flexShrink: 0 }}>
-                  <button onClick={() => { setDiscussionSubTab("community"); setDmActivePeer(null); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "community" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "community" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
-                    Discussion communautaire
-                  </button>
                   <button onClick={() => { setDiscussionSubTab("private"); loadDmConversations(); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "private" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "private" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
-                    Discussion privée
+                    Principal
+                  </button>
+                  <button onClick={() => { setDiscussionSubTab("community"); setDmActivePeer(null); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "community" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "community" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                    {"Général"}
                   </button>
                 </div>
 
-                {/* Community chat */}
+                {/* Général (community chat) */}
                 {discussionSubTab === "community" && (
                   <>
-                    <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
+                    <div className={communityMsgs.length > 0 ? "flex-1 overflow-y-auto no-scrollbar" : "flex-1 no-scrollbar"} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px", overscrollBehavior: "contain", overflow: communityMsgs.length > 0 ? undefined : "hidden" }}>
                       {communityMsgs.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>{T.communityNoMsg || "Aucun message"}</p>}
                       {communityMsgs.map(m => {
                         const isMe = m.user_id === profile?.userId;
@@ -8860,7 +8864,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       })}
                       <div ref={communityEndRef} />
                     </div>
-                    <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+                    <div className="flex items-center gap-2" style={{ padding: "8px 4px 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0, background: "#000", position: "sticky", bottom: 0 }}>
                       <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
                       <button onClick={() => sendCommunityMsg()} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
                         <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
@@ -8869,11 +8873,11 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   </>
                 )}
 
-                {/* Private DMs */}
+                {/* Principal (Private DMs) */}
                 {discussionSubTab === "private" && (
                   <>
                     {!dmActivePeer ? (
-                      <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 4, padding: "4px 0" }}>
+                      <div className={dmConversations.length > 0 ? "flex-1 overflow-y-auto no-scrollbar" : "flex-1 no-scrollbar"} style={{ display: "flex", flexDirection: "column", gap: 4, padding: "4px 0", overscrollBehavior: "contain", overflow: dmConversations.length > 0 ? undefined : "hidden" }}>
                         {dmConversations.length === 0 && (
                           <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>Aucune conversation</p>
                         )}
@@ -8901,7 +8905,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                           </div>
                           <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{dmActivePeer.pseudo || "?"}</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
+                        <div className={dmMessages.length > 0 ? "flex-1 overflow-y-auto no-scrollbar" : "flex-1 no-scrollbar"} style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px", overscrollBehavior: "contain", overflow: dmMessages.length > 0 ? undefined : "hidden" }}>
                           {dmMessages.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>Aucun message</p>}
                           {dmMessages.map((m, i) => (
                             <div key={i} className="flex items-end gap-2" style={{ flexDirection: m.isMe ? "row-reverse" : "row" }}>
@@ -8915,7 +8919,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                           ))}
                           <div ref={dmEndRef} />
                         </div>
-                        <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+                        <div className="flex items-center gap-2" style={{ padding: "8px 4px 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0, background: "#000", position: "sticky", bottom: 0 }}>
                           <input value={dmInput} onChange={e => setDmInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendDmMsg(); } }} placeholder="Message..." style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
                           <button onClick={() => sendDmMsg()} disabled={!dmInput.trim() || dmSending} className="rounded-full p-2.5" style={{ background: dmInput.trim() && !dmSending ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
                             <Send size={16} color={dmInput.trim() && !dmSending ? "#000" : "#555"} />
