@@ -9808,6 +9808,14 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showCs2Calendar, setShowCs2Calendar] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileView, setProfileView] = useState(false);
+  const [showFriendModal, setShowFriendModal] = useState(false);
+  const [showMessages, setShowMessages] = useState(false);
+  const [dmTarget, setDmTarget] = useState(null);
   const lastBackRef = useRef(0);
   function doTabSwitch(tab) {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
@@ -9913,9 +9921,6 @@ export default function ClutchApp() {
   }
   const remainingPreds = Math.max(0, DAILY_BET_LIMIT - activePredCount);
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showCs2Calendar, setShowCs2Calendar] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [currentLang, setCurrentLang] = useState("fr");
   const [notifGames, setNotifGames] = useState(() => {
@@ -9935,11 +9940,6 @@ export default function ClutchApp() {
   const [pointsPerGame, setPointsPerGame] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
-  const [showProfile, setShowProfile] = useState(false);
-  const [profileView, setProfileView] = useState(false);
-  const [showFriendModal, setShowFriendModal] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
-  const [dmTarget, setDmTarget] = useState(null);
 
   function syncProfileToBackend(p, pts, ppg, xp) {
     if (!p?.userId) return;
