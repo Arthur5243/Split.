@@ -71,6 +71,7 @@ const REGIONS = [
   { key: "AMERICAS", accent: "#FF5A1F" },
   { key: "PACIFIC", accent: "#1DE9D8" },
   { key: "CN", accent: "#FF2D6B" },
+  { key: "INTL", accent: "#A855F7" },
 ];
 
 // Chaînes Twitch officielles par région (pattern valorant_[region])
@@ -79,6 +80,7 @@ const REGION_TWITCH = {
   AMERICAS: "valorant_americas",
   PACIFIC: "valorant_pacific",
   CN: "valorantesports_cn",
+  INTL: "valorant",
 };
 
 // Liens replay YouTube officiels par région, pour le bouton "Replay" une fois
@@ -88,6 +90,7 @@ const REGION_YOUTUBE = {
   AMERICAS: "https://youtube.com/@valorant_americas?si=ZgRee5FljnA9F5XG",
   PACIFIC: "https://youtube.com/@vctpacific?si=BpA8cbVamLTFSN78",
   CN: "https://youtube.com/@valorantesportscn?si=H2cxjYM4lYVN-Oks",
+  INTL: "https://youtube.com/@valorantesports",
 };
 
 // Liens du direct YouTube (pas le replay) par région, pour le choix
@@ -97,6 +100,7 @@ const REGION_YOUTUBE_LIVE = {
   AMERICAS: "https://www.youtube.com/@valorant_americas/live",
   PACIFIC: "https://www.youtube.com/@VCTPacific/live",
   CN: "https://www.youtube.com/@VALORANTEsportsCN/live",
+  INTL: "https://www.youtube.com/@valorantesports/live",
 };
 
 function daysAgoText(beginAt) {
@@ -929,6 +933,7 @@ function regionLabel(key, T) {
   if (key === "PACIFIC") return T.regionPacific;
   if (key === "AMERICAS") return T.regionAmericas;
   if (key === "CN") return T.regionChine;
+  if (key === "INTL") return T.regionIntl || "International";
   return key;
 }
 
@@ -1032,6 +1037,7 @@ function classifyRegion(text) {
   if (t.includes("pacific")) return "PACIFIC";
   if (t.includes("emea")) return "EMEA";
   if (t.includes("china")) return "CN";
+  if (/masters|champions|\bvct\b|valorant champions tour|esports world cup|\bewc\b/.test(t)) return "INTL";
   return null; // ligue non suivie -> on l'ignore
 }
 
@@ -7991,7 +7997,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom, communityResetKey }) {
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
@@ -8162,6 +8168,40 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   useEffect(() => {
     if (appCreatePost) setCarouselSlide(1);
   }, [appCreatePost]);
+
+  const carouselAnimUntil = useRef(0);
+  function userSlide(i) {
+    carouselAnimUntil.current = Date.now() + 500;
+    setCarouselSlide(i);
+  }
+  const [settledSlide, setSettledSlide] = useState(carouselSlide);
+  useEffect(() => {
+    if (settledSlide === carouselSlide) return;
+    const t = setTimeout(() => setSettledSlide(carouselSlide), Date.now() < carouselAnimUntil.current ? 380 : 0);
+    return () => clearTimeout(t);
+  }, [carouselSlide, settledSlide]);
+
+  useEffect(() => {
+    if (!communityResetKey) return;
+    setSpectatorUser(null); setSpectatorStats(null);
+  }, [communityResetKey]);
+
+  const discussionRef = useRef(null);
+  const [discussionH, setDiscussionH] = useState(null);
+  useLayoutEffect(() => {
+    if (communityTab !== "discussion" || carouselSlide !== 1 || profileView || spectatorUser) return;
+    function measure() {
+      const el = discussionRef.current;
+      const sc = el && el.parentElement && el.parentElement.closest(".overflow-y-auto");
+      if (!sc) return;
+      sc.scrollTop = 0;
+      const h = Math.floor(sc.getBoundingClientRect().bottom - el.getBoundingClientRect().top);
+      if (h > 150) setDiscussionH(h);
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [communityTab, carouselSlide, settledSlide, profileView, spectatorUser]);
 
   const [editMode, setEditMode] = useState(false);
   const [editBio, setEditBio] = useState("");
@@ -8527,7 +8567,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     if (carouselDragX.current === null) return;
     const endX = e.clientX ?? e.changedTouches?.[0]?.clientX ?? 0;
     const dx = endX - carouselDragX.current;
-    if (Math.abs(dx) > 40) setCarouselSlide(s => dx < 0 ? Math.min(1, s + 1) : Math.max(0, s - 1));
+    if (Math.abs(dx) > 40) userSlide(dx < 0 ? Math.min(1, carouselSlide + 1) : Math.max(0, carouselSlide - 1));
     carouselDragX.current = null;
   }
 
@@ -8537,7 +8577,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#000", paddingBottom: 2 }}>
         <div className="flex items-center justify-center gap-4 pt-2 pb-0">
           {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
-            <button key={i} onClick={() => setCarouselSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
+            <button key={i} onClick={() => userSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
               <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
             </button>
           ))}
@@ -8547,12 +8587,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {/* Carousel wrapper */}
       <div style={{ position: "relative", overflow: "hidden" }}>
       <div
-        style={{ display: "flex", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: "transform 0.35s ease", touchAction: "pan-y" }}
+        style={{ display: "flex", alignItems: "flex-start", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y" }}
         onPointerDown={onCarouselDown}
         onPointerUp={onCarouselUp}
       >
         {/* SLIDE 1: Classement */}
-        <div style={{ width: "50%", flexShrink: 0 }}>
+        <div style={{ width: "50%", flexShrink: 0, ...(carouselSlide !== 0 && settledSlide === carouselSlide ? { height: 0, overflow: "hidden" } : {}) }}>
           <div className="px-4 pt-2 pb-6">
             <div className="flex items-center justify-between mb-1">
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
@@ -8719,7 +8759,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
             {/* Arrow to Community */}
             {carouselSlide === 0 && (
-              <button onClick={() => setCarouselSlide(1)} style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(204,247,29,0.06)", border: "1px solid rgba(204,247,29,0.12)", borderRadius: 12, padding: "10px 4px", cursor: "pointer" }}>
+              <button onClick={() => userSlide(1)} style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(204,247,29,0.06)", border: "1px solid rgba(204,247,29,0.12)", borderRadius: 12, padding: "10px 4px", cursor: "pointer" }}>
                 <Users size={14} color="rgba(204,247,29,0.5)" />
                 <ChevronRight size={16} color="rgba(204,247,29,0.5)" />
               </button>
@@ -8728,8 +8768,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
 
         {/* SLIDE 2: Community */}
-        <div style={{ width: "50%", flexShrink: 0 }}>
-          <div className="px-4 pt-2 pb-6">
+        <div style={{ width: "50%", flexShrink: 0, ...(carouselSlide !== 1 && settledSlide === carouselSlide ? { height: 0, overflow: "hidden" } : {}) }}>
+          <div className={communityTab === "discussion" ? "px-4 pt-2" : "px-4 pt-2 pb-6"}>
 
             {/* ===== NEXUS ===== */}
             {communityTab === "nexus" && (
@@ -8815,7 +8855,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
             {/* ===== DISCUSSION ===== */}
             {communityTab === "discussion" && (
-              <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 180px)", overflow: "hidden" }}>
+              <div ref={discussionRef} style={{ display: "flex", flexDirection: "column", height: discussionH ? discussionH + "px" : "calc(100dvh - 180px)", overflow: "hidden" }}>
                 {/* Sub-tabs: Principal (DMs) first, then Général (community) */}
                 <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", marginBottom: 8, flexShrink: 0 }}>
                   <button onClick={() => { setDiscussionSubTab("private"); loadDmConversations(); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "private" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "private" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
@@ -10086,6 +10126,9 @@ export default function ClutchApp() {
   function saveDrafts(d) { const limited = d.slice(0, 5); setDrafts(limited); try { localStorage.setItem("split_drafts", JSON.stringify(limited)); } catch {} }
   const postContentRef = useRef({ content: "", image: null });
   const [appDraftInit, setAppDraftInit] = useState(null);
+  const [appResetKey, setAppResetKey] = useState(0);
+  const [communityResetKey, setCommunityResetKey] = useState(0);
+  const communityPrevTabRef = useRef("nexus");
   const [carouselSlide, setCarouselSlide] = useState(0);
   const [communityNavTab, setCommunityNavTab] = useState("nexus");
   const [profileOpenedFrom, setProfileOpenedFrom] = useState(null);
@@ -10098,9 +10141,36 @@ export default function ClutchApp() {
   const [showMessages, setShowMessages] = useState(false);
   const [dmTarget, setDmTarget] = useState(null);
   const lastBackRef = useRef(0);
-  function doTabSwitch(tab) {
+  function hasPostContent() {
+    const d = postContentRef.current || {};
+    return !!((d.content && d.content.length > 0) || d.image);
+  }
+  function closeCreatePost() {
     setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
-    if (tab === "__close__") return;
+    postContentRef.current = { content: "", image: null };
+  }
+  function doCommunitySwitch(key) {
+    closeCreatePost();
+    setShowSettings(false); setShowNotifs(false); setShowMessages(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false);
+    setCommunityResetKey((k) => k + 1);
+    if (key === "post") {
+      if (communityNavTab !== "post") communityPrevTabRef.current = communityNavTab;
+      setAppCreatePost(true);
+    }
+    setCommunityNavTab(key);
+  }
+  function runPendingSwitch() {
+    const p = pendingTabSwitch;
+    setPendingTabSwitch(null);
+    if (!p) return;
+    if (p.community) doCommunitySwitch(p.key); else doTabSwitch(p.key);
+  }
+  function doTabSwitch(tab) {
+    closeCreatePost();
+    if (tab === "__close__") {
+      if (communityNavTab === "post") setCommunityNavTab(communityPrevTabRef.current || "nexus");
+      return;
+    }
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     setShowSettings(false); setShowNotifs(false);
     tabSwitchCountRef.current++;
@@ -10329,6 +10399,29 @@ export default function ClutchApp() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  function resetAppState() {
+    setAppCreatePost(false); setAppPostPrefill(""); setAppPostMatchCard(null); setAppDraftInit(null);
+    postContentRef.current = { content: "", image: null };
+    setShowDraftPrompt(false); setPendingTabSwitch(null);
+    setShowMessages(false); setShowSettings(false); setShowNotifs(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setShowStreakInfo(false); setShowLangMenu(false);
+    setProfileView(false); setShowProfile(false); setProfileOpenedFrom(null); setDmTarget(null);
+    setShowCalendar(false); setShowCs2Calendar(false); setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false);
+    setSelectedRegions(REGIONS.map((r) => r.key)); setPreAllRegions(REGIONS.map((r) => r.key));
+    setSelectedRegionsCS2(REGIONS_CS2.map((r) => r.key)); setPreAllRegionsCS2(REGIONS_CS2.map((r) => r.key));
+    setSelectedRegionsRL(REGIONS_RL.map((r) => r.key)); setPreAllRegionsRL(REGIONS_RL.map((r) => r.key));
+    setValoStatus(["upcoming"]); setCs2Status(["upcoming"]); setRlStatus(["upcoming"]);
+    setSelectedCats(["VALORANT"]); setPreAllCats(["VALORANT"]);
+    setPredictions((prev) => {
+      const next = {};
+      for (const [id, pred] of Object.entries(prev)) next[id] = pred && pred.expanded ? { ...pred, expanded: false } : pred;
+      return next;
+    });
+    setCarouselSlide(0); setCommunityNavTab("nexus");
+    setActiveTab("home");
+    setAppResetKey((k) => k + 1);
+    try { history.replaceState({ tab: "home" }, "", ""); } catch {}
+  }
+
   async function handleRefresh() {
     async function fj(path) {
       const res = await fetch(API_BASE + path);
@@ -10336,8 +10429,7 @@ export default function ClutchApp() {
       return res.json();
     }
     setRefreshing(true);
-    setActiveTab("home");
-    setCarouselSlide(0);
+    resetAppState();
     const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
       const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
@@ -11272,7 +11364,7 @@ export default function ClutchApp() {
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} onRefresh={handleRefresh} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
-        <div ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", visibility: splashDone ? "visible" : "hidden" }}>
+        <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", visibility: splashDone ? "visible" : "hidden" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
@@ -11361,7 +11453,7 @@ export default function ClutchApp() {
               onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -11404,8 +11496,8 @@ export default function ClutchApp() {
             <div onClick={e => e.stopPropagation()} style={{ background: "#1a1a1a", borderRadius: 16, padding: "24px 28px", textAlign: "center", maxWidth: 300 }}>
               <p style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 20 }}>Enregistrer comme brouillon ?</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <button onClick={() => { const d = postContentRef.current; if (d.content || d.image) { saveDrafts([{ id: Date.now(), content: d.content, image: d.image, date: new Date().toISOString() }, ...drafts]); } setShowDraftPrompt(false); doTabSwitch(pendingTabSwitch); setPendingTabSwitch(null); }} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Oui, sauvegarder</button>
-                <button onClick={() => { setShowDraftPrompt(false); doTabSwitch(pendingTabSwitch); setPendingTabSwitch(null); }} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non, supprimer</button>
+                <button onClick={() => { const d = postContentRef.current; if (d.content || d.image) { saveDrafts([{ id: Date.now(), content: d.content, image: d.image, date: new Date().toISOString() }, ...drafts]); } setShowDraftPrompt(false); runPendingSwitch(); }} style={{ background: "#CCF71D", color: "#000", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Oui, sauvegarder</button>
+                <button onClick={() => { setShowDraftPrompt(false); runPendingSwitch(); }} style={{ background: "#262626", color: "#ccc", border: "none", borderRadius: 10, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Non, supprimer</button>
               </div>
             </div>
           </div>
@@ -11417,13 +11509,14 @@ export default function ClutchApp() {
             const labelColor = active ? (isInCommunity ? "#CCF71D" : "#ddd") : "#6b6b6b";
             return (
               <button key={item.key} onClick={() => {
-                if (isInCommunity) {
-                  if (item.key === "post") { setAppCreatePost(true); setCommunityNavTab("post"); }
-                  else setCommunityNavTab(item.key);
+                if (appCreatePost && hasPostContent()) {
+                  if (isInCommunity && item.key === "post") return;
+                  setPendingTabSwitch({ key: item.key, community: isInCommunity });
+                  setShowDraftPrompt(true);
                   return;
                 }
-                if (appCreatePost) { setPendingTabSwitch(item.key); setShowDraftPrompt(true); return; }
-                doTabSwitch(item.key);
+                if (isInCommunity) doCommunitySwitch(item.key);
+                else doTabSwitch(item.key);
               }} className="flex flex-col items-center justify-center flex-1 gap-1 py-2">
                 <div style={{ height: "30px", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                   {item.svgIcon ? (
