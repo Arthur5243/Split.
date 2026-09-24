@@ -249,21 +249,25 @@ function step(n, icon, text) {
 }
 
 function showIOSSafari() {
+  var shareIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin:0 2px"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
   showModal('Installer sur iPhone',
-    step(1, '⬆️', 'Appuie sur l\'icône <b>Partager</b> <span style="font-size:18px">⎙</span> en bas de l\'écran') +
-    step(2, '➕', 'Défile vers le bas et appuie sur <b>"Sur l\'écran d\'accueil"</b>') +
+    '<div style="text-align:center;margin-bottom:14px"><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,122,255,0.1);border:1px solid rgba(0,122,255,0.2);border-radius:10px;padding:8px 16px"><span style="font-size:13px;color:#007AFF;font-weight:600">Safari uniquement</span></div></div>' +
+    step(1, '📤', 'Appuie sur l\'icône <b>Partager</b> ' + shareIcon + ' dans la <b>barre en bas</b> de Safari') +
+    step(2, '📱', 'Défile et appuie sur <b>"Sur l\'écran d\'accueil"</b>') +
     step(3, '✅', 'Appuie sur <b>"Ajouter"</b> en haut à droite') +
-    '<div class="modal-note">L\'app apparaîtra sur ton écran d\'accueil comme une vraie application.</div>'
+    '<div class="modal-note" style="background:#111;border-radius:10px;padding:12px;margin-top:16px">💡 L\'app s\'ouvrira en plein écran, comme une vraie application, avec toutes tes données sauvegardées.</div>'
   );
 }
 
 function showIOSOther() {
   showModal('Installer sur iPhone',
-    '<div style="text-align:center;margin-bottom:16px;font-size:14px;line-height:1.6">Pour installer Split, ouvre cette page dans <b>Safari</b> puis suis les instructions.</div>' +
+    '<div style="text-align:center;margin-bottom:14px"><div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,69,58,0.1);border:1px solid rgba(255,69,58,0.2);border-radius:10px;padding:8px 16px"><span style="font-size:13px;color:#FF453A;font-weight:600">⚠️ Safari requis</span></div></div>' +
+    '<div style="text-align:center;margin-bottom:16px;font-size:14px;line-height:1.6;color:#ccc">Ce navigateur ne peut pas installer l\'app.<br>Copie le lien et ouvre-le dans <b style="color:#fff">Safari</b>.</div>' +
     '<div style="text-align:center"><button class="modal-copy-btn" id="copyLinkBtn">📋 Copier le lien</button></div>' +
-    step(1, '🌐', 'Ouvre <b>Safari</b> et colle le lien') +
-    step(2, '⬆️', 'Appuie sur <b>Partager</b> puis <b>"Sur l\'écran d\'accueil"</b>') +
-    '<div class="modal-note">Seul Safari permet d\'installer des apps web sur iOS.</div>'
+    step(1, '🌐', 'Ouvre <b>Safari</b> et colle le lien dans la barre d\'adresse') +
+    step(2, '📤', 'Appuie sur l\'icône <b>Partager</b> en bas de Safari') +
+    step(3, '📱', 'Choisis <b>"Sur l\'écran d\'accueil"</b> puis <b>"Ajouter"</b>') +
+    '<div class="modal-note" style="background:#111;border-radius:10px;padding:12px;margin-top:16px">💡 Seul Safari permet d\'installer des apps web sur iOS. C\'est une limitation d\'Apple.</div>'
   );
   setTimeout(function() {
     var cb = document.getElementById('copyLinkBtn');
