@@ -9438,7 +9438,7 @@ function AdInterstitial({ onClose }) {
         <div ref={adContainerRef} style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
           {adSlot ? (
             <ins className="adsbygoogle" style={{ display: "block", width: "100%", height: "100%" }}
-              data-ad-client={adSlot.pubId} data-ad-slot={adSlot.slotId} data-ad-format="auto" data-full-width-responsive="true" />
+              data-ad-client={adSlot.pubId} {...(adSlot.slotId ? { "data-ad-slot": adSlot.slotId } : {})} data-ad-format="auto" data-full-width-responsive="true" />
           ) : (
             <>
               <span style={{ fontSize: 32 }}>📢</span>
@@ -9745,6 +9745,7 @@ export default function ClutchApp() {
     }
     setShowAd(true);
   }, []);
+  useEffect(() => { initAdMob(); }, []);
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
     window.addEventListener("beforeinstallprompt", handler);

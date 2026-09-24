@@ -11,8 +11,8 @@
  * 3. Google will give you a <script> tag — it's already loaded in index.html
  */
 
-const ADSENSE_PUB_ID = ""; // e.g. "ca-pub-7218024010278471"
-const ADSENSE_SLOT_ID = ""; // e.g. "4702203856"
+const ADSENSE_PUB_ID = "ca-pub-7218024010278471";
+const ADSENSE_SLOT_ID = "";
 
 let adReady = false;
 
@@ -21,19 +21,28 @@ function isAdSenseLoaded() {
 }
 
 function initAdMob() {
-  if (!ADSENSE_PUB_ID || !ADSENSE_SLOT_ID) {
+  if (!ADSENSE_PUB_ID) {
     console.log("[ads] AdSense not configured, using placeholder");
     return;
   }
   if (isAdSenseLoaded()) {
     adReady = true;
     console.log("[ads] AdSense ready");
+  } else {
+    const check = setInterval(() => {
+      if (isAdSenseLoaded()) {
+        adReady = true;
+        console.log("[ads] AdSense ready (delayed)");
+        clearInterval(check);
+      }
+    }, 1000);
+    setTimeout(() => clearInterval(check), 10000);
   }
 }
 
 function getAdSlotHtml() {
-  if (!adReady || !ADSENSE_PUB_ID || !ADSENSE_SLOT_ID) return null;
-  return { pubId: ADSENSE_PUB_ID, slotId: ADSENSE_SLOT_ID };
+  if (!adReady || !ADSENSE_PUB_ID) return null;
+  return { pubId: ADSENSE_PUB_ID, slotId: ADSENSE_SLOT_ID || "" };
 }
 
 function isNative() {
