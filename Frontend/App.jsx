@@ -4072,6 +4072,32 @@ function PredBadge({ remainingPreds, T }) {
   );
 }
 
+function hexToRgb(hex) {
+  const h = hex.replace("#", "");
+  return `${parseInt(h.substring(0, 2), 16)},${parseInt(h.substring(2, 4), 16)},${parseInt(h.substring(4, 6), 16)}`;
+}
+
+function getTierColor(t) {
+  if (t <= 4) return "#D4AF37";
+  if (t <= 9) return "#C0C0C0";
+  if (t <= 14) return "#A855F7";
+  if (t <= 19) return "#3B82F6";
+  if (t <= 29) return "#EF4444";
+  if (t <= 39) return "#10B981";
+  if (t <= 49) return "#06B6D4";
+  if (t <= 74) return "#F59E0B";
+  if (t <= 99) return "#EC4899";
+  return "#CCF71D";
+}
+
+function getStreakColor(s) {
+  if (s <= 0) return "#555";
+  if (s <= 2) return "#FF9500";
+  if (s <= 4) return "#FF6B00";
+  if (s <= 7) return "#FF4500";
+  return "#EF4444";
+}
+
 const RANK_TIERS = [
   { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "unranked",          bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1 },
   { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
@@ -4114,26 +4140,35 @@ function getUserRank(points, allUsersPoints, forceMax) {
 
 function RankBadgeCompact({ points, onClick }) {
   const rank = getUserRank(points);
+  const isUnranked = rank.name === "Unranked";
   const isTop = rank.name === "Infinite";
+  const rc = rank.color;
+  const rgb = hexToRgb(rc);
   return (
-    <button onClick={onClick} className="rounded-xl" style={{ background: rank.bg, border: `1px solid ${rank.border}`, padding: "6px 8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", width: "100%", height: "100%" }}>
+    <button onClick={onClick} style={{
+      position: "relative", overflow: "hidden", borderRadius: 14,
+      background: isUnranked ? "#111" : `linear-gradient(160deg, rgba(${rgb},0.08) 0%, #111 60%)`,
+      border: `1px solid ${isUnranked ? "#262626" : `rgba(${rgb},0.35)`}`,
+      boxShadow: isUnranked ? "none" : `0 0 12px rgba(${rgb},0.15)`,
+      cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
+      justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${isUnranked ? "255,255,255" : rgb},${isUnranked ? "0.03" : "0.06"}) 7px, rgba(${isUnranked ? "255,255,255" : rgb},${isUnranked ? "0.03" : "0.06"}) 8px)`, pointerEvents: "none" }} />
       {rank.logo === "unranked" ? (
-        <svg width="22" height="22" viewBox="0 0 48 48" fill="none" style={{ marginTop: -2 }}>
+        <svg width="24" height="24" viewBox="0 0 48 48" fill="none" style={{ position: "relative", zIndex: 1 }}>
           <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinejoin="round"/>
           <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(156,163,175,0.12)"/>
           <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
         </svg>
       ) : rank.logo ? (
-        <img src={rank.logo} alt={rank.name} style={{ width: 22, height: 22, objectFit: "contain", filter: isTop ? "drop-shadow(0 0 6px rgba(56,189,248,0.6))" : "none" }} />
+        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 6px rgba(${rgb},0.6))` : "none" }} />
       ) : (
-        <Shield size={18} color="#666" />
+        <Shield size={22} color="#666" style={{ position: "relative", zIndex: 1 }} />
       )}
-      <span style={{ color: rank.color, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{rank.label}</span>
-      {rank.nextPts && (
-        <div style={{ width: "80%", height: 3, background: "#262626", borderRadius: 2, overflow: "hidden" }}>
-          <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 2 }} />
-        </div>
-      )}
+      <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: isUnranked ? "none" : `0 0 8px rgba(${rgb},0.3)` }}>{rank.label}</span>
+      <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+        {rank.nextPts && <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rc, borderRadius: 2 }} />}
+      </div>
     </button>
   );
 }
@@ -4360,36 +4395,68 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <NewsCarousel T={T} splashDone={splashDone} />
 
       {/* 3 rectangles row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 80 }}>
-        {/* Rectangle 1: Rewards / Tier */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 110 }}>
+        {/* Card 1: Palier / Tier */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
+          const tc = getTierColor(ti.tier);
+          const rgb = hexToRgb(tc);
           return (
-            <button onClick={onOpenRewards} className="rounded-xl" style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.12) 0%, #141414 100%)", border: "1px solid rgba(168,85,247,0.25)", cursor: "pointer", padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, minWidth: 0, overflow: "hidden" }}>
-              <Zap size={16} color="#A855F7" />
-              <span style={{ color: "#A855F7", fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{ti.tier}</span>
-              <div style={{ width: "80%", height: 3, borderRadius: 2, background: "#262626", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: "#A855F7" }} />
+            <button onClick={onOpenRewards} style={{
+              position: "relative", overflow: "hidden", borderRadius: 14,
+              background: `linear-gradient(160deg, rgba(${rgb},0.1) 0%, #111 55%)`,
+              border: `1px solid rgba(${rgb},0.35)`,
+              boxShadow: `0 0 14px rgba(${rgb},0.18), inset 0 1px 0 rgba(${rgb},0.1)`,
+              cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
+            }}>
+              <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${rgb},0.06) 7px, rgba(${rgb},0.06) 8px)`, pointerEvents: "none" }} />
+              <svg width="20" height="16" viewBox="0 0 24 18" fill="none" style={{ position: "relative", zIndex: 1, filter: `drop-shadow(0 0 4px rgba(${rgb},0.5))` }}>
+                <path d="M2 14L4 4l5 4 3-6 3 6 5-4 2 10H2z" fill={tc} opacity="0.9" />
+                <path d="M2 14h20v2H2z" fill={tc} opacity="0.7" />
+              </svg>
+              <span style={{ color: tc, fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: `0 0 8px rgba(${rgb},0.3)` }}>{ti.tier}</span>
+              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+                <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: tc, boxShadow: `0 0 4px rgba(${rgb},0.5)` }} />
               </div>
-              <span style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.tierLabel}</span>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.tierLabel}</span>
             </button>
           );
         })()}
 
-        {/* Rectangle 2: Streak */}
+        {/* Card 2: Streak */}
         {(() => {
-          const expiring = isStreakExpiring() && streak.current > 0;
+          const sv = streak.current;
+          const active = sv > 0;
+          const expiring = isStreakExpiring() && active;
+          const sc = getStreakColor(sv);
+          const rgb = active ? hexToRgb(sc) : "255,255,255";
           return (
-            <button onClick={onOpenStreakInfo} className="rounded-xl" style={{ background: streak.current > 0 ? "linear-gradient(135deg, rgba(255,107,0,0.12) 0%, #141414 100%)" : "#141414", border: `1px solid ${streak.current > 0 ? "rgba(255,107,0,0.25)" : "#262626"}`, padding: "8px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 2, cursor: "pointer", minWidth: 0, overflow: "hidden", position: "relative" }}>
-              <span style={{ fontSize: 22, lineHeight: 1, animation: streak.current > 0 ? "flameGlow 1.5s ease-in-out infinite" : "none", filter: streak.current > 0 ? (expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : "drop-shadow(0 0 6px rgba(255,107,0,0.5))") : "none" }}>{streak.current > 0 ? "🔥" : "💤"}</span>
-              <span style={{ color: streak.current > 0 ? (expiring ? "#995a00" : "#FF9500") : "#666", fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{streak.current}</span>
-              <span style={{ color: "#666", fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>{T.streakTitle}</span>
+            <button onClick={onOpenStreakInfo} style={{
+              position: "relative", overflow: "hidden", borderRadius: 14,
+              background: active ? `linear-gradient(160deg, rgba(${hexToRgb(sc)},0.1) 0%, #111 55%)` : "#111",
+              border: `1px solid ${active ? `rgba(${hexToRgb(sc)},0.35)` : "#262626"}`,
+              boxShadow: active ? `0 0 14px rgba(${hexToRgb(sc)},0.18)` : "none",
+              cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
+              justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
+            }}>
+              <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${rgb},${active ? "0.06" : "0.03"}) 7px, rgba(${rgb},${active ? "0.06" : "0.03"}) 8px)`, pointerEvents: "none" }} />
+              {active ? (
+                <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${hexToRgb(sc)},0.5))` }}>🔥</span>
+              ) : (
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#5577AA", position: "relative", zIndex: 1, lineHeight: 1 }}>zzZ</span>
+              )}
+              <span style={{ color: active ? (expiring ? "#995a00" : sc) : "#555", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1 }}>{sv}</span>
+              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+                {active && <div style={{ height: "100%", width: `${Math.min(sv * 10, 100)}%`, borderRadius: 2, background: sc }} />}
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.streakTitle}</span>
             </button>
           );
         })()}
 
-        {/* Rectangle 3: Rank badge */}
+        {/* Card 3: Rank badge */}
         <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} />
       </div>
 
