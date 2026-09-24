@@ -309,6 +309,7 @@ const STR = {
     bioError: "Pas de liens, insultes ou contenu inapproprié.",
     noTeam: "Sans équipe", profileSkip: "Passer cette étape →",
     doubleBackToQuit: "Appuie encore pour quitter",
+    communityTitle: "Communauté", communityFeed: "Feed", communityDiscussion: "Discussion", communityCreate: "Créer", communityPoints: "pts", communityNoMsg: "Aucun message pour le moment", communityPlaceholder: "Écris un message...",
     profileAmis: "Amis", profileTop: "Top", profilePoint: "Point",
     profileModify: "Modifier le profil", profileHistory: "Historique :", profileFavLabel: "Équipes préférées",
     profileExact: "Exact", profileBon: "Bon", profileParie: "Parié",
@@ -397,6 +398,7 @@ const STR = {
     scoreTout: "ALL", scoreValo: "VALO", scoreCs2: "CS2", scoreRl: "RL",
     bioError: "No links, insults or inappropriate content.",
     noTeam: "No team", profileSkip: "Skip this step →",
+    communityTitle: "Community", communityFeed: "Feed", communityDiscussion: "Discussion", communityCreate: "Create", communityPoints: "pts", communityNoMsg: "No messages yet", communityPlaceholder: "Write a message...",
     profileAmis: "Friends", profileTop: "Top", profilePoint: "Point",
     profileModify: "Edit profile", profileHistory: "History:", profileFavLabel: "Favorite teams",
     profileExact: "Exact", profileBon: "Correct", profileParie: "Bet",
@@ -7938,6 +7940,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const postMatchCard = appPostMatchCard;
   const setPostMatchCard = setAppPostMatchCard;
   const [nexusPosts, setNexusPosts] = useState([]);
+  const [communityTab, setCommunityTab] = useState("feed");
+  const [communityMsgs, setCommunityMsgs] = useState([]);
+  const [communityInput, setCommunityInput] = useState("");
+  const communityEndRef = useRef(null);
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
   const [friendModalTab, setFriendModalTab] = useState("search");
@@ -7962,6 +7968,20 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     }).catch(() => {});
   }, [profile?.userId, profileView]);
 
+  useEffect(() => {
+    fetch(API_BASE + "/api/messages/community?limit=50").then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setCommunityMsgs(d.reverse());
+    }).catch(() => {});
+  }, []);
+  useEffect(() => { if (communityTab === "discussion") communityEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [communityMsgs, communityTab]);
+  function sendCommunityMsg() {
+    if (!communityInput.trim() || !profile?.userId) return;
+    fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: communityInput.trim() }) })
+      .then(r => r.json()).then(d => {
+        if (d.id) setCommunityMsgs(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: communityInput.trim(), created_at: new Date().toISOString() }]);
+        setCommunityInput("");
+      }).catch(() => {});
+  }
   useEffect(() => {
     if (appCreatePost) setCarouselSlide(1);
   }, [appCreatePost]);
@@ -8333,10 +8353,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
   return (
     <div style={{ position: "relative", overflow: "hidden", minHeight: "100%" }}>
-      {/* Dots */}
-      <div className="flex items-center justify-center gap-1.5 pt-3 pb-1">
-        {[0, 1].map(i => (
-          <span key={i} className="rounded-full" style={{ width: carouselSlide === i ? 16 : 6, height: 6, background: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.3)", transition: "all 0.25s" }} />
+      {/* Slide labels */}
+      <div className="flex items-center justify-center gap-4 pt-3 pb-1">
+        {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
+          <button key={i} onClick={() => setCarouselSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
+            <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
+          </button>
         ))}
       </div>
 
@@ -8507,90 +8529,136 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               })()}
             </div>
 
-            {/* Share + Swipe arrow hint */}
+            {/* Arrow to Community */}
             {carouselSlide === 0 && (
-              <div style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-                <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: "Mes résultats sur Split !", url: window.location.href }); }} className="rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                  <Share2 size={13} color="#ccc" />
-                </button>
-                <div style={{ opacity: 0.25, pointerEvents: "none" }}>
-                  <ChevronRight size={20} color="#fff" />
-                </div>
-              </div>
+              <button onClick={() => setCarouselSlide(1)} style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "rgba(204,247,29,0.06)", border: "1px solid rgba(204,247,29,0.12)", borderRadius: 12, padding: "10px 4px", cursor: "pointer" }}>
+                <Users size={14} color="rgba(204,247,29,0.5)" />
+                <ChevronRight size={16} color="rgba(204,247,29,0.5)" />
+              </button>
             )}
           </div>
         </div>
 
-        {/* SLIDE 2: Nexus */}
+        {/* SLIDE 2: Community */}
         <div style={{ width: "50%", flexShrink: 0 }}>
           <div className="px-4 pt-2 pb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-black text-white" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>Nexus</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-black text-white" style={{ fontSize: "20px", letterSpacing: "-0.02em" }}>{T.communityTitle || "Communauté"}</h2>
               <div className="flex items-center gap-2">
-                <button onClick={() => setShowCreatePost(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
-                  <Plus size={16} color="#CCF71D" />
-                </button>
+                <div className="flex items-center gap-1 rounded-full px-3 py-1" style={{ background: "rgba(204,247,29,0.1)", border: "1px solid rgba(204,247,29,0.2)" }}>
+                  <Trophy size={12} color="#CCF71D" />
+                  <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 800 }}>{score}</span>
+                  <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{T.communityPoints || "pts"}</span>
+                </div>
                 <button onClick={() => setShowMessages(true)} className="rounded-full p-2" style={{ background: "#181818", border: "1px solid #2a2a2a" }}>
                   <MessageCircle size={16} color="#ccc" />
                 </button>
               </div>
             </div>
-            <div className="flex items-start gap-3">
+
+            {/* Community sub-tabs */}
+            <div className="flex gap-1 mb-3 rounded-xl p-1" style={{ background: "#111" }}>
+              {["feed", "discussion", "create"].map(tab => (
+                <button key={tab} onClick={() => { if (tab === "create") { setShowCreatePost(true); return; } setCommunityTab(tab); }} className="flex-1 rounded-lg py-2 text-center" style={{ fontSize: "11px", fontWeight: 700, background: communityTab === tab && tab !== "create" ? "#222" : "transparent", color: communityTab === tab && tab !== "create" ? "#fff" : tab === "create" ? "#CCF71D" : "#666", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
+                  {tab === "feed" ? (T.communityFeed || "Feed") : tab === "discussion" ? (T.communityDiscussion || "Discussion") : (T.communityCreate || "Créer")}
+                </button>
+              ))}
+            </div>
+
+            {/* Friends row */}
+            <div className="flex items-start gap-3 mb-3">
               <button onClick={() => profile ? setProfileView(true) : onOpenProfile()} className="flex flex-col items-center shrink-0">
-                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 56, height: 56, background: "#1e1e1e", border: "2px solid #CCF71D" }}>
-                  {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={24} color="#555" />}
+                <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 48, height: 48, background: "#1e1e1e", border: "2px solid #CCF71D" }}>
+                  {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
                 </div>
-                <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, marginTop: 4 }}>{profile?.pseudo || "Toi"}</span>
+                <span style={{ color: "#fff", fontSize: "9px", fontWeight: 700, marginTop: 3 }}>{profile?.pseudo || "Toi"}</span>
               </button>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
+              <div className="flex gap-2.5 overflow-x-auto no-scrollbar flex-1" style={{ paddingBottom: 4 }}>
                 {friendsList.length === 0 && (
-                  <p style={{ color: "#555", fontSize: "12px", alignSelf: "center", padding: "12px 0" }}>{T.friendEmpty}</p>
+                  <p style={{ color: "#555", fontSize: "11px", alignSelf: "center", padding: "8px 0" }}>{T.friendEmpty}</p>
                 )}
                 {friendsList.map(f => (
                   <button key={f.id} onClick={() => { setSpectatorUser({ id: f.id, pseudo: f.pseudo, avatar: f.avatar, points: f.points || 0, bio: f.bio }); fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => setSpectatorStats(d)).catch(() => {}); }} className="flex flex-col items-center shrink-0" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 50, height: 50, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
-                      {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={20} color="#555" />}
+                    <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 44, height: 44, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+                      {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
                     </div>
-                    <span className="truncate" style={{ color: "#aaa", fontSize: "9px", fontWeight: 600, marginTop: 3, maxWidth: 50, textAlign: "center" }}>{f.pseudo}</span>
+                    <span className="truncate" style={{ color: "#aaa", fontSize: "8px", fontWeight: 600, marginTop: 2, maxWidth: 44, textAlign: "center" }}>{f.pseudo}</span>
                   </button>
                 ))}
               </div>
             </div>
-            <div className="mt-4 flex flex-col gap-3">
-              {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
-              {nexusPosts.map(p => (
-                <div key={p.id} style={{ background: "#0a0a0a", borderBottom: "1px solid #1e1e1e" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
-                  <div className="flex items-center gap-2.5 px-3 py-2.5">
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
-                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
-                    </button>
-                    <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
-                    <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
-                  </div>
-                  {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
-                  {p.match_data && (
-                    <div className="px-3 py-2" style={{ background: "#111" }}>
-                      <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+
+            {/* Feed content */}
+            {communityTab === "feed" && (
+              <div className="flex flex-col gap-3">
+                {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
+                {nexusPosts.map(p => (
+                  <div key={p.id} style={{ background: "#0e0e0e", borderRadius: 12, overflow: "hidden", border: "1px solid #1a1a1a" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
+                    <div className="flex items-center gap-2.5 px-3 py-2.5">
+                      <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                        {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                      </button>
+                      <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
+                      <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
                     </div>
-                  )}
-                  <div className="flex items-center gap-5 px-3 py-2">
-                    <button onClick={() => {
-                      if (!profile?.userId) return;
-                      const action = p.liked ? "unlike" : "like";
-                      fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
-                        .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
-                    }} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                      <Heart size={20} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
-                      <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "12px", fontWeight: 700 }}>{p.likes || 0}</span>
-                    </button>
-                    <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                      <Share2 size={18} color="#888" />
-                    </button>
+                    {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
+                    {p.match_data && (
+                      <div className="px-3 py-2" style={{ background: "#111" }}>
+                        <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-5 px-3 py-2">
+                      <button onClick={() => {
+                        if (!profile?.userId) return;
+                        const action = p.liked ? "unlike" : "like";
+                        fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+                          .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
+                      }} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                        <Heart size={20} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
+                        <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "12px", fontWeight: 700 }}>{p.likes || 0}</span>
+                      </button>
+                      <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                        <Share2 size={18} color="#888" />
+                      </button>
+                    </div>
+                    {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
                   </div>
-                  {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
+                ))}
+              </div>
+            )}
+
+            {/* Discussion content */}
+            {communityTab === "discussion" && (
+              <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 320px)" }}>
+                <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 8 }}>
+                  {communityMsgs.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>{T.communityNoMsg || "Aucun message"}</p>}
+                  {communityMsgs.map(m => {
+                    const isMe = m.user_id === profile?.userId;
+                    return (
+                      <div key={m.id} className="flex items-start gap-2" style={{ flexDirection: isMe ? "row-reverse" : "row" }}>
+                        <div className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e" }}>
+                          {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                        </div>
+                        <div style={{ maxWidth: "75%" }}>
+                          <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "9px", fontWeight: 700 }}>{m.pseudo}</span>
+                          <div style={{ background: isMe ? "rgba(204,247,29,0.1)" : "#161616", border: isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px", marginTop: 2 }}>
+                            <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>{m.content}</p>
+                          </div>
+                          <span style={{ color: "#444", fontSize: "8px", marginTop: 2, display: "block" }}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={communityEndRef} />
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-2 mt-2" style={{ paddingTop: 8, borderTop: "1px solid #1a1a1a" }}>
+                  <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
+                  <button onClick={sendCommunityMsg} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
+                    <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
