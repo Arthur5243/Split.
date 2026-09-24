@@ -4144,16 +4144,17 @@ function RankBadgeCompact({ points, onClick }) {
   const isTop = rank.name === "Infinite";
   const rc = rank.color;
   const rgb = hexToRgb(rc);
+  const slashRgb = isUnranked ? "130,135,145" : rgb;
+  const intensity = isUnranked ? 0.15 : 0.3;
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      background: isUnranked ? "#111" : `linear-gradient(160deg, rgba(${rgb},0.08) 0%, #111 60%)`,
-      border: `1px solid ${isUnranked ? "#262626" : `rgba(${rgb},0.35)`}`,
-      boxShadow: isUnranked ? "none" : `0 0 12px rgba(${rgb},0.15)`,
+      background: `linear-gradient(135deg, rgba(${slashRgb},${intensity}) 0%, rgba(${slashRgb},${intensity * 0.25}) 18%, transparent 35%), linear-gradient(135deg, rgba(${slashRgb},${intensity * 0.5}) 5%, transparent 22%), linear-gradient(315deg, rgba(${slashRgb},${intensity}) 0%, rgba(${slashRgb},${intensity * 0.25}) 18%, transparent 35%), linear-gradient(315deg, rgba(${slashRgb},${intensity * 0.5}) 5%, transparent 22%), #0a0a0a`,
+      border: `1px solid rgba(${slashRgb},${isUnranked ? 0.2 : 0.5})`,
+      boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
       justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
     }}>
-      <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${isUnranked ? "255,255,255" : rgb},${isUnranked ? "0.03" : "0.06"}) 7px, rgba(${isUnranked ? "255,255,255" : rgb},${isUnranked ? "0.03" : "0.06"}) 8px)`, pointerEvents: "none" }} />
       {rank.logo === "unranked" ? (
         <svg width="24" height="24" viewBox="0 0 48 48" fill="none" style={{ position: "relative", zIndex: 1 }}>
           <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinejoin="round"/>
@@ -4161,11 +4162,11 @@ function RankBadgeCompact({ points, onClick }) {
           <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
         </svg>
       ) : rank.logo ? (
-        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 6px rgba(${rgb},0.6))` : "none" }} />
+        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : "none" }} />
       ) : (
         <Shield size={22} color="#666" style={{ position: "relative", zIndex: 1 }} />
       )}
-      <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: isUnranked ? "none" : `0 0 8px rgba(${rgb},0.3)` }}>{rank.label}</span>
+      <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: isUnranked ? "none" : `0 0 8px rgba(${rgb},0.4)` }}>{rank.label}</span>
       <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
         {rank.nextPts && <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rc, borderRadius: 2 }} />}
       </div>
@@ -4396,22 +4397,22 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 110 }}>
-        {/* Card 1: Palier / Tier */}
+        {/* Card 1: Palier / Tier — gold diagonal slashes */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
           const tc = getTierColor(ti.tier);
           const rgb = hexToRgb(tc);
+          const goldRgb = "191,155,48";
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: `linear-gradient(160deg, rgba(${rgb},0.1) 0%, #111 55%)`,
-              border: `1px solid rgba(${rgb},0.35)`,
-              boxShadow: `0 0 14px rgba(${rgb},0.18), inset 0 1px 0 rgba(${rgb},0.1)`,
+              background: `linear-gradient(135deg, rgba(${goldRgb},0.35) 0%, rgba(${goldRgb},0.08) 18%, transparent 35%), linear-gradient(135deg, rgba(${goldRgb},0.18) 5%, transparent 22%), linear-gradient(315deg, rgba(${goldRgb},0.35) 0%, rgba(${goldRgb},0.08) 18%, transparent 35%), linear-gradient(315deg, rgba(${goldRgb},0.18) 5%, transparent 22%), #0a0a0a`,
+              border: `1px solid rgba(${goldRgb},0.5)`,
+              boxShadow: `0 0 16px rgba(${goldRgb},0.25), inset 0 0 20px rgba(${goldRgb},0.05)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
-              <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${rgb},0.06) 7px, rgba(${rgb},0.06) 8px)`, pointerEvents: "none" }} />
               <svg width="20" height="16" viewBox="0 0 24 18" fill="none" style={{ position: "relative", zIndex: 1, filter: `drop-shadow(0 0 4px rgba(${rgb},0.5))` }}>
                 <path d="M2 14L4 4l5 4 3-6 3 6 5-4 2 10H2z" fill={tc} opacity="0.9" />
                 <path d="M2 14h20v2H2z" fill={tc} opacity="0.7" />
@@ -4425,23 +4426,23 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           );
         })()}
 
-        {/* Card 2: Streak */}
+        {/* Card 2: Streak — grey slashes when inactive, colored when active */}
         {(() => {
           const sv = streak.current;
           const active = sv > 0;
           const expiring = isStreakExpiring() && active;
           const sc = getStreakColor(sv);
-          const rgb = active ? hexToRgb(sc) : "255,255,255";
+          const slashRgb = active ? hexToRgb(sc) : "130,135,145";
+          const borderAlpha = active ? 0.5 : 0.2;
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: active ? `linear-gradient(160deg, rgba(${hexToRgb(sc)},0.1) 0%, #111 55%)` : "#111",
-              border: `1px solid ${active ? `rgba(${hexToRgb(sc)},0.35)` : "#262626"}`,
-              boxShadow: active ? `0 0 14px rgba(${hexToRgb(sc)},0.18)` : "none",
+              background: `linear-gradient(135deg, rgba(${slashRgb},${active ? 0.3 : 0.2}) 0%, rgba(${slashRgb},${active ? 0.06 : 0.04}) 18%, transparent 35%), linear-gradient(135deg, rgba(${slashRgb},${active ? 0.15 : 0.1}) 5%, transparent 22%), linear-gradient(315deg, rgba(${slashRgb},${active ? 0.3 : 0.2}) 0%, rgba(${slashRgb},${active ? 0.06 : 0.04}) 18%, transparent 35%), linear-gradient(315deg, rgba(${slashRgb},${active ? 0.15 : 0.1}) 5%, transparent 22%), #0a0a0a`,
+              border: `1px solid rgba(${slashRgb},${borderAlpha})`,
+              boxShadow: active ? `0 0 16px rgba(${hexToRgb(sc)},0.2)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
-              <div style={{ position: "absolute", inset: 0, background: `repeating-linear-gradient(135deg, transparent, transparent 7px, rgba(${rgb},${active ? "0.06" : "0.03"}) 7px, rgba(${rgb},${active ? "0.06" : "0.03"}) 8px)`, pointerEvents: "none" }} />
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${hexToRgb(sc)},0.5))` }}>🔥</span>
               ) : (
@@ -8011,7 +8012,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const postMatchCard = appPostMatchCard;
   const setPostMatchCard = setAppPostMatchCard;
   const [nexusPosts, setNexusPosts] = useState([]);
-  const communityTab = communityNavTab === "nexus" ? "feed" : communityNavTab;
+  const communityTab = communityNavTab;
   const [communityMsgs, setCommunityMsgs] = useState([]);
   const [communityInput, setCommunityInput] = useState("");
   const communityEndRef = useRef(null);
@@ -8020,6 +8021,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [friendModalTab, setFriendModalTab] = useState("search");
   const [specMenu, setSpecMenu] = useState(false);
   const [specInfoPopup, setSpecInfoPopup] = useState(false);
+  const [followersList, setFollowersList] = useState([]);
+  const [discussionSubTab, setDiscussionSubTab] = useState("community");
+  const [dmConversations, setDmConversations] = useState([]);
+  const [dmActivePeer, setDmActivePeer] = useState(null);
+  const [dmMessages, setDmMessages] = useState([]);
+  const [dmInput, setDmInput] = useState("");
+  const [dmSending, setDmSending] = useState(false);
+  const [dmCryptoKeys, setDmCryptoKeys] = useState(null);
+  const dmEndRef = useRef(null);
 
   useEffect(() => {
     if (profile?.userId) {
@@ -8029,12 +8039,17 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       fetch(API_BASE + "/api/social/following/" + profile.userId).then(r => r.json()).then(d => {
         if (Array.isArray(d)) setFriendsList(d);
       }).catch(() => {});
+      fetch(API_BASE + "/api/social/followers/" + profile.userId).then(r => r.json()).then(d => {
+        if (Array.isArray(d)) setFollowersList(d);
+      }).catch(() => {});
+      initDmCrypto();
+      loadDmConversations();
     }
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) setLeaderboard(d);
       setLbLoaded(true);
     }).catch(() => { setLbLoaded(true); });
-    fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+    fetch(API_BASE + "/api/posts/feed?limit=40&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
       if (Array.isArray(d)) setNexusPosts(d);
     }).catch(() => {});
   }, [profile?.userId, profileView]);
@@ -8044,7 +8059,90 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       if (Array.isArray(d)) setCommunityMsgs(d.reverse());
     }).catch(() => {});
   }, []);
-  useEffect(() => { if (communityTab === "discussion") communityEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [communityMsgs, communityTab]);
+  useEffect(() => { if (communityNavTab === "discussion" && discussionSubTab === "community") communityEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [communityMsgs, communityNavTab, discussionSubTab]);
+  useEffect(() => { dmEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [dmMessages]);
+
+  async function initDmCrypto() {
+    if (!profile?.userId) return;
+    const stored = localStorage.getItem("split_crypto_keys_" + profile.userId);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const privKey = await crypto.subtle.importKey("jwk", parsed.privateKey, { name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey"]);
+        const pubKey = await crypto.subtle.importKey("jwk", parsed.publicKey, { name: "ECDH", namedCurve: "P-256" }, true, []);
+        setDmCryptoKeys({ privateKey: privKey, publicKey: pubKey, publicKeyJwk: parsed.publicKey });
+        fetch(API_BASE + "/api/messages/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, publicKey: JSON.stringify(parsed.publicKey) }) }).catch(() => {});
+        return;
+      } catch {}
+    }
+    const keyPair = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveKey"]);
+    const pubJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+    const privJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+    localStorage.setItem("split_crypto_keys_" + profile.userId, JSON.stringify({ publicKey: pubJwk, privateKey: privJwk }));
+    setDmCryptoKeys({ privateKey: keyPair.privateKey, publicKey: keyPair.publicKey, publicKeyJwk: pubJwk });
+    fetch(API_BASE + "/api/messages/keys", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, publicKey: JSON.stringify(pubJwk) }) }).catch(() => {});
+  }
+
+  async function dmDeriveKey(theirPubJwk) {
+    if (!dmCryptoKeys) return null;
+    const theirKey = await crypto.subtle.importKey("jwk", theirPubJwk, { name: "ECDH", namedCurve: "P-256" }, false, []);
+    return crypto.subtle.deriveKey({ name: "ECDH", public: theirKey }, dmCryptoKeys.privateKey, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  }
+
+  async function dmEncrypt(text, sharedKey) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, sharedKey, new TextEncoder().encode(text));
+    return { ciphertext: btoa(String.fromCharCode(...new Uint8Array(ct))), iv: btoa(String.fromCharCode(...iv)) };
+  }
+
+  async function dmDecrypt(ctB64, ivB64, sharedKey) {
+    try {
+      const ct = Uint8Array.from(atob(ctB64), c => c.charCodeAt(0));
+      const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+      const dec = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, sharedKey, ct);
+      return new TextDecoder().decode(dec);
+    } catch { return "[Message chiffré]"; }
+  }
+
+  function loadDmConversations() {
+    if (!profile?.userId) return;
+    fetch(API_BASE + "/api/messages/conversations/" + profile.userId).then(r => r.json()).then(d => {
+      if (Array.isArray(d)) setDmConversations(d);
+    }).catch(() => {});
+  }
+
+  async function openDmConv(partner) {
+    setDmActivePeer(partner);
+    setDmInput("");
+    if (!profile?.userId) return;
+    const msgs = await fetch(API_BASE + "/api/messages/dm/" + profile.userId + "/" + partner.partnerId).then(r => r.json()).catch(() => []);
+    if (!Array.isArray(msgs)) { setDmMessages([]); return; }
+    const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json()).catch(() => null);
+    if (!keyResp?.publicKey || !dmCryptoKeys) { setDmMessages(msgs.reverse().map(m => ({ ...m, text: "[Clé manquante]", isMe: m.sender_id === profile.userId }))); return; }
+    const sharedKey = await dmDeriveKey(JSON.parse(keyResp.publicKey));
+    const decrypted = await Promise.all(msgs.reverse().map(async m => {
+      const isMe = m.sender_id === profile.userId;
+      const text = await dmDecrypt(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
+      return { ...m, text, isMe };
+    }));
+    setDmMessages(decrypted);
+  }
+
+  async function sendDmMsg() {
+    if (!dmInput.trim() || !dmActivePeer || !profile?.userId || !dmCryptoKeys) return;
+    setDmSending(true);
+    try {
+      const keyResp = await fetch(API_BASE + "/api/messages/keys/" + dmActivePeer.partnerId).then(r => r.json());
+      if (!keyResp?.publicKey) return;
+      const sharedKey = await dmDeriveKey(JSON.parse(keyResp.publicKey));
+      const { ciphertext, iv } = await dmEncrypt(dmInput.trim(), sharedKey);
+      const { ciphertext: senderCopy, iv: senderIv } = await dmEncrypt(dmInput.trim(), sharedKey);
+      await fetch(API_BASE + "/api/messages/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: profile.userId, receiverId: dmActivePeer.partnerId, ciphertext, iv, senderCopy, senderIv }) });
+      setDmMessages(prev => [...prev, { text: dmInput.trim(), isMe: true, created_at: new Date().toISOString() }]);
+      setDmInput("");
+    } catch {} finally { setDmSending(false); }
+  }
+
   function sendCommunityMsg() {
     if (!communityInput.trim() || !profile?.userId) return;
     fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: communityInput.trim() }) })
@@ -8625,41 +8723,29 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         <div style={{ width: "50%", flexShrink: 0 }}>
           <div className="px-4 pt-2 pb-6">
 
-            {/* Feed / Nexus content */}
-            {communityTab === "feed" && (
+            {/* ===== NEXUS ===== */}
+            {communityTab === "nexus" && (
               <div className="flex flex-col gap-3">
-                {/* Profile mini-card */}
+                {/* Own profile — centered */}
                 {profile && (
-                  <button onClick={() => setProfileView(true)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "#0e0e0e", borderRadius: 14, border: "1px solid #1a1a1a", cursor: "pointer", textAlign: "left" }}>
-                    <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: "2px solid #CCF71D", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#1e1e1e" }}>
-                      {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={18} color="#555" />}
+                  <button onClick={() => setProfileView(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 0 10px", background: "none", border: "none", cursor: "pointer", width: "100%" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", border: "2px solid #CCF71D", display: "flex", alignItems: "center", justifyContent: "center", background: "#1e1e1e" }}>
+                      {profile.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={22} color="#555" />}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{profile.pseudo}</p>
-                      <p style={{ color: "#888", fontSize: 11, margin: 0 }}>{userPoints} pts</p>
-                    </div>
-                    <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                      <div style={{ textAlign: "center" }}>
-                        <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{socialStats?.followers || 0}</p>
-                        <p style={{ color: "#666", fontSize: 9, margin: 0 }}>{T.friendTabFollowers}</p>
-                      </div>
-                      <div style={{ textAlign: "center" }}>
-                        <p style={{ color: "#fff", fontSize: 13, fontWeight: 800, margin: 0 }}>{socialStats?.following || 0}</p>
-                        <p style={{ color: "#666", fontSize: 9, margin: 0 }}>{T.friendTabFollowing}</p>
-                      </div>
-                    </div>
+                    <p style={{ color: "#fff", fontSize: 14, fontWeight: 800, margin: 0 }}>{profile.pseudo}</p>
                   </button>
                 )}
-                {/* Follower bubbles */}
-                {friendsList.length > 0 && (
+
+                {/* Friends & followers bubbles */}
+                {(friendsList.length > 0 || followersList.length > 0) && (
                   <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "2px 0 6px" }} className="no-scrollbar">
-                    {friendsList.map(f => (
+                    {[...friendsList, ...followersList.filter(fl => !friendsList.some(fr => fr.id === fl.id))].map(f => (
                       <button key={f.id} onClick={() => {
                         fetch(API_BASE + "/api/social/profile/" + f.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
                           setSpectatorUser({ ...f, ...d }); setSpectatorStats(d);
                         }).catch(() => { setSpectatorUser(f); });
                       }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", flexShrink: 0, minWidth: 52, padding: 0 }}>
-                        <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: "2px solid #2a2a2a", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", border: friendsList.some(fr => fr.id === f.id) ? "2px solid #CCF71D" : "2px solid #2a2a2a", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {f.avatar ? <img src={f.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                         </div>
                         <span style={{ color: "#aaa", fontSize: 9, fontWeight: 600, maxWidth: 52, textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", display: "block" }}>{f.pseudo}</span>
@@ -8667,112 +8753,178 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     ))}
                   </div>
                 )}
-                {nexusPosts.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>}
-                {nexusPosts.map(p => (
-                  <div key={p.id} style={{ background: "#0e0e0e", borderRadius: 12, overflow: "hidden", border: "1px solid #1a1a1a" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
-                    <div className="flex items-center gap-2.5 px-3 py-2.5">
-                      <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
-                        {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
-                      </button>
-                      <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar, points: 0 }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
-                      <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
-                    </div>
-                    {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
-                    {p.match_data && (
-                      <div className="px-3 py-2" style={{ background: "#111" }}>
-                        <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-5 px-3 py-2">
-                      <button onClick={() => {
-                        if (!profile?.userId) return;
-                        const action = p.liked ? "unlike" : "like";
-                        fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
-                          .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
-                      }} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                        <Heart size={20} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
-                        <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "12px", fontWeight: 700 }}>{p.likes || 0}</span>
-                      </button>
-                      <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                        <Share2 size={18} color="#888" />
-                      </button>
-                    </div>
-                    {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
-                  </div>
-                ))}
-                {/* Suggestions when few posts */}
-                {nexusPosts.length < 3 && profile && (() => {
-                  const suggestions = leaderboard.filter(u => u.id !== profile.userId && !friendsList.some(f => f.id === u.id)).slice(0, 5);
-                  if (suggestions.length === 0) return null;
-                  return (
-                    <div style={{ marginTop: 4 }}>
-                      <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 8 }}>Suggestions</p>
-                      {suggestions.map(u => (
-                        <button key={u.id} onClick={() => {
-                          fetch(API_BASE + "/api/social/profile/" + u.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
-                            setSpectatorUser({ ...u, ...d }); setSpectatorStats(d);
-                          }).catch(() => { setSpectatorUser(u); });
-                        }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #1a1a1a", width: "100%", background: "none", border: "none", borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: "#1a1a1a", cursor: "pointer", textAlign: "left" }}>
-                          <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ color: "#fff", fontSize: 12, fontWeight: 700, margin: 0 }}>{u.pseudo}</p>
-                            <p style={{ color: "#666", fontSize: 10, margin: 0 }}>{u.points} pts</p>
-                          </div>
-                          <span style={{ color: "#CCF71D", fontSize: 10, fontWeight: 700 }}>Voir</span>
+
+                {/* Posts feed: friends → followers → suggestions (1 per 10) */}
+                {(() => {
+                  const friendIds = new Set(friendsList.map(f => f.id));
+                  const followerIds = new Set(followersList.map(f => f.id));
+                  const friendPosts = nexusPosts.filter(p => friendIds.has(p.user_id));
+                  const followerPosts = nexusPosts.filter(p => followerIds.has(p.user_id) && !friendIds.has(p.user_id));
+                  const suggestionPosts = nexusPosts.filter(p => !friendIds.has(p.user_id) && !followerIds.has(p.user_id) && p.user_id !== profile?.userId);
+                  const ordered = [];
+                  const mainPosts = [...friendPosts, ...followerPosts];
+                  let suggIdx = 0;
+                  mainPosts.forEach((p, i) => {
+                    ordered.push(p);
+                    if ((i + 1) % 10 === 0 && suggIdx < suggestionPosts.length) {
+                      ordered.push(suggestionPosts[suggIdx++]);
+                    }
+                  });
+                  if (mainPosts.length === 0) ordered.push(...suggestionPosts.slice(0, 10));
+                  else while (suggIdx < suggestionPosts.length) ordered.push(suggestionPosts[suggIdx++]);
+                  if (ordered.length === 0) return <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "20px 0" }}>{T.postEmpty || "Aucun post"}</p>;
+                  return ordered.map(p => (
+                    <div key={p.id} style={{ background: "#0e0e0e", borderRadius: 12, overflow: "hidden", border: "1px solid #1a1a1a" }} onDoubleClick={() => { if (!p.liked && profile?.userId) { fetch(API_BASE + `/api/posts/${p.id}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) }).then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: true, likes: (x.likes || 0) + 1 } : x))); } }}>
+                      <div className="flex items-center gap-2.5 px-3 py-2.5">
+                        <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} className="rounded-full overflow-hidden shrink-0" style={{ width: 32, height: 32, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                          {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                         </button>
-                      ))}
+                        <button onClick={() => { if (p.user_id && p.user_id !== profile?.userId) { setSpectatorUser({ id: p.user_id, pseudo: p.pseudo, avatar: p.avatar }); fetch(API_BASE + "/api/social/profile/" + p.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser(prev => ({ ...prev, ...d })); setSpectatorStats(d); }).catch(() => {}); } else if (p.user_id === profile?.userId) { setProfileView(true); } }} style={{ color: "#fff", fontSize: "12px", fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0 }}>{p.pseudo || "?"}</button>
+                        <span style={{ color: "#555", fontSize: "10px", marginLeft: "auto" }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {(p.has_image || p.image) && <img src={p.image || (API_BASE + "/api/posts/" + p.id + "/image")} alt="" style={{ width: "100%", maxHeight: 350, objectFit: "cover" }} />}
+                      {p.match_data && (
+                        <div className="px-3 py-2" style={{ background: "#111" }}>
+                          <span style={{ color: "#aaa", fontSize: "11px", fontWeight: 600 }}>{p.match_data.team1} vs {p.match_data.team2} — {p.match_data.score}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-5 px-3 py-2">
+                        <button onClick={() => {
+                          if (!profile?.userId) return;
+                          const action = p.liked ? "unlike" : "like";
+                          fetch(API_BASE + `/api/posts/${p.id}/${action}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+                            .then(() => setNexusPosts(prev => prev.map(x => x.id === p.id ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) } : x)));
+                        }} className="flex items-center gap-2" style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                          <Heart size={20} color={p.liked ? "#ef4444" : "#888"} fill={p.liked ? "#ef4444" : "none"} style={{ transition: "all 0.2s", transform: p.liked ? "scale(1.1)" : "scale(1)" }} />
+                          <span style={{ color: p.liked ? "#ef4444" : "#888", fontSize: "12px", fontWeight: 700 }}>{p.likes || 0}</span>
+                        </button>
+                        <button onClick={() => { if (navigator.share) navigator.share({ title: "Split", text: p.content || "", url: window.location.href }); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                          <Share2 size={18} color="#888" />
+                        </button>
+                      </div>
+                      {p.content && <p className="px-3 pb-3" style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.5 }}><span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{p.pseudo}</span>{p.content}</p>}
                     </div>
-                  );
+                  ));
                 })()}
               </div>
             )}
 
-            {/* Discussion content */}
+            {/* ===== DISCUSSION ===== */}
             {communityTab === "discussion" && (
               <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 180px)" }}>
-                <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
-                  {communityMsgs.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>{T.communityNoMsg || "Aucun message"}</p>}
-                  {communityMsgs.map(m => {
-                    const isMe = m.user_id === profile?.userId;
-                    return (
-                      <div key={m.id} className="flex items-start gap-2" style={{ flexDirection: isMe ? "row-reverse" : "row" }}>
-                        <button onClick={() => {
-                          if (m.user_id && m.user_id !== profile?.userId) {
-                            fetch(API_BASE + "/api/social/profile/" + m.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
-                              setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar, ...d }); setSpectatorStats(d);
-                            }).catch(() => { setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar }); });
-                          } else if (isMe) { setProfileView(true); }
-                        }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
-                          {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
-                        </button>
-                        <div style={{ maxWidth: "75%" }}>
-                          <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "9px", fontWeight: 700 }}>{m.pseudo}</span>
-                          <div
-                            onClick={() => {
-                              if (isMe && confirm("Supprimer ce message ?")) {
-                                fetch(API_BASE + "/api/messages/community/" + m.id, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
-                                  .then(() => setCommunityMsgs(prev => prev.filter(x => x.id !== m.id))).catch(() => {});
-                              }
-                            }}
-                            style={{ background: isMe ? "rgba(204,247,29,0.1)" : "#161616", border: isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px", marginTop: 2, cursor: isMe ? "pointer" : "default" }}
-                          >
-                            <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>{m.content}</p>
-                          </div>
-                          <span style={{ color: "#444", fontSize: "8px", marginTop: 2, display: "block" }}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={communityEndRef} />
-                </div>
-                <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
-                  <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
-                  <button onClick={sendCommunityMsg} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
-                    <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
+                {/* Sub-tabs: Communautaire / Privée */}
+                <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", marginBottom: 8, flexShrink: 0 }}>
+                  <button onClick={() => { setDiscussionSubTab("community"); setDmActivePeer(null); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "community" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "community" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                    Discussion communautaire
+                  </button>
+                  <button onClick={() => { setDiscussionSubTab("private"); loadDmConversations(); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "private" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "private" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                    Discussion privée
                   </button>
                 </div>
+
+                {/* Community chat */}
+                {discussionSubTab === "community" && (
+                  <>
+                    <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
+                      {communityMsgs.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>{T.communityNoMsg || "Aucun message"}</p>}
+                      {communityMsgs.map(m => {
+                        const isMe = m.user_id === profile?.userId;
+                        return (
+                          <div key={m.id} className="flex items-start gap-2" style={{ flexDirection: isMe ? "row-reverse" : "row" }}>
+                            <button onClick={() => {
+                              if (m.user_id && m.user_id !== profile?.userId) {
+                                fetch(API_BASE + "/api/social/profile/" + m.user_id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => {
+                                  setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar, ...d }); setSpectatorStats(d);
+                                }).catch(() => { setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar }); });
+                              } else if (isMe) { setProfileView(true); }
+                            }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                              {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                            </button>
+                            <div style={{ maxWidth: "75%" }}>
+                              <span style={{ color: isMe ? "#CCF71D" : "#aaa", fontSize: "9px", fontWeight: 700 }}>{m.pseudo}</span>
+                              <div
+                                onClick={() => {
+                                  if (isMe && confirm("Supprimer ce message ?")) {
+                                    fetch(API_BASE + "/api/messages/community/" + m.id, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) })
+                                      .then(() => setCommunityMsgs(prev => prev.filter(x => x.id !== m.id))).catch(() => {});
+                                  }
+                                }}
+                                style={{ background: isMe ? "rgba(204,247,29,0.1)" : "#161616", border: isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px", marginTop: 2, cursor: isMe ? "pointer" : "default" }}
+                              >
+                                <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>{m.content}</p>
+                              </div>
+                              <span style={{ color: "#444", fontSize: "8px", marginTop: 2, display: "block" }}>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={communityEndRef} />
+                    </div>
+                    <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+                      <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
+                      <button onClick={() => sendCommunityMsg()} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
+                        <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {/* Private DMs */}
+                {discussionSubTab === "private" && (
+                  <>
+                    {!dmActivePeer ? (
+                      <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 4, padding: "4px 0" }}>
+                        {dmConversations.length === 0 && (
+                          <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>Aucune conversation</p>
+                        )}
+                        {dmConversations.map(c => (
+                          <button key={c.partnerId} onClick={() => openDmConv(c)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", background: "none", border: "none", borderBottom: "1px solid #1a1a1a", cursor: "pointer", width: "100%", textAlign: "left" }}>
+                            <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ color: "#fff", fontSize: 13, fontWeight: 700, margin: 0 }}>{c.pseudo || "?"}</p>
+                              <p style={{ color: "#666", fontSize: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.lastMessage || "..."}</p>
+                            </div>
+                            <ChevronRight size={14} color="#444" />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0 8px", flexShrink: 0 }}>
+                          <button onClick={() => { setDmActivePeer(null); setDmMessages([]); loadDmConversations(); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                            <ChevronLeft size={20} color="#888" />
+                          </button>
+                          <div style={{ width: 30, height: 30, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {dmActivePeer.avatar ? <img src={dmActivePeer.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
+                          </div>
+                          <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>{dmActivePeer.pseudo || "?"}</span>
+                        </div>
+                        <div className="flex-1 overflow-y-auto no-scrollbar" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "4px 0 8px" }}>
+                          {dmMessages.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "30px 0" }}>Aucun message</p>}
+                          {dmMessages.map((m, i) => (
+                            <div key={i} className="flex items-end gap-2" style={{ flexDirection: m.isMe ? "row-reverse" : "row" }}>
+                              <div style={{ maxWidth: "75%" }}>
+                                <div style={{ background: m.isMe ? "rgba(204,247,29,0.12)" : "#161616", border: m.isMe ? "1px solid rgba(204,247,29,0.2)" : "1px solid #222", borderRadius: 12, padding: "8px 12px" }}>
+                                  <p style={{ color: "#ddd", fontSize: "12px", lineHeight: 1.4, margin: 0, wordBreak: "break-word" }}>{m.text}</p>
+                                </div>
+                                <span style={{ color: "#444", fontSize: "8px", marginTop: 2, display: "block", textAlign: m.isMe ? "right" : "left" }}>{m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                              </div>
+                            </div>
+                          ))}
+                          <div ref={dmEndRef} />
+                        </div>
+                        <div className="flex items-center gap-2" style={{ padding: "8px 0 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0 }}>
+                          <input value={dmInput} onChange={e => setDmInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendDmMsg(); } }} placeholder="Message..." style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
+                          <button onClick={() => sendDmMsg()} disabled={!dmInput.trim() || dmSending} className="rounded-full p-2.5" style={{ background: dmInput.trim() && !dmSending ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
+                            <Send size={16} color={dmInput.trim() && !dmSending ? "#000" : "#555"} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
