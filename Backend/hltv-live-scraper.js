@@ -72,7 +72,35 @@ function getHltvScrapedScores(team1Name, team2Name) {
   return null;
 }
 
+const BROWSERLESS_URL = (process.env.BROWSERLESS_URL || "").replace(/\/$/, "");
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN || "";
+
 async function fetchHtml(url) {
+  // Priorité browserless (vrai Chromium → bypass Cloudflare)
+  if (BROWSERLESS_URL && BROWSERLESS_TOKEN) {
+    const endpoint = `${BROWSERLESS_URL}/content?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url,
+        waitFor: 2500,
+        gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
+      }),
+    });
+    if (!res.ok) {
+      consecutiveErrors++;
+      throw new Error(`browserless HTTP ${res.status} for ${url}`);
+    }
+    const html = await res.text();
+    if (html.includes("Just a moment") || html.includes("cf-browser-verification")) {
+      consecutiveErrors++;
+      throw new Error("Cloudflare challenge detected (via browserless)");
+    }
+    consecutiveErrors = Math.max(0, consecutiveErrors - 1);
+    return html;
+  }
+  // Fallback fetch direct (bloqué Cloudflare depuis Railway datacenter)
   const res = await fetch(url, { headers: HEADERS });
   if (res.status === 403 || res.status === 429) {
     consecutiveErrors++;
