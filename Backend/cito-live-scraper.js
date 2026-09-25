@@ -73,23 +73,19 @@ async function fetchText(url) {
 }
 
 // Extraction des URLs /matches/cs2-match-<id> depuis la page listing.
-// On récupère aussi les 2 noms d'équipe qui apparaissent juste à côté du lien
-// pour un premier filtre rapide (évite d'aller charger 60+ pages détail pour
-// des matchs qui ne nous intéressent pas).
+// Approche défensive : cito.gg peut utiliser <a href>, <Link>, ou même du
+// JSON embarqué avec les IDs. On cherche juste tous les patterns
+// "cs2-match-<digits>" dans le HTML, uniques.
 function parseListPage(html) {
   const matches = [];
-  const re = /href="(\/matches\/cs2-match-\d+)"[^>]*>([\s\S]{0,600}?)<\/a>/g;
-  let m;
   const seen = new Set();
-  while ((m = re.exec(html))) {
-    const url = m[1];
-    if (seen.has(url)) continue;
-    seen.add(url);
-    // Cherche les noms d'équipes dans le bloc HTML (généralement <span> ou <div>
-    // avec la classe qui contient "team" ou "name"). On extrait tous les
-    // fragments texte pour matcher par la suite.
-    const inner = m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    matches.push({ url: CITO_BASE + url, hint: inner });
+  const idRe = /cs2-match-(\d+)/g;
+  let m;
+  while ((m = idRe.exec(html))) {
+    const id = m[1];
+    if (seen.has(id)) continue;
+    seen.add(id);
+    matches.push({ url: `${CITO_BASE}/matches/cs2-match-${id}`, hint: "" });
   }
   return matches;
 }
