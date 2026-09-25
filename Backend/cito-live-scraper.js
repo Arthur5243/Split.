@@ -52,11 +52,13 @@ async function fetchText(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
-        waitFor: 2000, // laisse le temps au JS Cloudflare de résoudre
         gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
       }),
     });
-    if (!res.ok) throw new Error(`browserless HTTP ${res.status} for ${url}`);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error(`browserless HTTP ${res.status} for ${url}: ${errText.slice(0, 200)}`);
+    }
     return res.text();
   }
   // Fallback fetch direct (probablement 403 depuis Railway pour cito/HLTV)

@@ -84,13 +84,13 @@ async function fetchHtml(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
-        waitFor: 2500,
         gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
       }),
     });
     if (!res.ok) {
+      const errText = await res.text().catch(() => "");
       consecutiveErrors++;
-      throw new Error(`browserless HTTP ${res.status} for ${url}`);
+      throw new Error(`browserless HTTP ${res.status} for ${url}: ${errText.slice(0, 200)}`);
     }
     const html = await res.text();
     if (html.includes("Just a moment") || html.includes("cf-browser-verification")) {
