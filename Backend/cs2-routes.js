@@ -42,6 +42,7 @@ import {
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores } from "./bo3gg-scores.js";
+import { getCitoScoresForMatch } from "./cito-live-scraper.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 
@@ -288,15 +289,23 @@ router.get("/api/cs2-live", async (req, res) => {
         const t2 = m.opponents?.[1]?.opponent?.name;
         const date = (m.begin_at || "").slice(0, 10);
         if (t1 && t2) {
-          // Priorité 1 : bo3.gg live (données structurées, scores map réels)
-          const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
-          if (bo3 && bo3.length > 0) enriched.live_map_scores = bo3;
-          // Fallback 2 : HLTV scraper (si Cloudflare passe)
+          // Priorité 1 : cito.gg live (indexe TOUS les matchs, y compris petits tournois)
+          const cito = getCitoScoresForMatch(t1, t2);
+          if (cito && cito.mapScores?.length > 0) {
+            enriched.live_map_scores = cito.mapScores;
+            enriched.cito_series_score = cito.seriesScore;
+          }
+          // Fallback 2 : bo3.gg live (structured API)
+          if (!enriched.live_map_scores) {
+            const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
+            if (bo3 && bo3.length > 0) enriched.live_map_scores = bo3;
+          }
+          // Fallback 3 : HLTV scraper (bloqué Cloudflare la plupart du temps)
           if (!enriched.live_map_scores) {
             const scraped = getHltvScrapedScores(t1, t2);
             if (scraped) enriched.live_map_scores = scraped;
           }
-          // Fallback 3 : parse du titre Kick
+          // Fallback 4 : parse du titre Kick
           const kick = getKickScoresForMatch(t1, t2);
           if (kick) {
             enriched.kick_title = kick.title;
@@ -530,6 +539,19 @@ async function processOneMatch(m, data) {
         }
       } catch (e) {
         console.log(`[cs2 map_scores] bo3.gg ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
+      }
+    }
+
+    // Fallback cito.gg pour les matchs finis récents encore dans le cache scraper
+    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
+      const cito = getCitoScoresForMatch(t1.name, t2.name);
+      if (cito && cito.mapScores?.length > 0) {
+        if (isMapScoresConsistent(cito.mapScores, s1, s2)) {
+          mapScores = cito.mapScores;
+          source = "cito";
+        } else {
+          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — cito incohérent (gagnants maps ≠ série), rejeté`);
+        }
       }
     }
 

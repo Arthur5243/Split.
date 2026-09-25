@@ -26,6 +26,7 @@ import { startHltvScraper } from "./hltv-live-scraper.js";
 import { startKickScraper } from "./kick-live-scraper.js";
 import { startTwitchScraper, getTwitchScoresForMatch } from "./twitch-live-scraper.js";
 import { startBo3ggLiveWorker } from "./bo3gg-scores.js";
+import { startCitoScraper } from "./cito-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
@@ -1925,6 +1926,7 @@ app.listen(PORT, () => {
   startKickScraper();
   startTwitchScraper();
   startBo3ggLiveWorker();
+  startCitoScraper();
   startRlScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
