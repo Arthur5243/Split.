@@ -50,14 +50,11 @@ async function fetchText(url) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url,
-        gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
-      }),
+      body: JSON.stringify({ url }),
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      throw new Error(`browserless HTTP ${res.status} for ${url}: ${errText.slice(0, 200)}`);
+      throw new Error(`browserless HTTP ${res.status} for ${url}: ${errText.slice(0, 300)}`);
     }
     return res.text();
   }
