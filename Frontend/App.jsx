@@ -6606,9 +6606,10 @@ function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   );
 }
 
-function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache }) {
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, defaultPseudo }) {
   const [step, setStep] = useState(profile?.pseudo ? 0 : 0);
-  const [pseudo, setPseudo] = useState(profile?.pseudo || "");
+  const [pseudo, setPseudo] = useState(profile?.pseudo || defaultPseudo || "");
+  const pseudoLocked = !!(profile?.pseudo || defaultPseudo);
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatar, setAvatar] = useState(profile?.avatar || null);
   const [favValo, setFavValo] = useState(profile?.favTeams?.valo || "");
@@ -6684,12 +6685,15 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
                 <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>{T.profileAvatar}</p>
+                {pseudoLocked && pseudo && <p style={{ color: "#ccc", fontSize: 13, fontWeight: 700, marginTop: 12 }}>{pseudo}</p>}
               </div>
-              <div>
-                <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
-                <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#111", border: "1px solid #222", color: "#fff", fontSize: 14, borderRadius: 12, padding: "12px 14px", width: "100%", outline: "none", marginTop: 6, boxSizing: "border-box" }} />
-                {pseudo.trim().length > 0 && pseudo.trim().length < 2 && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>Min. 2 caractères</p>}
-              </div>
+              {!pseudoLocked && (
+                <div>
+                  <label style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.profilePseudo}</label>
+                  <input value={pseudo} onChange={(e) => setPseudo(e.target.value)} maxLength={20} placeholder="ex: SplitKing" style={{ background: "#111", border: "1px solid #222", color: "#fff", fontSize: 14, borderRadius: 12, padding: "12px 14px", width: "100%", outline: "none", marginTop: 6, boxSizing: "border-box" }} />
+                  {pseudo.trim().length > 0 && pseudo.trim().length < 2 && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>Min. 2 caractères</p>}
+                </div>
+              )}
             </div>
           )}
 
@@ -11620,7 +11624,7 @@ export default function ClutchApp() {
         {showProfile && (
           <ProfileSetupModal
             onClose={() => setShowProfile(false)}
-            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); setShowProfile(false); }}
+            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || authUser?.id || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); setShowProfile(false); }}
             profile={profile}
             valoTeams={allTeams}
             cs2Teams={cs2AllTeams}
@@ -11630,6 +11634,7 @@ export default function ClutchApp() {
             valoLogoCache={teamLogoCache}
             cs2LogoCache={cs2TeamLogoCache}
             rlLogoCache={rlTeamLogoCache}
+            defaultPseudo={authUser?.pseudo}
           />
         )}
         {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}

@@ -49,6 +49,7 @@ try { db.exec(`ALTER TABLE users ADD COLUMN equipped_banner TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN profile_ready INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`CREATE UNIQUE INDEX idx_users_email ON users(email) WHERE email IS NOT NULL`); } catch {}
 
 db.exec(`
@@ -65,8 +66,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, @pseudo_color, @equipped_title, @equipped_banner, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, profile_ready, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, @pseudo_color, @equipped_title, @equipped_banner, 1, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -83,10 +84,11 @@ const stmts = {
       pseudo_color = COALESCE(@pseudo_color, users.pseudo_color),
       equipped_title = COALESCE(@equipped_title, users.equipped_title),
       equipped_banner = COALESCE(@equipped_banner, users.equipped_banner),
+      profile_ready = 1,
       updated_at = datetime('now')
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
-  searchUsers: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE pseudo_lower LIKE ? AND id != ? LIMIT 20`),
+  searchUsers: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE pseudo_lower LIKE ? AND id != ? AND profile_ready = 1 LIMIT 20`),
   follow: db.prepare(`INSERT OR IGNORE INTO follows (follower_id, followed_id) VALUES (?, ?)`),
   unfollow: db.prepare(`DELETE FROM follows WHERE follower_id = ? AND followed_id = ?`),
   getFollowing: db.prepare(`
@@ -112,7 +114,7 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner FROM users ORDER BY points DESC, pseudo ASC LIMIT 100`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner FROM users WHERE profile_ready = 1 ORDER BY points DESC, pseudo ASC LIMIT 100`),
   addXp: db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`),
   setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };
