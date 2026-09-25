@@ -22,6 +22,7 @@ import {
 } from "./match-history-store.js";
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 import { startHltvScraper } from "./hltv-live-scraper.js";
+import { startKickScraper } from "./kick-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
@@ -1890,6 +1891,7 @@ app.listen(PORT, () => {
   warmupBrowser();
   startScraper();
   startHltvScraper();
+  startKickScraper();
   startRlScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon

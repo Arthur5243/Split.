@@ -43,6 +43,7 @@ import {
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg } from "./bo3gg-scores.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
+import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ADMIN_KEY = process.env.ADMIN_KEY;
@@ -288,10 +289,24 @@ router.get("/api/cs2-live", async (req, res) => {
         if (t1 && t2) {
           const scraped = getHltvScrapedScores(t1, t2);
           if (scraped) enriched.live_map_scores = scraped;
+          const kick = getKickScoresForMatch(t1, t2);
+          if (kick) {
+            enriched.kick_title = kick.title;
+            enriched.kick_series_score = kick.seriesScore;
+            if (!enriched.live_map_scores && kick.mapScores?.length) {
+              enriched.live_map_scores = kick.mapScores.map((s, i) => ({
+                map: `Map ${i + 1}`,
+                score1: s.score1,
+                score2: s.score2,
+              }));
+            }
+          }
         }
       }
       return enriched;
     });
+    // Fait connaître au scraper les channels Kick des matchs actuellement en direct
+    registerKickChannels(withRegions);
     res.json(withRegions);
   } catch (e) {
     console.error("cs2-live error:", e.message);

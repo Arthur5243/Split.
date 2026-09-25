@@ -2625,7 +2625,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </>
               )}
             </div>
-            <button onClick={() => onToggleExpand(match.id)} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
+            <button onClick={() => { if (!expanded) { setScoresRevealed(true); setLiveRevealed(true); } onToggleExpand(match.id); }} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
               <ChevronDown size={16} color={accent} />
             </button>
             {pointsBreakdown && pointsBreakdown.total > 0 && (
@@ -2775,7 +2775,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </>
               )}
             </div>
-            <button onClick={() => onToggleExpand(match.id)} disabled={tbd} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
+            <button onClick={() => { if (!expanded && !tbd) { setScoresRevealed(true); setLiveRevealed(true); } onToggleExpand(match.id); }} disabled={tbd} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
               <ChevronDown size={16} color={accent} />
             </button>
           </div>
