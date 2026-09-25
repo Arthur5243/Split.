@@ -23,6 +23,7 @@ import {
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 import { startHltvScraper } from "./hltv-live-scraper.js";
 import { startKickScraper } from "./kick-live-scraper.js";
+import { startTwitchScraper, getTwitchScoresForMatch } from "./twitch-live-scraper.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
@@ -193,6 +194,20 @@ app.get("/api/valorant-live", async (req, res) => {
       const scraped = getScrapedScores(t1, t2);
       if (scraped && scraped.length > 0) {
         m.live_map_scores = scraped;
+      }
+      // Fallback / complément Twitch : titre du stream officiel Valorant
+      const twitch = getTwitchScoresForMatch(t1, t2);
+      if (twitch) {
+        m.twitch_title = twitch.title;
+        m.twitch_channel = twitch.channel;
+        m.twitch_series_score = twitch.seriesScore;
+        if ((!m.live_map_scores || m.live_map_scores.length === 0) && twitch.mapScores?.length) {
+          m.live_map_scores = twitch.mapScores.map((s, i) => ({
+            map: `Map ${i + 1}`,
+            score1: s.score1,
+            score2: s.score2,
+          }));
+        }
       }
     }
     res.json(visible);
@@ -1892,6 +1907,7 @@ app.listen(PORT, () => {
   startScraper();
   startHltvScraper();
   startKickScraper();
+  startTwitchScraper();
   startRlScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
