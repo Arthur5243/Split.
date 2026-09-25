@@ -4157,22 +4157,25 @@ function RankBadgeCompact({ points, onClick }) {
   const isTop = rank.name === "#Infinite";
   const rc = rank.color;
   const rgb = hexToRgb(rc);
+  const bgImg = rank.bgImage || "/home-card-3.png";
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      background: rank.bgImage ? `url(${rank.bgImage}) center/cover no-repeat` : "#0a0a0a",
+      background: `url(${bgImg}) center/cover no-repeat`,
       border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
       boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
       justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
     }}>
+      <div style={{ position: "absolute", inset: 0, background: `rgba(${rgb},${isUnranked ? 0.12 : 0.28})`, mixBlendMode: "color" }} />
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)` }} />
       {rank.logo ? (
-        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : "none" }} />
+        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : `drop-shadow(0 1px 3px rgba(0,0,0,0.6))` }} />
       ) : (
         <Shield size={22} color="#666" style={{ position: "relative", zIndex: 1 }} />
       )}
-      <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: isUnranked ? "none" : `0 0 8px rgba(${rgb},0.4)` }}>{rank.label}</span>
-      <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+      <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: `0 0 8px rgba(${rgb},0.4), 0 1px 3px rgba(0,0,0,0.9)` }}>{rank.label}</span>
+      <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
         {rank.nextPts && <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rc, borderRadius: 2 }} />}
       </div>
     </button>
@@ -4402,7 +4405,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 90 }}>
-        {/* Card 1: Palier / Tier — gold diagonal slashes */}
+        {/* Card 1: Palier / Tier */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
@@ -4412,52 +4415,54 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: `linear-gradient(135deg, rgba(${goldRgb},0.35) 0%, rgba(${goldRgb},0.08) 18%, transparent 35%), linear-gradient(135deg, rgba(${goldRgb},0.18) 5%, transparent 22%), linear-gradient(315deg, rgba(${goldRgb},0.35) 0%, rgba(${goldRgb},0.08) 18%, transparent 35%), linear-gradient(315deg, rgba(${goldRgb},0.18) 5%, transparent 22%), #0a0a0a`,
+              background: "url(/home-card-1.png) center/cover no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
-              boxShadow: `0 0 16px rgba(${goldRgb},0.25), inset 0 0 20px rgba(${goldRgb},0.05)`,
+              boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.72) 100%)" }} />
               <svg width="20" height="16" viewBox="0 0 24 18" fill="none" style={{ position: "relative", zIndex: 1, filter: `drop-shadow(0 0 4px rgba(${rgb},0.5))` }}>
                 <path d="M2 14L4 4l5 4 3-6 3 6 5-4 2 10H2z" fill={tc} opacity="0.9" />
                 <path d="M2 14h20v2H2z" fill={tc} opacity="0.7" />
               </svg>
-              <span style={{ color: tc, fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: `0 0 8px rgba(${rgb},0.3)` }}>{ti.tier}</span>
-              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+              <span style={{ color: tc, fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: `0 0 8px rgba(${rgb},0.3), 0 1px 3px rgba(0,0,0,0.8)` }}>{ti.tier}</span>
+              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
                 <div style={{ height: "100%", width: pct + "%", borderRadius: 2, background: tc, boxShadow: `0 0 4px rgba(${rgb},0.5)` }} />
               </div>
-              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.tierLabel}</span>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{T.tierLabel}</span>
             </button>
           );
         })()}
 
-        {/* Card 2: Streak — grey slashes when inactive, colored when active */}
+        {/* Card 2: Streak */}
         {(() => {
           const sv = streak.current;
           const active = sv > 0;
           const expiring = isStreakExpiring() && active;
           const sc = getStreakColor(sv);
           const slashRgb = active ? hexToRgb(sc) : "130,135,145";
-          const borderAlpha = active ? 0.5 : 0.2;
+          const borderAlpha = active ? 0.5 : 0.25;
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: `linear-gradient(135deg, rgba(${slashRgb},${active ? 0.3 : 0.2}) 0%, rgba(${slashRgb},${active ? 0.06 : 0.04}) 18%, transparent 35%), linear-gradient(135deg, rgba(${slashRgb},${active ? 0.15 : 0.1}) 5%, transparent 22%), linear-gradient(315deg, rgba(${slashRgb},${active ? 0.3 : 0.2}) 0%, rgba(${slashRgb},${active ? 0.06 : 0.04}) 18%, transparent 35%), linear-gradient(315deg, rgba(${slashRgb},${active ? 0.15 : 0.1}) 5%, transparent 22%), #0a0a0a`,
+              background: "url(/home-card-2.png) center/cover no-repeat",
               border: `1px solid rgba(${slashRgb},${borderAlpha})`,
               boxShadow: active ? `0 0 16px rgba(${hexToRgb(sc)},0.2)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
+              <div style={{ position: "absolute", inset: 0, background: active ? `linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%)` : "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.78) 100%)" }} />
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${hexToRgb(sc)},0.5))` }}>🔥</span>
               ) : (
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#5577AA", position: "relative", zIndex: 1, lineHeight: 1 }}>zzZ</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#7799CC", position: "relative", zIndex: 1, lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>zzZ</span>
               )}
-              <span style={{ color: active ? (expiring ? "#995a00" : sc) : "#555", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1 }}>{sv}</span>
-              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+              <span style={{ color: active ? (expiring ? "#c78300" : sc) : "#aaa", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{sv}</span>
+              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
                 {active && <div style={{ height: "100%", width: `${Math.min(sv * 10, 100)}%`, borderRadius: 2, background: sc }} />}
               </div>
-              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.streakTitle}</span>
+              <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{T.streakTitle}</span>
             </button>
           );
         })()}
