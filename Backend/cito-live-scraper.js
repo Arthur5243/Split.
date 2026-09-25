@@ -22,9 +22,15 @@ const HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-const POLL_INTERVAL_MS = 60_000;
+// Browserless (vrai Chromium headless sur Railway) → bypass Cloudflare.
+// URL et TOKEN injectés par Railway via references ${{browserless.PORT}} et
+// ${{browserless.TOKEN}}. Fallback fetch direct si absent (dev local).
+const BROWSERLESS_URL = (process.env.BROWSERLESS_URL || "").replace(/\/$/, "");
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN || "";
+
+const POLL_INTERVAL_MS = 90_000; // 90s: browserless est plus lent qu'un fetch, on aère
 const TTL_MS = 5 * 60 * 1000;
-const MATCH_PAGE_CONCURRENCY = 4;
+const MATCH_PAGE_CONCURRENCY = 2; // moins agressif pour ne pas surcharger browserless
 
 const cache = new Map(); // key: normalized team1|team2 → { team1, team2, seriesScore, mapScores, scrapedAt, url }
 
@@ -38,6 +44,22 @@ function normalize(s) {
 }
 
 async function fetchText(url) {
+  // Priorité browserless (vrai navigateur, bypass Cloudflare) si dispo
+  if (BROWSERLESS_URL && BROWSERLESS_TOKEN) {
+    const endpoint = `${BROWSERLESS_URL}/content?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url,
+        waitFor: 2000, // laisse le temps au JS Cloudflare de résoudre
+        gotoOptions: { waitUntil: "networkidle2", timeout: 30000 },
+      }),
+    });
+    if (!res.ok) throw new Error(`browserless HTTP ${res.status} for ${url}`);
+    return res.text();
+  }
+  // Fallback fetch direct (probablement 403 depuis Railway pour cito/HLTV)
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`cito HTTP ${res.status} for ${url}`);
   return res.text();
