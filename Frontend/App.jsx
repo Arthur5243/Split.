@@ -2495,7 +2495,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "20px 16px" : "8px 16px" }}>
+      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "14px 16px" : "5px 16px" }}>
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-center gap-0.5">
             {regionsAboveLogo && showRegion1 && (
@@ -4105,12 +4105,12 @@ function getStreakColor(s) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "unranked",          bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1 },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20 },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25 },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30 },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15 },
-  { name: "Infinite",      minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: null },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png" },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png" },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png" },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png" },
+  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", maxCount: 50 },
 ];
 
 function getUserRank(points, allUsersPoints, forceMax) {
@@ -4128,6 +4128,13 @@ function getUserRank(points, allUsersPoints, forceMax) {
     let effectiveTier = tier;
     for (let i = RANK_TIERS.length - 1; i >= 2; i--) {
       const t = RANK_TIERS[i];
+      if (t.maxCount) {
+        const countAtOrAbove = sorted.filter(p => p >= t.minPts).length;
+        if (countAtOrAbove > t.maxCount && points < sorted[t.maxCount - 1]) {
+          effectiveTier = RANK_TIERS[i - 1];
+          continue;
+        }
+      }
       const countAtOrAbove = sorted.filter(p => p >= t.minPts).length;
       const pct = countAtOrAbove / total;
       const maxAllowed = RANK_TIERS.slice(i).reduce((s, r) => s + r.maxPct, 0);
@@ -4147,27 +4154,19 @@ function getUserRank(points, allUsersPoints, forceMax) {
 function RankBadgeCompact({ points, onClick }) {
   const rank = getUserRank(points);
   const isUnranked = rank.name === "Unranked";
-  const isTop = rank.name === "Infinite";
+  const isTop = rank.name === "#Infinite";
   const rc = rank.color;
   const rgb = hexToRgb(rc);
-  const slashRgb = isUnranked ? "130,135,145" : rgb;
-  const intensity = isUnranked ? 0.15 : 0.3;
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      background: `linear-gradient(135deg, rgba(${slashRgb},${intensity}) 0%, rgba(${slashRgb},${intensity * 0.25}) 18%, transparent 35%), linear-gradient(135deg, rgba(${slashRgb},${intensity * 0.5}) 5%, transparent 22%), linear-gradient(315deg, rgba(${slashRgb},${intensity}) 0%, rgba(${slashRgb},${intensity * 0.25}) 18%, transparent 35%), linear-gradient(315deg, rgba(${slashRgb},${intensity * 0.5}) 5%, transparent 22%), #0a0a0a`,
-      border: `1px solid rgba(${slashRgb},${isUnranked ? 0.2 : 0.5})`,
+      background: rank.bgImage ? `url(${rank.bgImage}) center/cover no-repeat` : "#0a0a0a",
+      border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
       boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
       justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
     }}>
-      {rank.logo === "unranked" ? (
-        <svg width="24" height="24" viewBox="0 0 48 48" fill="none" style={{ position: "relative", zIndex: 1 }}>
-          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2.5" strokeLinejoin="round"/>
-          <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(156,163,175,0.12)"/>
-          <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
-        </svg>
-      ) : rank.logo ? (
+      {rank.logo ? (
         <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : "none" }} />
       ) : (
         <Shield size={22} color="#666" style={{ position: "relative", zIndex: 1 }} />
@@ -4255,8 +4254,8 @@ function NewsCarousel({ T, splashDone }) {
 
   useEffect(() => {
     if (splashDone) return;
-    const t1 = setTimeout(() => setActiveSlide(1), 500);
-    const t2 = setTimeout(() => setActiveSlide(0), 1000);
+    const t1 = setTimeout(() => setActiveSlide(1), 400);
+    const t2 = setTimeout(() => setActiveSlide(0), 800);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [splashDone]);
 
@@ -4308,7 +4307,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "left 30%" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4402,7 +4401,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <NewsCarousel T={T} splashDone={splashDone} />
 
       {/* 3 rectangles row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 110 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 90 }}>
         {/* Card 1: Palier / Tier — gold diagonal slashes */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
@@ -8381,14 +8380,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
             <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
-              {rank.logo === "unranked" ? (
-                <svg width="80" height="80" viewBox="0 0 48 48" fill="none">
-                  <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="1.5" strokeLinejoin="round"/>
-                  <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)" stroke="#444" strokeWidth="0.5"/>
-                  <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
-                </svg>
-              ) : rank.logo ? (
-                <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
+              {rank.logo ? (
+                <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "#Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
               ) : (
                 <Shield size={80} color="#666" />
               )}
@@ -8524,13 +8517,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         )}
 
         <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
-          {rank.logo === "unranked" ? (
-            <svg width="100" height="100" viewBox="0 0 48 48" fill="none">
-              <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="1.5" strokeLinejoin="round"/>
-              <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
-            </svg>
-          ) : rank.logo ? (
-            <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
+          {rank.logo ? (
+            <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "#Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
           ) : (
             <Shield size={80} color="#666" />
           )}
@@ -8601,14 +8589,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo);
                 return (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
-                    {rank.logo === "unranked" ? (
-                      <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-                        <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#555" strokeWidth="2" strokeLinejoin="round"/>
-                        <path d="M24 10L12 17v9c0 7.5 5.1 14.5 12 16.3 6.9-1.8 12-8.8 12-16.3v-9L24 10z" fill="rgba(80,80,80,0.15)" stroke="#444" strokeWidth="1"/>
-                        <text x="24" y="30" textAnchor="middle" fill="#555" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
-                      </svg>
-                    ) : rank.logo ? (
-                      <img src={rank.logo} alt={rank.name} style={{ width: 38, height: 38, objectFit: "contain", filter: rank.name === "Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
+                    {rank.logo ? (
+                      <img src={rank.logo} alt={rank.name} style={{ width: 38, height: 38, objectFit: "contain", filter: rank.name === "#Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
                     ) : (
                       <Shield size={32} color="#666" />
                     )}
@@ -8681,11 +8663,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const isMe = u.id === profile.userId;
                   const rankLogo = getUserRank(u.points);
                   const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
+                  const isUnranked = rankLogo.name === "Unranked";
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
                   const uBadgeEmoji = isMe ? (localStorage.getItem("split_equipped_badge_emoji") || "") : (u.equipped_badge_emoji || "");
                   const uBanner = isMe ? (localStorage.getItem("split_equipped_banner_color") || "") : (u.equipped_banner || "");
                   const uPseudoColor = isMe ? "#fff" : "#ccc";
+                  const rowBg = uBanner
+                    ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
+                    : (isMe ? "#141414" : "#0e0e0e");
                   return (
                     <button key={u.id} onClick={() => {
                       if (isMe) { setProfileView(true); return; }
@@ -8693,11 +8679,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         setSpectatorUser({ ...u, ...d });
                         setSpectatorStats(d);
                       }).catch(() => { setSpectatorUser(u); });
-                    }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2.5" style={{
+                    }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={{
                       position: "relative", overflow: "hidden", textAlign: "left",
-                      background: uBanner
-                        ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
-                        : (isMe ? "#141414" : "#0e0e0e"),
+                      background: rowBg,
                       border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "1px solid #1a1a1a"),
                     }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
@@ -8711,12 +8695,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
                         {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                       </div>
-                      {rankLogo.logo === "unranked" ? (
-                        <svg width={logoSize} height={logoSize} viewBox="0 0 48 48" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
-                          <path d="M24 4L6 14v12c0 10.5 7.7 20.3 18 22.8C34.3 46.3 42 36.5 42 26V14L24 4z" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinejoin="round"/>
-                          <text x="24" y="30" textAnchor="middle" fill="#9CA3AF" fontSize="16" fontWeight="800" fontFamily="system-ui">?</text>
-                        </svg>
-                      ) : rankLogo.logo ? (
+                      {!isUnranked && rankLogo.logo ? (
                         uBanner ? (
                           <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: "1px solid rgba(255,255,255,0.1)" }}>
                             <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
