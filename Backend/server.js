@@ -1926,7 +1926,11 @@ app.listen(PORT, () => {
   startKickScraper();
   startTwitchScraper();
   startBo3ggLiveWorker();
-  startCitoScraper();
+  // startCitoScraper(): désactivé — Cloudflare Turnstile détecte browserless
+  // comme headless et bloque tous les fetch (retourne la page "Loading"
+  // indéfiniment). Réactiver seulement avec un proxy stealth (ScrapingBee,
+  // Bright Data) ou un plugin browserless-stealth.
+  // startCitoScraper();
   startRlScraper();
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
