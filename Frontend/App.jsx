@@ -4162,7 +4162,7 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      background: `url(${bgImg}) center/cover no-repeat`,
+      background: `#0f0f0f url(${bgImg}) center/contain no-repeat`,
       border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
       boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4258,9 +4258,12 @@ function NewsCarousel({ T, splashDone }) {
 
   useEffect(() => {
     if (splashDone) return;
+    // Deux swipes complets pendant le chargement : 0→1→0→1→0
     const t1 = setTimeout(() => setActiveSlide(1), 400);
-    const t2 = setTimeout(() => setActiveSlide(0), 800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t2 = setTimeout(() => setActiveSlide(0), 900);
+    const t3 = setTimeout(() => setActiveSlide(1), 1400);
+    const t4 = setTimeout(() => setActiveSlide(0), 1900);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, [splashDone]);
 
   useEffect(() => {
@@ -4311,7 +4314,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "left 30%" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4322,7 +4325,7 @@ function NewsCarousel({ T, splashDone }) {
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
-        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
+        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
@@ -4406,7 +4409,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 90 }}>
-        {/* Card 1: Palier / Tier — fond doré */}
+        {/* Card 1: Palier / Tier — fond doré, image contenue sans crop */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
@@ -4415,7 +4418,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: "url(/doree-back.png) center/cover no-repeat",
+              background: "#0f0f0f url(/doree-back.png) center/contain no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4433,7 +4436,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           );
         })()}
 
-        {/* Card 2: Streak — gris quand off, immortal-back (rouge/feu) quand active */}
+        {/* Card 2: Streak — fond gris/dark toujours */}
         {(() => {
           const sv = streak.current;
           const active = sv > 0;
@@ -4443,24 +4446,22 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: active ? "url(/immortal-back.png) center/cover no-repeat" : "#0f0f0f",
+              background: "#0f0f0f",
               border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(130,135,145,0.2)",
               boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
-              {active && <div style={{ position: "absolute", inset: 0, background: `rgba(${rgb},0.22)`, mixBlendMode: "color" }} />}
-              {active && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)" }} />}
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${rgb},0.6))` }}>🔥</span>
               ) : (
                 <span style={{ fontSize: 14, fontWeight: 800, color: "#5577AA", position: "relative", zIndex: 1, lineHeight: 1 }}>zzZ</span>
               )}
-              <span style={{ color: active ? (expiring ? "#c78300" : "#fff") : "#555", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: active ? "0 1px 3px rgba(0,0,0,0.9)" : "none" }}>{sv}</span>
+              <span style={{ color: active ? (expiring ? "#c78300" : sc) : "#555", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1 }}>{sv}</span>
               <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.12)", overflow: "hidden", position: "relative", zIndex: 1 }}>
                 {active && <div style={{ height: "100%", width: `${Math.min(sv * 10, 100)}%`, borderRadius: 2, background: sc }} />}
               </div>
-              <span style={{ color: active ? "rgba(255,255,255,0.75)" : "rgba(255,255,255,0.35)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1, textShadow: active ? "0 1px 3px rgba(0,0,0,0.9)" : "none" }}>{T.streakTitle}</span>
+              <span style={{ color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.35)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.streakTitle}</span>
             </button>
           );
         })()}
