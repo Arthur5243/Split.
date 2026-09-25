@@ -44,7 +44,20 @@ import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores } from "./bo3gg-scores.js";
 import { getCitoScoresForMatch } from "./cito-live-scraper.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
+import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
+
+// Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
+// hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
+// captcha solver → bypass Cloudflare, contrairement au fetch direct.
+let cs2RunningCache = [];
+function getCurrentCs2RunningForHltv() {
+  return cs2RunningCache;
+}
+if (HLTV_API_BASE) {
+  console.log("[cs2] HLTV_API_BASE détectée → startHltvTracker branché sur cs2 running");
+  startHltvTracker(getCurrentCs2RunningForHltv);
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ADMIN_KEY = process.env.ADMIN_KEY;
@@ -282,6 +295,9 @@ router.get("/api/cs2-live", async (req, res) => {
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
+    // Alimente le cache pour startHltvTracker → hltv-match-api (browserless+captcha)
+    cs2RunningCache = visible.filter((m) => m.status === "running");
+
     const withRegions = visible.map((m) => {
       const enriched = attachTeamRegions(m);
       if (m.status === "running") {
