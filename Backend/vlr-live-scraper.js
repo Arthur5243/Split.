@@ -198,7 +198,7 @@ async function findRecentlyFinished() {
     matches.push({ matchUrl, team1: teams[0], team2: teams[1], finished: true });
   });
 
-  return matches.slice(0, 10);
+  return matches.slice(0, 25);
 }
 
 async function runOnce() {
