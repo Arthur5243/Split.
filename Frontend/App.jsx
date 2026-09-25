@@ -8026,6 +8026,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [friendModalTab, setFriendModalTab] = useState("search");
   const [specMenu, setSpecMenu] = useState(false);
   const [specInfoPopup, setSpecInfoPopup] = useState(false);
+  const [specFollowList, setSpecFollowList] = useState(null);
   const [followersList, setFollowersList] = useState([]);
   const [discussionSubTab, setDiscussionSubTab] = useState("private");
   const [dmConversations, setDmConversations] = useState([]);
@@ -8135,8 +8136,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
   async function sendDmMsg() {
     if (!dmInput.trim() || !dmActivePeer || !profile?.userId || !dmCryptoKeys) return;
-    const isFriend = friendsList.some(f => f.id === dmActivePeer.partnerId);
-    if (!isFriend && containsBadWords(dmInput)) return;
     setDmSending(true);
     try {
       const keyResp = await fetch(API_BASE + "/api/messages/keys/" + dmActivePeer.partnerId).then(r => r.json());
@@ -8157,11 +8156,10 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
   function sendCommunityMsg() {
     if (!communityInput.trim() || !profile?.userId) return;
-    if (containsBadWords(communityInput)) return;
-    fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: communityInput.trim() }) })
-      .then(r => r.json()).then(d => {
-        if (d.id) setCommunityMsgs(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: communityInput.trim(), created_at: new Date().toISOString() }]);
-        setCommunityInput("");
+    const msg = communityInput.trim();
+    fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: msg }) })
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => {
+        if (d.id) { setCommunityMsgs(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: msg, created_at: new Date().toISOString() }]); setCommunityInput(""); }
       }).catch(() => {});
   }
   useEffect(() => {
@@ -8424,7 +8422,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     return (
       <div className="px-4 pt-6 pb-6">
         <div className="flex items-center gap-3 mb-5">
-          <button onClick={() => { setSpectatorUser(null); setSpectatorStats(null); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
+          <button onClick={() => { setSpectatorUser(null); setSpectatorStats(null); setSpecFollowList(null); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
             <ArrowLeft size={18} color="#ccc" />
           </button>
           <h1 className="font-black text-white flex-1" style={{ fontSize: "22px", letterSpacing: "-0.02em" }}>{su.pseudo}</h1>
@@ -8459,14 +8457,22 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             {su.avatar ? <img src={su.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={36} color="#555" />}
           </div>
           <div className="flex justify-around text-center w-full mb-2">
-            <div>
+            <button onClick={() => {
+              fetch(API_BASE + "/api/social/followers/" + su.id).then(r => r.json()).then(d => {
+                setSpecFollowList({ tab: "followers", list: Array.isArray(d) ? d : [] });
+              }).catch(() => {});
+            }} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{ss.followers || 0}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowers}</p>
-            </div>
-            <div>
+            </button>
+            <button onClick={() => {
+              fetch(API_BASE + "/api/social/following/" + su.id).then(r => r.json()).then(d => {
+                setSpecFollowList({ tab: "following", list: Array.isArray(d) ? d : [] });
+              }).catch(() => {});
+            }} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <p className="font-black text-white" style={{ fontSize: "18px" }}>{ss.following || 0}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.friendTabFollowing}</p>
-            </div>
+            </button>
             <div>
               <p className="font-black" style={{ fontSize: "18px", color: "#CCF71D" }}>{su.displayPts || su.points || 0}</p>
               <p style={{ color: "#888", fontSize: "10px" }}>{T.profilePoint}</p>
@@ -8543,6 +8549,34 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 <p style={{ color: "#ccc", fontSize: "13px", fontWeight: 700 }}>{ss.createdAt ? new Date(ss.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "Inconnue"}</p>
               </div>
               <button onClick={() => setSpecInfoPopup(false)} className="w-full rounded-lg py-2 mt-4 font-bold" style={{ background: "#262626", color: "#ccc", fontSize: "12px", border: "none", cursor: "pointer" }}>Fermer</button>
+            </div>
+          </>
+        )}
+
+        {specFollowList && (
+          <>
+            <div onClick={() => setSpecFollowList(null)} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.6)" }} />
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 51, background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, width: "min(320px, 88%)", maxHeight: "60vh", display: "flex", flexDirection: "column", boxShadow: "0 8px 30px rgba(0,0,0,0.6)" }}>
+              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid #222" }}>
+                <h3 style={{ color: "#fff", fontSize: 14, fontWeight: 800, margin: 0 }}>{specFollowList.tab === "followers" ? (T.friendTabFollowers || "Abonnés") : (T.friendTabFollowing || "Abonnements")}</h3>
+                <button onClick={() => setSpecFollowList(null)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}><X size={18} color="#888" /></button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+                {specFollowList.list.length === 0 && <p style={{ color: "#555", fontSize: 12, textAlign: "center", padding: "20px 0" }}>Aucun</p>}
+                {specFollowList.list.map(u => (
+                  <button key={u.id} onClick={() => {
+                    setSpecFollowList(null);
+                    if (u.id === profile?.userId) { setSpectatorUser(null); setSpectatorStats(null); setProfileView(true); }
+                    else { fetch(API_BASE + "/api/social/profile/" + u.id + "?viewerId=" + (profile?.userId || "")).then(r => r.json()).then(d => { setSpectatorUser({ ...u, ...d }); setSpectatorStats(d); }).catch(() => { setSpectatorUser(u); }); }
+                  }} className="w-full flex items-center gap-3 px-4 py-2.5" style={{ background: "none", border: "none", cursor: "pointer" }}>
+                    <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                    </div>
+                    <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, textAlign: "left" }}>{u.pseudo || "?"}</span>
+                    <ChevronRight size={14} color="#444" style={{ marginLeft: "auto" }} />
+                  </button>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -10137,6 +10171,7 @@ export default function ClutchApp() {
       setAppCreatePost(true);
     }
     setCommunityNavTab(key);
+    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: "instant" });
   }
   function runPendingSwitch() {
     const p = pendingTabSwitch;
