@@ -43,6 +43,7 @@ import {
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores } from "./bo3gg-scores.js";
 import { getCitoScoresForMatch } from "./cito-live-scraper.js";
+import { getGGScoreMatch } from "./ggscore-scores.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
@@ -305,18 +306,26 @@ router.get("/api/cs2-live", async (req, res) => {
         const t2 = m.opponents?.[1]?.opponent?.name;
         const date = (m.begin_at || "").slice(0, 10);
         if (t1 && t2) {
-          // Priorité 1 : cito.gg live (indexe TOUS les matchs, y compris petits tournois)
-          const cito = getCitoScoresForMatch(t1, t2);
-          if (cito && cito.mapScores?.length > 0) {
-            enriched.live_map_scores = cito.mapScores;
-            enriched.cito_series_score = cito.seriesScore;
+          // Priorité 1 : GGScore v2 API (données structurées, propres, sans Cloudflare)
+          const gg = date ? getGGScoreMatch(t1, t2, date) : null;
+          if (gg && gg.mapScores?.length > 0) {
+            enriched.live_map_scores = gg.mapScores;
+            enriched.ggscore_series_score = gg.seriesScore;
           }
-          // Fallback 2 : bo3.gg live (structured API)
+          // Fallback 2 : cito.gg live (désactivé — Cloudflare)
+          if (!enriched.live_map_scores) {
+            const cito = getCitoScoresForMatch(t1, t2);
+            if (cito && cito.mapScores?.length > 0) {
+              enriched.live_map_scores = cito.mapScores;
+              enriched.cito_series_score = cito.seriesScore;
+            }
+          }
+          // Fallback 3 : bo3.gg live (structured API)
           if (!enriched.live_map_scores) {
             const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
             if (bo3 && bo3.length > 0) enriched.live_map_scores = bo3;
           }
-          // Fallback 3 : HLTV scraper (bloqué Cloudflare la plupart du temps)
+          // Fallback 4 : HLTV scraper (bloqué Cloudflare la plupart du temps)
           if (!enriched.live_map_scores) {
             const scraped = getHltvScrapedScores(t1, t2);
             if (scraped) enriched.live_map_scores = scraped;
@@ -524,6 +533,19 @@ async function processOneMatch(m, data) {
           source = "hltv-scraper";
         } else {
           console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — HLTV scraper incohérent, ignoré`);
+        }
+      }
+    }
+
+    // Priorité 1 : GGScore v2 API (données propres, structured, sans Cloudflare)
+    if (!mapScores) {
+      const gg = getGGScoreMatch(t1.name, t2.name, date);
+      if (gg && gg.mapScores?.length > 0) {
+        if (isMapScoresConsistent(gg.mapScores, s1, s2)) {
+          mapScores = gg.mapScores;
+          source = "ggscore";
+        } else {
+          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — GGScore incohérent (gagnants maps ≠ série), rejeté`);
         }
       }
     }
