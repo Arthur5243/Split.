@@ -55,8 +55,11 @@ async function fetchText(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
-        gotoOptions: { waitUntil: "domcontentloaded", timeout: 60000 },
-        waitForTimeout: 3000,
+        // load = window.onload, après hydratation Next.js (cito.gg SSR partiel)
+        // avec domcontentloaded on récupérait le HTML avant que la liste des
+        // matchs soit rendue → 0 matchs trouvés. load donne le temps au JS.
+        gotoOptions: { waitUntil: "load", timeout: 60000 },
+        waitForTimeout: 5000,
         bestAttempt: true,
       }),
     });
@@ -190,7 +193,10 @@ async function runOnce() {
     return;
   }
   const matches = parseListPage(listHtml);
-  console.log(`[cito-scraper] ${matches.length} matchs live sur cito.gg`);
+  const preview = listHtml.slice(0, 200).replace(/\s+/g, " ").trim();
+  console.log(
+    `[cito-scraper] ${matches.length} matchs live sur cito.gg (html=${listHtml.length}o, preview="${preview}")`
+  );
 
   // TTL cleanup
   const now = Date.now();
