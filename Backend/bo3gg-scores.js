@@ -46,15 +46,55 @@ async function resolveTeamSlug(teamName) {
   if (cached !== undefined) return cached;
 
   const base = slugify(teamName);
-  const candidates = [base, base + "-cs"];
+  // Plus de suffixes couverts : les équipes CS pro utilisent souvent des
+  // suffixes disambigus sur bo3.gg (`-cs`, `-esports`, `-team`, etc.), et
+  // certaines n'ont même pas le "esports" côté PandaScore mais l'ont côté bo3.
+  const candidates = [
+    base,
+    base + "-cs",
+    base + "-esports",
+    base + "-esport",
+    base + "-team",
+    base + "-gaming",
+    // Sans article "the" (ex: "the-mongolz" → "mongolz")
+    base.replace(/^the-/, ""),
+    // Version sans espaces (déjà géré par slugify, mais au cas où l'espace était un tiret)
+    base.replace(/-/g, ""),
+  ];
 
-  for (const slug of candidates) {
-    const data = await fetchJson(`${BO3_API}/teams/${slug}`);
-    if (data && data.slug) {
-      teamSlugCache.set(teamName, data.slug);
-      return data.slug;
+  // Retire les doublons tout en préservant l'ordre
+  const seen = new Set();
+  const unique = candidates.filter((s) => s && !seen.has(s) && seen.add(s));
+
+  for (const slug of unique) {
+    try {
+      const data = await fetchJson(`${BO3_API}/teams/${slug}`);
+      if (data && data.slug) {
+        teamSlugCache.set(teamName, data.slug);
+        console.log(`[bo3gg] slug "${teamName}" → "${data.slug}"`);
+        return data.slug;
+      }
+    } catch {
+      // continue avec le prochain candidat
     }
   }
+
+  // Fallback : recherche floue via l'endpoint /teams?filter[title]=X
+  try {
+    const searchUrl = `${BO3_API}/teams?filter[title]=${encodeURIComponent(teamName)}&limit=5`;
+    const data = await fetchJson(searchUrl);
+    const list = data?.data || data?.teams || (Array.isArray(data) ? data : null);
+    if (Array.isArray(list) && list.length > 0) {
+      // Match sur nom normalisé
+      const q = slugify(teamName);
+      const best = list.find((t) => t.slug && (slugify(t.name || t.title || "") === q || slugify(t.slug) === q)) || list[0];
+      if (best?.slug) {
+        teamSlugCache.set(teamName, best.slug);
+        console.log(`[bo3gg] slug (via search) "${teamName}" → "${best.slug}"`);
+        return best.slug;
+      }
+    }
+  } catch {}
 
   teamSlugCache.set(teamName, null);
   return null;
