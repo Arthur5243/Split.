@@ -2496,20 +2496,20 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-2" style={{ padding: finished ? "14px 16px" : "5px 16px" }}>
-        <div className="flex items-center gap-2">
-          <div className="flex flex-col items-center gap-0.5">
+      <div className="items-center gap-2" style={{ padding: finished ? "14px 16px" : "5px 16px", display: "grid", gridTemplateColumns: "1fr auto 1fr" }}>
+        <div className="flex items-center gap-2 min-w-0" style={{ justifyContent: "flex-start" }}>
+          <div className="flex flex-col items-center gap-0.5" style={{ flexShrink: 0 }}>
             {regionsAboveLogo && showRegion1 && (
               <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team1RegionCode}</span>
             )}
             <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
           </div>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 min-w-0">
             {!regionsAboveLogo && showRegion1 && (
-              <span style={{ background: team1RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4 }}>{team1RegionCode}</span>
+              <span style={{ background: team1RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4, flexShrink: 0 }}>{team1RegionCode}</span>
             )}
-            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "16px", fontWeight: 700, ...txtSt }}>{match.team1}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: (match.team1 || "").length > 12 ? "12px" : (match.team1 || "").length > 9 ? "14px" : "16px", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, ...txtSt }}>{match.team1}</span>
           </span>
         </div>
         {finished ? (
@@ -2531,19 +2531,20 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               </button>
             )}
           </div>
-        ) : hasLiveScores ? (
+        ) : running ? (
           <div className="flex flex-col items-center">
             {liveRevealed ? (() => {
               let s1 = 0, s2 = 0;
-              for (const m of match.live_map_scores) {
-                const hi = Math.max(m.score1, m.score2);
-                const diff = Math.abs(m.score1 - m.score2);
-                if (hi >= 13 && diff >= 2) { if (m.score1 > m.score2) s1++; else s2++; }
+              if (hasLiveScores) {
+                for (const m of match.live_map_scores) {
+                  const hi = Math.max(m.score1, m.score2);
+                  const diff = Math.abs(m.score1 - m.score2);
+                  if (hi >= 13 && diff >= 2) { if (m.score1 > m.score2) s1++; else s2++; }
+                }
               }
-              const confirmed = s1 + s2 > 0;
               return (
                 <span style={{ color: "#ff3b3b", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
-                  {confirmed ? `${s1} - ${s2}` : "!"}
+                  {s1} - {s2}
                 </span>
               );
             })() : (
@@ -2555,19 +2556,19 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         ) : (
           <span style={{ color: hasBg ? "#fff" : "#555", fontSize: "11px", fontWeight: 700, ...txtStW }}>VS</span>
         )}
-        <div className="flex items-center gap-2 flex-row-reverse">
-          <div className="flex flex-col items-center gap-0.5">
+        <div className="flex items-center gap-2 flex-row-reverse min-w-0" style={{ justifyContent: "flex-start" }}>
+          <div className="flex flex-col items-center gap-0.5" style={{ flexShrink: 0 }}>
             {regionsAboveLogo && showRegion2 && (
               <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team2RegionCode}</span>
             )}
             <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
-          <span className="flex items-center gap-1.5 flex-row-reverse">
+          <span className="flex items-center gap-1.5 flex-row-reverse min-w-0">
             {!regionsAboveLogo && showRegion2 && (
-              <span style={{ background: team2RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4 }}>{team2RegionCode}</span>
+              <span style={{ background: team2RegionColor, color: "#111", fontSize: "8.5px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: "5px", padding: "1.5px 4px", lineHeight: 1.4, flexShrink: 0 }}>{team2RegionCode}</span>
             )}
-            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: "16px", fontWeight: 700, ...txtSt }}>{match.team2}</span>
+            <span style={{ color: hasBg ? "#fff" : "#ccc", fontSize: (match.team2 || "").length > 12 ? "12px" : (match.team2 || "").length > 9 ? "14px" : "16px", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0, ...txtSt }}>{match.team2}</span>
           </span>
         </div>
       </div>
@@ -2588,7 +2589,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
         </div>
       )}
-      {lockedByTime && !finished && !tbd && (
+      {lockedByTime && !finished && !running && !tbd && (
         <div className="px-4 pb-1 flex items-center justify-center gap-1.5" style={{ marginTop: -2 }}>
           <Lock size={11} color={hasBg ? "#bbb" : "#666"} />
           <span style={{ color: hasBg ? "#bbb" : "#666", fontSize: "10px", fontWeight: 600, ...txtStW }}>{T.betLocked || "Pari verrouillé"}</span>
@@ -4162,7 +4163,7 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      background: `#0f0f0f url(${bgImg}) center/contain no-repeat`,
+      backgroundImage: `url(${bgImg})`, backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
       boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4314,7 +4315,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4325,7 +4326,7 @@ function NewsCarousel({ T, splashDone }) {
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
-        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "left center" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
+        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
@@ -4409,7 +4410,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
 
       {/* 3 rectangles row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 90 }}>
-        {/* Card 1: Palier / Tier — fond doré, image contenue sans crop */}
+        {/* Card 1: Palier / Tier — fond doré étiré */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
@@ -4418,7 +4419,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: "#0f0f0f url(/doree-back.png) center/contain no-repeat",
+              backgroundImage: "url(/doree-back.png)", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4436,7 +4437,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           );
         })()}
 
-        {/* Card 2: Streak — fond gris/dark toujours */}
+        {/* Card 2: Streak — fond immortal étiré */}
         {(() => {
           const sv = streak.current;
           const active = sv > 0;
@@ -4446,22 +4447,23 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              background: "#0f0f0f",
+              backgroundImage: "url(/immortal-back.png)", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
               border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(130,135,145,0.2)",
               boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
             }}>
+              <div style={{ position: "absolute", inset: 0, background: active ? "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)" : "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.78) 100%)" }} />
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${rgb},0.6))` }}>🔥</span>
               ) : (
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#5577AA", position: "relative", zIndex: 1, lineHeight: 1 }}>zzZ</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#7799CC", position: "relative", zIndex: 1, lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>zzZ</span>
               )}
-              <span style={{ color: active ? (expiring ? "#c78300" : sc) : "#555", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1 }}>{sv}</span>
-              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.12)", overflow: "hidden", position: "relative", zIndex: 1 }}>
+              <span style={{ color: active ? (expiring ? "#c78300" : "#fff") : "#aaa", fontSize: 20, fontWeight: 900, lineHeight: 1, position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>{sv}</span>
+              <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
                 {active && <div style={{ height: "100%", width: `${Math.min(sv * 10, 100)}%`, borderRadius: 2, background: sc }} />}
               </div>
-              <span style={{ color: active ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.35)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1 }}>{T.streakTitle}</span>
+              <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>{T.streakTitle}</span>
             </button>
           );
         })()}
@@ -4475,34 +4477,36 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
       <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#161616", border: "1px solid #2a2a2a" }}>
-        {[0, 1, 2].map((i) => {
-          const user = top3[i];
-          const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
-          return (
-            <div key={i} className="flex items-center justify-between px-4 py-3" style={{
-              borderBottom: i < 2 ? "1px solid #2a2a2a" : "none",
-              position: "relative", overflow: "hidden",
-              background: user?.equipped_banner
-                ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
-                : "transparent",
-            }}>
-              <div className="flex items-center gap-3">
-                <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: user ? `${rankColors[i]}18` : "#222", color: user ? rankColors[i] : "#666", fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
-                {user && user.avatar ? (
-                  <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `2px solid ${rankColors[i]}33` }} />
-                ) : (
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <User size={14} color="#555" />
-                  </div>
-                )}
-                <span style={{ color: user ? "#ccc" : "#555", fontSize: "13px", fontWeight: 600 }}>{user ? (user.pseudo || user.username) : "—"}</span>
+        {top3.length === 0 ? (
+          <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
+        ) : (
+          [0, 1, 2].map((i) => {
+            const user = top3[i];
+            if (!user) return null;
+            const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+            return (
+              <div key={i} className="flex items-center justify-between px-4 py-3" style={{
+                borderBottom: i < top3.length - 1 ? "1px solid #2a2a2a" : "none",
+                position: "relative", overflow: "hidden",
+                background: user.equipped_banner
+                  ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
+                  : "transparent",
+              }}>
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: `${rankColors[i]}18`, color: rankColors[i], fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
+                  {user.avatar ? (
+                    <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `2px solid ${rankColors[i]}33` }} />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <User size={14} color="#555" />
+                    </div>
+                  )}
+                  <span style={{ color: "#ccc", fontSize: "13px", fontWeight: 600 }}>{user.pseudo || user.username || "?"}</span>
+                </div>
+                <span style={{ color: rankColors[i], fontSize: "12px", fontWeight: 700 }}>{user.points || 0} pts</span>
               </div>
-              <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? `${user.points} pts` : "—"}</span>
-            </div>
-          );
-        })}
-        {top3.length === 0 && (
-          <p className="text-center px-4 py-3" style={{ color: "#666", fontSize: "11px" }}>{T.classementEmptyHome}</p>
+            );
+          })
         )}
       </div>
 
@@ -9691,7 +9695,7 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, onRefresh
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => { if (spinning) return; setSpinning(true); if (onRefresh) onRefresh(); setTimeout(() => setSpinning(false), 1500); }}>
+      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => { if (spinning) return; setSpinning(true); window.location.reload(); }}>
         <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "24px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
         {spinning && <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid transparent", borderTopColor: "#CCF71D", animation: "splashRing 0.6s linear infinite" }} />}
       </div>
@@ -11409,7 +11413,7 @@ export default function ClutchApp() {
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} onRefresh={handleRefresh} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
-        <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", visibility: splashDone ? "visible" : "hidden" }}>
+        <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
           </div>
