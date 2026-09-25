@@ -2573,7 +2573,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
         </div>
       </div>
 
-      {finished ? null : tbd ? (
+      {finished || running ? null : tbd ? (
         <div className="px-4 pb-2 text-center" style={{ color: hasBg ? "#bbb" : "#666", fontSize: "11px", ...txtStW }}>{T.teamsTbc}</div>
       ) : (
         <div className="px-4 pb-2 flex items-center justify-center gap-3" style={{ position: "relative" }} onClick={() => { if (betLocked && !lockedByTime && remainingPreds <= 0 && onLimitReached) onLimitReached(); }}>
@@ -3236,6 +3236,24 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     scrollDirTimer.current = setTimeout(() => setScrollDir(null), 1200);
   }
 
+  const [claimToast, setClaimToast] = useState(null);
+  const claimToastTimer = useRef(null);
+  function showClaimToast(item) {
+    if (!item) return;
+    const map = {
+      boost: "Boost récupéré !",
+      badge: "Badge récupéré !",
+      banner: "Bannière récupérée !",
+      title: "Titre récupéré !",
+      match_bg: "Fond de match récupéré !",
+      xp_bonus: `+${item.xpAmount || 0} XP récupérés !`,
+    };
+    const label = map[item.type] || `${item.name || "Récompense"} récupéré !`;
+    setClaimToast({ label, emoji: item.emoji || "🎁" });
+    if (claimToastTimer.current) clearTimeout(claimToastTimer.current);
+    claimToastTimer.current = setTimeout(() => setClaimToast(null), 2200);
+  }
+
   function claimTier(tier, item) {
     const next = [...claimedTiers, tier];
     setClaimedTiers(next);
@@ -3244,6 +3262,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       const ni = [...inventoryItems, item];
       setInventoryItems(ni);
       localStorage.setItem("split_inventory", JSON.stringify(ni));
+      showClaimToast(item);
     }
   }
 
@@ -3608,7 +3627,14 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
         @keyframes resultReveal { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes winGlow { 0%,100% { box-shadow: 0 0 8px var(--glow-c); } 50% { box-shadow: 0 0 28px var(--glow-c); } }
         @keyframes fadeInOut { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes claimToastIn { 0% { opacity: 0; transform: translate(-50%, -20px) scale(0.9); } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
       `}</style>
+      {claimToast && (
+        <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "linear-gradient(135deg, #CCF71D, #A0D911)", color: "#000", borderRadius: 14, padding: "10px 18px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 6px 24px rgba(204,247,29,0.4)", animation: "claimToastIn 0.28s ease-out", fontSize: 13, fontWeight: 900 }}>
+          <span style={{ fontSize: 20 }}>{claimToast.emoji}</span>
+          <span>{claimToast.label}</span>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", flexShrink: 0 }}>
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer" }}><ArrowLeft size={20} color="#fff" /></button>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>{T.rewardsFree || "Récompenses"}</p>
@@ -4163,7 +4189,7 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      backgroundImage: `url(${bgImg})`, backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
+      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
       boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4315,7 +4341,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: -3, width: "100%", height: "calc(100% + 3px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4326,7 +4352,7 @@ function NewsCarousel({ T, splashDone }) {
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
-        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
+        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", top: -2, left: 0, right: -2, bottom: -2, width: "calc(100% + 2px)", height: "calc(100% + 4px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
@@ -4419,7 +4445,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/doree-back.png)", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
+              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4447,7 +4473,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/immortal-back.png)", backgroundSize: "100% 100%", backgroundRepeat: "no-repeat",
+              backgroundImage: "url(/immortal-back.png)", backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
               border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(130,135,145,0.2)",
               boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -6751,13 +6777,13 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   );
 }
 
-function FriendModal({ onClose, T, profile, userPoints, initialTab }) {
+function FriendModal({ onClose, T, profile, userPoints, initialTab, initialFollowing, initialFollowers }) {
   const [tab, setTab] = useState(initialTab || "search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [following, setFollowing] = useState([]);
-  const [followers, setFollowers] = useState([]);
-  const [followingSet, setFollowingSet] = useState(new Set());
+  const [following, setFollowing] = useState(Array.isArray(initialFollowing) ? initialFollowing : []);
+  const [followers, setFollowers] = useState(Array.isArray(initialFollowers) ? initialFollowers : []);
+  const [followingSet, setFollowingSet] = useState(new Set(Array.isArray(initialFollowing) ? initialFollowing.map(u => u.id) : []));
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const searchTimer = useRef(null);
@@ -7448,8 +7474,8 @@ function CreatePostScreen({ onClose, T, profile, prefillText, matchCardData, ini
         <>
         <div style={{ position: "absolute", top: 92, left: 0, right: 0, bottom: 200, overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
           <div className="flex items-start gap-3 px-4 py-3">
-            <div className="rounded-full overflow-hidden shrink-0" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
-              {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" style={{ margin: "10px" }} />}
+            <div className="rounded-full overflow-hidden shrink-0 flex items-center justify-center" style={{ width: 36, height: 36, background: "#1e1e1e" }}>
+              {profile?.avatar ? <img src={profile.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
             </div>
             <div className="flex-1">
               <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{profile?.pseudo || "Toi"}</span>
@@ -8432,7 +8458,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           ))}
         </div>
 
-        {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
+        {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} initialFollowing={friendsList} initialFollowers={followersList} />}
       </div>
     );
   }
@@ -8929,7 +8955,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                                   setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar, ...d }); setSpectatorStats(d);
                                 }).catch(() => { setSpectatorUser({ id: m.user_id, pseudo: m.pseudo, avatar: m.avatar }); });
                               } else if (isMe) { setProfileView(true); }
-                            }} className="rounded-full overflow-hidden shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
+                            }} className="rounded-full overflow-hidden shrink-0 flex items-center justify-center" style={{ width: 28, height: 28, background: "#1e1e1e", border: "none", cursor: "pointer", padding: 0 }}>
                               {m.avatar ? <img src={m.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={12} color="#555" />}
                             </button>
                             <div style={{ maxWidth: "75%" }}>
@@ -9024,7 +9050,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       </div>
       </div>
 
-      {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} />}
+      {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} initialFollowing={friendsList} initialFollowers={followersList} />}
 
       {showCreatePost && !appCreatePost && <CreatePostScreen onClose={() => { setShowCreatePost(false); setPostPrefill(""); setPostMatchCard(null); fetch(API_BASE + "/api/posts/feed?limit=20&userId=" + (profile?.userId || "")).then(r => r.json()).then(d => { if (Array.isArray(d)) setNexusPosts(d); }).catch(() => {}); }} T={T} profile={profile} prefillText={postPrefill} matchCardData={postMatchCard} />}
 

@@ -41,7 +41,7 @@ import {
   resetAbandonedMapScores,
 } from "./cs2-history-store.js";
 import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
-import { getMapScoresFromBo3gg } from "./bo3gg-scores.js";
+import { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores } from "./bo3gg-scores.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 
@@ -286,9 +286,17 @@ router.get("/api/cs2-live", async (req, res) => {
       if (m.status === "running") {
         const t1 = m.opponents?.[0]?.opponent?.name;
         const t2 = m.opponents?.[1]?.opponent?.name;
+        const date = (m.begin_at || "").slice(0, 10);
         if (t1 && t2) {
-          const scraped = getHltvScrapedScores(t1, t2);
-          if (scraped) enriched.live_map_scores = scraped;
+          // Priorité 1 : bo3.gg live (données structurées, scores map réels)
+          const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
+          if (bo3 && bo3.length > 0) enriched.live_map_scores = bo3;
+          // Fallback 2 : HLTV scraper (si Cloudflare passe)
+          if (!enriched.live_map_scores) {
+            const scraped = getHltvScrapedScores(t1, t2);
+            if (scraped) enriched.live_map_scores = scraped;
+          }
+          // Fallback 3 : parse du titre Kick
           const kick = getKickScoresForMatch(t1, t2);
           if (kick) {
             enriched.kick_title = kick.title;
@@ -305,8 +313,15 @@ router.get("/api/cs2-live", async (req, res) => {
       }
       return enriched;
     });
-    // Fait connaître au scraper les channels Kick des matchs actuellement en direct
+    // Enregistre les channels Kick et les cibles bo3.gg à scraper en fond
     registerKickChannels(withRegions);
+    registerBo3ggLiveMatches(
+      withRegions.map((m) => ({
+        team1: m.opponents?.[0]?.opponent?.name,
+        team2: m.opponents?.[1]?.opponent?.name,
+        begin_at: m.begin_at,
+      }))
+    );
     res.json(withRegions);
   } catch (e) {
     console.error("cs2-live error:", e.message);

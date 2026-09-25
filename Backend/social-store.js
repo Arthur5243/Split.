@@ -50,6 +50,17 @@ try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN profile_ready INTEGER DEFAULT 0`); } catch {}
+// Migration: tous les users existants (avant l'ajout de profile_ready) sont
+// marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
+// les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
+// les comptes auth vides tout juste créés.
+try {
+  db.exec(`
+    UPDATE users SET profile_ready = 1
+    WHERE profile_ready = 0
+      AND (avatar IS NOT NULL OR bio IS NOT NULL OR fav_valo IS NOT NULL OR fav_cs2 IS NOT NULL OR fav_rl IS NOT NULL OR points > 0 OR xp > 0)
+  `);
+} catch {}
 try { db.exec(`CREATE UNIQUE INDEX idx_users_email ON users(email) WHERE email IS NOT NULL`); } catch {}
 
 db.exec(`

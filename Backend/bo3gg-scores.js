@@ -114,4 +114,121 @@ async function getMapScoresFromBo3gg(team1Name, team2Name, dateStr) {
   return null;
 }
 
-export { getMapScoresFromBo3gg };
+/**
+ * Version LIVE : renvoie aussi les games en cours (status "started",
+ * "in_progress"), pas seulement "finished". Utilisé par la route /api/cs2-live
+ * pour diffuser les scores map en temps réel.
+ */
+async function getLiveMapScoresFromBo3gg(team1Name, team2Name, dateStr) {
+  const slug1 = await resolveTeamSlug(team1Name);
+  const slug2 = await resolveTeamSlug(team2Name);
+  if (!slug1 || !slug2) return null;
+
+  const datePart = formatDateForSlug(dateStr);
+  if (!datePart) return null;
+
+  const slugCandidates = [
+    `${slug1}-vs-${slug2}-${datePart}`,
+    `${slug2}-vs-${slug1}-${datePart}`,
+  ];
+
+  for (const matchSlug of slugCandidates) {
+    const data = await fetchJson(`${BO3_API}/matches/${matchSlug}?with=games`);
+    if (!data || !Array.isArray(data.games) || data.games.length === 0) continue;
+
+    const games = data.games
+      .filter((g) => (g.winner_clan_score != null && g.loser_clan_score != null) || g.status === "in_progress" || g.status === "started")
+      .sort((a, b) => (a.number || 0) - (b.number || 0));
+
+    if (games.length === 0) continue;
+
+    const mapName = (raw) =>
+      (raw || "").replace(/^de_/, "").replace(/^\w/, (c) => c.toUpperCase());
+
+    const t1Slug = slugify(team1Name);
+
+    const result = games.map((g) => {
+      const s1raw = g.winner_clan_score;
+      const s2raw = g.loser_clan_score;
+      const winnerSlug = slugify(g.winner_clan_name || "");
+      const winnerIsTeam1 =
+        winnerSlug && (winnerSlug.includes(t1Slug) || t1Slug.includes(winnerSlug));
+      const s1 = winnerIsTeam1 ? s1raw : s2raw;
+      const s2 = winnerIsTeam1 ? s2raw : s1raw;
+      return {
+        map: mapName(g.map_name || `Map ${g.number || "?"}`),
+        score1: s1 ?? 0,
+        score2: s2 ?? 0,
+      };
+    });
+
+    console.log(
+      `[bo3gg-live] ${team1Name} vs ${team2Name} (${dateStr}) → ${result.length} game(s) via slug "${matchSlug}"`
+    );
+    return result;
+  }
+
+  return null;
+}
+
+// Cache mémoire pour /api/cs2-live : la route ne peut pas await bo3.gg par
+// match (timeout Railway). Un worker de fond poll les matchs live enregistrés
+// via registerBo3ggLiveMatches() toutes les 45s.
+const bo3ggLiveCache = new Map(); // key: t1|t2|date → { scores, at }
+const bo3ggLiveTargets = new Map(); // même clé → { t1, t2, date }
+const BO3GG_LIVE_TTL_MS = 5 * 60 * 1000;
+const BO3GG_LIVE_POLL_MS = 45_000;
+
+function bo3Key(t1, t2, date) {
+  const a = slugify(t1);
+  const b = slugify(t2);
+  return [a < b ? a : b, a < b ? b : a, date].join("|");
+}
+
+function registerBo3ggLiveMatches(matches) {
+  const next = new Map();
+  for (const m of matches || []) {
+    const t1 = m.team1 || m.opponents?.[0]?.opponent?.name;
+    const t2 = m.team2 || m.opponents?.[1]?.opponent?.name;
+    const date = (m.begin_at || m.beginAt || "").slice(0, 10);
+    if (!t1 || !t2 || !date) continue;
+    next.set(bo3Key(t1, t2, date), { t1, t2, date });
+  }
+  bo3ggLiveTargets.clear();
+  for (const [k, v] of next) bo3ggLiveTargets.set(k, v);
+}
+
+function getBo3ggLiveScores(t1, t2, date) {
+  const entry = bo3ggLiveCache.get(bo3Key(t1, t2, date));
+  if (!entry) return null;
+  if (Date.now() - entry.at > BO3GG_LIVE_TTL_MS) return null;
+  return entry.scores;
+}
+
+async function pollBo3ggLive() {
+  const now = Date.now();
+  for (const [k, e] of bo3ggLiveCache) {
+    if (now - e.at > BO3GG_LIVE_TTL_MS * 2) bo3ggLiveCache.delete(k);
+  }
+  for (const [k, { t1, t2, date }] of bo3ggLiveTargets) {
+    try {
+      const scores = await getLiveMapScoresFromBo3gg(t1, t2, date);
+      if (scores && scores.length > 0) {
+        bo3ggLiveCache.set(k, { scores, at: Date.now() });
+      }
+    } catch (e) {
+      // ignore par match
+    }
+  }
+}
+
+function startBo3ggLiveWorker() {
+  console.log("[bo3gg-live] worker démarré, poll toutes les 45s sur les matchs CS2 live enregistrés");
+  async function loop() {
+    try { await pollBo3ggLive(); } catch {}
+    setTimeout(loop, BO3GG_LIVE_POLL_MS);
+  }
+  setTimeout(loop, 15_000);
+}
+
+export { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores, startBo3ggLiveWorker };

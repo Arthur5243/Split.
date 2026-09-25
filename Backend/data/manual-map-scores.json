@@ -1,5 +1,16 @@
 [
   {
+    "date": "2026-09-25",
+    "region": "INTL",
+    "team1": "Karmine Corp",
+    "team2": "Xi Lai Gaming",
+    "score": "2-0",
+    "maps": [
+      { "map": "Sunset", "score1": 13, "score2": 2, "pick": null },
+      { "map": "Abyss", "score1": 13, "score2": 6, "pick": null }
+    ]
+  },
+  {
     "date": "2026-09-04",
     "region": "Americas",
     "team1": "NRG",
