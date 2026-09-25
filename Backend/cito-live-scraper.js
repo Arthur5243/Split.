@@ -55,11 +55,16 @@ async function fetchText(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
-        // load = window.onload, après hydratation Next.js (cito.gg SSR partiel)
-        // avec domcontentloaded on récupérait le HTML avant que la liste des
-        // matchs soit rendue → 0 matchs trouvés. load donne le temps au JS.
-        gotoOptions: { waitUntil: "load", timeout: 60000 },
-        waitForTimeout: 5000,
+        // cito.gg = Cloudflare Turnstile challenge. La 1ère réponse est une
+        // page "<title>Loading</title>" avec un iframe qui résout le challenge
+        // puis redirige vers la vraie page. On attend explicitement que le
+        // title change (max 30s) — sans ça on parse la page de challenge.
+        gotoOptions: { waitUntil: "domcontentloaded", timeout: 60000 },
+        waitForFunction: {
+          fn: "() => document.title !== 'Loading' && document.title !== 'Just a moment...' && document.title.length > 0",
+          timeout: 30000,
+        },
+        waitForTimeout: 2000,
         bestAttempt: true,
       }),
     });

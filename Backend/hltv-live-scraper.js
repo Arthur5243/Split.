@@ -84,8 +84,14 @@ async function fetchHtml(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
+        // HLTV = Cloudflare interstitial ("Just a moment..."). Attendre que
+        // le titre passe à autre chose avant de dumper le HTML.
         gotoOptions: { waitUntil: "domcontentloaded", timeout: 60000 },
-        waitForTimeout: 3000,
+        waitForFunction: {
+          fn: "() => document.title !== 'Just a moment...' && document.title !== 'Loading' && document.title.length > 0",
+          timeout: 30000,
+        },
+        waitForTimeout: 2000,
         bestAttempt: true,
       }),
     });
