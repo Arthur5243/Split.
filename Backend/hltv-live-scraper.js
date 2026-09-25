@@ -84,8 +84,8 @@ async function fetchHtml(url) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         url,
-        gotoOptions: { waitUntil: "domcontentloaded", timeout: 45000 },
-        waitForTimeout: 8000,
+        gotoOptions: { waitUntil: "domcontentloaded", timeout: 60000 },
+        waitForTimeout: 3000,
         bestAttempt: true,
       }),
     });
