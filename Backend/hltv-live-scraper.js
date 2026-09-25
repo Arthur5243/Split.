@@ -82,7 +82,12 @@ async function fetchHtml(url) {
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({
+        url,
+        gotoOptions: { waitUntil: "domcontentloaded", timeout: 45000 },
+        waitForTimeout: 8000,
+        bestAttempt: true,
+      }),
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
