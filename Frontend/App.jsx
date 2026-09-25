@@ -6608,7 +6608,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   );
 }
 
-function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache }) {
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache }) {
   const [step, setStep] = useState(profile?.pseudo ? 0 : 0);
   const [pseudo, setPseudo] = useState(profile?.pseudo || "");
   const [bio, setBio] = useState(profile?.bio || "");
@@ -6702,9 +6702,9 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
                 <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
                 {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou contenu inapproprié."}</p>}
               </div>
-              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} teamLogoCache={teamLogoCache} />
-              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} teamLogoCache={teamLogoCache} />
-              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} teamLogoCache={teamLogoCache} />
+              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} teamLogoCache={valoLogoCache || teamLogoCache} />
+              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
+              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
             </div>
           )}
 
@@ -8001,7 +8001,18 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom, communityResetKey }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom, communityResetKey }) {
+  const findLogo = (cache, name) => {
+    if (!cache || !name) return null;
+    const k = Object.keys(cache).find(x => x.toLowerCase() === name.toLowerCase());
+    return k ? cache[k] : null;
+  };
+  const getGameLogo = (game, name) => {
+    if (!name) return null;
+    if (game === "cs2") return findLogo(cs2LogoCache, name) || findLogo(teamLogoCache, name);
+    if (game === "rl") return findLogo(rlLogoCache, name) || findLogo(teamLogoCache, name);
+    return findLogo(valoLogoCache, name) || findLogo(teamLogoCache, name);
+  };
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
   const [socialStats, setSocialStats] = useState(null);
@@ -8332,21 +8343,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {editMode ? (
           <div className="mb-3" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
-            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={teamLogoCache} />
-            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={teamLogoCache} />
-            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={teamLogoCache} />
+            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={valoLogoCache || teamLogoCache} />
+            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
+            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
           </div>
         ) : (displayFavValo || displayFavCs2 || displayFavRl) && (
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
             <div className="flex justify-around gap-2">
               {[
-                { team: displayFavValo, game: "Valorant", color: "#ff4655" },
-                { team: displayFavCs2, game: "CS2", color: "#f0a500" },
-                { team: displayFavRl, game: "RL", color: "#3B82F6" },
-              ].map(({ team, game, color }) => {
+                { team: displayFavValo, gameKey: "valo", game: "Valorant", color: "#ff4655" },
+                { team: displayFavCs2, gameKey: "cs2", game: "CS2", color: "#f0a500" },
+                { team: displayFavRl, gameKey: "rl", game: "RL", color: "#3B82F6" },
+              ].map(({ team, gameKey, game, color }) => {
                 const hasTeam = team && team !== "__none__";
-                const logo = hasTeam && teamLogoCache ? teamLogoCache[Object.keys(teamLogoCache).find(k => k.toLowerCase() === team.toLowerCase()) || ""] : null;
+                const logo = hasTeam ? getGameLogo(gameKey, team) : null;
                 return (
                   <div key={game} className="flex flex-col items-center gap-1.5 flex-1 rounded-xl py-3" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
                     <span style={{ color, fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>{game}</span>
@@ -8520,9 +8531,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div className="mb-3">
             <p style={{ color: "#888", fontSize: 11, fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
             <div className="flex gap-2 flex-wrap">
-              {su.fav_teams_valo && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1a2e", border: "1px solid #2a2a3e", color: "#ff4655", fontSize: "11px", fontWeight: 700 }}>Valorant : {su.fav_teams_valo}</span>}
-              {su.fav_teams_cs2 && <span className="rounded-full px-3 py-1.5" style={{ background: "#1e1e1a", border: "1px solid #2e2e2a", color: "#f0a500", fontSize: "11px", fontWeight: 700 }}>CS2 : {su.fav_teams_cs2}</span>}
-              {su.fav_teams_rl && <span className="rounded-full px-3 py-1.5" style={{ background: "#1a1e2e", border: "1px solid #2a2e3e", color: "#3B82F6", fontSize: "11px", fontWeight: 700 }}>RL : {su.fav_teams_rl}</span>}
+              {[
+                { name: su.fav_teams_valo, game: "Valorant", gameKey: "valo", color: "#ff4655", bg: "#1a1a2e", border: "#2a2a3e" },
+                { name: su.fav_teams_cs2, game: "CS2", gameKey: "cs2", color: "#f0a500", bg: "#1e1e1a", border: "#2e2e2a" },
+                { name: su.fav_teams_rl, game: "RL", gameKey: "rl", color: "#3B82F6", bg: "#1a1e2e", border: "#2a2e3e" },
+              ].filter(x => x.name).map(({ name, game, gameKey, color, bg, border }) => {
+                const logo = getGameLogo(gameKey, name);
+                return (
+                  <span key={game} className="rounded-full inline-flex items-center gap-2 pr-3 pl-1 py-1" style={{ background: bg, border: `1px solid ${border}`, color, fontSize: "11px", fontWeight: 700 }}>
+                    <span style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.35)", display: "inline-flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                      {logo ? <img src={logo} alt="" style={{ width: 18, height: 18, objectFit: "contain" }} /> : <Shield size={12} color={color} />}
+                    </span>
+                    <span>{game} : {name}</span>
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}
@@ -11472,7 +11495,7 @@ export default function ClutchApp() {
               onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -11605,7 +11628,10 @@ export default function ClutchApp() {
             cs2Teams={cs2AllTeams}
             rlTeams={rlAllTeams}
             T={T}
-            teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache }}
+            teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }}
+            valoLogoCache={teamLogoCache}
+            cs2LogoCache={cs2TeamLogoCache}
+            rlLogoCache={rlTeamLogoCache}
           />
         )}
         {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}
