@@ -8,6 +8,7 @@ import cs2Router from "./cs2-routes.js";
 import rlRouter from "./rl-routes.js";
 import youtubeRouter from "./youtube-api.js";
 import { getMapScores, findTeamId, findMatchId, findManualMapScores, getUpcomingMatchesForTeam } from "./vlr-scores.js";
+import { getValorantMapScoresFromLiquipedia } from "./liquipedia-valorant-scores.js";
 import {
   storeFinishedMatches,
   getFullHistory,
@@ -508,11 +509,25 @@ async function enrichWithMapScores(data, forceRecheckIds = new Set()) {
     } else {
       try {
         m.map_scores = await getMapScores(t1, t2, date);
-        console.log(`[map_scores] ${t1} vs ${t2} (${date}) →`, JSON.stringify(m.map_scores));
+        console.log(`[map_scores] ${t1} vs ${t2} (${date}) → vlr`, JSON.stringify(m.map_scores));
       } catch (e) {
         m.map_scores = null;
         fetchError = true;
-        console.log(`[map_scores] ${t1} vs ${t2} (${date}) → ERREUR:`, e.message);
+        console.log(`[map_scores] ${t1} vs ${t2} (${date}) → vlr ERREUR:`, e.message);
+      }
+      // Fallback Liquipedia si vlr n'a rien renvoyé
+      if (!m.map_scores) {
+        try {
+          const lp = await getValorantMapScoresFromLiquipedia(
+            t1, t2, m.league?.name || m.tournament?.name || "", date, m.serie?.full_name || m.serie?.name || ""
+          );
+          if (lp && lp.length > 0) {
+            m.map_scores = lp;
+            console.log(`[map_scores] ${t1} vs ${t2} (${date}) → liquipedia-valo`, JSON.stringify(lp));
+          }
+        } catch (e) {
+          console.log(`[map_scores] ${t1} vs ${t2} (${date}) → liquipedia-valo ERREUR:`, e.message);
+        }
       }
     }
     // Succès -> persisté pour de bon. Échec (ou `null` renvoyé, ex: requête

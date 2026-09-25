@@ -1313,6 +1313,28 @@ function isMapScoresConsistent(mapScores, score1, score2) {
   return false;
 }
 
+// Quand PandaScore dit match terminé mais qu'une map est encore à un score
+// "en cours" (ex: 12-6, 11-4), bump le côté gagnant au minimum requis pour
+// avoir un score de map cohérent (13 pour Valo/CS2, 6 pour RL, mais avec 2
+// d'écart mini). Corrige le cas récurrent où le scraper a lu la map juste
+// avant le round final.
+function bumpFinalScoresIfFinished(mapScores, status, seriesScore1, seriesScore2, gameType) {
+  if (!Array.isArray(mapScores) || mapScores.length === 0) return mapScores;
+  if (status !== "finished" && status !== "completed") return mapScores;
+  const minWin = gameType === "rl" ? 1 : 13; // seuil pour "map complète"
+  return mapScores.map((mp) => {
+    if (mp.score1 == null || mp.score2 == null) return mp;
+    const hi = Math.max(mp.score1, mp.score2);
+    const lo = Math.min(mp.score1, mp.score2);
+    if (hi >= minWin && hi - lo >= 2) return mp; // déjà complet
+    // Bump le côté gagnant à minWin, ou à lo+2 si le loser dépasse minWin-2 (overtime)
+    const target = Math.max(minWin, lo + 2);
+    if (mp.score1 > mp.score2) return { ...mp, score1: target };
+    if (mp.score2 > mp.score1) return { ...mp, score2: target };
+    return mp; // ex aequo (rare) : on ne touche pas
+  });
+}
+
 function transformMatch(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -1355,7 +1377,10 @@ function transformMatch(m) {
     // réponse brute du backend mais se perd ici avant d'arriver à MatchCard.
     // Passée au garde-fou de cohérence (cf isMapScoresConsistent) avant
     // d'être acceptée.
-    map_scores: isMapScoresConsistent(m.map_scores, score1, score2) ? m.map_scores || null : null,
+    map_scores: (() => {
+      const ok = isMapScoresConsistent(m.map_scores, score1, score2) ? (m.map_scores || null) : null;
+      return bumpFinalScoresIfFinished(ok, m.status, score1, score2, "valo");
+    })(),
     live_map_scores: m.status === "running" ? (m.live_map_scores || null) : null,
     number_of_games: m.number_of_games || 3,
   };
@@ -1471,7 +1496,8 @@ function transformMatchCS2(m) {
     // accepté, quelle que soit la source.
     map_scores: (() => {
       const resolved = findManualMapScoresCS2ById(m.id) || findManualMapScoresCS2ByTeams(t1 ? t1.name : "", t2 ? t2.name : "") || m.map_scores || null;
-      return isMapScoresConsistent(resolved, score1, score2) ? resolved : null;
+      const ok = isMapScoresConsistent(resolved, score1, score2) ? resolved : null;
+      return bumpFinalScoresIfFinished(ok, m.status, score1, score2, "cs2");
     })(),
     // Flux officiel du match (streams_list PandaScore), si dispo — remplace
     // le repli "chaîne Twitch régionale" utilisé côté Valorant, qui n'a pas
