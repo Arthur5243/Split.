@@ -2566,7 +2566,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 )}
               </>
             ) : (
-              {/* "?" style LIVE: gros rouge dans encadré, même code visuel que le badge LIVE */}
               <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); persistReveal("s"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.35)", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
                 <span style={{ color: "#ff3b3b", fontSize: "18px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.04em" }}>?</span>
               </button>
@@ -2590,7 +2589,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </div>
               );
             })() : (
-              {/* Bouton reveal live: encadré rouge visible, style LIVE */}
               <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); persistReveal("l"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
                 <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
