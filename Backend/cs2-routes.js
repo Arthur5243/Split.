@@ -488,8 +488,8 @@ async function processOneMatch(m, data) {
     const serieName = m.serie?.full_name || m.serie?.name || "";
     let source = null;
 
-    // PandaScore games array — fastest source, available directly from the match object.
-    // Only accept if we got REAL round scores (not dummy 13-0 from winner-only data).
+    // PandaScore games array (calculé sync depuis le match object)
+    let pandaGames = null;
     if (Array.isArray(m.games) && m.games.length > 0) {
       let hasRealScores = false;
       const pandaMapScores = m.games
@@ -509,111 +509,55 @@ async function processOneMatch(m, data) {
           }
           return { map: mapName, score1: sc1, score2: sc2 };
         });
-      if (hasRealScores && pandaMapScores.length > 0 && isMapScoresConsistent(pandaMapScores, s1, s2)) {
-        mapScores = pandaMapScores;
-        source = "pandascore-games";
-      }
+      if (hasRealScores && pandaMapScores.length > 0) pandaGames = pandaMapScores;
     }
 
-    // PandaScore detailed per-game API — individual call per map, gets real round scores
-    if (!mapScores) {
-      try {
-        const detailedScores = await getMapScoresForMatch(m, t1.id, t2.id);
-        if (detailedScores && detailedScores.length > 0 && isMapScoresConsistent(detailedScores, s1, s2)) {
-          mapScores = detailedScores;
-          source = "pandascore-detailed";
-        }
-      } catch (e) {
-        console.log(`[cs2 map_scores] pandascore-detailed ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
-    }
+    // TOUTES les sources lancées en parallèle (les async ET les sync).
+    // Aucun early return — on collecte tout puis on garde la plus complète.
+    const [pandaDetailed, liquipedia, bo3gg] = await Promise.all([
+      getMapScoresForMatch(m, t1.id, t2.id).catch((e) => { console.log(`[cs2 map_scores] pandascore-detailed → ${e.message}`); return null; }),
+      getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName).catch((e) => { console.log(`[cs2 map_scores] liquipedia → ${e.message}`); return null; }),
+      getMapScoresFromBo3gg(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] bo3.gg → ${e.message}`); return null; }),
+    ]);
+    // Sources cache-only (sync)
+    const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
+    const sofa = getSofascoreMatch(t1.name, t2.name);
+    const gg = getGGScoreMatch(t1.name, t2.name, date);
+    const cito = getCitoScoresForMatch(t1.name, t2.name);
+    const manual = findCS2ManualMapScores(t1.name, t2.name, date);
 
-    if (!mapScores) {
-      const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
-      if (hltvScraped && hltvScraped.length > 0) {
-        if (isMapScoresConsistent(hltvScraped, s1, s2)) {
-          mapScores = hltvScraped;
-          source = "hltv-scraper";
-        } else {
-          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — HLTV scraper incohérent, ignoré`);
-        }
-      }
-    }
+    // Rassemble tous les candidats, filtre ceux qui sont cohérents avec la
+    // série PandaScore (s1-s2), et prend la plus complète (nb maps × 100 + rounds).
+    const raw = [
+      { src: "pandascore-games", data: pandaGames },
+      { src: "pandascore-detailed", data: pandaDetailed },
+      { src: "hltv-scraper", data: hltvScraped },
+      { src: "sofascore", data: sofa?.mapScores },
+      { src: "ggscore", data: gg?.mapScores },
+      { src: "liquipedia", data: liquipedia },
+      { src: "bo3gg", data: bo3gg },
+      { src: "cito", data: cito?.mapScores },
+      { src: "manual", data: manual },
+    ].filter((c) => Array.isArray(c.data) && c.data.length > 0);
 
-    // Priorité 1 : Sofascore (cache mémoire, plus frais que GGScore)
-    if (!mapScores) {
-      const sofa = getSofascoreMatch(t1.name, t2.name);
-      if (sofa && sofa.mapScores?.length > 0) {
-        if (isMapScoresConsistent(sofa.mapScores, s1, s2)) {
-          mapScores = sofa.mapScores;
-          source = "sofascore";
-        } else {
-          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — Sofascore incohérent (gagnants maps ≠ série), rejeté`);
-        }
-      }
-    }
-    // Priorité 2 : GGScore v2 API (données propres, structured, sans Cloudflare)
-    if (!mapScores) {
-      const gg = getGGScoreMatch(t1.name, t2.name, date);
-      if (gg && gg.mapScores?.length > 0) {
-        if (isMapScoresConsistent(gg.mapScores, s1, s2)) {
-          mapScores = gg.mapScores;
-          source = "ggscore";
-        } else {
-          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — GGScore incohérent (gagnants maps ≠ série), rejeté`);
-        }
-      }
-    }
+    const candidates = raw.filter((c) => {
+      if (c.src === "manual") return true; // saisie manuelle = source de vérité, jamais rejetée
+      if (isMapScoresConsistent(c.data, s1, s2)) return true;
+      console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — ${c.src} incohérent (gagnants maps ≠ série), rejeté`);
+      return false;
+    });
 
-    if (!mapScores) try {
-      mapScores = await getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName);
-      if (mapScores) {
-        if (isMapScoresConsistent(mapScores, s1, s2)) {
-          source = "liquipedia";
-        } else {
-          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — Liquipedia incohérent (gagnants maps ≠ série), rejeté`);
-          mapScores = null;
-        }
-      }
-    } catch (e) {
-      console.log(`[cs2 map_scores] liquipedia ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-    }
-
-    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
-      try {
-        const bo3ggScores = await getMapScoresFromBo3gg(t1.name, t2.name, date);
-        if (bo3ggScores && (!mapScores || bo3ggScores.length > mapScores.length)) {
-          if (isMapScoresConsistent(bo3ggScores, s1, s2)) {
-            mapScores = bo3ggScores;
-            source = "bo3gg";
-          } else {
-            console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — bo3.gg incohérent (gagnants maps ≠ série), rejeté`);
-          }
-        }
-      } catch (e) {
-        console.log(`[cs2 map_scores] bo3.gg ${t1.name} vs ${t2.name} → ERREUR:`, e.message);
-      }
-    }
-
-    // Fallback cito.gg pour les matchs finis récents encore dans le cache scraper
-    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
-      const cito = getCitoScoresForMatch(t1.name, t2.name);
-      if (cito && cito.mapScores?.length > 0) {
-        if (isMapScoresConsistent(cito.mapScores, s1, s2)) {
-          mapScores = cito.mapScores;
-          source = "cito";
-        } else {
-          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — cito incohérent (gagnants maps ≠ série), rejeté`);
-        }
-      }
-    }
-
-    if (!mapScores || (expectedMaps > 0 && mapScores.length < expectedMaps)) {
-      const manual = findCS2ManualMapScores(t1.name, t2.name, date);
-      if (manual && (!mapScores || manual.length > mapScores.length)) {
-        mapScores = manual;
-        source = "manual";
-      }
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => {
+        const wa = a.data.length * 100 + a.data.reduce((s, mp) => s + (mp.score1 || 0) + (mp.score2 || 0), 0);
+        const wb = b.data.length * 100 + b.data.reduce((s, mp) => s + (mp.score1 || 0) + (mp.score2 || 0), 0);
+        return wb - wa;
+      });
+      // Manual battle-tested = force priorité si dispo, sinon la plus complète
+      const manualHit = candidates.find((c) => c.src === "manual");
+      const best = manualHit || candidates[0];
+      mapScores = best.data;
+      source = best.src;
     }
 
     const seriesScore = `${s1 ?? "?"}-${s2 ?? "?"}`;
