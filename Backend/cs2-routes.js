@@ -307,50 +307,44 @@ router.get("/api/cs2-live", async (req, res) => {
         const t2 = m.opponents?.[1]?.opponent?.name;
         const date = (m.begin_at || "").slice(0, 10);
         if (t1 && t2) {
-          // Priorité 1 : Sofascore live (temps réel, poll 60s, browserless bypass IP block)
+          // TOUTES les sources interrogées en parallèle, on garde la plus complète
+          // (le "poids" = nombre de maps × 100 + points totaux marqués)
+          const candidates = [];
           const sofa = getSofascoreMatch(t1, t2);
-          if (sofa && sofa.mapScores?.length > 0) {
-            enriched.live_map_scores = sofa.mapScores;
-            enriched.sofa_series_score = sofa.seriesScore;
-          }
-          // Priorité 2 : GGScore v2 API (structured, sans Cloudflare, mais plan gratuit = 3 req/jour)
-          if (!enriched.live_map_scores) {
-            const gg = date ? getGGScoreMatch(t1, t2, date) : null;
-            if (gg && gg.mapScores?.length > 0) {
-              enriched.live_map_scores = gg.mapScores;
-              enriched.ggscore_series_score = gg.seriesScore;
-            }
-          }
-          // Fallback 2 : cito.gg live (désactivé — Cloudflare)
-          if (!enriched.live_map_scores) {
-            const cito = getCitoScoresForMatch(t1, t2);
-            if (cito && cito.mapScores?.length > 0) {
-              enriched.live_map_scores = cito.mapScores;
-              enriched.cito_series_score = cito.seriesScore;
-            }
-          }
-          // Fallback 3 : bo3.gg live (structured API)
-          if (!enriched.live_map_scores) {
-            const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
-            if (bo3 && bo3.length > 0) enriched.live_map_scores = bo3;
-          }
-          // Fallback 4 : HLTV scraper (bloqué Cloudflare la plupart du temps)
-          if (!enriched.live_map_scores) {
-            const scraped = getHltvScrapedScores(t1, t2);
-            if (scraped) enriched.live_map_scores = scraped;
-          }
-          // Fallback 4 : parse du titre Kick
+          if (sofa && sofa.mapScores?.length > 0) candidates.push({ src: "sofascore", data: sofa.mapScores, series: sofa.seriesScore });
+          const gg = date ? getGGScoreMatch(t1, t2, date) : null;
+          if (gg && gg.mapScores?.length > 0) candidates.push({ src: "ggscore", data: gg.mapScores, series: gg.seriesScore });
+          const cito = getCitoScoresForMatch(t1, t2);
+          if (cito && cito.mapScores?.length > 0) candidates.push({ src: "cito", data: cito.mapScores, series: cito.seriesScore });
+          const bo3 = date ? getBo3ggLiveScores(t1, t2, date) : null;
+          if (bo3 && bo3.length > 0) candidates.push({ src: "bo3gg", data: bo3, series: null });
+          const hltv = getHltvScrapedScores(t1, t2);
+          if (hltv && hltv.length > 0) candidates.push({ src: "hltv", data: hltv, series: null });
           const kick = getKickScoresForMatch(t1, t2);
           if (kick) {
             enriched.kick_title = kick.title;
             enriched.kick_series_score = kick.seriesScore;
-            if (!enriched.live_map_scores && kick.mapScores?.length) {
-              enriched.live_map_scores = kick.mapScores.map((s, i) => ({
-                map: `Map ${i + 1}`,
-                score1: s.score1,
-                score2: s.score2,
-              }));
+            if (kick.mapScores?.length) {
+              candidates.push({
+                src: "kick",
+                data: kick.mapScores.map((s, i) => ({ map: `Map ${i + 1}`, score1: s.score1, score2: s.score2 })),
+                series: kick.seriesScore,
+              });
             }
+          }
+          // Pondération: privilégie la source avec le plus de maps, puis le plus
+          // de rounds totaux (indique le match le plus avancé/récent).
+          if (candidates.length > 0) {
+            candidates.sort((a, b) => {
+              const wa = a.data.length * 100 + a.data.reduce((s, m) => s + (m.score1 || 0) + (m.score2 || 0), 0);
+              const wb = b.data.length * 100 + b.data.reduce((s, m) => s + (m.score1 || 0) + (m.score2 || 0), 0);
+              return wb - wa;
+            });
+            const best = candidates[0];
+            enriched.live_map_scores = best.data;
+            enriched.live_source = best.src;
+            enriched.live_sources_hit = candidates.map((c) => c.src);
+            if (best.series) enriched[best.src + "_series_score"] = best.series;
           }
         }
       }
