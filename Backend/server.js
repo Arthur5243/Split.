@@ -58,6 +58,9 @@ app.use(messagesRouter);
 // Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).
 import("./graphql-server.js").then(({ mountGraphQL }) => mountGraphQL(app));
 
+// Cito API worker (vrais rounds 13-x live pour CS2 via citoapi.com Free tier)
+import("./cito-api.js").then(({ startCitoApiWorker }) => startCitoApiWorker());
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";

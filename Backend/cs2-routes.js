@@ -49,6 +49,7 @@ import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
+import { getCitoApiMatch, setCitoHasLiveMatches } from "./cito-api.js";
 
 // Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
 // hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
@@ -311,6 +312,13 @@ router.get("/api/cs2-live", async (req, res) => {
           // TOUTES les sources interrogées en parallèle, on garde la plus complète
           // (le "poids" = nombre de maps × 100 + points totaux marqués)
           const candidates = [];
+          // Cito API en priorité 1 (vrais rounds 13-x live-updated)
+          const cito = getCitoApiMatch(t1, t2);
+          if (cito && cito.mapScores?.length > 0) {
+            candidates.push({ src: "cito-api", data: cito.mapScores, series: cito.seriesScore });
+            enriched.cito_current_map = cito.currentMap;
+            enriched.cito_current_round = cito.currentRound;
+          }
           const sofa = getSofascoreMatch(t1, t2);
           if (sofa && sofa.mapScores?.length > 0) candidates.push({ src: "sofascore", data: sofa.mapScores, series: sofa.seriesScore });
           const gg = date ? getGGScoreMatch(t1, t2, date) : null;
@@ -399,6 +407,8 @@ router.get("/api/cs2-live", async (req, res) => {
     // Enregistre les channels Kick + Twitch et les cibles bo3.gg à scraper en fond
     registerKickChannels(withRegions);
     registerTwitchChannels(withRegions);
+    // Signal cito-api : est-ce qu'on a des matchs live à couvrir (économie quota)
+    setCitoHasLiveMatches(withRegions.some((m) => m.status === "running"));
     registerBo3ggLiveMatches(
       withRegions.map((m) => ({
         team1: m.opponents?.[0]?.opponent?.name,
