@@ -90,28 +90,37 @@ async function fetchJsonViaBrowserless(url) {
   }
 
   const endpoint = `${BROWSERLESS_URL}/function?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+  // V3: naviguer directement vers l'URL API après avoir chargé les cookies
+  // de la home. Chromium émet une vraie requête HTTP avec cookies + UA legit,
+  // sans passer par un fetch cross-origin (qui déclenche CORS challenge).
   const fnCode = `
     export default async ({ page, context }) => {
       const { apiUrl } = context;
-      // Étape 1: visite la home Sofascore pour obtenir les cookies visitor
       await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
+      await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
+
+      // Étape 1: visite la home Sofascore pour laisser Cloudflare poser
+      // les cookies visitor (challenge JS peut prendre 2-3s).
       await page.goto('https://www.sofascore.com/esports', {
         waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
-      // Petit délai pour laisser les scripts de challenge s'exécuter
-      await new Promise(r => setTimeout(r, 1500));
-      // Étape 2: fetch de l'API depuis le contexte du site (cookies + origin OK)
-      const data = await page.evaluate(async (u) => {
-        try {
-          const r = await fetch(u, { headers: { Accept: 'application/json' }, credentials: 'include' });
-          const txt = await r.text();
-          return { ok: r.ok, status: r.status, body: txt };
-        } catch (e) {
-          return { ok: false, status: 0, body: String(e) };
-        }
-      }, apiUrl);
-      return { data, type: 'application/json' };
+      await new Promise(r => setTimeout(r, 3500));
+
+      // Étape 2: navigate direct vers l'API. Chromium fait un vrai GET
+      // avec cookies + UA legit. Pas de check CORS car c'est une navigation
+      // top-level, pas un fetch XHR.
+      const resp = await page.goto(apiUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+      const status = resp ? resp.status() : 0;
+      // Le body JSON est wrappé par Chromium dans <pre>. On récupère le texte brut.
+      const bodyText = await page.evaluate(() => {
+        const pre = document.querySelector('pre');
+        return pre ? pre.textContent : document.body.innerText;
+      });
+      return { data: { status, body: bodyText }, type: 'application/json' };
     };
   `;
   const res = await fetch(endpoint, {
@@ -125,13 +134,13 @@ async function fetchJsonViaBrowserless(url) {
   }
   const wrap = await res.json();
   const result = wrap?.data || wrap;
-  if (!result || !result.ok) {
-    throw new Error(`sofa fetch-in-page HTTP ${result?.status}, body: ${String(result?.body).slice(0, 200)}`);
+  if (!result || result.status !== 200) {
+    throw new Error(`sofa navigate HTTP ${result?.status}, body preview: ${String(result?.body).slice(0, 200)}`);
   }
   try {
     return JSON.parse(result.body);
   } catch (e) {
-    throw new Error(`sofa JSON parse (in-page) failed: ${e.message}, body preview: ${String(result.body).slice(0, 300)}`);
+    throw new Error(`sofa JSON parse (navigate) failed: ${e.message}, body preview: ${String(result.body).slice(0, 300)}`);
   }
 }
 
