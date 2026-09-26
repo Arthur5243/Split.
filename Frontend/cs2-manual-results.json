@@ -2,6 +2,50 @@
   "_comment": "Résultats CS2 saisis à la main, lus par App.jsx. Ces résultats sont TOUJOURS prioritaires sur ceux trouvés automatiquement (Liquipedia/odds-api.io/PandaScore) — vérifiés à la main contre des sources précises, donc plus fiables qu'une correspondance automatique qui peut se tromper de match. Pour ajouter un match : soit tu connais son id PandaScore (mets-le dans byId), soit tu ne le connais pas (mets une entrée dans byTeams, avec les 2 noms d'équipe tels qu'ils apparaissent dans l'app).",
 
   "byId": {
+    "1696339": {
+      "_comment": "Liquid vs M80 — Semifinal 1, iBUYPOWER Masters FML 2026, 26 sept 2026 (source: hltv.org/matches/2398297)",
+      "maps": [
+        { "map": "Cache", "score1": 16, "score2": 13 },
+        { "map": "Anubis", "score1": 13, "score2": 2 }
+      ]
+    },
+    "1688996": {
+      "_comment": "magic vs GamerLegion — Upper Bracket SF2, 1win Private Club Season 1, 26 sept 2026 (source: hltv.org/matches/2398239)",
+      "maps": [
+        { "map": "Dust2", "score1": 13, "score2": 6 },
+        { "map": "Cache", "score1": 8, "score2": 13 },
+        { "map": "Ancient", "score1": 19, "score2": 17 }
+      ]
+    },
+    "1696337": {
+      "_comment": "M80 vs Voca — Decider, iBUYPOWER Masters FML 2026, 26 sept 2026 (source: hltv.org/matches/2398296)",
+      "maps": [
+        { "map": "Ancient", "score1": 13, "score2": 11 },
+        { "map": "Cache", "score1": 13, "score2": 11 }
+      ]
+    },
+    "1696308": {
+      "_comment": "NRG vs Wildcard — Decider, iBUYPOWER Masters FML 2026, 26 sept 2026 (Wildcard a gagné, source: hltv.org/matches/2398291)",
+      "maps": [
+        { "map": "Mirage", "score1": 10, "score2": 13 },
+        { "map": "Cache", "score1": 9, "score2": 13 }
+      ]
+    },
+    "1688995": {
+      "_comment": "SINNERS vs Ninjas in Pyjamas — Upper Bracket SF1, 1win Private Club Season 1, 26 sept 2026 (NIP a gagné, source: hltv.org/matches/2398238)",
+      "maps": [
+        { "map": "Ancient", "score1": 13, "score2": 10 },
+        { "map": "Cache", "score1": 7, "score2": 13 },
+        { "map": "Inferno", "score1": 0, "score2": 13 }
+      ]
+    },
+    "1688999": {
+      "_comment": "EYEBALLERS vs K27 — Lower Bracket R1M2, 1win Private Club Season 1, 26 sept 2026 (K27 a gagné, source: hltv.org/matches/2398237)",
+      "maps": [
+        { "map": "Nuke", "score1": 7, "score2": 13 },
+        { "map": "Anubis", "score1": 9, "score2": 13 }
+      ]
+    },
     "1624085": {
       "_comment": "BIG vs Spirit — Esports World Cup 2026, 15 août 2026",
       "maps": [
