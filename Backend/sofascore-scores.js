@@ -107,10 +107,17 @@ async function fetchJsonViaBrowserless(url) {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
   try {
-    return JSON.parse(decoded);
+    const parsed = JSON.parse(decoded);
+    // Log de debug : si le JSON est parsé mais events est vide, on log les
+    // premiers 200 caractères pour vérifier si c'est bien du contenu Sofascore
+    // valide (blocage anti-bot renvoyant {events:[]} vs vraie réponse vide).
+    if (parsed && Array.isArray(parsed.events) && parsed.events.length === 0) {
+      console.log(`[sofascore-debug] ${url} → JSON valide mais events vide. Raw preview: ${decoded.slice(0, 200)}`);
+    }
+    return parsed;
   } catch (e) {
-    // Log le début du contenu reçu pour aider au debug (blocage Cloudflare, page HTML, etc.)
-    throw new Error(`sofa JSON parse failed (${e.message}), preview: ${decoded.slice(0, 300)}`);
+    // Blocage Cloudflare = page HTML "just a moment", 403, etc.
+    throw new Error(`sofa JSON parse failed (${e.message}), preview: ${decoded.slice(0, 400)}`);
   }
 }
 
