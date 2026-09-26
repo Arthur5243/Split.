@@ -313,11 +313,11 @@ router.get("/api/cs2-live", async (req, res) => {
           // (le "poids" = nombre de maps × 100 + points totaux marqués)
           const candidates = [];
           // Cito API en priorité 1 (vrais rounds 13-x live-updated)
-          const cito = getCitoApiMatch(t1, t2);
-          if (cito && cito.mapScores?.length > 0) {
-            candidates.push({ src: "cito-api", data: cito.mapScores, series: cito.seriesScore });
-            enriched.cito_current_map = cito.currentMap;
-            enriched.cito_current_round = cito.currentRound;
+          const citoApi = getCitoApiMatch(t1, t2);
+          if (citoApi && citoApi.mapScores?.length > 0) {
+            candidates.push({ src: "cito-api", data: citoApi.mapScores, series: citoApi.seriesScore });
+            enriched.cito_current_map = citoApi.currentMap;
+            enriched.cito_current_round = citoApi.currentRound;
           }
           const sofa = getSofascoreMatch(t1, t2);
           if (sofa && sofa.mapScores?.length > 0) candidates.push({ src: "sofascore", data: sofa.mapScores, series: sofa.seriesScore });
