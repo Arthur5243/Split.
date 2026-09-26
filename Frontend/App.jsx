@@ -8799,7 +8799,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
             <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", background: "#000", display: "block", borderRadius: 14 }}>
-              <img src={REWARDS_BANNER} alt="" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
@@ -9161,7 +9161,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={REWARDS_BANNER} alt="" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
+              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -11563,6 +11563,10 @@ export default function ClutchApp() {
           }}>
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+            <img src={NEWS_CS2_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+            {/* Preload + force decode de la banner récompenses dès le splash
+                → dispo instantanément quand on clique sur l'onglet Classement */}
+            <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             {/* eager + decoding=sync + fetchpriority + dimensions figées → rendu instantané, pas de fondu progressif */}
             <img src={SPLIT_HEADER_LOGO} alt="Split" width={180} height={54} loading="eager" fetchpriority="high" decoding="sync" style={{ width: 180, height: 54, objectFit: "contain" }} />
             <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#C4F000", animation: "splashRing 0.9s linear infinite", marginTop: 32 }} />
