@@ -31,8 +31,13 @@ const SOFA_LIVE_URL = "https://api.sofascore.com/api/v1/sport/esports/events/liv
 const BROWSERLESS_URL = (process.env.BROWSERLESS_URL || "").replace(/\/$/, "");
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN || "";
 
-const POLL_INTERVAL_MS = 60_000;
-const TTL_MS = 5 * 60 * 1000;
+// Poll rare (30min) — Sofascore bloque avec Cloudflare Turnstile 403 challenge
+// sur toutes les IPs via browserless standard. Sans proxy résidentiel payant
+// ou captcha solver, on ne peut pas bypass. Le worker tourne quand même au
+// cas où Cloudflare release temporairement le tournoi couvert (gros tournois
+// type Major/IEM parfois moins protégés). Sinon les 403 continueront.
+const POLL_INTERVAL_MS = 30 * 60 * 1000;
+const TTL_MS = 60 * 60 * 1000;
 
 // Cache indexé par (team1|team2 normalisés)
 const cache = new Map();
