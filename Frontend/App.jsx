@@ -944,7 +944,7 @@ function regionLabel(key, T) {
 // peut très bien opposer une équipe EUROPE à une équipe AMERICAS dans un
 // stage commun (Major, IEM, BLAST...).
 const REGIONS_CS2 = [
-  { key: "EUROPE", accent: "#3B82F6" },
+  { key: "EUROPE", accent: "#F5C518" },   // Jaune (au lieu du bleu Europe Valo) pour distinguer les jeux
   { key: "AMERICAS", accent: "#FF3B30" },
   { key: "ASIA", accent: "#34D058" },
 ];
@@ -4461,7 +4461,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <NewsCarousel T={T} splashDone={splashDone} />
 
       {/* 3 rectangles row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 90 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 100 }}>
         {/* Card 1: Palier / Tier — fond doré étiré */}
         {(() => {
           const ti = getTierFromXp(userXp || 0);
@@ -9747,9 +9747,8 @@ function TopHeader({ isLight, onOpenLang, currentLang, onOpenSettings, onRefresh
         <span style={{ color: isLight ? "#333" : "#fff", fontSize: "11px", fontWeight: 700 }}>{lang.code.toUpperCase()}</span>
         <ChevronDown size={12} color={isLight ? "#444" : "#888"} />
       </button>
-      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => { if (spinning) return; setSpinning(true); window.location.reload(); }}>
+      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }} onClick={() => { if (spinning) return; setSpinning(true); setTimeout(() => window.location.reload(), 1000); }}>
         <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ height: "24px", objectFit: "contain", filter: isLight ? "invert(1)" : "none" }} />
-        {spinning && <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid transparent", borderTopColor: "#CCF71D", animation: "splashRing 0.6s linear infinite" }} />}
       </div>
       <button onClick={onOpenSettings} className="rounded-full p-1.5" style={{ background: isLight ? "#fff" : "#181818", minWidth: 32 }}>
         <Settings size={16} color={isLight ? "#444" : "#ccc"} />
@@ -10408,7 +10407,19 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!profile) return;
     if (!profile.userId) {
-      const updated = { ...profile, userId: crypto.randomUUID() };
+      // Priorité auth.id : évite de créer un compte social dupliqué quand l'user est
+      // déjà authentifié (email/pwd ou Google). Fallback UUID uniquement pour le mode
+      // "sans compte" (démo/testing).
+      const uid = authUser?.id || crypto.randomUUID();
+      const updated = { ...profile, userId: uid };
+      setProfile(updated);
+      localStorage.setItem("split_profile", JSON.stringify(updated));
+      syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
+    } else if (authUser?.id && profile.userId !== authUser.id) {
+      // Cas migration : profile.userId (localStorage) diverge de auth.id.
+      // Ex: user avait un profile local créé AVANT d'avoir un compte auth.
+      // On force la fusion : le vrai compte est celui de auth.id.
+      const updated = { ...profile, userId: authUser.id };
       setProfile(updated);
       localStorage.setItem("split_profile", JSON.stringify(updated));
       syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
@@ -11554,7 +11565,7 @@ export default function ClutchApp() {
               onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
@@ -11651,19 +11662,36 @@ export default function ClutchApp() {
             T={T}
             profile={profile}
             onLogout={() => {
+              localStorage.removeItem("split_token");
               localStorage.removeItem("split_auth_token");
               localStorage.removeItem("split_auth_user");
               localStorage.removeItem("split_profile");
               setProfile(null);
+              setAuthUser(null);
               setShowSettings(false);
+              setShowAuth(true);
               setActiveTab("valorant");
             }}
-            onDeleteAccount={() => {
+            onDeleteAccount={async (password) => {
+              try {
+                const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
+                await fetch(API_BASE + "/api/auth/account", {
+                  method: "DELETE",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token,
+                  },
+                  body: JSON.stringify({ password: password || "" }),
+                });
+              } catch {}
+              localStorage.removeItem("split_token");
               localStorage.removeItem("split_auth_token");
               localStorage.removeItem("split_auth_user");
               localStorage.removeItem("split_profile");
               setProfile(null);
+              setAuthUser(null);
               setShowSettings(false);
+              setShowAuth(true);
               setActiveTab("valorant");
             }}
             onChangePseudo={(newPseudo) => {
@@ -11681,7 +11709,17 @@ export default function ClutchApp() {
         {showProfile && (
           <ProfileSetupModal
             onClose={() => setShowProfile(false)}
-            onSave={(p) => { const saved = { ...p, userId: p.userId || profile?.userId || authUser?.id || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); setShowProfile(false); }}
+            onSave={(p) => {
+              // authUser.id EN PREMIER : garantit qu'un utilisateur connecté (email/pwd OU Google)
+              // ne crée jamais un compte classement dupliqué avec un UUID random. Sans ça, un
+              // user connecté qui ouvre ProfileSetupModal pour la 1ère fois génère un userId
+              // random ≠ auth id → doublon (compte auth + compte social non liés).
+              const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() };
+              setProfile(saved);
+              localStorage.setItem("split_profile", JSON.stringify(saved));
+              syncProfileToBackend(saved, userPoints, pointsPerGame, userXp);
+              setShowProfile(false);
+            }}
             profile={profile}
             valoTeams={allTeams}
             cs2Teams={cs2AllTeams}

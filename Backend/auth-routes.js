@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword } from "./social-store.js";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail } from "./social-store.js";
 import crypto from "crypto";
 
 const router = Router();
@@ -187,5 +187,36 @@ router.post("/api/auth/reset-password", async (req, res) => {
 router.get("/api/auth/count", (_req, res) => {
   res.json({ count: getUserCount() });
 });
+
+// Admin: fusionne les comptes dupliqués pour un email donné.
+// Ex: POST /api/admin/merge-account?key=<ADMIN_KEY>  { "email": "user@example.com" }
+// Garde le compte "canonique" (celui avec email dans users.email) et transfère
+// les points/xp/badges des doublons avec le même pseudo.
+router.post("/api/admin/merge-account", (req, res) => {
+  const ADMIN_KEY = process.env.ADMIN_KEY;
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) {
+    return res.status(403).json({ error: "Accès refusé" });
+  }
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Email requis" });
+  try {
+    const result = mergeDuplicatesForEmail(email);
+    res.json({ ok: true, ...result });
+  } catch (e) {
+    console.error("[admin] merge-account error:", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Auto-appel au démarrage : fusionne les comptes de arthur.cambin@gmail.com
+// (bug historique — l'user avait 138 points sur un compte unranked séparé).
+try {
+  const r = mergeDuplicatesForEmail("arthur.cambin@gmail.com");
+  if (r.merged && r.merged.length > 0) {
+    console.log(`[merge-boot] arthur.cambin@gmail.com: ${r.merged.length} doublon(s) fusionné(s), ${r.totalPointsMerged} pts transférés vers ${r.kept?.id}`);
+  }
+} catch (e) {
+  console.log("[merge-boot] arthur.cambin skip:", e.message);
+}
 
 export default router;

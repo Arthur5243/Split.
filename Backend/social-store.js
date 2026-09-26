@@ -237,6 +237,74 @@ export function linkGoogleToUser(userId, email) {
   db.prepare(`UPDATE users SET email = ?, provider = 'google' WHERE id = ?`).run(email, userId);
 }
 
+/**
+ * Fusionne les comptes dupliqués d'un même email : garde le compte
+ * "canonique" (qui a l'email set), transfère les points/xp/badges des
+ * autres comptes dupliqués (matchés par pseudo similaire), puis supprime
+ * les doublons. Sert à réparer les cas où un user s'est inscrit ET a
+ * eu un compte social créé indépendamment (bug corrigé côté frontend).
+ * Renvoie { kept, merged: [{id, pseudo, points, xp}] }.
+ */
+export function mergeDuplicatesForEmail(email) {
+  const canonical = getUserByEmail(email.toLowerCase());
+  if (!canonical) return { kept: null, merged: [] };
+  // Cherche tous les autres users avec le même pseudo (case insensitive)
+  const dupes = db.prepare(`
+    SELECT id, pseudo, points, points_valo, points_cs2, points_rl, xp, avatar, bio, fav_valo, fav_cs2, fav_rl
+    FROM users
+    WHERE pseudo_lower = ? AND id != ?
+  `).all(canonical.pseudo_lower, canonical.id);
+  if (dupes.length === 0) return { kept: canonical, merged: [] };
+
+  const totalPoints = dupes.reduce((s, u) => s + (u.points || 0), 0);
+  const totalPointsValo = dupes.reduce((s, u) => s + (u.points_valo || 0), 0);
+  const totalPointsCs2 = dupes.reduce((s, u) => s + (u.points_cs2 || 0), 0);
+  const totalPointsRl = dupes.reduce((s, u) => s + (u.points_rl || 0), 0);
+  const maxXp = dupes.reduce((m, u) => Math.max(m, u.xp || 0), 0);
+
+  // Récupère avatar/bio/fav depuis un dupliqué si le canonique n'en a pas
+  const enrich = dupes.find((u) => u.avatar || u.bio || u.fav_valo || u.fav_cs2 || u.fav_rl) || {};
+
+  db.prepare(`
+    UPDATE users SET
+      points = points + ?,
+      points_valo = points_valo + ?,
+      points_cs2 = points_cs2 + ?,
+      points_rl = points_rl + ?,
+      xp = CASE WHEN xp < ? THEN ? ELSE xp END,
+      avatar = COALESCE(avatar, ?),
+      bio = COALESCE(bio, ?),
+      fav_valo = COALESCE(fav_valo, ?),
+      fav_cs2 = COALESCE(fav_cs2, ?),
+      fav_rl = COALESCE(fav_rl, ?),
+      profile_ready = 1,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).run(
+    totalPoints, totalPointsValo, totalPointsCs2, totalPointsRl,
+    maxXp, maxXp,
+    enrich.avatar || null, enrich.bio || null,
+    enrich.fav_valo || null, enrich.fav_cs2 || null, enrich.fav_rl || null,
+    canonical.id
+  );
+
+  // Transfère follows / posts / messages avant delete
+  for (const d of dupes) {
+    try { db.prepare(`UPDATE OR IGNORE follows SET follower_id = ? WHERE follower_id = ?`).run(canonical.id, d.id); } catch {}
+    try { db.prepare(`UPDATE OR IGNORE follows SET followed_id = ? WHERE followed_id = ?`).run(canonical.id, d.id); } catch {}
+    try { db.prepare(`DELETE FROM follows WHERE follower_id = ?`).run(d.id); } catch {}
+    try { db.prepare(`DELETE FROM follows WHERE followed_id = ?`).run(d.id); } catch {}
+    try { db.prepare(`DELETE FROM users WHERE id = ?`).run(d.id); } catch {}
+  }
+
+  return {
+    kept: { id: canonical.id, pseudo: canonical.pseudo, email: canonical.email },
+    merged: dupes.map((d) => ({ id: d.id, pseudo: d.pseudo, points: d.points, xp: d.xp })),
+    totalPointsMerged: totalPoints,
+  };
+}
+
+
 try {
   db.exec(`ALTER TABLE users ADD COLUMN referral_code TEXT`);
 } catch {}
