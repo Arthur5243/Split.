@@ -150,9 +150,13 @@ async function scrapeMapScores(matchUrl) {
     }
     mapName = mapName.replace(/\s*(PICK|BAN|DECIDER)\s*$/i, "").trim();
 
-    const scoreSpans = header.find(".team .score");
-    const score1 = scoreSpans.eq(0).text().trim();
-    const score2 = scoreSpans.eq(1).text().trim();
+    // VLR utilise <div class="team">...<div class="score">4</div>... et
+    // <div class="team mod-right">...<div class="score">8</div>. On récupère
+    // TOUS les .score dans .team (2 par game : gauche + droite) — l'ancienne
+    // classe .results-team-score n'existe plus.
+    const scoreDivs = header.find(".team .score, .team.mod-right .score");
+    const score1 = scoreDivs.eq(0).text().trim();
+    const score2 = scoreDivs.eq(1).text().trim();
 
     if (!score1 && !score2) return;
 
