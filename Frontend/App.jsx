@@ -4252,9 +4252,12 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      // Unranked: bg encore plus étiré verticalement et poussé fort vers le bas
+      // Unranked: bg étendu sur les 4 côtés (surtout les côtés et le bas).
+      // +40px en largeur = ~20px de dépassement à gauche ET à droite
+      // +60px en hauteur avec position "center bottom" = tout le dépassement
+      // pousse vers le bas, l'image remplit largement les coins bas/latéraux.
       backgroundImage: `url(${bgImg})`,
-      backgroundSize: isUnranked ? "calc(100% + 24px) calc(100% + 70px)" : "calc(100% + 14px) calc(100% + 20px)",
+      backgroundSize: isUnranked ? "calc(100% + 40px) calc(100% + 60px)" : "calc(100% + 14px) calc(100% + 20px)",
       backgroundPosition: isUnranked ? "center bottom" : "center 70%",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,

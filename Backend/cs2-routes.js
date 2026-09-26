@@ -332,34 +332,8 @@ router.get("/api/cs2-live", async (req, res) => {
               });
             }
           }
-          // Fallback ultime — utilise les games PandaScore quand aucune source
-          // externe ne connaît le match (tournois mineurs FML, EPL Regular, CCT).
-          // On connait le winner par game mais pas les rounds exacts → on met
-          // 13-0 approximatif juste pour indiquer qui a gagné chaque map.
-          // Game running/not_started → 0-0 (map en cours ou à venir).
-          if (Array.isArray(m.games) && m.games.length > 0) {
-            const t1Id = m.opponents?.[0]?.opponent?.id;
-            const psGames = m.games
-              .filter((g) => g.status === "finished" || g.status === "running")
-              .sort((a, b) => (a.position || 0) - (b.position || 0));
-            if (psGames.length > 0) {
-              const psData = psGames.map((g, i) => {
-                if (g.status === "finished" && g.winner?.id != null) {
-                  const t1Won = g.winner.id === t1Id;
-                  return { map: `Map ${g.position || i + 1}`, score1: t1Won ? 13 : 0, score2: t1Won ? 0 : 13 };
-                }
-                return { map: `Map ${g.position || i + 1}`, score1: 0, score2: 0 };
-              });
-              const psSeries = m.results && m.results.length === 2
-                ? { a: m.results[0].score, b: m.results[1].score }
-                : null;
-              candidates.push({ src: "pandascore-games", data: psData, series: psSeries });
-            }
-          }
           // Pondération: privilégie la source avec le plus de maps, puis le plus
           // de rounds totaux (indique le match le plus avancé/récent).
-          // Note: pandascore-games arrive dernier — les vraies sources (avec
-          // rounds réels 13-x) auront un poids supérieur au 13-0 approximatif.
           if (candidates.length > 0) {
             candidates.sort((a, b) => {
               const wa = a.data.length * 100 + a.data.reduce((s, m) => s + (m.score1 || 0) + (m.score2 || 0), 0);
