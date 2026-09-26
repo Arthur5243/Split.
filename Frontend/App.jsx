@@ -4252,11 +4252,11 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      // Unranked: image étirée pour remplir EXACTEMENT le bloc (100% 100%).
-      // Pas de rognage, pas de bordures vides — juste un léger stretch vertical
-      // si le ratio de l'image ne matche pas parfaitement le ratio du bloc.
+      // Unranked: image étirée + dépassement dans les 4 directions
+      // (+20px de chaque côté, +20px haut/bas). Centrée → dépasse uniformément
+      // haut/bas/gauche/droite pour cacher tout bord visible.
       backgroundImage: `url(${bgImg})`,
-      backgroundSize: isUnranked ? "100% 100%" : "calc(100% + 14px) calc(100% + 20px)",
+      backgroundSize: isUnranked ? "calc(100% + 40px) calc(100% + 40px)" : "calc(100% + 14px) calc(100% + 20px)",
       backgroundPosition: isUnranked ? "center center" : "center 70%",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
