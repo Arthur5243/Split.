@@ -4451,7 +4451,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       {/* Circles row: notif + news label + quests */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#141414", border: "1px solid #262626", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", marginLeft: -8, marginTop: -6 }}>
+          <button onClick={onOpenNotifs} style={{ width: 32, height: 32, borderRadius: "50%", background: "#1f1f1f", border: "1px solid #333", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative", marginLeft: -8, marginTop: -6 }}>
             <Bell size={14} color="#888" />
           </button>
           <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.newsLabel}</p>
@@ -4535,7 +4535,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#161616", border: "1px solid #2a2a2a" }}>
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
         {top3.length === 0 ? (
           <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
         ) : (
@@ -4570,7 +4570,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       </div>
 
       <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-3">{T.calendarLabel}</p>
-      <button onClick={onOpenCalendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4" style={{ background: "#141414", border: "1px solid #262626" }}>
+      <button onClick={onOpenCalendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
         <span className="flex items-center gap-3">
           <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
             <CalendarDays size={18} color="#CCF71D" />
@@ -4582,7 +4582,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         </span>
         <ChevronRight size={18} color="#666" />
       </button>
-      <button onClick={onOpenCs2Calendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#141414", border: "1px solid #262626" }}>
+      <button onClick={onOpenCs2Calendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
         <span className="flex items-center gap-3">
           <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
             <CalendarDays size={18} color="#3B82F6" />
@@ -5392,7 +5392,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           })}
         </div>
         <div style={{ padding: "0 16px 12px" }}>
-          <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
+          <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#1e1e1e", border: "1px solid #333", cursor: "pointer" }}>
             <div className="flex items-center gap-3">
               <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
                 <Trophy size={15} color="#888" />
@@ -5851,7 +5851,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         })}
       </div>
       <div style={{ padding: "0 16px 20px" }}>
-        <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#141414", border: "1px solid #262626", cursor: "pointer" }}>
+        <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#1e1e1e", border: "1px solid #333", cursor: "pointer" }}>
           <div className="flex items-center gap-3">
             <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
               <Trophy size={15} color="#888" />
@@ -8438,7 +8438,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
         )}
 
-        <div className="rounded-2xl px-4 py-3 mb-5 flex justify-around text-center" style={{ background: "#141414", border: "1px solid #262626" }}>
+        <div className="rounded-2xl px-4 py-3 mb-5 flex justify-around text-center" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
           <div>
             <p className="font-black text-white" style={{ fontSize: "18px" }}>{exact}</p>
             <p style={{ color: "#888", fontSize: "10px" }}>{T.profileExact}</p>
@@ -8480,7 +8480,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         <div className="flex flex-col gap-2">
           {history.length === 0 && <p style={{ color: "#555", fontSize: "12px" }}>—</p>}
           {history.map((h) => (
-            <div key={h.id} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "#141414", border: "1px solid #1e1e1e" }}>
+            <div key={h.id} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "#1e1e1e", border: "1px solid #2c2c2c" }}>
               <span className="rounded px-2 py-0.5 font-bold shrink-0" style={{ fontSize: "10px", textTransform: "uppercase", background: h.game === "valo" ? "#1a1a2e" : "#1e1e1a", color: h.game === "valo" ? "#ff4655" : "#f0a500", border: "1px solid " + (h.game === "valo" ? "#2a2a3e" : "#2e2e2a") }}>
                 {h.game === "valo" ? "Valo" : "Cs2"}
               </span>
@@ -8753,7 +8753,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             <div className="flex flex-col gap-2">
               {!profile && (
                 <div className="flex flex-col items-center text-center mt-6" style={{ minHeight: "300px" }}>
-                  <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#141414", border: "1px solid #262626" }}>
+                  <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 64, height: 64, background: "#1e1e1e", border: "1px solid #333" }}>
                     <User size={26} color="#444" />
                   </div>
                   <p className="font-black text-white" style={{ fontSize: "16px" }}>{T.profileCreate}</p>
@@ -9296,13 +9296,14 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
     setNotifGames((p) => ({ ...p, [gKey]: { ...p[gKey], regions: { ...p[gKey].regions, [rKey]: !p[gKey].regions[rKey] } } }));
   }
 
-  const sectionStyle = { background: "#181818", borderRadius: "16px", overflow: "hidden" };
+  // Grays éclaircis pour meilleure visibilité (sans toucher aux cards match)
+  const sectionStyle = { background: "#232323", borderRadius: "16px", overflow: "hidden", border: "1px solid #2f2f2f" };
   const rowStyle = { padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" };
   const labelStyle = { color: "#fff", fontSize: "14px", fontWeight: 600, display: "flex", alignItems: "center", gap: "12px" };
-  const chevStyle = { color: "#555", transition: "transform 0.2s" };
+  const chevStyle = { color: "#888", transition: "transform 0.2s" };
 
   return (
-    <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50, background: "#111", display: "flex", flexDirection: "column" }}>
+    <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50, background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
       </div>
@@ -9511,7 +9512,7 @@ function CalendarModal({ onClose, T, lang }) {
   const todayISO = getTodayISO();
   return (
     <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#111", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl flex flex-col" style={{ background: "#1c1c1c", maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.calendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
@@ -9551,7 +9552,7 @@ function CalendarModal({ onClose, T, lang }) {
                         {item.detail.map((d) => {
                           const reg = REGIONS.find((r) => r.key === d.region);
                           return (
-                            <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                            <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#252525" }}>
                               <span style={{ color: reg ? reg.accent : "#fff", fontSize: "11px", fontWeight: 700 }}>{reg ? regionLabel(reg.key, T) : d.region}</span>
                               <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
                             </div>
@@ -9681,7 +9682,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
 
   return (
     <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "88%" }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#1c1c1c", maxHeight: "88%" }}>
         <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
           <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.cs2CalendarModalTitle}</h2>
           <button onClick={onClose}><X size={20} color="#999" /></button>
@@ -9721,7 +9722,7 @@ function Cs2CalendarModal({ onClose, T, lang }) {
                           {item.detail.map((d) => {
                             const reg = REGIONS_CS2.find((r) => r.key === d.region);
                             return (
-                              <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#181818" }}>
+                              <div key={d.region} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#252525" }}>
                                 <span style={{ color: reg ? reg.accent : "#fff", fontSize: "11px", fontWeight: 700 }}>{cs2RegionLabel(d.region, T)}</span>
                                 <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
                               </div>
