@@ -4252,21 +4252,29 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      // Rank étiré: dépasse un peu plus les bords (12px) pour combler mieux
-      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 14px) calc(100% + 20px)", backgroundPosition: "center 70%", backgroundRepeat: "no-repeat",
+      // Unranked: bg encore plus étiré et poussé vers le bas
+      backgroundImage: `url(${bgImg})`,
+      backgroundSize: isUnranked ? "calc(100% + 18px) calc(100% + 34px)" : "calc(100% + 14px) calc(100% + 20px)",
+      backgroundPosition: isUnranked ? "center bottom" : "center 70%",
+      backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
-      justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
+      justifyContent: isUnranked ? "flex-start" : "center",
+      alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
     }}>
-      {/* Boost luminosité pour Unranked (gris-back.png est très sombre sur mobile) */}
       {isUnranked && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.055)", pointerEvents: "none" }} />}
       {!isUnranked && <div style={{ position: "absolute", inset: 0, background: `rgba(${rgb},0.28)`, mixBlendMode: "color" }} />}
       <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)` }} />
       {rank.logo ? (
-        <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : `drop-shadow(0 1px 3px rgba(0,0,0,0.6))` }} />
+        <img src={rank.logo} alt={rank.name} style={{
+          width: isUnranked ? 40 : 26, height: isUnranked ? 40 : 26,
+          objectFit: "contain", position: "relative", zIndex: 1,
+          marginTop: isUnranked ? -4 : 0,
+          filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : `drop-shadow(0 1px 3px rgba(0,0,0,0.6))`
+        }} />
       ) : (
-        <Shield size={22} color="#666" style={{ position: "relative", zIndex: 1 }} />
+        <Shield size={isUnranked ? 30 : 22} color="#666" style={{ position: "relative", zIndex: 1, marginTop: isUnranked ? -4 : 0 }} />
       )}
       <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: `0 0 8px rgba(${rgb},0.4), 0 1px 3px rgba(0,0,0,0.9)` }}>{rank.label}</span>
       <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
@@ -4407,23 +4415,23 @@ function NewsCarousel({ T, splashDone }) {
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
         {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#fff", fontSize: "17px", fontWeight: 900, lineHeight: 1.1 }}>{T.newsTitle}</p>
-          <p style={{ color: "#dcdcdc", fontSize: "10.5px", marginTop: "4px", lineHeight: 1.3 }}>{T.newsSub}</p>
+          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.newsTitle}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.newsSub}</p>
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
         {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", top: -4, left: 0, right: -6, bottom: -4, width: "calc(100% + 6px)", height: "calc(100% + 8px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
-        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#ffaa00", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
+          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
           <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news2Sub}</p>
         </div>
       </div>
@@ -4523,7 +4531,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 12px) calc(100% + 14px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
+              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 16px) calc(100% + 18px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
