@@ -21,13 +21,59 @@ const HEADERS = {
 };
 
 // Chaînes officielles Valorant par région (identique à REGION_TWITCH côté front)
-const CHANNELS = [
+const VALO_CHANNELS = [
   "valorant_emea",
   "valorant_americas",
   "valorant_pacific",
   "valorantesports_cn",
   "valorant",
 ];
+
+// Chaînes officielles CS2 : broadcasters qui mettent le score dans le titre
+// (format habituel "MAP 2 [8-13] - Team A vs Team B" ou "Team A 1-0 Team B").
+const CS2_CHANNELS = [
+  "esl_csgo",
+  "blastpremier",
+  "blastpremiercs",
+  "faceit_tv",
+  "faceittv",
+  "esl_csgo_b",
+  "eslcs",
+  "ibuypowerhq",
+  "mythicleague",
+  "fl0m",
+  "1wincs",
+  "starladder5",
+  "starladder_cs_en",
+  "starladder_cs_ru",
+  "pgleague",
+  "hltv",
+];
+
+const STATIC_CHANNELS = [...VALO_CHANNELS, ...CS2_CHANNELS];
+
+// Channels dynamiques ajoutés depuis PandaScore streams_list au runtime
+const dynamicChannels = new Set();
+
+/**
+ * Enregistre les channels Twitch extraits des streams_list de matchs PandaScore
+ * (live/upcoming). À appeler à chaque poll cs2-routes / valorant-routes.
+ */
+export function registerTwitchChannels(matches) {
+  for (const m of matches || []) {
+    const streams = m.streams_list || [];
+    for (const s of streams) {
+      const url = s.raw_url || s.embed_url || "";
+      // Extract channel name from https://www.twitch.tv/CHANNEL or player.twitch.tv/?channel=X
+      const twMatch = url.match(/twitch\.tv\/(?:\?channel=)?([a-z0-9_]+)/i);
+      if (twMatch) dynamicChannels.add(twMatch[1].toLowerCase());
+    }
+  }
+}
+
+function getAllChannels() {
+  return Array.from(new Set([...STATIC_CHANNELS, ...dynamicChannels]));
+}
 
 const TTL_MS = 60 * 1000;
 const POLL_INTERVAL_MS = 45_000;
@@ -170,7 +216,8 @@ async function pollAll() {
   for (const [k, v] of cache) {
     if (now - v.scrapedAt > TTL_MS * 5) cache.delete(k);
   }
-  const jobs = CHANNELS.map((c) => pollChannel(c));
+  const channels = getAllChannels();
+  const jobs = channels.map((c) => pollChannel(c));
   await Promise.allSettled(jobs);
 }
 
@@ -212,7 +259,7 @@ export function getTwitchScoresForMatch(team1Name, team2Name) {
 }
 
 export function startTwitchScraper() {
-  console.log("[twitch-scraper] démarrage, poll toutes les 45s sur", CHANNELS.length, "chaînes Valorant");
+  console.log(`[twitch-scraper] démarrage, poll toutes les ${POLL_INTERVAL_MS / 1000}s sur ${STATIC_CHANNELS.length} chaînes statiques (Valo+CS2) + N dynamiques`);
   async function loop() {
     try {
       await pollAll();

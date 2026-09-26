@@ -48,6 +48,7 @@ import { getSofascoreMatch } from "./sofascore-scores.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
+import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
 
 // Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
 // hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
@@ -332,6 +333,24 @@ router.get("/api/cs2-live", async (req, res) => {
               });
             }
           }
+          // Twitch: les broadcasters CS2 officiels (ESL, BLAST, Faceit, StarLadder,
+          // 1WinCS, MythicLeague, ibuypowerhq, fl0m, etc.) mettent souvent le
+          // score en titre de leur stream ("Map 2 [8-13] - M80 vs Voca").
+          // Le scraper poll leurs titres toutes les 45s via l'API GraphQL Twitch
+          // publique (gratuite, pas de Cloudflare).
+          const tw = getTwitchScoresForMatch(t1, t2);
+          if (tw) {
+            enriched.twitch_title = tw.title;
+            enriched.twitch_channel = tw.channel;
+            enriched.twitch_series_score = tw.seriesScore;
+            if (tw.mapScores?.length) {
+              candidates.push({
+                src: "twitch",
+                data: tw.mapScores.map((s, i) => ({ map: `Map ${i + 1}`, score1: s.score1, score2: s.score2 })),
+                series: tw.seriesScore,
+              });
+            }
+          }
           // Fallback dernier recours — Sofascore/HLTV/GGScore bloqués par
           // Cloudflare Turnstile sur ces tournois mineurs (FML iBUYPOWER,
           // Private Club, CCT, EPL Regular). Sans proxy résidentiel payant,
@@ -377,8 +396,9 @@ router.get("/api/cs2-live", async (req, res) => {
       }
       return enriched;
     });
-    // Enregistre les channels Kick et les cibles bo3.gg à scraper en fond
+    // Enregistre les channels Kick + Twitch et les cibles bo3.gg à scraper en fond
     registerKickChannels(withRegions);
+    registerTwitchChannels(withRegions);
     registerBo3ggLiveMatches(
       withRegions.map((m) => ({
         team1: m.opponents?.[0]?.opponent?.name,
