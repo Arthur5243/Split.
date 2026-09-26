@@ -10408,10 +10408,22 @@ export default function ClutchApp() {
   const [rlLiveMatches, setRlLiveMatches] = useState([]);
   const [rlResultsMatches, setRlResultsMatches] = useState([]);
 
-  const [prefetchedLeaderboard, setPrefetchedLeaderboard] = useState(null);
+  // Prefetch leaderboard depuis localStorage en initial state (survit aux reloads,
+  // pas de frame de chargement visible) + refresh backend en background.
+  const [prefetchedLeaderboard, setPrefetchedLeaderboard] = useState(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem("split_leaderboard_cache") || "null");
+      if (Array.isArray(cached) && cached.length > 0) return cached;
+    } catch {}
+    return null;
+  });
   useEffect(() => {
     fetch((import.meta.env.VITE_API_BASE || "") + "/api/social/leaderboard").then(r => r.json()).then(d => {
-      if (Array.isArray(d)) setPrefetchedLeaderboard(d);
+      if (Array.isArray(d)) {
+        setPrefetchedLeaderboard(d);
+        // Cache pour prochain boot: le classement s'affiche instant sans frame de chargement
+        try { localStorage.setItem("split_leaderboard_cache", JSON.stringify(d.slice(0, 100))); } catch {}
+      }
     }).catch(() => {});
   }, []);
 
