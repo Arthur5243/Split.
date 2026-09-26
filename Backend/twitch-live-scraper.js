@@ -158,26 +158,41 @@ function parseTitle(title) {
   const t = title.replace(/\s+/g, " ").trim();
 
   // Extraction team1 vs team2 : cherche "X vs Y" (case-insensitive)
+  // + variante "[N] X vs Y [N]" et "X [N] vs [N] Y" (bracketed score)
   let team1 = null, team2 = null;
-  const vsMatch = t.match(/([A-Z0-9][\w.& -]{1,25})\s+(?:vs\.?|v)\s+([A-Z0-9][\w.& -]{1,25})/i);
-  if (vsMatch) {
-    team1 = vsMatch[1].trim().replace(/[\s|\-]+$/, "");
-    team2 = vsMatch[2].trim().replace(/[\s|\-]+$/, "");
+  const vsBracket = t.match(/([A-Z0-9][\w.& -]{1,25})\s*\[\d\]\s*vs\.?\s*\[\d\]\s*([A-Z0-9][\w.& -]{1,25})/i);
+  if (vsBracket) {
+    team1 = vsBracket[1].trim().replace(/[\s|\-]+$/, "");
+    team2 = vsBracket[2].trim().replace(/[\s|\-]+$/, "");
+  } else {
+    const vsMatch = t.match(/([A-Z0-9][\w.& -]{1,25})\s+(?:vs\.?|v)\s+([A-Z0-9][\w.& -]{1,25})/i);
+    if (vsMatch) {
+      team1 = vsMatch[1].trim().replace(/[\s|\-]+$/, "");
+      team2 = vsMatch[2].trim().replace(/[\s|\-]+$/, "");
+    }
   }
 
-  // Score série (0-2, 1-1, 2-0, etc.)
-  const seriesMatch = t.match(/(?:^|\s|\(|\[)(\d)\s*[-–:]\s*(\d)(?:\s|\)|\]|$)/);
-  const seriesScore = seriesMatch
-    ? { a: Number(seriesMatch[1]), b: Number(seriesMatch[2]) }
-    : null;
+  // Score série — 3 patterns supportés :
+  //   1. "1-1", "0-2", "2:1" avec délimiteurs
+  //   2. "[1] vs [1]", "[0] vs [0]" (broadcasters russes/1WinCS)
+  //   3. "[1] X vs Y [1]" ou "X [1] vs [1] Y" (score encadré autour de vs)
+  let seriesScore = null;
+  const bracketVs = t.match(/\[(\d)\][^[\]]{0,60}?\bvs\.?\b[^[\]]{0,60}?\[(\d)\]/i);
+  if (bracketVs) {
+    seriesScore = { a: Number(bracketVs[1]), b: Number(bracketVs[2]) };
+  } else {
+    const seriesMatch = t.match(/(?:^|\s|\(|\[)(\d)\s*[-–:]\s*(\d)(?:\s|\)|\]|$)/);
+    if (seriesMatch) seriesScore = { a: Number(seriesMatch[1]), b: Number(seriesMatch[2]) };
+  }
 
-  // Scores map Valorant : 13-x, x-13 (nouveau format) ou anciens formats jusqu'à 30
+  // Scores map (rounds) : 13-x, x-13 (CS2 format) ou anciens (Valo/CS1 jusqu'à 30)
   const mapRe = /(\d{1,2})\s*[-–:]\s*(\d{1,2})/g;
   const mapScores = [];
   let m;
   while ((m = mapRe.exec(t))) {
     const a = Number(m[1]);
     const b = Number(m[2]);
+    // Rounds réels : au moins un des deux >= 8 (partie déjà avancée)
     if (a <= 30 && b <= 30 && (a >= 8 || b >= 8)) {
       mapScores.push({ score1: a, score2: b });
     }
