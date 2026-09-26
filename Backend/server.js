@@ -54,6 +54,10 @@ app.use(socialRouter);
 app.use(postsRouter);
 app.use(messagesRouter);
 
+// Endpoint /graphql + /graphiql (UI web pour tester les queries).
+// Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).
+import("./graphql-server.js").then(({ mountGraphQL }) => mountGraphQL(app));
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
