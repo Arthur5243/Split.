@@ -69,9 +69,14 @@ function getScrapedScores(team1Name, team2Name) {
     const q2 = normalize(team2Name);
     if ((t1 === q1 && t2 === q2) || (t1 === q2 && t2 === q1)) {
       const swap = t1 === q2;
-      const completeMaps = entry.maps.filter((m) => m.complete);
-      if (completeMaps.length === 0) return null;
-      return completeMaps.map((m) => ({
+      // On renvoie TOUTES les maps (in-progress + finies), pas seulement
+      // celles qui ont atteint 13. Sans ça, un match live avec 1ère map à
+      // 4-10 renvoie null et le front affiche "Scores par map en attente"
+      // alors qu'on a le score. Renvoie null seulement si aucune map n'a de
+      // score exploitable.
+      const anyMap = entry.maps.filter((m) => (m.score1 || 0) > 0 || (m.score2 || 0) > 0);
+      if (anyMap.length === 0) return null;
+      return anyMap.map((m) => ({
         map: m.map,
         score1: swap ? m.score2 : m.score1,
         score2: swap ? m.score1 : m.score2,

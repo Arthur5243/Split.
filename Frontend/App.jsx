@@ -2810,24 +2810,31 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           {expanded && !tbd && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
               {running && hasLiveScores && (
-                <div className="mb-3 pb-3" style={{ borderBottom: "1px solid #262626" }}>
-                  {match.live_map_scores.map((lm, li) => {
-                    // En live: on masque les scores <13 (pour couvrir le "hide" spoiler + éviter les 0-0 qui polluent)
-                    // sauf si liveRevealed est true, auquel cas on montre tout.
-                    const hi = Math.max(lm.score1 || 0, lm.score2 || 0);
-                    const showRealScore = liveRevealed || hi >= 13;
+                <div className="flex flex-col gap-2">
+                  {/* Design identique à la vue "match terminé" (mêmes classes, mêmes tailles). */}
+                  {match.live_map_scores.map((lm, i) => {
+                    const gamePred = (pred && pred.games && pred.games[i]) || null;
                     return (
-                      <div key={li} className="flex items-center justify-between py-1">
-                        <span style={{ color: "#888", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {li + 1}{lm.map ? ` · ${lm.map}` : ""}</span>
-                        <span style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 800 }}>{showRealScore ? `${lm.score1} - ${lm.score2}` : "?"}</span>
+                      <div key={i} className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
+                          {lm.map && (
+                            <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{lm.map}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                            {lm.score1 != null ? lm.score1 : 0} - {lm.score2 != null ? lm.score2 : 0}
+                          </span>
+                          {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                            <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
+                              {T.yourBet} : {gamePred.a}-{gamePred.b}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
-                  {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
-                    <div className="flex items-center justify-center pt-2 mt-2" style={{ borderTop: "1px solid #262626" }}>
-                      <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{T.yourBet} : {pred.seriesA}-{pred.seriesB}</span>
-                    </div>
-                  )}
                 </div>
               )}
               {running && !hasLiveScores && (
