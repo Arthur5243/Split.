@@ -63,12 +63,20 @@ function yesterdayIsoUtc() {
   return `${y}-${m}-${day}`;
 }
 
-// Fetch JSON via browserless (bypass block IP datacenter Sofascore).
-// Browserless renvoie le HTML de la page ; pour une API JSON, Chromium
-// enveloppe le body dans <pre>...</pre>. On extrait le contenu du <pre>.
+// Fetch JSON via browserless — approche "fetch depuis le contexte du site".
+//
+// Un appel direct à api.sofascore.com renvoie 403 challenge Cloudflare même
+// via browserless (l'API bloque toute requête sans les cookies + JS check
+// obtenus en visitant la page principale).
+//
+// Solution : browserless /function exécute un script Puppeteer qui :
+//   1. Visite https://www.sofascore.com/esports (obtient les cookies visitor)
+//   2. Depuis le contexte de la page (même origine, cookies présents), fait
+//      le fetch de l'API JSON. Cloudflare voit une requête légitime.
+//   3. Retourne le JSON parsé.
 async function fetchJsonViaBrowserless(url) {
   if (!BROWSERLESS_URL || !BROWSERLESS_TOKEN) {
-    // Fallback direct — probablement 403 en prod Railway mais utile en dev local
+    // Fallback direct — probablement 403 mais utile en dev local
     const r = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -80,44 +88,50 @@ async function fetchJsonViaBrowserless(url) {
     if (!r.ok) throw new Error(`sofa direct HTTP ${r.status}`);
     return r.json();
   }
-  const endpoint = `${BROWSERLESS_URL}/content?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+
+  const endpoint = `${BROWSERLESS_URL}/function?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
+  const fnCode = `
+    export default async ({ page, context }) => {
+      const { apiUrl } = context;
+      // Étape 1: visite la home Sofascore pour obtenir les cookies visitor
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
+      await page.goto('https://www.sofascore.com/esports', {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+      // Petit délai pour laisser les scripts de challenge s'exécuter
+      await new Promise(r => setTimeout(r, 1500));
+      // Étape 2: fetch de l'API depuis le contexte du site (cookies + origin OK)
+      const data = await page.evaluate(async (u) => {
+        try {
+          const r = await fetch(u, { headers: { Accept: 'application/json' }, credentials: 'include' });
+          const txt = await r.text();
+          return { ok: r.ok, status: r.status, body: txt };
+        } catch (e) {
+          return { ok: false, status: 0, body: String(e) };
+        }
+      }, apiUrl);
+      return { data, type: 'application/json' };
+    };
+  `;
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url,
-      gotoOptions: { waitUntil: "domcontentloaded", timeout: 45000 },
-      waitForTimeout: 2500,
-      bestAttempt: true,
-    }),
+    body: JSON.stringify({ code: fnCode, context: { apiUrl: url } }),
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    throw new Error(`browserless HTTP ${res.status} for sofa: ${t.slice(0, 200)}`);
+    throw new Error(`browserless /function HTTP ${res.status}: ${t.slice(0, 200)}`);
   }
-  const html = await res.text();
-  // Extraction du <pre>...</pre> qui contient le JSON brut
-  const preMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
-  const raw = preMatch ? preMatch[1] : html;
-  const decoded = raw
-    .replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&")
-    .replace(/&#34;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">");
+  const wrap = await res.json();
+  const result = wrap?.data || wrap;
+  if (!result || !result.ok) {
+    throw new Error(`sofa fetch-in-page HTTP ${result?.status}, body: ${String(result?.body).slice(0, 200)}`);
+  }
   try {
-    const parsed = JSON.parse(decoded);
-    // Log de debug : si le JSON est parsé mais events est vide, on log les
-    // premiers 200 caractères pour vérifier si c'est bien du contenu Sofascore
-    // valide (blocage anti-bot renvoyant {events:[]} vs vraie réponse vide).
-    if (parsed && Array.isArray(parsed.events) && parsed.events.length === 0) {
-      console.log(`[sofascore-debug] ${url} → JSON valide mais events vide. Raw preview: ${decoded.slice(0, 200)}`);
-    }
-    return parsed;
+    return JSON.parse(result.body);
   } catch (e) {
-    // Blocage Cloudflare = page HTML "just a moment", 403, etc.
-    throw new Error(`sofa JSON parse failed (${e.message}), preview: ${decoded.slice(0, 400)}`);
+    throw new Error(`sofa JSON parse (in-page) failed: ${e.message}, body preview: ${String(result.body).slice(0, 300)}`);
   }
 }
 
