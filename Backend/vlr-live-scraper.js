@@ -234,6 +234,13 @@ async function runOnce() {
             .join(" | "),
           seriesDecided ? "(persisté)" : ""
         );
+      } else {
+        // Log utile pour comprendre pourquoi le map score n'apparaît pas
+        // côté front (match live détecté mais VLR n'a pas encore rendu les
+        // scores map — délai typique 5-15min après le début).
+        console.log(
+          `[vlr-scraper] [live] ${match.team1} vs ${match.team2} → aucune map score sur ${match.matchUrl} (VLR pas encore à jour ?)`
+        );
       }
     } catch (err) {
       console.error(
