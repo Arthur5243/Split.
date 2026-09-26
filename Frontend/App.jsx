@@ -269,8 +269,8 @@ const STR = {
   fr: {
     navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
     newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Ouverture du tournoi mondial à Shanghai 🇨🇳 · 32 équipes, 2,25 M$",
-    news2Badge: "Valorant", news2Title: "MAARTEN FILE À FNATIC", news2Sub: "L'IGL quitte M8 pour rejoindre Fnatic à quelques semaines des Champions.",
-    news3Badge: "CS2", news3Title: "MAJOR CHAMPIONS J-X", news3Sub: "Counter-Strike Major 2026 approche · phase suisse dans quelques jours.",
+    news2Badge: "Valorant", news2Title: "MARTEEN REJOINT FNATIC", news2Sub: "Après Gentle Mates, Marteen rejoint Fnatic pour la saison 2027.",
+    news3Badge: "CS2", news3Title: "AVANT LES CHAMPIONS CS2", news3Sub: "Le Major de Singapour approche, avec 1,25 M$ à gagner.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
@@ -360,8 +360,8 @@ const STR = {
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
     newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Shanghai world tournament kicks off 🇨🇳 · 32 teams, $2.25M prize pool",
-    news2Badge: "Valorant", news2Title: "MAARTEN JOINS FNATIC", news2Sub: "The IGL leaves M8 to sign with Fnatic ahead of Champions.",
-    news3Badge: "CS2", news3Title: "MAJOR CHAMPIONS COUNTDOWN", news3Sub: "Counter-Strike Major 2026 approaching · Swiss stage in a few days.",
+    news2Badge: "Valorant", news2Title: "MARTEEN JOINS FNATIC", news2Sub: "After Gentle Mates, Marteen joins Fnatic for the 2027 season.",
+    news3Badge: "CS2", news3Title: "BEFORE THE CS2 CHAMPIONS", news3Sub: "The Singapore Major is approaching, with $1.25M on the line.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
@@ -4252,9 +4252,9 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      // Unranked: bg encore plus étiré et poussé vers le bas
+      // Unranked: bg encore plus étiré verticalement et poussé fort vers le bas
       backgroundImage: `url(${bgImg})`,
-      backgroundSize: isUnranked ? "calc(100% + 18px) calc(100% + 34px)" : "calc(100% + 14px) calc(100% + 20px)",
+      backgroundSize: isUnranked ? "calc(100% + 24px) calc(100% + 70px)" : "calc(100% + 14px) calc(100% + 20px)",
       backgroundPosition: isUnranked ? "center bottom" : "center 70%",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
@@ -4406,6 +4406,16 @@ function NewsCarousel({ T, splashDone }) {
     dragStartX.current = null;
   }
 
+  // Countdown "J-X" vers le prochain 1er octobre (Major CS2 Singapour).
+  // Re-calculé à chaque render (le carousel se rafraîchit toutes les 6s, donc
+  // le compteur reste à jour au 24h près sans avoir besoin de timer dédié).
+  const daysToMajor = (() => {
+    const now = new Date();
+    let target = new Date(Date.UTC(now.getUTCFullYear(), 9, 1)); // 1er octobre
+    if (target.getTime() < now.getTime()) target = new Date(Date.UTC(now.getUTCFullYear() + 1, 9, 1));
+    return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000));
+  })();
+
   return (
     <div
       className="relative rounded-2xl overflow-hidden mb-6"
@@ -4444,7 +4454,7 @@ function NewsCarousel({ T, splashDone }) {
           {T.news3Badge || "CS2"}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news3Title || "MAJOR CHAMPIONS"}</p>
+          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>J-{daysToMajor} {T.news3Title || "AVANT LES CHAMPIONS CS2"}</p>
           <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news3Sub || ""}</p>
         </div>
       </div>
