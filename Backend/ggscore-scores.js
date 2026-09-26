@@ -24,8 +24,11 @@
 const API_BASE = (process.env.GGSCORE_API_BASE || "https://api.ggscore.net").replace(/\/$/, "");
 const API_KEY = process.env.GGSCORE_API_KEY || "";
 
-const POLL_INTERVAL_MS = 90_000; // 90s : suffisant pour capter matchs juste finis
-const TTL_MS = 24 * 60 * 60 * 1000; // 24h — pour les résultats historiques
+// ⚠️ Plan gratuit ggscore.net = 3 requêtes/jour. Poll toutes les 8h max
+// pour ne pas dépasser (24h / 8h = 3 fetches/jour). Passer à 5-10 min quand
+// upgrade vers un plan payant.
+const POLL_INTERVAL_MS = Number(process.env.GGSCORE_POLL_INTERVAL_MS) || 8 * 60 * 60 * 1000;
+const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours (couvre les matchs vus au dernier fetch)
 
 // key: "team1|team2|YYYY-MM-DD" (normalisés) → { team1, team2, date, seriesScore, mapScores, id, scrapedAt }
 const cache = new Map();

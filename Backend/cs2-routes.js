@@ -605,7 +605,7 @@ async function processOneMatch(m, data) {
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni PandaScore games, ni HLTV, ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni GGScore, ni PandaScore games, ni HLTV, ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
     );
 
     if (mapScores) {
