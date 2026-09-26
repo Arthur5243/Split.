@@ -95,37 +95,51 @@ async function fetchJsonViaBrowserless(url) {
   }
 
   const endpoint = `${BROWSERLESS_URL}/function?token=${encodeURIComponent(BROWSERLESS_TOKEN)}`;
-  // V3: naviguer directement vers l'URL API après avoir chargé les cookies
-  // de la home. Chromium émet une vraie requête HTTP avec cookies + UA legit,
-  // sans passer par un fetch cross-origin (qui déclenche CORS challenge).
+  // V4: attend explicitement le cookie cf_clearance avant d'appeler l'API.
+  // Cloudflare Turnstile pose ce cookie après avoir résolu son JS challenge
+  // (fingerprint navigateur, canvas, WebGL, plugins, timing). Une fois posé,
+  // il est valide 15-30min et permet TOUS les fetch API depuis la même session.
+  // Sans ce cookie → 403 challenge. Avec ce cookie → 200 OK.
   const fnCode = `
     export default async ({ page, context }) => {
       const { apiUrl } = context;
       await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
       await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
 
-      // Étape 1: visite la home Sofascore pour laisser Cloudflare poser
-      // les cookies visitor (challenge JS peut prendre 2-3s).
-      await page.goto('https://www.sofascore.com/esports', {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000,
+      // Étape 1: visite la home Sofascore
+      await page.goto('https://www.sofascore.com/', {
+        waitUntil: 'networkidle2',
+        timeout: 45000,
       });
-      await new Promise(r => setTimeout(r, 3500));
 
-      // Étape 2: navigate direct vers l'API. Chromium fait un vrai GET
-      // avec cookies + UA legit. Pas de check CORS car c'est une navigation
-      // top-level, pas un fetch XHR.
+      // Étape 2: attend explicitement que cf_clearance soit posé par le JS
+      // challenge Cloudflare (peut prendre 3-10s selon les fingerprints).
+      let hasCfClearance = false;
+      try {
+        await page.waitForFunction(
+          () => document.cookie.split(';').some(c => c.trim().startsWith('cf_clearance=')),
+          { timeout: 20000, polling: 500 }
+        );
+        hasCfClearance = true;
+      } catch (e) {
+        // Timeout — le challenge n'a pas été résolu. On tente quand même.
+      }
+
+      // Log de tous les cookies pour debug
+      const cookies = await page.cookies();
+      const cookieList = cookies.map(c => c.name).join(',');
+
+      // Étape 3: navigation top-level vers l'API JSON
       const resp = await page.goto(apiUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
       const status = resp ? resp.status() : 0;
-      // Le body JSON est wrappé par Chromium dans <pre>. On récupère le texte brut.
       const bodyText = await page.evaluate(() => {
         const pre = document.querySelector('pre');
         return pre ? pre.textContent : document.body.innerText;
       });
-      return { data: { status, body: bodyText }, type: 'application/json' };
+      return { data: { status, body: bodyText, cfClearance: hasCfClearance, cookies: cookieList }, type: 'application/json' };
     };
   `;
   const res = await fetch(endpoint, {
@@ -140,7 +154,7 @@ async function fetchJsonViaBrowserless(url) {
   const wrap = await res.json();
   const result = wrap?.data || wrap;
   if (!result || result.status !== 200) {
-    throw new Error(`sofa navigate HTTP ${result?.status}, body preview: ${String(result?.body).slice(0, 200)}`);
+    throw new Error(`sofa navigate HTTP ${result?.status} (cf_clearance=${result?.cfClearance}, cookies=[${result?.cookies || ""}]), body preview: ${String(result?.body).slice(0, 200)}`);
   }
   try {
     return JSON.parse(result.body);
