@@ -28,6 +28,7 @@ import { startTwitchScraper, getTwitchScoresForMatch } from "./twitch-live-scrap
 import { startBo3ggLiveWorker } from "./bo3gg-scores.js";
 import { startCitoScraper } from "./cito-live-scraper.js";
 import { startGGScoreWorker } from "./ggscore-scores.js";
+import { startSofascoreWorker } from "./sofascore-scores.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
@@ -1928,6 +1929,7 @@ app.listen(PORT, () => {
   startTwitchScraper();
   startBo3ggLiveWorker();
   startGGScoreWorker(); // GGScore v2 API — source prioritaire pour scores map CS2
+  startSofascoreWorker(); // Sofascore live via browserless — fallback CS2 live temps réel
   // startCitoScraper(): désactivé — Cloudflare Turnstile détecte browserless
   // comme headless et bloque tous les fetch (retourne la page "Loading"
   // indéfiniment). Réactiver seulement avec un proxy stealth (ScrapingBee,

@@ -44,6 +44,7 @@ import { getMapScoresFromLiquipedia } from "./liquipedia-scores.js";
 import { getMapScoresFromBo3gg, getLiveMapScoresFromBo3gg, registerBo3ggLiveMatches, getBo3ggLiveScores } from "./bo3gg-scores.js";
 import { getCitoScoresForMatch } from "./cito-live-scraper.js";
 import { getGGScoreMatch } from "./ggscore-scores.js";
+import { getSofascoreMatch } from "./sofascore-scores.js";
 import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
@@ -306,11 +307,19 @@ router.get("/api/cs2-live", async (req, res) => {
         const t2 = m.opponents?.[1]?.opponent?.name;
         const date = (m.begin_at || "").slice(0, 10);
         if (t1 && t2) {
-          // Priorité 1 : GGScore v2 API (données structurées, propres, sans Cloudflare)
-          const gg = date ? getGGScoreMatch(t1, t2, date) : null;
-          if (gg && gg.mapScores?.length > 0) {
-            enriched.live_map_scores = gg.mapScores;
-            enriched.ggscore_series_score = gg.seriesScore;
+          // Priorité 1 : Sofascore live (temps réel, poll 60s, browserless bypass IP block)
+          const sofa = getSofascoreMatch(t1, t2);
+          if (sofa && sofa.mapScores?.length > 0) {
+            enriched.live_map_scores = sofa.mapScores;
+            enriched.sofa_series_score = sofa.seriesScore;
+          }
+          // Priorité 2 : GGScore v2 API (structured, sans Cloudflare, mais plan gratuit = 3 req/jour)
+          if (!enriched.live_map_scores) {
+            const gg = date ? getGGScoreMatch(t1, t2, date) : null;
+            if (gg && gg.mapScores?.length > 0) {
+              enriched.live_map_scores = gg.mapScores;
+              enriched.ggscore_series_score = gg.seriesScore;
+            }
           }
           // Fallback 2 : cito.gg live (désactivé — Cloudflare)
           if (!enriched.live_map_scores) {
@@ -537,7 +546,19 @@ async function processOneMatch(m, data) {
       }
     }
 
-    // Priorité 1 : GGScore v2 API (données propres, structured, sans Cloudflare)
+    // Priorité 1 : Sofascore (cache mémoire, plus frais que GGScore)
+    if (!mapScores) {
+      const sofa = getSofascoreMatch(t1.name, t2.name);
+      if (sofa && sofa.mapScores?.length > 0) {
+        if (isMapScoresConsistent(sofa.mapScores, s1, s2)) {
+          mapScores = sofa.mapScores;
+          source = "sofascore";
+        } else {
+          console.log(`[cs2-map-diag] ${t1.name} vs ${t2.name} — Sofascore incohérent (gagnants maps ≠ série), rejeté`);
+        }
+      }
+    }
+    // Priorité 2 : GGScore v2 API (données propres, structured, sans Cloudflare)
     if (!mapScores) {
       const gg = getGGScoreMatch(t1.name, t2.name, date);
       if (gg && gg.mapScores?.length > 0) {
@@ -605,7 +626,7 @@ async function processOneMatch(m, data) {
     const diagLabel = [serieName, leagueName].filter(Boolean).join(" / ") || "?";
     console.log(
       `[cs2-map-diag] ${t1.name} ${seriesScore} ${t2.name} (id=${m.id}, ${date}, tournoi="${diagLabel}") — ` +
-        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni GGScore, ni PandaScore games, ni HLTV, ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
+        `résultat=${mapScores ? `[${source}] ${JSON.stringify(mapScores)}` : "aucun (ni Sofascore, ni GGScore, ni PandaScore games, ni HLTV, ni Liquipedia, ni bo3.gg, ni saisie manuelle)"}`
     );
 
     if (mapScores) {
