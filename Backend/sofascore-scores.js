@@ -205,14 +205,20 @@ async function refreshLive() {
     for (const ev of events) {
       if (!isCS2(ev)) continue;
       cs2Today++;
-      // On indexe TOUS les CS2 du jour (inprogress + finished récents) pour
-      // couvrir les cas où /live ne remonte pas le match
       if (isInProgress(ev) || isCS2Recent(ev)) {
         indexEvent(ev);
         indexedCS2++;
       }
     }
-    console.log(`[sofascore] scheduled-events/${today} → ${events.length} events, ${cs2Today} CS2 total`);
+    // Log détaillé: structure du JSON reçu quand 0 events (aide à savoir si
+    // Sofascore renvoie un vrai {events:[]}, un {code:403}, ou une page HTML).
+    if (dayCount === 0) {
+      const keys = data && typeof data === "object" ? Object.keys(data).slice(0, 10).join(",") : "non-objet";
+      const preview = JSON.stringify(data).slice(0, 300);
+      console.log(`[sofascore] scheduled-events/${today} → 0 events. Keys reçues: [${keys}]. JSON preview: ${preview}`);
+    } else {
+      console.log(`[sofascore] scheduled-events/${today} → ${dayCount} events, ${cs2Today} CS2 total`);
+    }
   } catch (e) {
     console.log(`[sofascore] /scheduled-events/${today} erreur: ${e.message}`);
   }
