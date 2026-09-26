@@ -2809,19 +2809,33 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
           {expanded && !tbd && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
-              {hasLiveScores && liveRevealed && (
+              {running && hasLiveScores && (
                 <div className="mb-3 pb-3" style={{ borderBottom: "1px solid #262626" }}>
-                  {match.live_map_scores.map((lm, li) => (
-                    <div key={li} className="flex items-center justify-between py-1">
-                      <span style={{ color: "#888", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {li + 1}{lm.map ? ` · ${lm.map}` : ""}</span>
-                      <span style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 800 }}>{lm.score1} - {lm.score2}</span>
+                  {match.live_map_scores.map((lm, li) => {
+                    // En live: on masque les scores <13 (pour couvrir le "hide" spoiler + éviter les 0-0 qui polluent)
+                    // sauf si liveRevealed est true, auquel cas on montre tout.
+                    const hi = Math.max(lm.score1 || 0, lm.score2 || 0);
+                    const showRealScore = liveRevealed || hi >= 13;
+                    return (
+                      <div key={li} className="flex items-center justify-between py-1">
+                        <span style={{ color: "#888", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {li + 1}{lm.map ? ` · ${lm.map}` : ""}</span>
+                        <span style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 800 }}>{showRealScore ? `${lm.score1} - ${lm.score2}` : "?"}</span>
+                      </div>
+                    );
+                  })}
+                  {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
+                    <div className="flex items-center justify-center pt-2 mt-2" style={{ borderTop: "1px solid #262626" }}>
+                      <span style={{ color: "#888", fontSize: "10px", fontWeight: 600 }}>{T.yourBet} : {pred.seriesA}-{pred.seriesB}</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
-              {games.length === 0 ? (
+              {running && !hasLiveScores && (
+                <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>
+              )}
+              {!running && games.length === 0 ? (
                 <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.seriesHint}</p>
-              ) : (
+              ) : !running && (
                 <div className="flex flex-col gap-3">
                   {games.map((g, i) => {
                     // On n'affiche l'erreur que si les DEUX scores ont été

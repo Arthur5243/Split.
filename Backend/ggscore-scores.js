@@ -38,11 +38,15 @@ let consecutiveErrors = 0;
 let disabledUntil = 0;
 
 function normalize(s) {
+  // Retire les accents, les suffixes courants (" CS", " Esports", etc.) et
+  // tout ce qui n'est pas alphanumérique. Ex: "DENDELE CS" → "dendele",
+  // "Team Falcons" → "falcons", "Wildcard Gaming" → "wildcard".
   return (s || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .trim()
     .toLowerCase()
+    .replace(/\b(cs|cs2|csgo|esports?|gaming|team|esport|club|academy)\b/g, "")
+    .trim()
     .replace(/[^a-z0-9]/g, "");
 }
 
