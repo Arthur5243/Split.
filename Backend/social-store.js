@@ -50,6 +50,10 @@ try { db.exec(`ALTER TABLE users ADD COLUMN email TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN profile_ready INTEGER DEFAULT 0`); } catch {}
+// Suivi des changements de pseudo : 1 crédit gratuit à l'inscription puis
+// 15 jours d'attente entre chaque changement.
+try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_change_credit INTEGER DEFAULT 1`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_last_changed_at TEXT`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
@@ -364,6 +368,41 @@ export function getReferrals(userId) {
 export function updatePseudo(userId, newPseudo) {
   db.prepare(`UPDATE users SET pseudo = ?, pseudo_lower = ?, updated_at = datetime('now') WHERE id = ?`)
     .run(newPseudo, newPseudo.toLowerCase(), userId);
+}
+
+/**
+ * Vérifie si l'user peut changer son pseudo :
+ * - 1 crédit gratuit à l'inscription (pseudo_change_credit=1)
+ * - Puis 15 jours entre chaque changement
+ * Renvoie { allowed: bool, reason?: string, daysLeft?: number }
+ */
+export function canChangePseudo(userId) {
+  const user = db.prepare(`SELECT pseudo_change_credit, pseudo_last_changed_at FROM users WHERE id = ?`).get(userId);
+  if (!user) return { allowed: false, reason: "Utilisateur introuvable" };
+  // Si le crédit gratuit n'a jamais été utilisé, on autorise
+  if ((user.pseudo_change_credit || 0) > 0) return { allowed: true };
+  // Sinon on vérifie le cooldown de 15 jours
+  if (!user.pseudo_last_changed_at) return { allowed: true };
+  const last = new Date(user.pseudo_last_changed_at).getTime();
+  const cooldownMs = 15 * 24 * 60 * 60 * 1000;
+  const elapsed = Date.now() - last;
+  if (elapsed >= cooldownMs) return { allowed: true };
+  const daysLeft = Math.ceil((cooldownMs - elapsed) / (24 * 60 * 60 * 1000));
+  return { allowed: false, reason: `Attends encore ${daysLeft} jour(s) avant de rechanger`, daysLeft };
+}
+
+/**
+ * Consomme un changement de pseudo : décrémente le crédit gratuit
+ * s'il en reste, sinon enregistre la date pour le cooldown.
+ */
+export function consumePseudoChange(userId) {
+  const user = db.prepare(`SELECT pseudo_change_credit FROM users WHERE id = ?`).get(userId);
+  if (!user) return;
+  if ((user.pseudo_change_credit || 0) > 0) {
+    db.prepare(`UPDATE users SET pseudo_change_credit = pseudo_change_credit - 1, pseudo_last_changed_at = datetime('now') WHERE id = ?`).run(userId);
+  } else {
+    db.prepare(`UPDATE users SET pseudo_last_changed_at = datetime('now') WHERE id = ?`).run(userId);
+  }
 }
 
 export function deleteUser(userId) {

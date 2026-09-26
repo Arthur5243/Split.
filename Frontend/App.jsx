@@ -54,8 +54,9 @@ import {
 
 const SPLIT_LOGO = "/split-logo.png";
 const SPLIT_HEADER_LOGO = "/split-header-logo.png";
-const NEWS_IMAGE = "/news-image.jpg";
-const NEWS_EWC_IMAGE = "/news-ewc.png";
+const NEWS_IMAGE = "/news-champions.png";
+const NEWS_EWC_IMAGE = "/news-marteen.png";
+const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.png";
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -64,7 +65,7 @@ const NAV_VALORANT_IMG = "/Valo(1).png";
 const NAV_CSGO_IMG = "/Cs2(2).png";
 const NAV_RL_IMG = "/Rl(1).png";
 
-[NEWS_IMAGE, NEWS_EWC_IMAGE, REWARDS_BANNER].forEach(src => { const img = new Image(); img.src = src; });
+[NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE, REWARDS_BANNER].forEach(src => { const img = new Image(); img.src = src; });
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
@@ -267,8 +268,9 @@ const LOCALE_MAP = {
 const STR = {
   fr: {
     navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS EN 2027", newsSub: "Un troisième tournoi Masters s'ajouterait au calendrier de la saison prochaine.",
-    news2Badge: "CS2", news2Title: "2 MILLIONS $ EN JEU", news2Sub: "Finale Esports World Cup 2026 CS2 · 23 août · Paris 🇫🇷",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Ouverture du tournoi mondial à Shanghai 🇨🇳 · 32 équipes, 2,25 M$",
+    news2Badge: "Valorant", news2Title: "MAARTEN FILE À FNATIC", news2Sub: "L'IGL quitte M8 pour rejoindre Fnatic à quelques semaines des Champions.",
+    news3Badge: "CS2", news3Title: "MAJOR CHAMPIONS J-X", news3Sub: "Counter-Strike Major 2026 approche · phase suisse dans quelques jours.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
     calendarLabel: "Calendrier", calendarCardTitle: "Calendrier VCT 2026", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
@@ -357,8 +359,9 @@ const STR = {
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "3 MASTERS IN 2027", newsSub: "A third Masters tournament could be added to next season's calendar.",
-    news2Badge: "CS2", news2Title: "$2 MILLION ON THE LINE", news2Sub: "Esports World Cup 2026 CS2 Finals · Aug 23 · Paris 🇫🇷",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Shanghai world tournament kicks off 🇨🇳 · 32 teams, $2.25M prize pool",
+    news2Badge: "Valorant", news2Title: "MAARTEN JOINS FNATIC", news2Sub: "The IGL leaves M8 to sign with Fnatic ahead of Champions.",
+    news3Badge: "CS2", news3Title: "MAJOR CHAMPIONS COUNTDOWN", news3Sub: "Counter-Strike Major 2026 approaching · Swiss stage in a few days.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
     calendarLabel: "Calendar", calendarCardTitle: "VCT 2026 Calendar", calendarCardSub: "Kickoff · Masters · Playoffs · Champions",
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
@@ -2351,8 +2354,19 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const replayDaysText = gameType === "cs2" ? daysAgoText(match.beginAt) : null;
   const [showReplayPopup, setShowReplayPopup] = useState(false);
   const [showSharePicker, setShowSharePicker] = useState(false);
-  const [scoresRevealed, setScoresRevealed] = useState(false);
-  const [liveRevealed, setLiveRevealed] = useState(false);
+  // Persistance des reveals dans localStorage: une fois révélé, le score reste
+  // visible même après fermeture/reload de l'app (le cache "spoiler" est
+  // définitivement désactivé pour ce match).
+  const revealKey = `split_revealed_${match.id}`;
+  const [scoresRevealed, setScoresRevealed] = useState(() => {
+    try { return localStorage.getItem(revealKey + "_s") === "1"; } catch { return false; }
+  });
+  const [liveRevealed, setLiveRevealed] = useState(() => {
+    try { return localStorage.getItem(revealKey + "_l") === "1"; } catch { return false; }
+  });
+  const persistReveal = (kind) => {
+    try { localStorage.setItem(revealKey + "_" + kind, "1"); } catch {}
+  };
   const isBoosted = (() => { try { return JSON.parse(localStorage.getItem("split_boosted_matches") || "[]").includes(String(match.id)); } catch { return false; } })();
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
@@ -2552,8 +2566,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 )}
               </>
             ) : (
-              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); }} style={{ background: "#333", border: "none", borderRadius: 6, padding: "4px 16px", cursor: "pointer" }}>
-                <span style={{ color: "#555", fontSize: "16px", fontWeight: 900 }}>?</span>
+              {/* "?" style LIVE: gros rouge dans encadré, même code visuel que le badge LIVE */}
+              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); persistReveal("s"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.35)", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
+                <span style={{ color: "#ff3b3b", fontSize: "18px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.04em" }}>?</span>
               </button>
             )}
           </div>
@@ -2569,13 +2584,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 }
               }
               return (
-                <span style={{ color: "#ff3b3b", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out" }}>
-                  {s1} - {s2}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: "scoreReveal 0.3s ease-out" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                  <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
+                </div>
               );
             })() : (
-              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); }} style={{ background: "rgba(255,59,59,0.1)", border: "1px solid rgba(255,59,59,0.3)", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
-                <span style={{ color: "#ff3b3b", fontSize: "9px", fontWeight: 800, textTransform: "uppercase" }}>{T.liveReveal || "Voir"}</span>
+              {/* Bouton reveal live: encadré rouge visible, style LIVE */}
+              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); persistReveal("l"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
               </button>
             )}
           </div>
@@ -4237,7 +4255,7 @@ function RankBadgeCompact({ points, onClick }) {
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
       // Rank étiré: dépasse un peu plus les bords (12px) pour combler mieux
-      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 12px) calc(100% + 12px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
+      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 14px) calc(100% + 20px)", backgroundPosition: "center 70%", backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4313,14 +4331,14 @@ function NewsCarousel({ T, splashDone }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [ready, setReady] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(0);
-  const [imgErrors, setImgErrors] = useState([false, false]);
+  const [imgErrors, setImgErrors] = useState([false, false, false]);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
-  const slideCount = 2;
+  const slideCount = 3;
 
   useEffect(() => {
     let cancelled = false;
-    const imgs = [NEWS_IMAGE, NEWS_EWC_IMAGE];
+    const imgs = [NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE];
     let loaded = 0;
     imgs.forEach((src, idx) => {
       const img = new Image();
@@ -4335,16 +4353,15 @@ function NewsCarousel({ T, splashDone }) {
 
   useEffect(() => {
     if (splashDone) return;
-    // Deux swipes complets pendant le chargement : 0→1→0→1→0
+    // Swipe intro 0→1→2→0
     const t1 = setTimeout(() => setActiveSlide(1), 400);
-    const t2 = setTimeout(() => setActiveSlide(0), 900);
-    const t3 = setTimeout(() => setActiveSlide(1), 1400);
-    const t4 = setTimeout(() => setActiveSlide(0), 1900);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+    const t2 = setTimeout(() => setActiveSlide(2), 900);
+    const t3 = setTimeout(() => setActiveSlide(0), 1400);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [splashDone]);
 
   useEffect(() => {
-    if (imagesLoaded >= 2) {
+    if (imagesLoaded >= 3) {
       const id = requestAnimationFrame(() => setReady(true));
       return () => cancelAnimationFrame(id);
     }
@@ -4413,8 +4430,21 @@ function NewsCarousel({ T, splashDone }) {
         </div>
       </div>
 
+      {/* Slide 3: Major CS2 */}
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 2 && imagesLoaded >= 3 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 2 ? "auto" : "none", background: "linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)" }}>
+        {!imgErrors[2] && <img src={NEWS_CS2_IMAGE} alt="" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[2] = true; return n; }); }} />}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
+        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(245,197,24,0.3)", color: "#F5C518", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+          {T.news3Badge || "CS2"}
+        </span>
+        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news3Title || "MAJOR CHAMPIONS"}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news3Sub || ""}</p>
+        </div>
+      </div>
+
       <div className="absolute flex items-center gap-1.5" style={{ bottom: "10px", left: "50%", transform: "translateX(-50%)" }}>
-        {[0, 1].map((i) => (
+        {[0, 1, 2].map((i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
@@ -4520,19 +4550,20 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           const expiring = isStreakExpiring() && active;
           const sc = getStreakColor(sv);
           const rgb = hexToRgb(sc);
-          const bg = active ? "/immortal-back.png" : "/gris-back.png";
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: `url(${bg})`, backgroundSize: "calc(100% + 12px) calc(100% + 14px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
-              border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(160,165,175,0.28)",
-              boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "0 0 12px rgba(180,185,195,0.06)",
+              // Fond uni gris/noir simple (pas d'image), immortal-back gardé pour l'état actif
+              backgroundImage: active ? "url(/immortal-back.png)" : "none",
+              backgroundColor: active ? "transparent" : "#242424",
+              backgroundSize: active ? "calc(100% + 12px) calc(100% + 14px)" : undefined,
+              backgroundPosition: active ? "center center" : undefined,
+              backgroundRepeat: "no-repeat",
+              border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid #3a3a3a",
+              boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "none",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
               justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0,
-              // Boost luminosité léger quand off pour mieux voir sur mobile (l'image d'origine est sombre)
-              filter: active ? "none" : undefined,
             }}>
-              {!active && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.055)", pointerEvents: "none" }} />}
               <div style={{ position: "absolute", inset: 0, background: active ? "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)" : "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.78) 100%)" }} />
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${rgb},0.6))` }}>🔥</span>
@@ -9378,14 +9409,14 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                     <input value={(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.email || profile?.email || "—"; } catch { return "—"; } })()} readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
                   </div>
                 </div>
+                {(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.provider !== "google"; } catch { return true; } })() && (
                 <div className="mt-3">
+                  {/* Compte email/mdp: on n'affiche jamais le mot de passe en clair,
+                      juste des points opaques + le bouton "Mot de passe oublié ?". */}
                   <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsPassword}</p>
                   <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
                     <Lock size={14} color="#666" />
-                    <input type={showPwd ? "text" : "password"} value="password" readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
-                    <button onClick={() => setShowPwd(!showPwd)} style={{ padding: 4 }}>
-                      {showPwd ? <EyeOff size={16} color="#666" /> : <Eye size={16} color="#666" />}
-                    </button>
+                    <input type="password" value="•••••••••••" readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none", letterSpacing: 3 }} />
                   </div>
                   <button onClick={async () => {
                     if (forgotLoading) return;
@@ -9404,6 +9435,16 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                   </button>
                   {forgotMsg && <p style={{ color: "#888", fontSize: "11px", marginTop: 4 }}>{forgotMsg}</p>}
                 </div>
+                )}
+                {(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.provider === "google"; } catch { return false; } })() && (
+                  <div className="mt-3">
+                    <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Connexion</p>
+                    <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
+                      <Chrome size={14} color="#4285F4" />
+                      <span style={{ color: "#ccc", fontSize: 12, fontWeight: 700 }}>Compte Google</span>
+                    </div>
+                  </div>
+                )}
                 <div className="mt-4 pt-3" style={{ borderTop: "1px solid #262626" }}>
                   {!deleteConfirm ? (
                     <button onClick={() => setDeleteConfirm(true)} style={{ color: "#ff4655", fontSize: 13, fontWeight: 700, background: "none", border: "none" }}>Supprimer mon compte</button>

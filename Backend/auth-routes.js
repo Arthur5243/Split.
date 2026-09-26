@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail } from "./social-store.js";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange } from "./social-store.js";
 import crypto from "crypto";
 
 const router = Router();
@@ -119,14 +119,24 @@ router.patch("/api/auth/pseudo", authMiddleware, (req, res) => {
   try {
     const { pseudo } = req.body;
     if (!pseudo || pseudo.length < 2 || pseudo.length > 20) return res.status(400).json({ error: "Pseudo entre 2 et 20 caractères" });
+    // Cooldown 15 jours (1 crédit gratuit à l'inscription)
+    const check = canChangePseudo(req.userId);
+    if (!check.allowed) return res.status(429).json({ error: check.reason, daysLeft: check.daysLeft });
     const existing = getUserByPseudo(pseudo);
     if (existing && existing.id !== req.userId) return res.status(409).json({ error: "Ce pseudo est déjà pris" });
     updatePseudo(req.userId, pseudo);
+    consumePseudoChange(req.userId);
     res.json({ ok: true, pseudo });
   } catch (e) {
     console.error("[auth] pseudo change error:", e.message);
     res.status(500).json({ error: "Erreur serveur" });
   }
+});
+
+// Statut du crédit/cooldown pseudo (utilisé côté frontend pour afficher
+// "1 changement gratuit dispo" ou "attends N jour(s)").
+router.get("/api/auth/pseudo-status", authMiddleware, (req, res) => {
+  res.json(canChangePseudo(req.userId));
 });
 
 router.delete("/api/auth/account", authMiddleware, async (req, res) => {
