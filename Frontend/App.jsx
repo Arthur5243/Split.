@@ -4159,7 +4159,7 @@ function getStreakColor(s) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: null },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png" },
   { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png" },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png" },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png" },
@@ -4215,13 +4215,16 @@ function RankBadgeCompact({ points, onClick }) {
   return (
     <button onClick={onClick} style={{
       position: "relative", overflow: "hidden", borderRadius: 14,
-      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
-      border: `1px solid rgba(${isUnranked ? "156,163,175" : rgb},${isUnranked ? 0.2 : 0.5})`,
-      boxShadow: isUnranked ? "none" : `0 0 16px rgba(${rgb},0.2)`,
+      // Rank étiré: dépasse un peu plus les bords (12px) pour combler mieux
+      backgroundImage: `url(${bgImg})`, backgroundSize: "calc(100% + 12px) calc(100% + 12px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
+      border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
+      boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
       cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
       justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0, width: "100%", height: "100%"
     }}>
-      <div style={{ position: "absolute", inset: 0, background: `rgba(${rgb},${isUnranked ? 0.12 : 0.28})`, mixBlendMode: "color" }} />
+      {/* Boost luminosité pour Unranked (gris-back.png est très sombre sur mobile) */}
+      {isUnranked && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.055)", pointerEvents: "none" }} />}
+      {!isUnranked && <div style={{ position: "absolute", inset: 0, background: `rgba(${rgb},0.28)`, mixBlendMode: "color" }} />}
       <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)` }} />
       {rank.logo ? (
         <img src={rank.logo} alt={rank.name} style={{ width: 26, height: 26, objectFit: "contain", position: "relative", zIndex: 1, filter: isTop ? `drop-shadow(0 0 8px rgba(${rgb},0.7))` : `drop-shadow(0 1px 3px rgba(0,0,0,0.6))` }} />
@@ -4367,7 +4370,7 @@ function NewsCarousel({ T, splashDone }) {
       onPointerUp={onUp}
     >
       <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: -3, width: "100%", height: "calc(100% + 3px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 80%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4378,7 +4381,7 @@ function NewsCarousel({ T, splashDone }) {
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
-        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", top: -2, left: 0, right: -2, bottom: -2, width: "calc(100% + 2px)", height: "calc(100% + 4px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
+        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", top: -4, left: 0, right: -6, bottom: -4, width: "calc(100% + 6px)", height: "calc(100% + 8px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,170,0,0.3)", color: "#ffaa00", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.news2Badge}
@@ -4471,7 +4474,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
+              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 12px) calc(100% + 14px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -4489,22 +4492,26 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           );
         })()}
 
-        {/* Card 2: Streak — fond immortal étiré */}
+        {/* Card 2: Streak — gris-back quand off, immortal-back quand active */}
         {(() => {
           const sv = streak.current;
           const active = sv > 0;
           const expiring = isStreakExpiring() && active;
           const sc = getStreakColor(sv);
           const rgb = hexToRgb(sc);
+          const bg = active ? "/immortal-back.png" : "/gris-back.png";
           return (
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/immortal-back.png)", backgroundSize: "calc(100% + 8px) calc(100% + 8px)", backgroundPosition: "-4px -4px", backgroundRepeat: "no-repeat",
-              border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(130,135,145,0.2)",
-              boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "none",
+              backgroundImage: `url(${bg})`, backgroundSize: "calc(100% + 12px) calc(100% + 14px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
+              border: active ? `1px solid rgba(${rgb},0.5)` : "1px solid rgba(160,165,175,0.28)",
+              boxShadow: active ? `0 0 16px rgba(${rgb},0.25)` : "0 0 12px rgba(180,185,195,0.06)",
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
-              justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0
+              justifyContent: "center", alignItems: "center", gap: 3, minWidth: 0,
+              // Boost luminosité léger quand off pour mieux voir sur mobile (l'image d'origine est sombre)
+              filter: active ? "none" : undefined,
             }}>
+              {!active && <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.055)", pointerEvents: "none" }} />}
               <div style={{ position: "absolute", inset: 0, background: active ? "linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.55) 100%)" : "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.78) 100%)" }} />
               {active ? (
                 <span style={{ fontSize: 22, lineHeight: 1, position: "relative", zIndex: 1, animation: "flameGlow 1.5s ease-in-out infinite", filter: expiring ? "drop-shadow(0 0 2px rgba(255,107,0,0.2)) opacity(0.5)" : `drop-shadow(0 0 6px rgba(${rgb},0.6))` }}>🔥</span>
@@ -9136,7 +9143,13 @@ function LanguageMenu({ current, onSelect, onClose }) {
 }
 
 function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevStyle, activeSection, setActiveSection }) {
-  const [referralData, setReferralData] = useState(null);
+  // Fallback client-side : si le fetch backend échoue, on affiche le code
+  // déterministe (userId.slice(0,8).upper) pour que l'user puisse quand même
+  // le copier/partager. Le backend applique le même algo dans ensureReferralCode.
+  const fallbackCode = (profile?.userId || "").slice(0, 8).toUpperCase();
+  const [referralData, setReferralData] = useState(
+    fallbackCode ? { code: fallbackCode, count: 0, referrals: [] } : null
+  );
   const [inputCode, setInputCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [applyMsg, setApplyMsg] = useState(null);
@@ -9147,7 +9160,7 @@ function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevS
     if (!userId) return;
     fetch(API_BASE + "/api/referral/" + userId)
       .then((r) => r.json())
-      .then((d) => setReferralData(d))
+      .then((d) => { if (d && d.code) setReferralData(d); })
       .catch(() => {});
   }, [userId]);
 
@@ -11458,7 +11471,8 @@ export default function ClutchApp() {
           }}>
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            <img src={SPLIT_HEADER_LOGO} alt="Split" style={{ width: 180, objectFit: "contain" }} />
+            {/* eager + decoding=sync + fetchpriority + dimensions figées → rendu instantané, pas de fondu progressif */}
+            <img src={SPLIT_HEADER_LOGO} alt="Split" width={180} height={54} loading="eager" fetchpriority="high" decoding="sync" style={{ width: 180, height: 54, objectFit: "contain" }} />
             <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#C4F000", animation: "splashRing 0.9s linear infinite", marginTop: 32 }} />
             <style>{`
               @keyframes splashRing {
