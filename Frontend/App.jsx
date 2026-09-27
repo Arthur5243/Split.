@@ -10355,19 +10355,39 @@ export default function ClutchApp() {
     const userJson = localStorage.getItem("split_auth_user");
     const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
 
-    // Cas 1 : user avait une session → on valide et on WIPE tout si backend ne connait plus
+    // Cas 1 : user avait une session → on valide + on check force-wipe
     if (userJson) {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       fetch(`${API_BASE}/api/auth/me`, { headers })
-        .then((r) => {
+        .then(async (r) => {
           if (r.status === 401 || r.status === 404) {
-            resetClientState(); // purge palier, xp, inventory, streak, quests, drafts, etc.
+            resetClientState();
             setAuthUser(null);
             setShowAuth(true);
             setShowMigrationNotice(true);
             try { localStorage.setItem("split_migration_pending", "1"); } catch {}
-            console.log("[auth-validate] Session invalide, reset client complet + popup migration");
+            console.log("[auth-validate] Session invalide, reset client + popup migration");
+            return;
           }
+          if (!r.ok) return;
+          // Force-wipe check: si le backend a set wipe_at et qu'il est plus recent
+          // que notre dernier wipe local → purge TOUT le state client + reload
+          try {
+            const data = await r.json();
+            const serverWipe = data?.wipe_at;
+            const localWipe = localStorage.getItem("split_last_wipe_at") || "";
+            if (serverWipe && serverWipe > localWipe) {
+              const freshToken = localStorage.getItem("split_token");
+              const freshAuth = localStorage.getItem("split_auth_user");
+              resetClientState();
+              if (freshToken) localStorage.setItem("split_token", freshToken);
+              if (freshAuth) localStorage.setItem("split_auth_user", freshAuth);
+              localStorage.setItem("split_last_wipe_at", serverWipe);
+              localStorage.setItem("split_migration_seen", "1");
+              console.log("[force-wipe] server wipe_at=" + serverWipe + " > local, reload");
+              window.location.reload();
+            }
+          } catch {}
         })
         .catch(() => {});
       return;

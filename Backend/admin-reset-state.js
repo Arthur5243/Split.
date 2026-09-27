@@ -88,6 +88,33 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
+  // Force wipe of client state for a specific user. Sets wipe_at=now() on the
+  // user row. Next /api/auth/me returns it, frontend detects and clears its
+  // localStorage split_* + reloads.
+  app.post("/api/admin/force-wipe", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const userId = req.query.userId;
+    const email = req.query.email;
+    const pseudo = req.query.pseudo;
+    if (!userId && !email && !pseudo) return res.status(400).json({ error: "userId/email/pseudo required" });
+    try {
+      const db = new Database(DB_PATH);
+      let where, param;
+      if (userId) { where = "id = ?"; param = userId; }
+      else if (email) { where = "email = ?"; param = email.toLowerCase(); }
+      else { where = "pseudo = ?"; param = pseudo; }
+      const now = new Date().toISOString();
+      const result = db.prepare("UPDATE users SET wipe_at = ? WHERE " + where).run(now, param);
+      // Also reset backend state (points/xp/equipped)
+      resetUserRow(db, where, [param]);
+      const user = db.prepare("SELECT id, pseudo, email, xp, points, wipe_at FROM users WHERE " + where).get(param);
+      db.close();
+      res.json({ ok: true, wipeSet: result.changes, user });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // List all users with created_at + provider + pseudo (light query for admin overview)
   app.get("/api/admin/list-users", (req, res) => {
     if (!checkAuth(req, res)) return;

@@ -54,6 +54,10 @@ try { db.exec(`ALTER TABLE users ADD COLUMN profile_ready INTEGER DEFAULT 0`); }
 // 15 jours d'attente entre chaque changement.
 try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_change_credit INTEGER DEFAULT 1`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_last_changed_at TEXT`); } catch {}
+// Force wipe timestamp: admin peut forcer un reset du state client d'un user
+// via /api/admin/force-wipe. Le frontend detecte au boot que wipe_at > sa
+// derniere valeur locale, wipe tout localStorage split_* et reload.
+try { db.exec(`ALTER TABLE users ADD COLUMN wipe_at TEXT`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
