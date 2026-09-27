@@ -1,16 +1,12 @@
-/**
- * Endpoints admin pour reset le state game des users SANS supprimer les comptes.
- * UPDATE only sur les champs game (xp/points/equipped/pseudo_color).
- * Aucune donnée essentielle du user (id/email/password_hash/pseudo/created_at) touchée.
- *
- * Auth: ?key=<ADMIN_KEY>
- *
- * POST /api/admin/reset-all-users-state
- *   → reset xp/points/equipped_*/pseudo_color pour tous les users
- *
- * POST /api/admin/reset-user-state?userId=X  (ou ?email=X)
- *   → reset un seul user
- */
+// Admin endpoints to reset user game state (UPDATE only, no DELETE).
+// Auth: query param key=<ADMIN_KEY>
+//
+// POST /api/admin/reset-all-users-state
+//   Reset xp/points/equipped/pseudo_color for all users.
+//   Keep id, email, password_hash, pseudo, provider, created_at intact.
+//
+// POST /api/admin/reset-user-state?userId=X  (or ?email=X)
+//   Reset a single user.
 
 import Database from "better-sqlite3";
 
@@ -24,21 +20,21 @@ function checkAuth(req, res) {
 }
 
 function resetUserRow(db, whereClause, whereParams) {
-  const stmt = db.prepare(`
-    UPDATE users SET
-      points = 0,
-      points_valo = 0,
-      points_cs2 = 0,
-      points_rl = 0,
-      xp = 0,
-      pseudo_color = '#ffffff',
-      equipped_title = NULL,
-      equipped_banner = NULL,
-      equipped_banner_color = NULL,
-      equipped_badge = NULL,
-      equipped_badge_emoji = NULL
-    WHERE ${whereClause}
-  `);
+  const stmt = db.prepare(
+    "UPDATE users SET " +
+    "points = 0, " +
+    "points_valo = 0, " +
+    "points_cs2 = 0, " +
+    "points_rl = 0, " +
+    "xp = 0, " +
+    "pseudo_color = '#ffffff', " +
+    "equipped_title = NULL, " +
+    "equipped_banner = NULL, " +
+    "equipped_banner_color = NULL, " +
+    "equipped_badge = NULL, " +
+    "equipped_badge_emoji = NULL " +
+    "WHERE " + whereClause
+  );
   return stmt.run(...whereParams);
 }
 
@@ -61,13 +57,13 @@ export function mountAdminResetEndpoints(app) {
     if (!checkAuth(req, res)) return;
     const userId = req.query.userId;
     const email = req.query.email;
-    if (!userId && !email) return res.status(400).json({ error: "userId ou email requis" });
+    if (!userId && !email) return res.status(400).json({ error: "userId or email required" });
     try {
       const db = new Database(DB_PATH);
       const where = userId ? "id = ?" : "email = ?";
       const param = userId || email.toLowerCase();
       const result = resetUserRow(db, where, [param]);
-      const user = db.prepare(`SELECT id, pseudo, email, xp, points FROM users WHERE ${where}`).get(param);
+      const user = db.prepare("SELECT id, pseudo, email, xp, points FROM users WHERE " + where).get(param);
       db.close();
       res.json({ ok: true, changed: result.changes, user });
     } catch (e) {
@@ -75,5 +71,5 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
-  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state montés");
+  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state ready");
 }
