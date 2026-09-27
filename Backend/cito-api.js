@@ -271,7 +271,8 @@ async function refreshRecentFinished() {
   lastFinishedPollAt = now;
   try {
     const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
-    const url = `${CITO_API_BASE}/cs2/matches?status=completed&from=${yesterday}&limit=50&sort=-start_date`;
+    // Cito API sort: 'sort=startsAt&order=desc' pour les plus recents en premier
+    const url = `${CITO_API_BASE}/cs2/matches?status=completed&from=${yesterday}&limit=50&sort=startsAt&order=desc`;
     const res = await citoFetch(url);
     if (!res.ok) {
       console.log(`[cito-api] /cs2/matches?completed HTTP ${res.status}`);

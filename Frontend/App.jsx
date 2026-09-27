@@ -5267,34 +5267,77 @@ function ChampionsView({ T, accent, onViewMatch }) {
     );
   }
 
-  // PLAYOFFS bracket (TBD)
+  // PLAYOFFS bracket visuel (colonnes rounds, scroll horizontal, Grand Final en dessous)
   if (view === "playoffs") {
-    const renderMatch = (m) => (
-      <div key={m.id} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: rowBorder, display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>{m.label}</div>
-          <div style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>{m.team1} vs {m.team2}</div>
+    // MatchBox uniforme
+    const MatchBox = ({ m, w = 128 }) => (
+      <div style={{ width: w, background: rowBg, borderRadius: 6, border: rowBorder, padding: "6px 8px", fontSize: 10, lineHeight: 1.35 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", color: m.team1 === "TBD" ? "#666" : "#eee" }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1}</span>
+          <span style={{ color: "#888", marginLeft: 4 }}>{m.score?.[0] ?? "-"}</span>
         </div>
-        <span style={{ color: "#555", fontSize: 11, fontWeight: 800 }}>{m.score || "TBD"}</span>
+        <div style={{ borderTop: "1px solid #2a2a2a", margin: "3px -8px" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", color: m.team2 === "TBD" ? "#666" : "#eee" }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team2}</span>
+          <span style={{ color: "#888", marginLeft: 4 }}>{m.score?.[1] ?? "-"}</span>
+        </div>
+      </div>
+    );
+    // Upper bracket: 4 QF (col 1) → 2 SF (col 2) → 1 UF (col 3)
+    // Lower bracket: 2 R1 (col 1) → 2 QF (col 2) → 1 SF (col 3) → 1 LF (col 4)
+    // Grand Final: en dessous, centrée
+    const upper = data.playoffs.upper;
+    const uQF = upper.slice(0, 4);
+    const uSF = upper.slice(4, 6);
+    const uF = upper.slice(6, 7);
+    const lower = data.playoffs.lower;
+    const lR1 = lower.slice(0, 2);
+    const lQF = lower.slice(2, 4);
+    const lSF = lower.slice(4, 5);
+    const lF = lower.slice(5, 6);
+    const boxH = 46;
+    const gap = 20; // gap vertical entre matches col 1
+    const Col = ({ title, matches, spacing }) => (
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", minWidth: 128 }}>
+        <div style={{ fontSize: 8, fontWeight: 800, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", marginBottom: 8, whiteSpace: "nowrap" }}>{title}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: spacing }}>
+          {matches.map((m) => <MatchBox key={m.id} m={m} />)}
+        </div>
       </div>
     );
     return (
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
 
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Upper Bracket</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
-          {data.playoffs.upper.map(renderMatch)}
+        {/* Upper Bracket */}
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Upper Bracket</div>
+        <div style={{ overflowX: "auto", paddingBottom: 6, marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 24, minWidth: "fit-content", alignItems: "flex-start" }}>
+            <Col title="UB Quarterfinals" matches={uQF} spacing={8} />
+            <Col title="UB Semifinals" matches={uSF} spacing={boxH + gap + 8} />
+            <Col title="Upper Final" matches={uF} spacing={0} />
+          </div>
         </div>
 
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Lower Bracket</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
-          {data.playoffs.lower.map(renderMatch)}
+        {/* Lower Bracket */}
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Lower Bracket</div>
+        <div style={{ overflowX: "auto", paddingBottom: 6, marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 24, minWidth: "fit-content", alignItems: "flex-start" }}>
+            <Col title="LB Round 1" matches={lR1} spacing={8} />
+            <Col title="LB Quarterfinals" matches={lQF} spacing={8} />
+            <Col title="LB Semifinal" matches={lSF} spacing={0} />
+            <Col title="Lower Final" matches={lF} spacing={0} />
+          </div>
         </div>
 
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Grande Finale</div>
-        <div>{renderMatch(data.playoffs.grandFinal)}</div>
+        {/* Grand Final EN DESSOUS, centrée */}
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10, textAlign: "center" }}>Grande Finale</div>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ width: 160 }}>
+            <MatchBox m={data.playoffs.grandFinal} w={160} />
+          </div>
+        </div>
       </div>
     );
   }
