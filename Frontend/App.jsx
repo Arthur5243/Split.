@@ -8567,9 +8567,16 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <span className="rounded px-2 py-0.5 font-bold shrink-0" style={{ fontSize: "10px", textTransform: "uppercase", background: h.game === "valo" ? "#1a1a2e" : "#1e1e1a", color: h.game === "valo" ? "#ff4655" : "#f0a500", border: "1px solid " + (h.game === "valo" ? "#2a2a3e" : "#2e2e2a") }}>
                 {h.game === "valo" ? "Valo" : "Cs2"}
               </span>
-              <span className="font-bold shrink-0" style={{ color: h.pts > 0 ? "#CCF71D" : "#666", fontSize: "13px", minWidth: "45px" }}>+{h.pts}</span>
-              <span className="flex-1 truncate" style={{ color: "#aaa", fontSize: "12px" }}>{h.team1} vs {h.team2}</span>
-              <button onClick={() => onViewMatch(h.id, h.game)} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700 }}>{T.profileVoir}</button>
+              <span className="font-bold shrink-0" style={{ color: h.pts > 0 ? "#CCF71D" : "#555", fontSize: "13px", minWidth: "40px" }}>{h.pts > 0 ? "+" + h.pts : "0"}</span>
+              <div className="flex-1 min-w-0">
+                <p className="truncate" style={{ color: "#ccc", fontSize: "12px", fontWeight: 600 }}>{h.team1} vs {h.team2}</p>
+                {h.predSeries && h.actualSeries && (
+                  <p style={{ fontSize: "10px", color: h.correct ? "#7ec850" : "#c14a4a", marginTop: 2 }}>
+                    Ton pari : {h.predSeries} · Résultat : {h.actualSeries} {h.correct ? "✓" : "✗"}
+                  </p>
+                )}
+              </div>
+              <button onClick={() => onViewMatch(h.id, h.game)} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.profileVoir}</button>
             </div>
           ))}
         </div>
@@ -11246,7 +11253,11 @@ export default function ClutchApp() {
       const isCorrect = predictedAWins === actualAWins;
       if (isCorrect) bon++;
       if (isCorrect && predA === match.score1 && predB === match.score2) exact++;
-      if (pts > 0) history.push({ id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day });
+      // Historique : tous les matchs pronostiqués (gagnés OU perdus), avec les pts
+      history.push({
+        id, game, pts, team1: match.team1 || match.team1Name, team2: match.team2 || match.team2Name, day: match.day,
+        predSeries: `${predA}-${predB}`, actualSeries: `${match.score1}-${match.score2}`, correct: isCorrect,
+      });
     }
     history.sort((a, b) => (b.day || "").localeCompare(a.day || ""));
     if (isCaffioraDemo) {
