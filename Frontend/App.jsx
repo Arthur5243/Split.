@@ -5059,55 +5059,150 @@ function GroupStandings({ standings, accent, T }) {
 }
 
 function ChampionsView({ T, accent }) {
-  const [points, setPoints] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_champions_bracket_cache") || "null"); } catch { return null; }
+  });
+  const [loading, setLoading] = useState(!data);
+  const [view, setView] = useState("menu");     // "menu" | "groups" | "playoffs"
+  const [groupSel, setGroupSel] = useState(null); // "A" | "B" | "C" | "D"
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(API_BASE + "/api/vct-points");
-        if (res.ok) setPoints(await res.json());
-      } catch (e) { /* silent */ }
+        const res = await fetch(API_BASE + "/api/valorant-champions-bracket");
+        if (res.ok) {
+          const d = await res.json();
+          setData(d);
+          try { localStorage.setItem("split_champions_bracket_cache", JSON.stringify(d)); } catch {}
+        }
+      } catch {}
       finally { setLoading(false); }
     })();
   }, []);
 
-  if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
-  if (!points) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
+  if (loading && !data) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#ff4655", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
+  if (!data || !data.groups) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
-  return (
-    <div style={{ padding: "12px 0" }}>
-      {Object.entries(points).map(([region, teams]) => {
-        const rInfo = REGIONS.find(r => r.key === region);
-        const rAccent = rInfo?.accent || "#fff";
-        return (
-          <div key={region} style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: rAccent, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{regionLabel(region, T)}</div>
-            <div style={{ background: "#141414", borderRadius: 10, overflow: "hidden", border: "1px solid #1e1e1e" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "30px 1fr 55px", padding: "8px 12px", borderBottom: "1px solid #222", fontSize: 9, fontWeight: 700, color: "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                <span>#</span>
-                <span>{T.bracketTeams || "Team"}</span>
-                <span style={{ textAlign: "right" }}>PTS</span>
-              </div>
-              {teams.map((t, i) => {
-                const qualified = i < 2;
-                return (
-                  <div key={t.team} style={{ display: "grid", gridTemplateColumns: "30px 1fr 55px", padding: "7px 12px", borderBottom: i < teams.length - 1 ? "1px solid #1a1a1a" : "none", background: qualified ? "rgba(255,70,85,0.06)" : "transparent" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: qualified ? "#ff4655" : "#444" }}>{i + 1}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: qualified ? "#fff" : "#aaa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {t.team}
-                      {qualified && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff4655", marginLeft: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.bracketQualified}</span>}
-                    </span>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: qualified ? "#ff4655" : "#555", textAlign: "right" }}>{t.pts}</span>
-                  </div>
-                );
-              })}
+  // MENU: 2 boutons Groupes / Playoffs
+  if (view === "menu") {
+    return (
+      <div style={{ padding: "20px 0" }}>
+        <button onClick={() => setView("groups")} style={{ width: "100%", background: "linear-gradient(135deg, #ff465515 0%, #111 60%)", border: "1px solid #ff465540", borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 12, textAlign: "left" }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
+          <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
+        </button>
+        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: "linear-gradient(135deg, #FFD70015 0%, #111 60%)", border: "1px solid #FFD70040", borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
+          <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
+        </button>
+      </div>
+    );
+  }
+
+  // GROUPS overview: 4 tuiles
+  if (view === "groups" && !groupSel) {
+    return (
+      <div style={{ padding: "12px 0" }}>
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Retour</button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {data.groups.map((g) => (
+            <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, color: "#ff4655", marginBottom: 8, letterSpacing: "0.06em" }}>Groupe {g.name}</div>
+              {g.teams.slice(0, 4).map((t, i) => (
+                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ color: "#666", fontSize: 10, width: 12 }}>{i + 1}.</span>
+                  {t.logo && <img src={t.logo} alt="" loading="eager" style={{ width: 14, height: 14, objectFit: "contain" }} />}
+                  <span style={{ color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#ccc", fontSize: 10, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.acronym || t.name}</span>
+                  <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>{t.wins}-{t.losses}</span>
+                </div>
+              ))}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // GROUP DETAIL
+  if (view === "groups" && groupSel) {
+    const g = data.groups.find((x) => x.name === groupSel);
+    if (!g) return null;
+    const phaseLabel = { opening1: "Opening 1", opening2: "Opening 2", winners: "Winners Match", elimination: "Elimination Match", decider: "Decider Match" };
+    const phaseOrder = ["opening1", "opening2", "winners", "elimination", "decider"];
+    return (
+      <div style={{ padding: "12px 0" }}>
+        <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Groupes</button>
+        <div style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", marginBottom: 10 }}>Groupe {g.name}</div>
+        {/* Standings */}
+        <div style={{ background: "#141414", borderRadius: 10, overflow: "hidden", border: "1px solid #1e1e1e", marginBottom: 16 }}>
+          {g.teams.map((t, i) => (
+            <div key={t.id} style={{ display: "grid", gridTemplateColumns: "26px 24px 1fr 40px 60px", alignItems: "center", padding: "9px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #1a1a1a" : "none", background: t.qualified ? "rgba(126,200,80,0.06)" : t.eliminated ? "rgba(193,74,74,0.06)" : "transparent" }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#666" }}>{i + 1}.</span>
+              {t.logo ? <img src={t.logo} alt="" loading="eager" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <div />}
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa" }}>{t.wins}-{t.losses}</span>
+              <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Qualif." : t.eliminated ? "Élim." : "—"}</span>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+          ))}
+        </div>
+        {/* Matches par phase */}
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Matches</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {phaseOrder.map((ph) => {
+            const m = g.matches.find((mm) => mm.phase === ph);
+            return (
+              <div key={ph} style={{ background: "#141414", borderRadius: 8, padding: "8px 12px", border: "1px solid #1e1e1e" }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{phaseLabel[ph]}</div>
+                {m ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
+                    <span style={{ color: m.status === "finished" ? "#7ec850" : m.status === "running" ? "#ff4655" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
+                  </div>
+                ) : (
+                  <div style={{ color: "#444", fontSize: 11 }}>TBD</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // PLAYOFFS
+  if (view === "playoffs") {
+    return (
+      <div style={{ padding: "12px 0" }}>
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Retour</button>
+        {data.playoffs.all.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>Playoffs pas encore commencés (démarre le 7 oct.)</div>
+        ) : (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Upper Bracket</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+              {data.playoffs.upper.concat(data.playoffs.other).map((m) => (
+                <div key={m.id} style={{ background: "#141414", borderRadius: 8, padding: "10px 12px", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
+                  <span style={{ color: m.status === "finished" ? "#7ec850" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Lower Bracket</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {data.playoffs.lower.map((m) => (
+                <div key={m.id} style={{ background: "#141414", borderRadius: 8, padding: "10px 12px", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
+                  <span style={{ color: m.status === "finished" ? "#7ec850" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function RegionStandings({ regionKey, accent, T }) {

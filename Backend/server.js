@@ -73,6 +73,9 @@ import("./github-backup.js").then(({ startBackupWorker, mountBackupEndpoints }) 
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
+// VCT Champions 2026 bracket aggregator (multi-source: PandaScore + fallbacks)
+import("./valorant-champions-bracket.js").then(({ mountChampionsBracketEndpoint }) => mountChampionsBracketEndpoint(app));
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
