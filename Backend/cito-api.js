@@ -11,7 +11,13 @@
 //    with live rounds]. Exposed to /api/cs2-live consumers.
 
 const CITO_API_BASE = (process.env.CITO_API_BASE || "https://api.citoapi.com/api/v1").replace(/\/$/, "");
-const CITO_API_KEY = process.env.CITO_API_KEY || "";
+// Support multi-tokens: CITO_API_KEY peut contenir plusieurs tokens separes
+// par virgule. Quand le token courant hit 429 (quota epuise), on tourne
+// automatiquement sur le suivant. Backward compatible avec un seul token.
+const CITO_API_KEYS = (process.env.CITO_API_KEY || "")
+  .split(",")
+  .map((k) => k.trim())
+  .filter((k) => k.length > 0);
 
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 const TTL_MS = 5 * 60 * 1000;
@@ -24,6 +30,53 @@ const cache = new Map();
 const finishedMapsCache = new Map();
 let lastPollAt = 0;
 let hasLiveMatches = false;
+
+// Rotation des tokens: index courant + set des tokens epuises (429) qu'on skip
+// jusqu'au prochain mois. exhaustedAt[i] = timestamp quand token[i] a hit 429.
+let currentKeyIdx = 0;
+const exhaustedAt = new Array(CITO_API_KEYS.length).fill(0);
+const EXHAUST_COOLDOWN_MS = 24 * 60 * 60 * 1000; // Retry un token exhaust au bout de 24h
+
+function getCurrentKey() {
+  if (CITO_API_KEYS.length === 0) return "";
+  const now = Date.now();
+  // Cherche un token utilisable a partir de currentKeyIdx
+  for (let i = 0; i < CITO_API_KEYS.length; i++) {
+    const idx = (currentKeyIdx + i) % CITO_API_KEYS.length;
+    if (now - exhaustedAt[idx] > EXHAUST_COOLDOWN_MS) {
+      if (idx !== currentKeyIdx) {
+        console.log(`[cito-api] rotation token #${currentKeyIdx} → #${idx}`);
+        currentKeyIdx = idx;
+      }
+      return CITO_API_KEYS[idx];
+    }
+  }
+  // Tous les tokens exhausts → renvoie le "moins vieux" (le prochain qui va reset)
+  return "";
+}
+
+function markCurrentKeyExhausted() {
+  exhaustedAt[currentKeyIdx] = Date.now();
+  console.log(`[cito-api] token #${currentKeyIdx} marque exhausted (quota atteint)`);
+}
+
+async function citoFetch(url) {
+  const key = getCurrentKey();
+  if (!key) throw new Error("all tokens exhausted");
+  const res = await fetch(url, {
+    headers: { "x-api-key": key, Accept: "application/json" },
+  });
+  if (res.status === 429) {
+    // Quota epuise sur ce token → mark + retry avec le suivant si dispo
+    markCurrentKeyExhausted();
+    const nextKey = getCurrentKey();
+    if (nextKey && nextKey !== key) {
+      console.log(`[cito-api] retry avec token suivant`);
+      return fetch(url, { headers: { "x-api-key": nextKey, Accept: "application/json" } });
+    }
+  }
+  return res;
+}
 
 function normalize(s) {
   return (s || "")
@@ -41,9 +94,7 @@ function mapNameClean(raw) {
 // Returns array of { map, score1, score2, winnerIsTeam1 } or null on error.
 async function fetchMatchMaps(matchId, team1Id) {
   try {
-    const res = await fetch(`${CITO_API_BASE}/cs2/matches/${matchId}/maps`, {
-      headers: { "x-api-key": CITO_API_KEY, Accept: "application/json" },
-    });
+    const res = await citoFetch(`${CITO_API_BASE}/cs2/matches/${matchId}/maps`);
     if (!res.ok) {
       console.log(`[cito-api] /maps HTTP ${res.status} for ${matchId}`);
       return null;
@@ -79,23 +130,21 @@ async function fetchMatchMaps(matchId, team1Id) {
 }
 
 async function refreshLive() {
-  if (!CITO_API_KEY) return;
+  if (CITO_API_KEYS.length === 0) return;
   if (!hasLiveMatches) return;
   const now = Date.now();
   if (now - lastPollAt < MIN_POLL_INTERVAL_MS) return;
   lastPollAt = now;
 
   try {
-    const res = await fetch(`${CITO_API_BASE}/cs2/live`, {
-      headers: { "x-api-key": CITO_API_KEY, Accept: "application/json" },
-    });
+    const res = await citoFetch(`${CITO_API_BASE}/cs2/live`);
     if (res.status === 503) {
       const body = await res.json().catch(() => ({}));
       console.log(`[cito-api] 503 warmup: ${body?.error?.message || "delayed data"}`);
       return;
     }
     if (res.status === 429) {
-      console.log("[cito-api] 429 rate limit, pause 10 min");
+      console.log("[cito-api] 429 tous tokens epuises, pause 10 min");
       lastPollAt = Date.now() + 10 * 60 * 1000;
       return;
     }
@@ -187,7 +236,9 @@ async function refreshLive() {
       indexed++;
     }
     const monthlyRem = res.headers.get("x-ratelimit-monthly-remaining");
-    console.log(`[cito-api] refresh → ${events.length} events, ${indexed} indexed, +${extraMapCalls} /maps calls | monthly rem: ${monthlyRem}`);
+    const activeToken = currentKeyIdx + 1;
+    const totalTokens = CITO_API_KEYS.length;
+    console.log(`[cito-api] refresh → ${events.length} events, ${indexed} indexed, +${extraMapCalls} /maps calls | token ${activeToken}/${totalTokens} rem: ${monthlyRem}`);
   } catch (e) {
     console.log(`[cito-api] erreur: ${e.message}`);
   }
@@ -226,11 +277,11 @@ export function getCitoApiMatch(team1Name, team2Name) {
 }
 
 export function startCitoApiWorker() {
-  if (!CITO_API_KEY) {
+  if (CITO_API_KEYS.length === 0) {
     console.log("[cito-api] CITO_API_KEY absent, worker skipped");
     return;
   }
-  console.log(`[cito-api] worker started, poll ${POLL_INTERVAL_MS / 1000}s + /maps calls on series change`);
+  console.log(`[cito-api] worker started, poll ${POLL_INTERVAL_MS / 1000}s + /maps on series change | ${CITO_API_KEYS.length} token(s) en rotation`);
   async function loop() {
     try { await refreshLive(); } catch (e) { console.error("[cito-api] loop:", e.message); }
     setTimeout(loop, POLL_INTERVAL_MS);
