@@ -42,11 +42,60 @@ export function mountAdminResetEndpoints(app) {
     if (!checkAuth(req, res)) return;
     try {
       const db = new Database(DB_PATH);
+      // Optional excludeUserIds=id1,id2 → these users are NOT reset
+      const exclude = (req.query.excludeUserIds || "").split(",").map((s) => s.trim()).filter(Boolean);
       const before = db.prepare("SELECT id, pseudo, xp, points FROM users").all();
-      const result = resetUserRow(db, "1=1", []);
+      let where = "1=1";
+      let params = [];
+      if (exclude.length > 0) {
+        where = "id NOT IN (" + exclude.map(() => "?").join(",") + ")";
+        params = exclude;
+      }
+      const result = resetUserRow(db, where, params);
       const after = db.prepare("SELECT id, pseudo, xp, points FROM users").all();
       db.close();
-      res.json({ ok: true, usersReset: result.changes, before, after });
+      res.json({ ok: true, usersReset: result.changes, excluded: exclude, before, after });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Get full user details (created_at, provider, pseudo_last_changed_at, all points, etc.)
+  app.get("/api/admin/user-details", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const userId = req.query.userId;
+    const email = req.query.email;
+    const pseudo = req.query.pseudo;
+    if (!userId && !email && !pseudo) return res.status(400).json({ error: "userId/email/pseudo required" });
+    try {
+      const db = new Database(DB_PATH);
+      let where, param;
+      if (userId) { where = "id = ?"; param = userId; }
+      else if (email) { where = "email = ?"; param = email.toLowerCase(); }
+      else { where = "pseudo = ?"; param = pseudo; }
+      const user = db.prepare("SELECT id, pseudo, email, provider, created_at, xp, points, points_valo, points_cs2, points_rl, pseudo_color, equipped_title, equipped_banner, pseudo_last_changed_at, pseudo_change_credit FROM users WHERE " + where).get(param);
+      // Also check for referrals (who invited them, who they invited)
+      let referredBy = null, referrals = [];
+      try {
+        const ref = db.prepare("SELECT referrer_id, at FROM referrals WHERE referred_id = ?").get(user?.id);
+        if (ref) referredBy = ref;
+        referrals = db.prepare("SELECT referred_id, at FROM referrals WHERE referrer_id = ?").all(user?.id);
+      } catch {}
+      db.close();
+      res.json({ ok: true, user, referredBy, referrals });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // List all users with created_at + provider + pseudo (light query for admin overview)
+  app.get("/api/admin/list-users", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    try {
+      const db = new Database(DB_PATH);
+      const users = db.prepare("SELECT id, pseudo, email, provider, created_at, xp, points, points_valo, points_cs2, points_rl FROM users ORDER BY created_at DESC").all();
+      db.close();
+      res.json({ ok: true, count: users.length, users });
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
