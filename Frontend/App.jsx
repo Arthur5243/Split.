@@ -8899,9 +8899,16 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       {/* Carousel wrapper */}
       <div style={{ position: "relative", overflow: "hidden" }}>
       <div
-        style={{ display: "flex", alignItems: "flex-start", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y" }}
+        style={{ display: "flex", alignItems: "flex-start", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y", userSelect: "none" }}
         onPointerDown={onCarouselDown}
+        onPointerMove={(e) => {
+          // Track du geste pour detection horizontal swipe explicite
+          if (carouselDragX.current == null) return;
+          const dx = (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - carouselDragX.current;
+          if (Math.abs(dx) > 15) e.currentTarget.setPointerCapture?.(e.pointerId);
+        }}
         onPointerUp={onCarouselUp}
+        onPointerCancel={onCarouselUp}
       >
         {/* SLIDE 1: Classement */}
         <div style={{ width: "50%", flexShrink: 0, ...(carouselSlide !== 0 && settledSlide === carouselSlide ? { height: 0, overflow: "hidden" } : {}) }}>
@@ -9339,10 +9346,14 @@ function LanguageMenu({ current, onSelect, onClose }) {
 }
 
 function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevStyle, activeSection, setActiveSection }) {
-  // Fallback client-side : si le fetch backend échoue, on affiche le code
-  // déterministe (userId.slice(0,8).upper) pour que l'user puisse quand même
-  // le copier/partager. Le backend applique le même algo dans ensureReferralCode.
-  const fallbackCode = (profile?.userId || "").slice(0, 8).toUpperCase();
+  // Récupère l'id user via profile OU authUser (fallback si profile vide après reset).
+  const authUserId = (() => {
+    try { return JSON.parse(localStorage.getItem("split_auth_user") || "null")?.id || null; } catch { return null; }
+  })();
+  const userId = profile?.userId || authUserId;
+  // Fallback client-side : code déterministe (userId.slice(0,8).upper) affiché
+  // immédiatement, même sans fetch backend. Update quand backend répond.
+  const fallbackCode = (userId || "").slice(0, 8).toUpperCase();
   const [referralData, setReferralData] = useState(
     fallbackCode ? { code: fallbackCode, count: 0, referrals: [] } : null
   );
@@ -9350,7 +9361,6 @@ function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevS
   const [copied, setCopied] = useState(false);
   const [applyMsg, setApplyMsg] = useState(null);
   const [applying, setApplying] = useState(false);
-  const userId = profile?.userId;
 
   useEffect(() => {
     if (!userId) return;
