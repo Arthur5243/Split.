@@ -61,6 +61,9 @@ import("./graphql-server.js").then(({ mountGraphQL }) => mountGraphQL(app));
 // Cito API worker (vrais rounds 13-x live pour CS2 via citoapi.com Free tier)
 import("./cito-api.js").then(({ startCitoApiWorker }) => startCitoApiWorker());
 
+// Endpoints admin de transfert DB (migration entre 2 backends Railway)
+import("./admin-db-transfer.js").then(({ mountAdminDbTransfer }) => mountAdminDbTransfer(app));
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
