@@ -10267,13 +10267,11 @@ export default function ClutchApp() {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const [showMigrationNotice, setShowMigrationNotice] = useState(false);
 
   // Validation du user au boot : si le backend ne reconnait plus l'user
   // (compte supprimé, migration Railway, backend reset), on force le logout
-  // pour ne pas laisser une session fantôme qui échoue silencieusement.
-  // Note: 2 noms de clés token en circulation dans le code — split_token
-  // (register/login modernes) et split_auth_token (settings modal). On lit
-  // les deux. On check TOUJOURS si un split_auth_user existe, même sans token.
+  // et on affiche une popup d'excuses pour expliquer.
   useEffect(() => {
     const userJson = localStorage.getItem("split_auth_user");
     if (!userJson) return;
@@ -10282,16 +10280,16 @@ export default function ClutchApp() {
     fetch(`${API_BASE}/api/auth/me`, { headers })
       .then((r) => {
         if (r.status === 401 || r.status === 404) {
-          // Token invalide OU user inconnu du backend actuel → clear TOUT + force auth screen
           localStorage.removeItem("split_token");
           localStorage.removeItem("split_auth_token");
           localStorage.removeItem("split_auth_user");
           setAuthUser(null);
           setShowAuth(true);
+          setShowMigrationNotice(true);
           console.log("[auth-validate] Session invalide côté backend, logout forcé");
         }
       })
-      .catch(() => {}); // backend down = pas d'action, on garde l'état local
+      .catch(() => {});
   }, []);
   const isCaffioraDemo = authUser?.email === "caffiora.official@gmail.com";
   useEffect(() => {
@@ -11546,6 +11544,35 @@ export default function ClutchApp() {
             if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
           }
         }} />
+      )}
+      {showMigrationNotice && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          backdropFilter: "blur(8px)",
+        }} onClick={() => setShowMigrationNotice(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20,
+            padding: "24px 22px", maxWidth: 340, width: "100%",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{ fontSize: 40, textAlign: "center", marginBottom: 8 }}>😔</div>
+            <h3 style={{ color: "#fff", fontSize: 17, fontWeight: 900, textAlign: "center", marginBottom: 10 }}>
+              Désolé, ton compte a été perdu
+            </h3>
+            <p style={{ color: "#bbb", fontSize: 13, lineHeight: 1.5, textAlign: "center", marginBottom: 18 }}>
+              Suite à une migration technique de notre serveur, tous les comptes ont dû être réinitialisés.
+              Merci de créer un nouveau compte pour continuer à profiter de Split.
+              Tes points repartent à zéro — désolé pour la gêne.
+            </p>
+            <button onClick={() => setShowMigrationNotice(false)} style={{
+              width: "100%", background: "#CCF71D", color: "#000", border: "none",
+              borderRadius: 12, padding: "12px", fontSize: 14, fontWeight: 800, cursor: "pointer",
+            }}>
+              J'ai compris
+            </button>
+          </div>
+        </div>
       )}
       {showIntroCards && (
         <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", overflowY: "auto" }}>

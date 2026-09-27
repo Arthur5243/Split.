@@ -64,6 +64,12 @@ import("./cito-api.js").then(({ startCitoApiWorker }) => startCitoApiWorker());
 // Endpoints admin de transfert DB (migration entre 2 backends Railway)
 import("./admin-db-transfer.js").then(({ mountAdminDbTransfer }) => mountAdminDbTransfer(app));
 
+// Backup automatique des DBs vers GitHub (gzippé, 1x/24h par défaut)
+import("./github-backup.js").then(({ startBackupWorker, mountBackupEndpoints }) => {
+  startBackupWorker();
+  mountBackupEndpoints(app);
+});
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
