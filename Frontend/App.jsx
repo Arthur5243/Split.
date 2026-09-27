@@ -10267,6 +10267,25 @@ export default function ClutchApp() {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+
+  // Validation du token JWT au boot : si le backend ne reconnait plus l'user
+  // (compte supprimé, migration Railway, backend reset), on force le logout
+  // pour ne pas laisser une session fantôme qui échoue silencieusement.
+  useEffect(() => {
+    const token = localStorage.getItem("split_auth_token");
+    if (!token) return;
+    fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => {
+        if (r.status === 401 || r.status === 404) {
+          // Token invalide OU user inconnu du backend actuel → clear + force auth screen
+          localStorage.removeItem("split_auth_token");
+          localStorage.removeItem("split_auth_user");
+          setAuthUser(null);
+          setShowAuth(true);
+        }
+      })
+      .catch(() => {}); // backend down = pas d'action, on garde l'état local
+  }, []);
   const isCaffioraDemo = authUser?.email === "caffiora.official@gmail.com";
   useEffect(() => {
     if (isCaffioraDemo) {
