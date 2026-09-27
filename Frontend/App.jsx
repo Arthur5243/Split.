@@ -11582,28 +11582,29 @@ export default function ClutchApp() {
       )}
       {showMigrationNotice && showAuth && (
         <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100000,
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
-          backdropFilter: "blur(8px)",
-        }} onClick={dismissMigrationNotice}>
-          <div onClick={(e) => e.stopPropagation()} style={{
-            background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20,
-            padding: "24px 22px", maxWidth: 340, width: "100%",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100000,
+          background: "rgba(20,20,20,0.96)",
+          borderBottom: "1px solid #2a2a2a",
+          padding: "10px 16px",
+          textAlign: "center",
+          pointerEvents: "none", // ne bloque PAS les clics — l'utilisateur peut interagir avec l'AuthScreen dessous
+          animation: "slideDownNotice 0.5s ease-out",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+          backdropFilter: "blur(6px)",
+        }}>
+          <p style={{
+            color: "#eee", fontSize: 12.5, lineHeight: 1.4, margin: 0, fontWeight: 500,
           }}>
-            <h3 style={{ color: "#fff", fontSize: 16, fontWeight: 900, textAlign: "center", marginBottom: 10, letterSpacing: "0.02em" }}>
-              Réinscription obligatoire
-            </h3>
-            <p style={{ color: "#bbb", fontSize: 13, lineHeight: 1.5, textAlign: "center", marginBottom: 18 }}>
-              Tous les comptes ont été réinitialisés suite à une migration serveur. Recrée le tien pour continuer. Nous sommes désolés.
-            </p>
-            <button onClick={dismissMigrationNotice} style={{
-              width: "100%", background: "#CCF71D", color: "#000", border: "none",
-              borderRadius: 12, padding: "12px", fontSize: 14, fontWeight: 800, cursor: "pointer",
-            }}>
-              OK
-            </button>
-          </div>
+            <span style={{ color: "#CCF71D", fontWeight: 800 }}>Réinscription obligatoire</span>
+            {" — "}
+            Tous les comptes ont été réinitialisés suite à une migration serveur. Recrée le tien. Nous sommes désolés.
+          </p>
+          <style>{`
+            @keyframes slideDownNotice {
+              from { transform: translateY(-100%); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
         </div>
       )}
       {showIntroCards && (
