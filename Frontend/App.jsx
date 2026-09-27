@@ -2183,6 +2183,9 @@ function TeamLogo({ code, apiLogo, accent, tbd }) {
         <img
           src={src}
           alt={code}
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
           style={{ width: pct, height: pct, objectFit: "contain" }}
         />
       ) : (
