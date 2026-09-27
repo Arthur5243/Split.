@@ -10268,20 +10268,27 @@ export default function ClutchApp() {
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
 
-  // Validation du token JWT au boot : si le backend ne reconnait plus l'user
+  // Validation du user au boot : si le backend ne reconnait plus l'user
   // (compte supprimé, migration Railway, backend reset), on force le logout
   // pour ne pas laisser une session fantôme qui échoue silencieusement.
+  // Note: 2 noms de clés token en circulation dans le code — split_token
+  // (register/login modernes) et split_auth_token (settings modal). On lit
+  // les deux. On check TOUJOURS si un split_auth_user existe, même sans token.
   useEffect(() => {
-    const token = localStorage.getItem("split_auth_token");
-    if (!token) return;
-    fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+    const userJson = localStorage.getItem("split_auth_user");
+    if (!userJson) return;
+    const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    fetch(`${API_BASE}/api/auth/me`, { headers })
       .then((r) => {
         if (r.status === 401 || r.status === 404) {
-          // Token invalide OU user inconnu du backend actuel → clear + force auth screen
+          // Token invalide OU user inconnu du backend actuel → clear TOUT + force auth screen
+          localStorage.removeItem("split_token");
           localStorage.removeItem("split_auth_token");
           localStorage.removeItem("split_auth_user");
           setAuthUser(null);
           setShowAuth(true);
+          console.log("[auth-validate] Session invalide côté backend, logout forcé");
         }
       })
       .catch(() => {}); // backend down = pas d'action, on garde l'état local
