@@ -11556,20 +11556,17 @@ export default function ClutchApp() {
             padding: "24px 22px", maxWidth: 340, width: "100%",
             boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
           }}>
-            <div style={{ fontSize: 40, textAlign: "center", marginBottom: 8 }}>😔</div>
-            <h3 style={{ color: "#fff", fontSize: 17, fontWeight: 900, textAlign: "center", marginBottom: 10 }}>
-              Désolé, ton compte a été perdu
+            <h3 style={{ color: "#fff", fontSize: 16, fontWeight: 900, textAlign: "center", marginBottom: 10, letterSpacing: "0.02em" }}>
+              Réinscription obligatoire
             </h3>
             <p style={{ color: "#bbb", fontSize: 13, lineHeight: 1.5, textAlign: "center", marginBottom: 18 }}>
-              Suite à une migration technique de notre serveur, tous les comptes ont dû être réinitialisés.
-              Merci de créer un nouveau compte pour continuer à profiter de Split.
-              Tes points repartent à zéro — désolé pour la gêne.
+              Tous les comptes ont été réinitialisés suite à une migration serveur. Recrée le tien pour continuer. Nous sommes désolés.
             </p>
             <button onClick={() => setShowMigrationNotice(false)} style={{
               width: "100%", background: "#CCF71D", color: "#000", border: "none",
               borderRadius: 12, padding: "12px", fontSize: 14, fontWeight: 800, cursor: "pointer",
             }}>
-              J'ai compris
+              OK
             </button>
           </div>
         </div>
