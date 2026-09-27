@@ -183,30 +183,36 @@ async function refreshLive() {
         }
       }
 
-      // Build live_map_scores: prefer real /maps data, fallback to approx
+      // Build live_map_scores: prefer real /maps data, fallback to approx.
+      // IMPORTANT: dedupe by clean map name. mapName from /maps est deja propre
+      // ("Cache"), mais ev.currentMap est brut ("de_cache") → mapNameClean(both).
       const maps = [];
       if (finishedMaps && finishedMaps.maps.length > 0) {
-        // Use exact per-map scores from /maps endpoint
+        const currentClean = mapNameClean(ev.currentMap || "").toLowerCase();
         for (const m of finishedMaps.maps) {
-          maps.push({ map: m.map, score1: m.score1, score2: m.score2 });
+          const mClean = mapNameClean(m.map).toLowerCase();
+          // Si c'est la map EN COURS, on prefere le score frais de /cs2/live
+          // (evite '0-0' fige quand /maps a mis en cache avant que la map demarre)
+          if (mClean === currentClean && ev.currentMapScore) {
+            maps.push({
+              map: mapNameClean(m.map),
+              score1: ev.currentMapScore.team1 ?? m.score1 ?? 0,
+              score2: ev.currentMapScore.team2 ?? m.score2 ?? 0,
+            });
+          } else {
+            maps.push({ map: mapNameClean(m.map), score1: m.score1, score2: m.score2 });
+          }
         }
-        // If Cito's currentMap is not yet in the /maps list, append with live rounds
-        const currentInList = finishedMaps.maps.some(
-          (m) => m.map?.toLowerCase() === (ev.currentMap || "").toLowerCase() && m.status !== "completed"
+        // Ajoute la map en cours SEULEMENT si elle n'est pas deja dans /maps
+        const alreadyInList = finishedMaps.maps.some(
+          (m) => mapNameClean(m.map).toLowerCase() === currentClean
         );
-        if (ev.currentMapScore && !currentInList) {
+        if (ev.currentMapScore && !alreadyInList && currentClean) {
           maps.push({
-            map: mapNameClean(ev.currentMap) || `Map ${maps.length + 1}`,
+            map: mapNameClean(ev.currentMap),
             score1: ev.currentMapScore.team1 ?? 0,
             score2: ev.currentMapScore.team2 ?? 0,
           });
-        } else if (ev.currentMapScore && currentInList) {
-          // Overwrite the "live" entry with fresher currentMapScore from /cs2/live
-          const idx = maps.findIndex((m) => m.map?.toLowerCase() === mapNameClean(ev.currentMap).toLowerCase());
-          if (idx >= 0) {
-            maps[idx].score1 = ev.currentMapScore.team1 ?? maps[idx].score1;
-            maps[idx].score2 = ev.currentMapScore.team2 ?? maps[idx].score2;
-          }
         }
       } else {
         // Fallback: 13-0 approx for finished maps + real currentMapScore

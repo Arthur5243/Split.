@@ -2370,10 +2370,17 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [showReplayPopup, setShowReplayPopup] = useState(false);
   const [showSharePicker, setShowSharePicker] = useState(false);
   // Persistance des reveals dans localStorage: une fois révélé, le score reste
-  // visible même après fermeture/reload de l'app (le cache "spoiler" est
-  // définitivement désactivé pour ce match).
+  // visible même après fermeture/reload de l'app.
+  // Cas spécial: un match terminé depuis > 24h → plus de spoiler du tout
+  // (auto-reveal), pas besoin de bouton "?" pour un vieux résultat.
   const revealKey = `split_revealed_${match.id}`;
+  const matchOlderThan24h = (() => {
+    const t = new Date(match.endAt || match.end_at || match.beginAt || match.begin_at || 0).getTime();
+    if (!t || isNaN(t)) return false;
+    return finished && (Date.now() - t) > 24 * 3600 * 1000;
+  })();
   const [scoresRevealed, setScoresRevealed] = useState(() => {
+    if (matchOlderThan24h) return true;
     try { return localStorage.getItem(revealKey + "_s") === "1"; } catch { return false; }
   });
   const [liveRevealed, setLiveRevealed] = useState(() => {
@@ -2382,6 +2389,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const persistReveal = (kind) => {
     try { localStorage.setItem(revealKey + "_" + kind, "1"); } catch {}
   };
+  // Anim de reveal UNIQUEMENT au 1er clic. Une fois révélé (persisté), pas
+  // d'anim au reload/reouverture — le score apparaît direct.
+  const [justRevealedS, setJustRevealedS] = useState(false);
+  const [justRevealedL, setJustRevealedL] = useState(false);
   const isBoosted = (() => { try { return JSON.parse(localStorage.getItem("split_boosted_matches") || "[]").includes(String(match.id)); } catch { return false; } })();
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
@@ -2571,7 +2582,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           <div className="flex flex-col items-center">
             {scoresRevealed ? (
               <>
-                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: "scoreReveal 0.3s ease-out", ...txtStW }}>
+                <span style={{ color: "#fff", fontSize: "16px", fontWeight: 900, animation: justRevealedS ? "scoreReveal 0.3s ease-out" : "none", ...txtStW }}>
                   {match.score1 != null ? match.score1 : "–"} - {match.score2 != null ? match.score2 : "–"}
                 </span>
                 {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
@@ -2581,7 +2592,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 )}
               </>
             ) : (
-              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); persistReveal("s"); }} style={{ background: "#242424", border: "1px solid #333", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
+              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); setJustRevealedS(true); persistReveal("s"); }} style={{ background: "#242424", border: "1px solid #333", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
                 <span style={{ color: "#fff", fontSize: "18px", fontWeight: 900, letterSpacing: "0.04em" }}>?</span>
               </button>
             )}
@@ -2598,13 +2609,13 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 }
               }
               return (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: "scoreReveal 0.3s ease-out" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: justRevealedL ? "scoreReveal 0.3s ease-out" : "none" }}>
                   <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
                   <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
                 </div>
               );
             })() : (
-              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); persistReveal("l"); }} style={{ background: "#242424", border: "1px solid rgba(255,59,59,0.5)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); setJustRevealedL(true); persistReveal("l"); }} style={{ background: "#242424", border: "1px solid rgba(255,59,59,0.5)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                 <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
               </button>
             )}
