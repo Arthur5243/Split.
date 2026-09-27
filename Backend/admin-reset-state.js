@@ -20,6 +20,8 @@ function checkAuth(req, res) {
 }
 
 function resetUserRow(db, whereClause, whereParams) {
+  // Only columns that actually exist in the users table schema.
+  // Badge/banner_color/badge_emoji are client-side only (localStorage).
   const stmt = db.prepare(
     "UPDATE users SET " +
     "points = 0, " +
@@ -29,10 +31,7 @@ function resetUserRow(db, whereClause, whereParams) {
     "xp = 0, " +
     "pseudo_color = '#ffffff', " +
     "equipped_title = NULL, " +
-    "equipped_banner = NULL, " +
-    "equipped_banner_color = NULL, " +
-    "equipped_badge = NULL, " +
-    "equipped_badge_emoji = NULL " +
+    "equipped_banner = NULL " +
     "WHERE " + whereClause
   );
   return stmt.run(...whereParams);
