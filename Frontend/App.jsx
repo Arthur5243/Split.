@@ -2304,13 +2304,25 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesBRef = useRef(null);
   const gameRefs = useRef({});
   const cardRef = useRef(null);
+  // Fige la hauteur de fond au 1er render ET après chaque retour à l'état
+  // collapsed, pour éviter que le background image s'étire au 1er clic Map
+  // Score (bug: la card semblait "bouger" car frozenBgH était encore null →
+  // fallback "100%" → BG suivait l'expansion soudaine).
   const [frozenBgH, setFrozenBgH] = useState(null);
   useLayoutEffect(() => {
-    if (cardRef.current && !expanded) {
+    if (!cardRef.current) return;
+    if (!expanded) {
       const h = cardRef.current.offsetHeight;
+      if (h > 0 && h !== frozenBgH) setFrozenBgH(h);
+    } else if (frozenBgH == null) {
+      // Cas edge: expanded au 1er render sans mesure préalable → estime la
+      // hauteur collapsed depuis la première section (header) pour éviter
+      // que le BG bouge au moment de l'expand initial.
+      const first = cardRef.current.querySelector(":scope > div");
+      const h = first ? first.offsetHeight : cardRef.current.offsetHeight;
       if (h > 0) setFrozenBgH(h);
     }
-  });
+  }, [expanded, frozenBgH]);
 
   // Suit quels champs de score par map ont été "quittés" (blur) par
   // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
@@ -2566,8 +2578,8 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 )}
               </>
             ) : (
-              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); persistReveal("s"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.35)", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
-                <span style={{ color: "#ff3b3b", fontSize: "18px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.04em" }}>?</span>
+              <button onClick={(e) => { e.stopPropagation(); setScoresRevealed(true); persistReveal("s"); }} style={{ background: "#242424", border: "1px solid #333", borderRadius: 8, padding: "2px 14px", cursor: "pointer" }}>
+                <span style={{ color: "#fff", fontSize: "18px", fontWeight: 900, letterSpacing: "0.04em" }}>?</span>
               </button>
             )}
           </div>
@@ -2589,8 +2601,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </div>
               );
             })() : (
-              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); persistReveal("l"); }} style={{ background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); persistReveal("l"); }} style={{ background: "#242424", border: "1px solid rgba(255,59,59,0.5)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center" }}>
                 <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
               </button>
             )}
@@ -9161,7 +9172,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "102%", height: "102%", objectFit: "cover", objectPosition: "left center", marginLeft: "-1%", marginTop: "-1%" }} />
+              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "115%", height: "102%", objectFit: "cover", objectPosition: "0% center", marginLeft: "-2%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -9345,6 +9356,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   const [editPseudo, setEditPseudo] = useState(false);
   const [newPseudo, setNewPseudo] = useState(profile?.pseudo || "");
   const [pseudoMsg, setPseudoMsg] = useState("");
+  const [showPseudoConfirm, setShowPseudoConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
@@ -9376,7 +9388,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
         <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
       </div>
-      <div className="overflow-y-auto no-scrollbar px-5 pb-6 flex-1" style={{ overscrollBehavior: "contain" }}>
+      <div className="overflow-y-auto no-scrollbar px-5 flex-1" style={{ overscrollBehavior: "contain", paddingBottom: 120 }}>
 
           {/* COMPTE */}
           <div style={sectionStyle} className="mb-3">
@@ -9395,19 +9407,38 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                         <input value={newPseudo} onChange={e => setNewPseudo(e.target.value)} maxLength={20} className="flex-1" style={{ background: "transparent", color: "#fff", fontSize: "13px", padding: "10px 0", outline: "none", border: "none" }} />
                       </div>
                       <div className="flex gap-2 mt-2">
-                        <button onClick={async () => {
+                        <button onClick={() => {
                           if (newPseudo.trim().length < 2) { setPseudoMsg("Pseudo trop court"); return; }
-                          try {
-                            const token = localStorage.getItem("split_auth_token");
-                            const r = await fetch(API_BASE + "/api/auth/pseudo", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ pseudo: newPseudo.trim() }) });
-                            const d = await r.json();
-                            if (r.ok) { onChangePseudo(d.pseudo); setEditPseudo(false); setPseudoMsg(""); }
-                            else setPseudoMsg(d.error || "Erreur");
-                          } catch { setPseudoMsg("Erreur réseau"); }
+                          setShowPseudoConfirm(true);
                         }} style={{ background: "#CCF71D", color: "#000", fontSize: 12, fontWeight: 800, padding: "6px 16px", borderRadius: 10, border: "none" }}>Sauvegarder</button>
                         <button onClick={() => { setEditPseudo(false); setNewPseudo(profile?.pseudo || ""); setPseudoMsg(""); }} style={{ background: "#333", color: "#888", fontSize: 12, fontWeight: 700, padding: "6px 14px", borderRadius: 10, border: "none" }}>Annuler</button>
                       </div>
                       {pseudoMsg && <p style={{ color: "#ff4655", fontSize: 11, marginTop: 4 }}>{pseudoMsg}</p>}
+                      {showPseudoConfirm && (
+                        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100001, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setShowPseudoConfirm(false)}>
+                          <div onClick={(e) => e.stopPropagation()} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 18, padding: "20px 22px", maxWidth: 340, width: "100%" }}>
+                            <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 900, marginBottom: 8, textAlign: "center" }}>Changer ton pseudo ?</h3>
+                            <p style={{ color: "#bbb", fontSize: 12.5, lineHeight: 1.45, marginBottom: 16, textAlign: "center" }}>
+                              Ton nouveau pseudo sera <span style={{ color: "#CCF71D", fontWeight: 700 }}>« {newPseudo.trim()} »</span>.
+                              Tu ne pourras plus le modifier avant <b>15 jours</b>.
+                            </p>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button onClick={() => setShowPseudoConfirm(false)} style={{ flex: 1, background: "#2a2a2a", color: "#ccc", fontSize: 13, fontWeight: 700, padding: "10px", borderRadius: 10, border: "none" }}>Non</button>
+                              <button onClick={async () => {
+                                setShowPseudoConfirm(false);
+                                try {
+                                  const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token");
+                                  const r = await fetch(API_BASE + "/api/auth/pseudo", { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: JSON.stringify({ pseudo: newPseudo.trim() }) });
+                                  const d = await r.json();
+                                  if (r.ok) { onChangePseudo(d.pseudo); setEditPseudo(false); setPseudoMsg(""); }
+                                  else if (r.status === 429 && d.daysLeft) setPseudoMsg(`Attends encore ${d.daysLeft} jour(s)`);
+                                  else setPseudoMsg(d.error || "Erreur");
+                                } catch { setPseudoMsg("Erreur réseau"); }
+                              }} style={{ flex: 1, background: "#CCF71D", color: "#000", fontSize: 13, fontWeight: 800, padding: "10px", borderRadius: 10, border: "none" }}>Oui, confirmer</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
@@ -9428,13 +9459,6 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                 </div>
                 {(() => { try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u?.provider !== "google"; } catch { return true; } })() && (
                 <div className="mt-3">
-                  {/* Compte email/mdp: on n'affiche jamais le mot de passe en clair,
-                      juste des points opaques + le bouton "Mot de passe oublié ?". */}
-                  <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsPassword}</p>
-                  <div className="flex items-center gap-2 rounded-xl px-3" style={{ background: "#222", border: "1px solid #2a2a2a" }}>
-                    <Lock size={14} color="#666" />
-                    <input type="password" value="•••••••••••" readOnly className="flex-1" style={{ background: "transparent", color: "#888", fontSize: "13px", padding: "10px 0", outline: "none", border: "none", letterSpacing: 3 }} />
-                  </div>
                   <button onClick={async () => {
                     if (forgotLoading) return;
                     setForgotLoading(true);
@@ -9447,7 +9471,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                       else setForgotMsg(d.error || "Erreur");
                     } catch { setForgotMsg("Erreur réseau"); }
                     setForgotLoading(false);
-                  }} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, marginTop: 8, background: "none", border: "none" }}>
+                  }} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, background: "none", border: "none", padding: 0 }}>
                     {T.settingsForgotPwd}
                   </button>
                   {forgotMsg && <p style={{ color: "#888", fontSize: "11px", marginTop: 4 }}>{forgotMsg}</p>}
@@ -11684,11 +11708,17 @@ export default function ClutchApp() {
             <img src={NEWS_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_CS2_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            {/* Preload + force decode de la banner récompenses dès le splash
-                → dispo instantanément quand on clique sur l'onglet Classement */}
             <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
-            {/* eager + decoding=sync + fetchpriority + dimensions figées → rendu instantané, pas de fondu progressif */}
-            <img src={SPLIT_HEADER_LOGO} alt="Split" width={180} height={54} loading="eager" fetchpriority="high" decoding="sync" style={{ width: 180, height: 54, objectFit: "contain" }} />
+            {/* Preload cartes match backgrounds (home-card-1/2/3, doree/gris/immortal-back) */}
+            {["/home-card-1.png","/home-card-2.png","/home-card-3.png","/doree-back.png","/gris-back.png","/immortal-back.png","/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png"].map((src) => (
+              <img key={src} src={src} alt="" loading="eager" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+            ))}
+            {/* Split logo: attend le décodage complet avant de l'afficher (opacity 0 → 1 via onLoad).
+                Résultat: le logo apparait ENTIER instantanément OU pas du tout — plus jamais partiel. */}
+            <img src={SPLIT_HEADER_LOGO} alt="Split" width={180} height={54}
+              loading="eager" fetchpriority="high" decoding="sync"
+              onLoad={(e) => { e.currentTarget.style.opacity = "1"; }}
+              style={{ width: 180, height: 54, objectFit: "contain", opacity: 0, transition: "opacity 0.15s ease-in" }} />
             <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #1a1a1a", borderTopColor: "#C4F000", animation: "splashRing 0.9s linear infinite", marginTop: 32 }} />
             <style>{`
               @keyframes splashRing {
