@@ -10267,30 +10267,65 @@ export default function ClutchApp() {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
-  const [showMigrationNotice, setShowMigrationNotice] = useState(false);
+  const [showMigrationNotice, setShowMigrationNotice] = useState(() => {
+    // Persiste le flag entre reloads : si la popup n'a pas encore été fermée
+    // lors d'une visite précédente, on la remontre au prochain boot.
+    try { return localStorage.getItem("split_migration_pending") === "1"; } catch { return false; }
+  });
 
-  // Validation du user au boot : si le backend ne reconnait plus l'user
-  // (compte supprimé, migration Railway, backend reset), on force le logout
-  // et on affiche une popup d'excuses pour expliquer.
+  // Détecte un "returning user" via n'importe quelle clé split_* dans le storage
+  // (usage antérieur de l'app). Utilisé pour distinguer un vrai nouveau
+  // visiteur d'un ancien user qui a été kick par la migration.
+  function isReturningUser() {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("split_") && k !== "split_migration_pending" && k !== "split_migration_seen") return true;
+      }
+      return false;
+    } catch { return false; }
+  }
+
   useEffect(() => {
     const userJson = localStorage.getItem("split_auth_user");
-    if (!userJson) return;
     const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    fetch(`${API_BASE}/api/auth/me`, { headers })
-      .then((r) => {
-        if (r.status === 401 || r.status === 404) {
-          localStorage.removeItem("split_token");
-          localStorage.removeItem("split_auth_token");
-          localStorage.removeItem("split_auth_user");
-          setAuthUser(null);
-          setShowAuth(true);
-          setShowMigrationNotice(true);
-          console.log("[auth-validate] Session invalide côté backend, logout forcé");
-        }
-      })
-      .catch(() => {});
+
+    // Cas 1 : user avait une session → on valide et on kick si le backend ne connait plus
+    if (userJson) {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      fetch(`${API_BASE}/api/auth/me`, { headers })
+        .then((r) => {
+          if (r.status === 401 || r.status === 404) {
+            localStorage.removeItem("split_token");
+            localStorage.removeItem("split_auth_token");
+            localStorage.removeItem("split_auth_user");
+            setAuthUser(null);
+            setShowAuth(true);
+            setShowMigrationNotice(true);
+            try { localStorage.setItem("split_migration_pending", "1"); } catch {}
+            console.log("[auth-validate] Session invalide, logout + popup migration");
+          }
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // Cas 2 : pas de session mais returning user (a utilisé l'app avant)
+    // et pas encore vu la popup migration → on la montre sur l'écran d'inscription.
+    if (isReturningUser() && localStorage.getItem("split_migration_seen") !== "1") {
+      setShowMigrationNotice(true);
+      try { localStorage.setItem("split_migration_pending", "1"); } catch {}
+    }
   }, []);
+
+  // Handler de fermeture: clear le flag pending + set seen pour ne plus jamais l'afficher
+  function dismissMigrationNotice() {
+    setShowMigrationNotice(false);
+    try {
+      localStorage.removeItem("split_migration_pending");
+      localStorage.setItem("split_migration_seen", "1");
+    } catch {}
+  }
   const isCaffioraDemo = authUser?.email === "caffiora.official@gmail.com";
   useEffect(() => {
     if (isCaffioraDemo) {
@@ -11550,7 +11585,7 @@ export default function ClutchApp() {
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
           backdropFilter: "blur(8px)",
-        }} onClick={() => setShowMigrationNotice(false)}>
+        }} onClick={dismissMigrationNotice}>
           <div onClick={(e) => e.stopPropagation()} style={{
             background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 20,
             padding: "24px 22px", maxWidth: 340, width: "100%",
@@ -11562,7 +11597,7 @@ export default function ClutchApp() {
             <p style={{ color: "#bbb", fontSize: 13, lineHeight: 1.5, textAlign: "center", marginBottom: 18 }}>
               Tous les comptes ont été réinitialisés suite à une migration serveur. Recrée le tien pour continuer. Nous sommes désolés.
             </p>
-            <button onClick={() => setShowMigrationNotice(false)} style={{
+            <button onClick={dismissMigrationNotice} style={{
               width: "100%", background: "#CCF71D", color: "#000", border: "none",
               borderRadius: 12, padding: "12px", fontSize: 14, fontWeight: 800, cursor: "pointer",
             }}>
