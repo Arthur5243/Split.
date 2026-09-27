@@ -11545,7 +11545,7 @@ export default function ClutchApp() {
           }
         }} />
       )}
-      {showMigrationNotice && (
+      {showMigrationNotice && showAuth && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100000,
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
