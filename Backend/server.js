@@ -70,6 +70,9 @@ import("./github-backup.js").then(({ startBackupWorker, mountBackupEndpoints }) 
   mountBackupEndpoints(app);
 });
 
+// Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
+import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
+
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
