@@ -10274,8 +10274,6 @@ export default function ClutchApp() {
   });
 
   // Détecte un "returning user" via n'importe quelle clé split_* dans le storage
-  // (usage antérieur de l'app). Utilisé pour distinguer un vrai nouveau
-  // visiteur d'un ancien user qui a été kick par la migration.
   function isReturningUser() {
     try {
       for (let i = 0; i < localStorage.length; i++) {
@@ -10286,39 +10284,58 @@ export default function ClutchApp() {
     } catch { return false; }
   }
 
+  // Purge TOUTES les clés split_* + predictions + autres état user, en
+  // gardant uniquement les flags migration (pour ne pas rebriefer le user).
+  // Utilisé quand le backend ne reconnait plus le user (migration) ou quand
+  // un nouveau user login sur ce device (différent userId).
+  function resetClientState({ keepMigrationFlags = true } = {}) {
+    try {
+      const keep = new Set();
+      if (keepMigrationFlags) {
+        keep.add("split_migration_seen");
+        keep.add("split_migration_pending");
+      }
+      const toDelete = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (k.startsWith("split_") && !keep.has(k)) toDelete.push(k);
+      }
+      toDelete.forEach((k) => localStorage.removeItem(k));
+      console.log(`[reset-client-state] purged ${toDelete.length} keys`);
+    } catch (e) { console.log("[reset-client-state] erreur:", e.message); }
+  }
+
   useEffect(() => {
     const userJson = localStorage.getItem("split_auth_user");
     const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
 
-    // Cas 1 : user avait une session → on valide et on kick si le backend ne connait plus
+    // Cas 1 : user avait une session → on valide et on WIPE tout si backend ne connait plus
     if (userJson) {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       fetch(`${API_BASE}/api/auth/me`, { headers })
         .then((r) => {
           if (r.status === 401 || r.status === 404) {
-            localStorage.removeItem("split_token");
-            localStorage.removeItem("split_auth_token");
-            localStorage.removeItem("split_auth_user");
+            resetClientState(); // purge palier, xp, inventory, streak, quests, drafts, etc.
             setAuthUser(null);
             setShowAuth(true);
             setShowMigrationNotice(true);
             try { localStorage.setItem("split_migration_pending", "1"); } catch {}
-            console.log("[auth-validate] Session invalide, logout + popup migration");
+            console.log("[auth-validate] Session invalide, reset client complet + popup migration");
           }
         })
         .catch(() => {});
       return;
     }
 
-    // Cas 2 : pas de session mais returning user (a utilisé l'app avant)
-    // et pas encore vu la popup migration → on la montre sur l'écran d'inscription.
+    // Cas 2 : returning user sans session (déjà kicked) → popup + purge résidu si présent
     if (isReturningUser() && localStorage.getItem("split_migration_seen") !== "1") {
+      resetClientState(); // au cas où il reste des points/palier/inventory résiduels
       setShowMigrationNotice(true);
       try { localStorage.setItem("split_migration_pending", "1"); } catch {}
     }
   }, []);
 
-  // Handler de fermeture: clear le flag pending + set seen pour ne plus jamais l'afficher
   function dismissMigrationNotice() {
     setShowMigrationNotice(false);
     try {
@@ -11574,6 +11591,23 @@ export default function ClutchApp() {
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {
+            // Si l'user vient d'une migration (popup active) OU si un ancien
+            // état résiduel est présent (points, palier, inventory...),
+            // on wipe TOUT le client-state avant d'accepter la nouvelle session,
+            // puis reload complet → l'app redémarre fresh sur le nouveau compte.
+            const migrationPending = localStorage.getItem("split_migration_pending") === "1";
+            const hasResidual = ["split_points_total", "split_xp", "split_inventory", "split_streak", "split_quests", "split_claimed_tiers"].some((k) => localStorage.getItem(k));
+            if (migrationPending || hasResidual) {
+              const freshToken = localStorage.getItem("split_token");
+              const freshAuth = localStorage.getItem("split_auth_user");
+              resetClientState();
+              // Ré-écrit les data auth fraîches que AuthScreen vient de poser
+              if (freshToken) localStorage.setItem("split_token", freshToken);
+              if (freshAuth) localStorage.setItem("split_auth_user", freshAuth);
+              localStorage.setItem("split_migration_seen", "1");
+              window.location.reload();
+              return;
+            }
             setAuthUser(user);
             setShowAuth(false);
             if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
