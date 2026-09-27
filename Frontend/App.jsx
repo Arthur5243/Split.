@@ -5121,6 +5121,29 @@ function ChampionsView({ T, accent, onViewMatch }) {
       t.eliminated = i >= 2 && t.losses >= 1;
     });
     g.teams = sorted;
+    // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
+    // Winner ni Elimination. Si Winner ou Elimination finished → on peut
+    // determiner. Sinon TBD.
+    const decider = g.matches.find((m) => m.phase === "decider");
+    const winner = g.matches.find((m) => m.phase === "winners");
+    const elim = g.matches.find((m) => m.phase === "elimination");
+    if (decider && decider.team1 === "TBD" && winner && elim) {
+      // Perdant du Winner Match
+      let winnerLoser = null;
+      if (winner.status === "finished" && winner.score) {
+        winnerLoser = winner.score[0] < winner.score[1] ? winner.team1 : winner.team2;
+      }
+      // Gagnant de l'Elimination Match
+      let elimWinner = null;
+      if (elim.status === "finished" && elim.score) {
+        elimWinner = elim.score[0] > elim.score[1] ? elim.team1 : elim.team2;
+      }
+      if (winnerLoser && elimWinner) {
+        decider.team1 = winnerLoser;
+        decider.team2 = elimWinner;
+        decider.status = "upcoming";
+      }
+    }
   });
 
   // Playoffs TBD (structure 8 equipes upper/lower)

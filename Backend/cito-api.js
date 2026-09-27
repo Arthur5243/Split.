@@ -24,12 +24,17 @@ const TTL_MS = 5 * 60 * 1000;
 const BOOT_DELAY_MS = 10_000;
 const MIN_POLL_INTERVAL_MS = 90_000;
 
-// Cache indexed by normalized team1|team2
+// Cache indexed by normalized team1|team2 (LIVE matches, TTL court)
 const cache = new Map();
-// Cache indexed by cito matchId → finished maps details (persistent across polls)
+// Cache indexed by cito matchId → finished maps details (persistent 24h)
 const finishedMapsCache = new Map();
+// Cache indexed by normalized team1|team2 (FINISHED matches, TTL long 24h)
+const finishedByTeamsCache = new Map();
 let lastPollAt = 0;
+let lastFinishedPollAt = 0;
 let hasLiveMatches = false;
+const FINISHED_POLL_MS = 10 * 60 * 1000; // Poll les finished toutes les 10 min
+const FINISHED_TTL_MS = 24 * 60 * 60 * 1000; // Cache 24h les matchs finis
 
 // Rotation des tokens: index courant + set des tokens epuises (429) qu'on skip
 // jusqu'au prochain mois. exhaustedAt[i] = timestamp quand token[i] a hit 429.
@@ -256,10 +261,61 @@ export function setCitoHasLiveMatches(flag) {
   hasLiveMatches = !!flag;
 }
 
-export function getCitoApiMatch(team1Name, team2Name) {
+// Refresh les matchs CS2 finis recemment (24h) pour les avoir en cache
+// et pouvoir servir les scores map dans /api/cs2-results sans polling
+// individuel par match.
+async function refreshRecentFinished() {
+  if (CITO_API_KEYS.length === 0) return;
+  const now = Date.now();
+  if (now - lastFinishedPollAt < FINISHED_POLL_MS) return;
+  lastFinishedPollAt = now;
+  try {
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const url = `${CITO_API_BASE}/cs2/matches?status=completed&from=${yesterday}&limit=50&sort=-start_date`;
+    const res = await citoFetch(url);
+    if (!res.ok) {
+      console.log(`[cito-api] /cs2/matches?completed HTTP ${res.status}`);
+      return;
+    }
+    const data = await res.json();
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    let indexed = 0;
+    for (const m of rows) {
+      const t1 = m.team1Name;
+      const t2 = m.team2Name;
+      const matchId = m.matchId || m.id;
+      if (!t1 || !t2 || !matchId) continue;
+      // Fetch /maps pour ce match (si pas deja en cache)
+      if (!finishedMapsCache.has(matchId)) {
+        const maps = await fetchMatchMaps(matchId, m.team1Id);
+        if (maps) finishedMapsCache.set(matchId, { maps, seriesTotal: (m.team1Score || 0) + (m.team2Score || 0), at: Date.now() });
+      }
+      const finishedMaps = finishedMapsCache.get(matchId);
+      if (!finishedMaps || finishedMaps.maps.length === 0) continue;
+      const key = normalize(t1) + "|" + normalize(t2);
+      finishedByTeamsCache.set(key, {
+        team1: t1, team2: t2,
+        seriesScore: { a: m.team1Score ?? 0, b: m.team2Score ?? 0 },
+        mapScores: finishedMaps.maps.map((mp) => ({ map: mapNameClean(mp.map), score1: mp.score1, score2: mp.score2 })),
+        matchId,
+        scrapedAt: Date.now(),
+      });
+      indexed++;
+    }
+    // Purge finished cache > 24h
+    for (const [k, v] of finishedByTeamsCache) {
+      if (Date.now() - v.scrapedAt > FINISHED_TTL_MS) finishedByTeamsCache.delete(k);
+    }
+    console.log(`[cito-api] finished refresh → ${rows.length} recent, ${indexed} indexed | cache size: ${finishedByTeamsCache.size}`);
+  } catch (e) {
+    console.log(`[cito-api] finished refresh erreur: ${e.message}`);
+  }
+}
+
+function lookupInCache(cacheMap, team1Name, team2Name) {
   const q1 = normalize(team1Name);
   const q2 = normalize(team2Name);
-  for (const entry of cache.values()) {
+  for (const entry of cacheMap.values()) {
     const t1 = normalize(entry.team1);
     const t2 = normalize(entry.team2);
     const match1 = t1 === q1 || t1.includes(q1) || q1.includes(t1);
@@ -282,14 +338,20 @@ export function getCitoApiMatch(team1Name, team2Name) {
   return null;
 }
 
+export function getCitoApiMatch(team1Name, team2Name) {
+  // Chercher d'abord dans le cache LIVE (plus frais), puis dans FINISHED (24h)
+  return lookupInCache(cache, team1Name, team2Name) || lookupInCache(finishedByTeamsCache, team1Name, team2Name);
+}
+
 export function startCitoApiWorker() {
   if (CITO_API_KEYS.length === 0) {
     console.log("[cito-api] CITO_API_KEY absent, worker skipped");
     return;
   }
-  console.log(`[cito-api] worker started, poll ${POLL_INTERVAL_MS / 1000}s + /maps on series change | ${CITO_API_KEYS.length} token(s) en rotation`);
+  console.log(`[cito-api] worker started, poll ${POLL_INTERVAL_MS / 1000}s live + ${FINISHED_POLL_MS / 60000}min finished | ${CITO_API_KEYS.length} token(s) en rotation`);
   async function loop() {
-    try { await refreshLive(); } catch (e) { console.error("[cito-api] loop:", e.message); }
+    try { await refreshLive(); } catch (e) { console.error("[cito-api] live loop:", e.message); }
+    try { await refreshRecentFinished(); } catch (e) { console.error("[cito-api] finished loop:", e.message); }
     setTimeout(loop, POLL_INTERVAL_MS);
   }
   setTimeout(loop, BOOT_DELAY_MS);
