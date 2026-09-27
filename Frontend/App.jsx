@@ -5058,40 +5058,119 @@ function GroupStandings({ standings, accent, T }) {
   );
 }
 
-function ChampionsView({ T, accent }) {
-  const [data, setData] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("split_champions_bracket_cache") || "null"); } catch { return null; }
+function ChampionsView({ T, accent, onViewMatch }) {
+  // DATA HARDCODEE — pas de chargement, tout dispo instant.
+  // Backend fetch en arriere-plan pour update scores si dispo, mais l'UI
+  // affiche deja les groupes complets des le premier render.
+  const HARDCODED_GROUPS = [
+    { name: "A", teams: [
+      { name: "100 Thieves", acronym: "100T", wins: 1, losses: 0 },
+      { name: "FUT Esports", acronym: "FUT", wins: 1, losses: 0 },
+      { name: "JD Gaming", acronym: "JDG", wins: 0, losses: 1 },
+      { name: "T1", acronym: "T1", wins: 0, losses: 1 },
+    ], matches: [
+      { phase: "opening1", team1: "100 Thieves", team2: "T1", score: [2, 0], status: "finished" },
+      { phase: "opening2", team1: "JD Gaming", team2: "FUT Esports", score: [0, 2], status: "finished" },
+      { phase: "winners", team1: "100 Thieves", team2: "FUT Esports", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "T1", team2: "JD Gaming", score: null, status: "upcoming" },
+      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+    ] },
+    { name: "B", teams: [
+      { name: "LOUD", acronym: "LOUD", wins: 1, losses: 0 },
+      { name: "Team Vitality", acronym: "VIT", wins: 1, losses: 0 },
+      { name: "EDward Gaming", acronym: "EDG", wins: 0, losses: 1 },
+      { name: "Global Esports", acronym: "GE", wins: 0, losses: 1 },
+    ], matches: [
+      { phase: "opening1", team1: "Global Esports", team2: "Team Vitality", score: [1, 2], status: "finished" },
+      { phase: "opening2", team1: "LOUD", team2: "EDward Gaming", score: [2, 0], status: "finished" },
+      { phase: "winners", team1: "Team Vitality", team2: "LOUD", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "Global Esports", team2: "EDward Gaming", score: null, status: "upcoming" },
+      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+    ] },
+    { name: "C", teams: [
+      { name: "G2 Esports", acronym: "G2", wins: 1, losses: 0 },
+      { name: "Paper Rex", acronym: "PRX", wins: 1, losses: 0 },
+      { name: "Team Liquid", acronym: "TL", wins: 0, losses: 1 },
+      { name: "TYLOO", acronym: "TYL", wins: 0, losses: 1 },
+    ], matches: [
+      { phase: "opening1", team1: "Team Liquid", team2: "Paper Rex", score: [1, 2], status: "finished" },
+      { phase: "opening2", team1: "TYLOO", team2: "G2 Esports", score: [0, 2], status: "finished" },
+      { phase: "winners", team1: "G2 Esports", team2: "Paper Rex", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "TYLOO", team2: "Team Liquid", score: null, status: "upcoming" },
+      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+    ] },
+    { name: "D", teams: [
+      { name: "Karmine Corp", acronym: "KC", wins: 1, losses: 0 },
+      { name: "NRG", acronym: "NRG", wins: 1, losses: 0 },
+      { name: "Nongshim RedForce", acronym: "NS", wins: 0, losses: 1 },
+      { name: "XLG Esports", acronym: "XLG", wins: 0, losses: 1 },
+    ], matches: [
+      { phase: "opening1", team1: "Karmine Corp", team2: "XLG Esports", score: [2, 0], status: "finished" },
+      { phase: "opening2", team1: "Nongshim RedForce", team2: "NRG", score: [0, 2], status: "finished" },
+      { phase: "winners", team1: "Karmine Corp", team2: "NRG", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "XLG Esports", team2: "Nongshim RedForce", score: null, status: "upcoming" },
+      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+    ] },
+  ];
+  // Applique qualified/eliminated selon W-L
+  HARDCODED_GROUPS.forEach((g) => {
+    const sorted = [...g.teams].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses));
+    sorted.forEach((t, i) => {
+      t.rank = i + 1;
+      t.qualified = i < 2 && t.wins >= 1;
+      t.eliminated = i >= 2 && t.losses >= 1;
+    });
+    g.teams = sorted;
   });
-  const [loading, setLoading] = useState(!data);
-  const [view, setView] = useState("menu");     // "menu" | "groups" | "playoffs"
-  const [groupSel, setGroupSel] = useState(null); // "A" | "B" | "C" | "D"
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(API_BASE + "/api/valorant-champions-bracket");
-        if (res.ok) {
-          const d = await res.json();
-          setData(d);
-          try { localStorage.setItem("split_champions_bracket_cache", JSON.stringify(d)); } catch {}
-        }
-      } catch {}
-      finally { setLoading(false); }
-    })();
-  }, []);
+  // Playoffs TBD (structure 8 equipes upper/lower)
+  const HARDCODED_PLAYOFFS = {
+    upper: [
+      { id: "u-qf-1", label: "Upper QF 1", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-qf-2", label: "Upper QF 2", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-qf-3", label: "Upper QF 3", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-qf-4", label: "Upper QF 4", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-sf-1", label: "Upper Semi 1", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-sf-2", label: "Upper Semi 2", team1: "TBD", team2: "TBD", score: null },
+      { id: "u-f", label: "Upper Final", team1: "TBD", team2: "TBD", score: null },
+    ],
+    lower: [
+      { id: "l-r1-1", label: "Lower R1 M1", team1: "TBD", team2: "TBD", score: null },
+      { id: "l-r1-2", label: "Lower R1 M2", team1: "TBD", team2: "TBD", score: null },
+      { id: "l-r2-1", label: "Lower R2 M1", team1: "TBD", team2: "TBD", score: null },
+      { id: "l-r2-2", label: "Lower R2 M2", team1: "TBD", team2: "TBD", score: null },
+      { id: "l-sf", label: "Lower Semi", team1: "TBD", team2: "TBD", score: null },
+      { id: "l-f", label: "Lower Final", team1: "TBD", team2: "TBD", score: null },
+    ],
+    grandFinal: { id: "gf", label: "Grand Final", team1: "TBD", team2: "TBD", score: null },
+  };
 
-  if (loading && !data) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#ff4655", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
-  if (!data || !data.groups) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
+  const [view, setView] = useState("menu");
+  const [groupSel, setGroupSel] = useState(null);
 
-  // MENU: 2 boutons Groupes / Playoffs
+  // Style gris uniforme (comme les autres modules Settings/Calendar)
+  const modBg = "#232323";
+  const modBorder = "1px solid #2f2f2f";
+  const rowBg = "#1e1e1e";
+  const rowBorder = "1px solid #2c2c2c";
+
+  const clickTeamMatch = (m) => {
+    if (onViewMatch && m.team1 !== "TBD" && m.team2 !== "TBD") {
+      onViewMatch(m.team1, m.team2, m.status);
+    }
+  };
+
+  const data = { groups: HARDCODED_GROUPS, playoffs: HARDCODED_PLAYOFFS };
+
+  // MENU: 2 gros boutons Groupes / Playoffs (fond gris uniforme)
   if (view === "menu") {
     return (
-      <div style={{ padding: "20px 0" }}>
-        <button onClick={() => setView("groups")} style={{ width: "100%", background: "linear-gradient(135deg, #ff465515 0%, #111 60%)", border: "1px solid #ff465540", borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 12, textAlign: "left" }}>
+      <div style={{ padding: "12px 0 120px" }}>
+        <button onClick={() => setView("groups")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 10, textAlign: "left" }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
           <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
         </button>
-        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: "linear-gradient(135deg, #FFD70015 0%, #111 60%)", border: "1px solid #FFD70040", borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
+        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
           <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
         </button>
@@ -5102,17 +5181,16 @@ function ChampionsView({ T, accent }) {
   // GROUPS overview: 4 tuiles
   if (view === "groups" && !groupSel) {
     return (
-      <div style={{ padding: "12px 0" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Retour</button>
+      <div style={{ padding: "8px 0 120px" }}>
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
-            <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: "#141414", border: "1px solid #1e1e1e", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
+            <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: modBorder, borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 900, color: "#ff4655", marginBottom: 8, letterSpacing: "0.06em" }}>Groupe {g.name}</div>
-              {g.teams.slice(0, 4).map((t, i) => (
-                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+              {g.teams.map((t, i) => (
+                <div key={t.acronym} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                   <span style={{ color: "#666", fontSize: 10, width: 12 }}>{i + 1}.</span>
-                  {t.logo && <img src={t.logo} alt="" loading="eager" style={{ width: 14, height: 14, objectFit: "contain" }} />}
-                  <span style={{ color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#ccc", fontSize: 10, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.acronym || t.name}</span>
+                  <span style={{ color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#ccc", fontSize: 10, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.acronym}</span>
                   <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>{t.wins}-{t.losses}</span>
                 </div>
               ))}
@@ -5127,18 +5205,17 @@ function ChampionsView({ T, accent }) {
   if (view === "groups" && groupSel) {
     const g = data.groups.find((x) => x.name === groupSel);
     if (!g) return null;
-    const phaseLabel = { opening1: "Opening 1", opening2: "Opening 2", winners: "Winners Match", elimination: "Elimination Match", decider: "Decider Match" };
+    const phaseLabel = { opening1: "Opening Match 1", opening2: "Opening Match 2", winners: "Winner Match", elimination: "Elimination Match", decider: "Decider Match" };
     const phaseOrder = ["opening1", "opening2", "winners", "elimination", "decider"];
     return (
-      <div style={{ padding: "12px 0" }}>
-        <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Groupes</button>
+      <div style={{ padding: "8px 0 120px" }}>
+        <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Groupes</button>
         <div style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", marginBottom: 10 }}>Groupe {g.name}</div>
         {/* Standings */}
-        <div style={{ background: "#141414", borderRadius: 10, overflow: "hidden", border: "1px solid #1e1e1e", marginBottom: 16 }}>
+        <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: modBorder, marginBottom: 16 }}>
           {g.teams.map((t, i) => (
-            <div key={t.id} style={{ display: "grid", gridTemplateColumns: "26px 24px 1fr 40px 60px", alignItems: "center", padding: "9px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #1a1a1a" : "none", background: t.qualified ? "rgba(126,200,80,0.06)" : t.eliminated ? "rgba(193,74,74,0.06)" : "transparent" }}>
+            <div key={t.acronym} style={{ display: "grid", gridTemplateColumns: "26px 1fr 45px 60px", alignItems: "center", padding: "10px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #2c2c2c" : "none", background: t.qualified ? "rgba(126,200,80,0.05)" : t.eliminated ? "rgba(193,74,74,0.05)" : "transparent" }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#666" }}>{i + 1}.</span>
-              {t.logo ? <img src={t.logo} alt="" loading="eager" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <div />}
               <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa" }}>{t.wins}-{t.losses}</span>
               <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Qualif." : t.eliminated ? "Élim." : "—"}</span>
@@ -5150,18 +5227,16 @@ function ChampionsView({ T, accent }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {phaseOrder.map((ph) => {
             const m = g.matches.find((mm) => mm.phase === ph);
+            if (!m) return null;
+            const clickable = m.team1 !== "TBD" && m.team2 !== "TBD";
             return (
-              <div key={ph} style={{ background: "#141414", borderRadius: 8, padding: "8px 12px", border: "1px solid #1e1e1e" }}>
+              <button key={ph} onClick={() => clickable && clickTeamMatch(m)} disabled={!clickable} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: rowBorder, cursor: clickable ? "pointer" : "default", textAlign: "left", width: "100%" }}>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{phaseLabel[ph]}</div>
-                {m ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
-                    <span style={{ color: m.status === "finished" ? "#7ec850" : m.status === "running" ? "#ff4655" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
-                  </div>
-                ) : (
-                  <div style={{ color: "#444", fontSize: 11 }}>TBD</div>
-                )}
-              </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1} vs {m.team2}</span>
+                  <span style={{ color: m.status === "finished" ? "#7ec850" : m.status === "upcoming" ? "#CCF71D" : "#555", fontSize: 12, fontWeight: 800 }}>{m.score ? `${m.score[0]}-${m.score[1]}` : m.status === "upcoming" ? "À venir" : "TBD"}</span>
+                </div>
+              </button>
             );
           })}
         </div>
@@ -5169,35 +5244,34 @@ function ChampionsView({ T, accent }) {
     );
   }
 
-  // PLAYOFFS
+  // PLAYOFFS bracket (TBD)
   if (view === "playoffs") {
+    const renderMatch = (m) => (
+      <div key={m.id} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: rowBorder, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>{m.label}</div>
+          <div style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>{m.team1} vs {m.team2}</div>
+        </div>
+        <span style={{ color: "#555", fontSize: 11, fontWeight: 800 }}>{m.score || "TBD"}</span>
+      </div>
+    );
     return (
-      <div style={{ padding: "12px 0" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer" }}>← Retour</button>
-        {data.playoffs.all.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>Playoffs pas encore commencés (démarre le 7 oct.)</div>
-        ) : (
-          <>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Upper Bracket</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
-              {data.playoffs.upper.concat(data.playoffs.other).map((m) => (
-                <div key={m.id} style={{ background: "#141414", borderRadius: 8, padding: "10px 12px", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
-                  <span style={{ color: m.status === "finished" ? "#7ec850" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Lower Bracket</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {data.playoffs.lower.map((m) => (
-                <div key={m.id} style={{ background: "#141414", borderRadius: 8, padding: "10px 12px", border: "1px solid #1e1e1e", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1?.acronym || m.team1?.name} vs {m.team2?.acronym || m.team2?.name}</span>
-                  <span style={{ color: m.status === "finished" ? "#7ec850" : "#555", fontSize: 11, fontWeight: 800 }}>{m.score ? `${m.score.team1 ?? "-"}-${m.score.team2 ?? "-"}` : "—"}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+      <div style={{ padding: "8px 0 120px" }}>
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 14 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
+
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Upper Bracket</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+          {data.playoffs.upper.map(renderMatch)}
+        </div>
+
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Lower Bracket</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 20 }}>
+          {data.playoffs.lower.map(renderMatch)}
+        </div>
+
+        <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Grande Finale</div>
+        <div>{renderMatch(data.playoffs.grandFinal)}</div>
       </div>
     );
   }
@@ -5612,7 +5686,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketChampions, "#ff4655")}</div>
-        <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" /></div>
+        <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" onViewMatch={onLiveClick ? () => onLiveClick() : undefined} /></div>
       </div>
     );
   }
