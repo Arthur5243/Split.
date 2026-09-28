@@ -5267,77 +5267,40 @@ function ChampionsView({ T, accent, onViewMatch }) {
     );
   }
 
-  // PLAYOFFS bracket visuel (colonnes rounds, scroll horizontal, Grand Final en dessous)
+  // PLAYOFFS: utilise le meme composant BracketTree que les autres stages
+  // (Kickoff/Stage 1/Masters) avec flèches SVG, mais data TBD partout.
   if (view === "playoffs") {
-    // MatchBox uniforme
-    const MatchBox = ({ m, w = 128 }) => (
-      <div style={{ width: w, background: rowBg, borderRadius: 6, border: rowBorder, padding: "6px 8px", fontSize: 10, lineHeight: 1.35 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", color: m.team1 === "TBD" ? "#666" : "#eee" }}>
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1}</span>
-          <span style={{ color: "#888", marginLeft: 4 }}>{m.score?.[0] ?? "-"}</span>
-        </div>
-        <div style={{ borderTop: "1px solid #2a2a2a", margin: "3px -8px" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", color: m.team2 === "TBD" ? "#666" : "#eee" }}>
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team2}</span>
-          <span style={{ color: "#888", marginLeft: 4 }}>{m.score?.[1] ?? "-"}</span>
-        </div>
-      </div>
-    );
-    // Upper bracket: 4 QF (col 1) → 2 SF (col 2) → 1 UF (col 3)
-    // Lower bracket: 2 R1 (col 1) → 2 QF (col 2) → 1 SF (col 3) → 1 LF (col 4)
-    // Grand Final: en dessous, centrée
-    const upper = data.playoffs.upper;
-    const uQF = upper.slice(0, 4);
-    const uSF = upper.slice(4, 6);
-    const uF = upper.slice(6, 7);
-    const lower = data.playoffs.lower;
-    const lR1 = lower.slice(0, 2);
-    const lQF = lower.slice(2, 4);
-    const lSF = lower.slice(4, 5);
-    const lF = lower.slice(5, 6);
-    const boxH = 46;
-    const gap = 20; // gap vertical entre matches col 1
-    const Col = ({ title, matches, spacing }) => (
-      <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-around", minWidth: 128 }}>
-        <div style={{ fontSize: 8, fontWeight: 800, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center", marginBottom: 8, whiteSpace: "nowrap" }}>{title}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: spacing }}>
-          {matches.map((m) => <MatchBox key={m.id} m={m} />)}
-        </div>
-      </div>
-    );
+    const tbdMatch = (id) => ({
+      match_id: id,
+      team1: { name: "TBD", is_winner: false },
+      team2: { name: "TBD", is_winner: false },
+      status: "upcoming",
+    });
+    const tbdBracket = {
+      upper: [
+        { name: "Upper Quarterfinals", matches: [tbdMatch("uqf1"), tbdMatch("uqf2"), tbdMatch("uqf3"), tbdMatch("uqf4")] },
+        { name: "Upper Semifinals", matches: [tbdMatch("usf1"), tbdMatch("usf2")] },
+        { name: "Upper Final", matches: [tbdMatch("uf")] },
+      ],
+      lower: [
+        { name: "Lower Round 1", matches: [tbdMatch("lr1a"), tbdMatch("lr1b")] },
+        { name: "Lower Quarterfinals", matches: [tbdMatch("lqf1"), tbdMatch("lqf2")] },
+        { name: "Lower Semifinals", matches: [tbdMatch("lsf1")] },
+        { name: "Lower Final", matches: [tbdMatch("lf")] },
+      ],
+      grand_final: [
+        { name: "Grand Final", matches: [tbdMatch("gf")] },
+      ],
+    };
     return (
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
-
-        {/* Upper Bracket */}
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec850", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Upper Bracket</div>
-        <div style={{ overflowX: "auto", paddingBottom: 6, marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 24, minWidth: "fit-content", alignItems: "flex-start" }}>
-            <Col title="UB Quarterfinals" matches={uQF} spacing={8} />
-            <Col title="UB Semifinals" matches={uSF} spacing={boxH + gap + 8} />
-            <Col title="Upper Final" matches={uF} spacing={0} />
-          </div>
-        </div>
-
-        {/* Lower Bracket */}
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#c14a4a", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Lower Bracket</div>
-        <div style={{ overflowX: "auto", paddingBottom: 6, marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 24, minWidth: "fit-content", alignItems: "flex-start" }}>
-            <Col title="LB Round 1" matches={lR1} spacing={8} />
-            <Col title="LB Quarterfinals" matches={lQF} spacing={8} />
-            <Col title="LB Semifinal" matches={lSF} spacing={0} />
-            <Col title="Lower Final" matches={lF} spacing={0} />
-          </div>
-        </div>
-
-        {/* Grand Final EN DESSOUS, centrée */}
-        <div style={{ fontSize: 11, fontWeight: 800, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10, textAlign: "center" }}>Grande Finale</div>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <div style={{ width: 160 }}>
-            <MatchBox m={data.playoffs.grandFinal} w={160} />
-          </div>
-        </div>
+        <DragScroll>
+          <BracketTree rounds={tbdBracket.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
+          <BracketTree rounds={tbdBracket.lower} accent="#ff4655" label="Lower Bracket" labelColor="#ff4655" isPlayoffs />
+          <BracketTree rounds={tbdBracket.grand_final} accent="#FFD700" label="Grande Finale" labelColor="#FFD700" isPlayoffs />
+        </DragScroll>
       </div>
     );
   }
@@ -5483,9 +5446,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   };
 
   const stageAvailable = (key) => {
+    if (key === "champions") return true;
+    if (key === "stage2") return true; // Force actif meme si aucun event dispo cote VLR
     if (!vlrEvents) return false;
     if (key === "masters") return !!vlrEvents.masters;
-    if (key === "champions") return true;
     return Object.keys(vlrEvents[key] || {}).length > 0;
   };
 
