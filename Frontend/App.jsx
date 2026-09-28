@@ -4449,8 +4449,9 @@ function NewsCarousel({ T, splashDone }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", background: "linear-gradient(135deg, #1a0a0f 0%, #2d1520 50%, #1a0a0f 100%)" }}>
-        {!imgErrors[0] && <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[0] = true; return n; }); }} />}
+      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", backgroundImage: !imgErrors[0] ? `url(${NEWS_IMAGE})` : undefined, backgroundColor: imgErrors[0] ? "#1a0a0f" : undefined, backgroundSize: "calc(100% + 6px) calc(100% + 6px)", backgroundPosition: "-3px -3px", backgroundRepeat: "no-repeat" }}>
+        {/* image hidden mais force fetch + onError pour fallback background gradient */}
+        <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} onError={() => setImgErrors(p => { const n = [...p]; n[0] = true; return n; })} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
         <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {T.newsBadge}
@@ -4702,7 +4703,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
     <div onClick={isLive && onLiveClick ? () => onLiveClick() : undefined} style={{
       width: "100%", borderRadius: 8, overflow: "hidden", position: "relative",
       background: "linear-gradient(135deg, #161616 0%, #111 100%)",
-      border: isLive ? "1px solid #ff4655" : "1px solid rgba(255,255,255,0.08)",
+      border: isLive ? "1px solid #ff4655" : "none",
       boxShadow: isLive ? "0 0 16px rgba(255,70,85,0.3)" : "0 3px 12px rgba(0,0,0,0.5)",
       opacity: isTBD ? 0.4 : 1,
       cursor: isLive ? "pointer" : "default",
@@ -5206,12 +5207,15 @@ function ChampionsView({ T, accent, onViewMatch }) {
     return (
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
+        <p style={{ fontSize: 10, color: "#888", fontStyle: "italic", marginBottom: 10, textAlign: "center" }}>
+          Les 2 équipes en tête sont <span style={{ color: "#7ec850" }}>prévues qualifiées</span> (non confirmé)
+        </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
-            <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: modBorder, borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
+            <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: "none", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 900, color: "#ff4655", marginBottom: 8, letterSpacing: "0.06em" }}>Groupe {g.name}</div>
               {g.teams.map((t, i) => (
-                <div key={t.acronym} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <div key={t.acronym} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, opacity: t.qualified ? 0.55 : 1 }}>
                   <span style={{ color: "#666", fontSize: 10, width: 12 }}>{i + 1}.</span>
                   <span style={{ color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#ccc", fontSize: 10, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.acronym}</span>
                   <span style={{ color: "#888", fontSize: 9, fontWeight: 700 }}>{t.wins}-{t.losses}</span>
@@ -5234,14 +5238,17 @@ function ChampionsView({ T, accent, onViewMatch }) {
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Groupes</button>
         <div style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", marginBottom: 10 }}>Groupe {g.name}</div>
+        <p style={{ fontSize: 10, color: "#888", fontStyle: "italic", marginBottom: 10 }}>
+          Les qualifications ne sont pas encore confirmées — prévision basée sur les scores actuels.
+        </p>
         {/* Standings */}
-        <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: modBorder, marginBottom: 16 }}>
+        <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: "none", marginBottom: 16 }}>
           {g.teams.map((t, i) => (
-            <div key={t.acronym} style={{ display: "grid", gridTemplateColumns: "26px 1fr 45px 60px", alignItems: "center", padding: "10px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #2c2c2c" : "none", background: t.qualified ? "rgba(126,200,80,0.05)" : t.eliminated ? "rgba(193,74,74,0.05)" : "transparent" }}>
+            <div key={t.acronym} style={{ display: "grid", gridTemplateColumns: "26px 1fr 45px 60px", alignItems: "center", padding: "10px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #2c2c2c" : "none", background: "transparent", opacity: t.qualified ? 0.6 : 1 }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#666" }}>{i + 1}.</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa" }}>{t.wins}-{t.losses}</span>
-              <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Qualif." : t.eliminated ? "Élim." : "—"}</span>
+              <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Prévu qualif." : t.eliminated ? "Élim." : "—"}</span>
             </div>
           ))}
         </div>
@@ -5253,7 +5260,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
             if (!m) return null;
             const clickable = m.team1 !== "TBD" && m.team2 !== "TBD";
             return (
-              <button key={ph} onClick={() => clickable && clickTeamMatch(m)} disabled={!clickable} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: rowBorder, cursor: clickable ? "pointer" : "default", textAlign: "left", width: "100%" }}>
+              <button key={ph} onClick={() => clickable && clickTeamMatch(m)} disabled={!clickable} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: "none", cursor: clickable ? "pointer" : "default", textAlign: "left", width: "100%" }}>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{phaseLabel[ph]}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1} vs {m.team2}</span>
@@ -9036,8 +9043,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", background: "#000", display: "block", borderRadius: 14 }}>
-              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${REWARDS_BANNER})`, backgroundSize: "cover", backgroundPosition: "20% center", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+              {/* Preload synchrone: image en <img> hidden pour forcer fetch prioritaire, background-image peint des que caché */}
+              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
