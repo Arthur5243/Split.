@@ -4715,7 +4715,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
         return (
           <div key={i} style={{
             display: "flex", alignItems: "center", gap: 0,
-            borderBottom: i === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+            borderBottom: "none",
             background: won ? `linear-gradient(90deg, ${accent}20 0%, ${accent}08 100%)` : "transparent",
           }}>
             <div style={{
@@ -5118,8 +5118,8 @@ function ChampionsView({ T, accent, onViewMatch }) {
     const sorted = [...g.teams].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses));
     sorted.forEach((t, i) => {
       t.rank = i + 1;
-      t.qualified = i < 2 && t.wins >= 1;
-      t.eliminated = i >= 2 && t.losses >= 1;
+      t.qualified = i < 2;
+      t.eliminated = i >= 2;
     });
     g.teams = sorted;
     // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
@@ -5244,7 +5244,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
         {/* Standings */}
         <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: "none", marginBottom: 16 }}>
           {g.teams.map((t, i) => (
-            <div key={t.acronym} style={{ display: "grid", gridTemplateColumns: "26px 1fr 45px 60px", alignItems: "center", padding: "10px 12px", borderBottom: i < g.teams.length - 1 ? "1px solid #2c2c2c" : "none", background: "transparent", opacity: t.qualified ? 0.6 : 1 }}>
+            <div key={t.acronym} style={{ display: "grid", gridTemplateColumns: "26px 1fr 45px 60px", alignItems: "center", padding: "10px 12px", borderBottom: "none", background: "transparent", opacity: t.qualified ? 0.55 : 1 }}>
               <span style={{ fontSize: 12, fontWeight: 800, color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#666" }}>{i + 1}.</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa" }}>{t.wins}-{t.losses}</span>
