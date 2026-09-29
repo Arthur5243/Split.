@@ -146,5 +146,46 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
-  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state ready");
+  // DELETE ALL users + toutes leurs donnees rattachees.
+  // Vraiment destructif: pseudos redeviennent disponibles, aucun compte ne
+  // survit. Les prochaines connexions Google creent un nouveau row propre.
+  // Nettoie aussi: follows, referrals, profile_views, posts, post_likes,
+  // post_comments, dm_messages, community_messages, conversations, user_keys.
+  app.post("/api/admin/delete-all-users", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    try {
+      const db = new Database(DB_PATH);
+      const before = db.prepare("SELECT COUNT(*) as n FROM users").get().n;
+      // Tables auxiliaires (silencieux si table absente sur cette instance).
+      const wipeTables = [
+        "follows",
+        "referrals",
+        "profile_views",
+        "post_likes",
+        "post_comments",
+        "posts",
+        "dm_messages",
+        "community_messages",
+        "conversations",
+        "user_keys",
+      ];
+      const wiped = {};
+      for (const t of wipeTables) {
+        try {
+          const r = db.prepare("DELETE FROM " + t).run();
+          wiped[t] = r.changes;
+        } catch (e) {
+          wiped[t] = "skipped: " + e.message;
+        }
+      }
+      const userDel = db.prepare("DELETE FROM users").run();
+      const after = db.prepare("SELECT COUNT(*) as n FROM users").get().n;
+      db.close();
+      res.json({ ok: true, usersBefore: before, usersDeleted: userDel.changes, usersAfter: after, wiped });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users ready");
 }

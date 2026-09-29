@@ -9007,10 +9007,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
       </div>
 
-      {/* Carousel wrapper */}
-      <div style={{ position: "relative", overflow: "hidden" }}>
+      {/* Carousel wrapper — minHeight garantit une zone tactile pleine hauteur
+          meme si le slide Communaute a peu de contenu (sans ca, le swipe
+          horizontal ne fonctionne que dans la portion haute occupee). */}
+      <div style={{ position: "relative", overflow: "hidden", minHeight: "calc(100dvh - 180px)" }}>
       <div
-        style={{ display: "flex", alignItems: "flex-start", width: "200%", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y", userSelect: "none" }}
+        style={{ display: "flex", alignItems: "stretch", width: "200%", minHeight: "calc(100dvh - 180px)", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y", userSelect: "none" }}
         onPointerDown={onCarouselDown}
         onPointerMove={(e) => {
           // Track du geste pour detection horizontal swipe explicite
