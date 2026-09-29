@@ -4696,43 +4696,48 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      {/* Layout compact type carte-par-user avec contour (comme dans le
-          Classement complet), limite a 20. Tap = ouvre classement complet. */}
-      <div className="flex flex-col gap-1.5 mb-6">
-        {homeLeaderboard.length === 0 ? (
-          <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
-        ) : (
-          homeLeaderboard.slice(0, 20).map((u, i) => {
-            const rankLogo = getUserRank(u.points || 0);
-            const logoSize = 18;
-            const isUnranked = rankLogo.name === "Unranked";
-            const rankColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#888";
-            const isMe = profile && u.id === profile.userId;
-            return (
-              <button
-                key={u.id}
-                onClick={() => setActiveTab("classement")}
-                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2"
-                style={{
-                  textAlign: "left",
-                  background: isMe ? "#141414" : "#101010",
-                  border: isMe ? "1px solid #CCF71D44" : "1px solid #262626",
-                  cursor: "pointer",
-                }}
-              >
-                <span className="font-black shrink-0" style={{ color: rankColor, fontSize: "13px", width: 22, textAlign: "center" }}>{i + 1}</span>
-                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: isMe ? "1px solid #CCF71D" : "1px solid #2a2a2a" }}>
-                  {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={13} color="#555" />}
-                </div>
-                <span className="flex-1 truncate" style={{ color: isMe ? "#fff" : "#ccc", fontSize: "13px", fontWeight: 700 }}>{u.pseudo}</span>
-                {!isUnranked && rankLogo.logo && (
-                  <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} />
+      {/* Ancien style: top 3 h24 (toujours 3 slots) avec avatar + pseudo +
+          medal color (or/argent/bronze). Slots vides quand < 3 users. */}
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
+        {[0, 1, 2].map((i) => {
+          const user = homeLeaderboard[i];
+          const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+          const isMe = user && profile && user.id === profile.userId;
+          return (
+            <div
+              key={i}
+              onClick={() => user && setActiveTab("classement")}
+              className="flex items-center justify-between px-4 py-3"
+              style={{
+                borderBottom: i < 2 ? "1px solid #2a2a2a" : "none",
+                position: "relative", overflow: "hidden",
+                background: user && user.equipped_banner
+                  ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
+                  : "transparent",
+                cursor: user ? "pointer" : "default",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: `${rankColors[i]}18`, color: rankColors[i], fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
+                {user ? (
+                  user.avatar ? (
+                    <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `2px solid ${rankColors[i]}33` }} />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <User size={14} color="#555" />
+                    </div>
+                  )
+                ) : (
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.4 }}>
+                    <User size={14} color="#444" />
+                  </div>
                 )}
-                <span className="shrink-0" style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "13px", fontWeight: 800, minWidth: 42, textAlign: "right" }}>{u.points || 0}<span style={{ color: "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span></span>
-              </button>
-            );
-          })
-        )}
+                <span style={{ color: user ? (isMe ? "#CCF71D" : "#ccc") : "#555", fontSize: "13px", fontWeight: user ? 600 : 500 }}>{user ? (user.pseudo || user.username || "?") : "—"}</span>
+              </div>
+              <span style={{ color: user ? rankColors[i] : "#555", fontSize: "12px", fontWeight: 700 }}>{user ? (user.points || 0) : 0} pts</span>
+            </div>
+          );
+        })}
       </div>
 
       <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-3">{T.calendarLabel}</p>
