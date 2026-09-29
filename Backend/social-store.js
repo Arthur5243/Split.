@@ -58,6 +58,12 @@ try { db.exec(`ALTER TABLE users ADD COLUMN pseudo_last_changed_at TEXT`); } cat
 // via /api/admin/force-wipe. Le frontend detecte au boot que wipe_at > sa
 // derniere valeur locale, wipe tout localStorage split_* et reload.
 try { db.exec(`ALTER TABLE users ADD COLUMN wipe_at TEXT`); } catch {}
+// Stats de paris (calcul cote client, pousse via /api/social/bet-stats).
+// Sert a afficher le bloc "bons paris / paris exacts / total" sur le profil
+// visite par un autre user (spectator view). Update-only.
+try { db.exec(`ALTER TABLE users ADD COLUMN bets_correct INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN bets_exact INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN bets_total INTEGER DEFAULT 0`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
@@ -211,6 +217,18 @@ export function getLeaderboard() {
 
 export function addXp(userId, amount) {
   stmts.addXp.run(amount, userId);
+}
+
+// Ecrase les stats de paris pour un user. Frontend appelle ceci a chaque
+// recalcul de profileStats — le total ne peut que monter en pratique, mais
+// on prend la valeur donnee (idempotent, evite les incoherences).
+const setBetStatsStmt = db.prepare(`
+  UPDATE users
+  SET bets_correct = ?, bets_exact = ?, bets_total = ?
+  WHERE id = ?
+`);
+export function setBetStats(userId, correct, exact, total) {
+  setBetStatsStmt.run(correct | 0, exact | 0, total | 0, userId);
 }
 
 export function setXpByPseudo(pseudo, xp) {

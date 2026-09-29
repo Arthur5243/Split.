@@ -21,6 +21,7 @@ import {
   getReferralCount,
   getReferrals,
   cleanupOldAccounts,
+  setBetStats,
 } from "./social-store.js";
 
 const router = Router();
@@ -113,6 +114,15 @@ router.post("/api/social/xp", (req, res) => {
   addXp(userId, amount);
   const user = getUser(userId);
   res.json({ ok: true, xp: user?.xp || 0 });
+});
+
+// Push stats de paris (calcul cote client) pour que les autres users voient
+// bons paris / paris exacts / total quand ils visitent un profil.
+router.post("/api/social/bet-stats", (req, res) => {
+  const { userId, correct, exact, total } = req.body;
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  setBetStats(userId, correct || 0, exact || 0, total || 0);
+  res.json({ ok: true });
 });
 
 setXpByPseudo("ggez", 99999);

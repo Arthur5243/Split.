@@ -4630,7 +4630,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
         {top3.length === 0 ? (
           <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
         ) : (
@@ -4665,7 +4665,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       </div>
 
       <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }} className="mb-3">{T.calendarLabel}</p>
-      <button onClick={onOpenCalendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
+      <button onClick={onOpenCalendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
         <span className="flex items-center gap-3">
           <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
             <CalendarDays size={18} color="#CCF71D" />
@@ -4677,7 +4677,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         </span>
         <ChevronRight size={18} color="#666" />
       </button>
-      <button onClick={onOpenCs2Calendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#1e1e1e", border: "1px solid #333" }}>
+      <button onClick={onOpenCs2Calendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
         <span className="flex items-center gap-3">
           <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
             <CalendarDays size={18} color="#3B82F6" />
@@ -8932,6 +8932,26 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px" }}>{rank.label}</p>
         </div>
 
+        {/* Stats paris — visibles pour tous les visiteurs (donnees stockees
+            cote backend, poussees par le proprietaire du compte au fil de ses
+            pronos, via POST /api/social/bet-stats). */}
+        {(su.bets_total > 0 || su.bets_correct > 0) && (
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <div style={{ background: "#161616", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+              <p style={{ color: "#CCF71D", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{su.bets_exact || 0}</p>
+              <p style={{ color: "#888", fontSize: 9, fontWeight: 700, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileExactBets || "Paris exacts"}</p>
+            </div>
+            <div style={{ background: "#161616", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+              <p style={{ color: "#7ec850", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{su.bets_correct || 0}</p>
+              <p style={{ color: "#888", fontSize: 9, fontWeight: 700, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileCorrectBets || "Bons paris"}</p>
+            </div>
+            <div style={{ background: "#161616", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+              <p style={{ color: "#fff", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{su.bets_total || 0}</p>
+              <p style={{ color: "#888", fontSize: 9, fontWeight: 700, marginTop: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileTotalBets || "Total paris"}</p>
+            </div>
+          </div>
+        )}
+
         {specInfoPopup && (
           <>
             <div onClick={() => setSpecInfoPopup(false)} style={{ position: "fixed", inset: 0, zIndex: 50, background: "rgba(0,0,0,0.6)" }} />
@@ -9116,7 +9136,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const uPseudoColor = isMe ? "#fff" : "#ccc";
                   const rowBg = uBanner
                     ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
-                    : (isMe ? "#141414" : "#0e0e0e");
+                    : (isMe ? "#141414" : "transparent");
                   return (
                     <button key={u.id} onClick={() => {
                       if (isMe) { setProfileView(true); return; }
@@ -9127,7 +9147,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={{
                       position: "relative", overflow: "hidden", textAlign: "left",
                       background: rowBg,
-                      border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "1px solid #1a1a1a"),
+                      border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "none"),
                     }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
                       <div className="flex flex-col items-center shrink-0" style={{ position: "relative", width: 42 }}>
@@ -11167,7 +11187,10 @@ export default function ClutchApp() {
     }
 
     load();
-    const interval = setInterval(load, 60000);
+    // 30s: cache backend est deja 30s cote /api/valorant-*, donc pas de hit
+    // PandaScore supplementaire; on gagne juste 2x en reactivite pour les
+    // scores live/finished.
+    const interval = setInterval(load, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -11258,7 +11281,7 @@ export default function ClutchApp() {
     }
 
     loadCS2();
-    const interval = setInterval(loadCS2, 60000);
+    const interval = setInterval(loadCS2, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -11328,7 +11351,7 @@ export default function ClutchApp() {
       }
     }
     loadRL();
-    const interval = setInterval(loadRL, 60000);
+    const interval = setInterval(loadRL, 30000);
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
@@ -11525,6 +11548,23 @@ export default function ClutchApp() {
     }
     return { exact, bon, parie, history };
   }, [settledMatchIds, predictions, resultsMatches, cs2ResultsMatches, isCaffioraDemo]);
+
+  // Pousse les stats de paris (bons/exacts/total) au backend a chaque
+  // changement pour que le bloc soit visible sur le profil visite par
+  // les autres users (spectator view). Debounce 2s pour eviter le spam.
+  useEffect(() => {
+    if (!profile?.userId || isCaffioraDemo) return;
+    const { exact, bon, parie } = profileStats;
+    if (!parie) return;
+    const t = setTimeout(() => {
+      fetch(API_BASE + "/api/social/bet-stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: profile.userId, correct: bon, exact, total: parie }),
+      }).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [profile?.userId, profileStats.exact, profileStats.bon, profileStats.parie, isCaffioraDemo]);
 
   // Cache logo par équipe (nom complet normalisé -> URL), construit à partir
   // de TOUS les matchs déjà chargés (à venir/live/résultats). Sert de secours
