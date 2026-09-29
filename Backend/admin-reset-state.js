@@ -187,5 +187,5 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
-  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users ready");
+  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users ready (v2)");
 }
