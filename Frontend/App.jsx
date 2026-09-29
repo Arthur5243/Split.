@@ -2599,26 +2599,40 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
           </div>
         ) : running ? (
           <div className="flex flex-col items-center">
-            {liveRevealed ? (() => {
-              let s1 = 0, s2 = 0;
-              if (hasLiveScores) {
-                for (const m of match.live_map_scores) {
-                  const hi = Math.max(m.score1, m.score2);
-                  const diff = Math.abs(m.score1 - m.score2);
-                  if (hi >= 13 && diff >= 2) { if (m.score1 > m.score2) s1++; else s2++; }
-                }
+            {(() => {
+              const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
+              // CS2: pas de reveal live, juste le badge LIVE fige, sans score
+              // (demande utilisateur — l'affichage live map par map de Cito
+              // etait trop imprevisible pour etre utile en live).
+              if (gt === "cs2") {
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                    <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
+                  </div>
+                );
               }
-              return (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: justRevealedL ? "scoreReveal 0.3s ease-out" : "none" }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-                  <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
-                </div>
+              return liveRevealed ? (() => {
+                let s1 = 0, s2 = 0;
+                if (hasLiveScores) {
+                  for (const m of match.live_map_scores) {
+                    const hi = Math.max(m.score1, m.score2);
+                    const diff = Math.abs(m.score1 - m.score2);
+                    if (hi >= 13 && diff >= 2) { if (m.score1 > m.score2) s1++; else s2++; }
+                  }
+                }
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: justRevealedL ? "scoreReveal 0.3s ease-out" : "none" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                    <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
+                  </div>
+                );
+              })() : (
+                <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); setJustRevealedL(true); persistReveal("l"); }} style={{ background: "#242424", border: "1px solid rgba(255,59,59,0.5)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
+                </button>
               );
-            })() : (
-              <button onClick={(e) => { e.stopPropagation(); setLiveRevealed(true); setJustRevealedL(true); persistReveal("l"); }} style={{ background: "#242424", border: "1px solid rgba(255,59,59,0.5)", borderRadius: 8, padding: "3px 12px", cursor: "pointer", display: "flex", alignItems: "center" }}>
-                <span style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.06em" }}>LIVE</span>
-              </button>
-            )}
+            })()}
           </div>
         ) : (
           <span style={{ color: hasBg ? "#fff" : "#555", fontSize: "11px", fontWeight: 700, ...txtStW }}>VS</span>
@@ -2850,37 +2864,74 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
 
           {expanded && !tbd && (
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
-              {running && hasLiveScores && (
-                <div className="flex flex-col gap-2">
-                  {/* Design identique à la vue "match terminé" (mêmes classes, mêmes tailles). */}
-                  {match.live_map_scores.map((lm, i) => {
-                    const gamePred = (pred && pred.games && pred.games[i]) || null;
-                    return (
-                      <div key={i} className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
-                          {lm.map && (
-                            <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{lm.map}</span>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                            {lm.score1 != null ? lm.score1 : 0} - {lm.score2 != null ? lm.score2 : 0}
-                          </span>
-                          {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
-                            <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
-                              {T.yourBet} : {gamePred.a}-{gamePred.b}
+              {running && (() => {
+                const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
+                // CS2: on masque tout le rendu maps en live (demande user).
+                // Affichage minimal juste pour indiquer "en cours, prono impossible".
+                if (gt === "cs2") {
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 0" }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                      <span style={{ color: "#ff3b3b", fontSize: 12, fontWeight: 800, fontStyle: "italic", letterSpacing: "0.04em" }}>MATCH EN COURS</span>
+                      <span style={{ color: "#666", fontSize: 11, fontWeight: 600 }}>· pronostic impossible</span>
+                    </div>
+                  );
+                }
+                // Valorant/RL: rendu live avec un design "en direct" bien
+                // marque (bordure rouge, badge LIVE par map en cours, pulse)
+                // + le pronostic du joueur affiche a cote pour chaque map.
+                if (!hasLiveScores) return null;
+                return (
+                  <div className="flex flex-col gap-2">
+                    {match.live_map_scores.map((lm, i) => {
+                      const gamePred = (pred && pred.games && pred.games[i]) || null;
+                      const s1 = lm.score1 != null ? lm.score1 : 0;
+                      const s2 = lm.score2 != null ? lm.score2 : 0;
+                      const hi = Math.max(s1, s2);
+                      const diff = Math.abs(s1 - s2);
+                      const mapDone = hi >= 13 && diff >= 2;
+                      const mapLive = !mapDone && (s1 > 0 || s2 > 0);
+                      return (
+                        <div key={i} className="flex items-center justify-between" style={{
+                          background: mapLive ? "rgba(255,59,59,0.06)" : "transparent",
+                          border: mapLive ? "1px solid rgba(255,59,59,0.35)" : "1px solid #1e1e1e",
+                          borderRadius: 8,
+                          padding: "6px 10px",
+                        }}>
+                          <div className="flex items-center gap-1.5">
+                            <span style={{ color: mapLive ? "#ff3b3b" : "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
+                            {lm.map && (
+                              <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{lm.map}</span>
+                            )}
+                            {mapLive && (
+                              <span className="flex items-center gap-1" style={{ background: "rgba(255,59,59,0.15)", padding: "1px 6px", borderRadius: 4 }}>
+                                <span style={{ width: 4, height: 4, borderRadius: 9999, background: "#ff3b3b", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                                <span style={{ color: "#ff3b3b", fontSize: 8, fontWeight: 900, letterSpacing: "0.06em" }}>LIVE</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span style={{ color: mapLive ? "#ff3b3b" : "#fff", fontSize: "13px", fontWeight: 800, fontStyle: mapLive ? "italic" : "normal" }}>
+                              {s1} - {s2}
                             </span>
-                          )}
+                            {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                              <span style={{ color: "#CCF71D", fontSize: "9px", fontWeight: 700, marginTop: "1px", background: "rgba(204,247,29,0.08)", padding: "1px 5px", borderRadius: 3 }}>
+                                {T.yourBet || "Ton pari"} : {gamePred.a}-{gamePred.b}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {running && !hasLiveScores && (
-                <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              {running && (() => {
+                const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
+                if (gt === "cs2") return null;
+                if (hasLiveScores) return null;
+                return <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>;
+              })()}
               {!running && games.length === 0 ? (
                 <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.seriesHint}</p>
               ) : !running && (
@@ -4539,7 +4590,6 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       if (Array.isArray(d)) setHomeLeaderboard(d);
     }).catch(() => {});
   }, []);
-  const top3 = homeLeaderboard.slice(0, 3);
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -4630,35 +4680,54 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
-        {top3.length === 0 ? (
+      {/* Meme rendu que ClassementTab: tous les users listes (pas de top3),
+          meme style avec avatar/badge/pseudo/rank/pts, transparent (sans bg),
+          affiche tout le monde meme a 0 pts. */}
+      <div className="flex flex-col gap-2 mb-6">
+        {homeLeaderboard.length === 0 ? (
           <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
         ) : (
-          [0, 1, 2].map((i) => {
-            const user = top3[i];
-            if (!user) return null;
-            const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
+          homeLeaderboard.map((u, i) => {
+            const uBanner = u.equipped_banner || "";
+            const uTitle = u.equipped_title || "";
+            const uBadge = u.equipped_badge || "";
+            const uBadgeEmoji = u.equipped_badge_emoji || "";
+            const rankLogo = getUserRank(u.points || 0);
+            const logoSize = rankLogo.name === "Immortal" ? 24 : 20;
+            const isUnranked = rankLogo.name === "Unranked";
+            const rowBg = uBanner
+              ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
+              : "transparent";
             return (
-              <div key={i} className="flex items-center justify-between px-4 py-3" style={{
-                borderBottom: i < top3.length - 1 ? "1px solid #2a2a2a" : "none",
-                position: "relative", overflow: "hidden",
-                background: user.equipped_banner
-                  ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
-                  : "transparent",
-              }}>
-                <div className="flex items-center gap-3">
-                  <div className="rounded-full flex items-center justify-center" style={{ width: 24, height: 24, background: `${rankColors[i]}18`, color: rankColors[i], fontSize: "11px", fontWeight: 900 }}>{i + 1}</div>
-                  {user.avatar ? (
-                    <img src={user.avatar} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", border: `2px solid ${rankColors[i]}33` }} />
-                  ) : (
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <User size={14} color="#555" />
-                    </div>
-                  )}
-                  <span style={{ color: "#ccc", fontSize: "13px", fontWeight: 600 }}>{user.pseudo || user.username || "?"}</span>
+              <button
+                key={u.id}
+                onClick={() => setActiveTab("classement")}
+                className="flex items-center gap-2.5 rounded-2xl px-3 py-2"
+                style={{
+                  position: "relative", overflow: "hidden", textAlign: "left",
+                  background: rowBg,
+                  border: uBanner ? "1px solid rgba(255,255,255,0.18)" : "none",
+                }}
+              >
+                <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
+                <div className="flex flex-col items-center shrink-0" style={{ width: 42 }}>
+                  <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32, background: "#1e1e1e", border: uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
+                    {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                  </div>
+                  <span className="font-bold truncate" style={{ fontSize: "9px", color: uBanner ? "#eee" : "#ccc", textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}</span>
                 </div>
-                <span style={{ color: rankColors[i], fontSize: "12px", fontWeight: 700 }}>{user.points || 0} pts</span>
-              </div>
+                <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                  {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
+                  {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none" }}>{uTitle}</span>}
+                </div>
+                {!isUnranked && rankLogo.logo ? (
+                  <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} />
+                ) : null}
+                <div className="text-right shrink-0">
+                  <span style={{ color: "#ddd", fontSize: "15px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.points || 0}</span>
+                  <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                </div>
+              </button>
             );
           })
         )}
@@ -9119,11 +9188,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 merged.sort((a, b) => b.displayPts - a.displayPts);
                 const filtered = merged;
                 if (filtered.length === 0) return null;
-                const PAGE_SIZE = 50;
-                const top150 = filtered.slice(0, 150);
-                const totalPages = Math.min(3, Math.ceil(top150.length / PAGE_SIZE));
+                // Pagination retiree: on rend tout le classement d'un coup
+                // (backend limit deja capped a 500). Le user voit toute la
+                // liste des l'ouverture, plus de clic pagination.
+                const allItems = filtered;
                 const myRankIdx = filtered.findIndex(u => u.id === profile.userId);
-                const meInTop = myRankIdx >= 0 && myRankIdx < 150;
+                const meInTop = myRankIdx >= 0;
                 function renderRow(u, i) {
                   const isMe = u.id === profile.userId;
                   const rankLogo = getUserRank(u.points);
@@ -9176,26 +9246,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     </button>
                   );
                 }
-                const pageItems = top150.slice(lbPage * PAGE_SIZE, (lbPage + 1) * PAGE_SIZE);
-                const meOnThisPage = myRankIdx >= lbPage * PAGE_SIZE && myRankIdx < (lbPage + 1) * PAGE_SIZE;
-                const showFixedBar = !meInTop || (!meOnThisPage && myRankIdx >= 0);
                 return (
                   <>
-                    {totalPages > 1 && (
-                      <div style={{ display: "flex", gap: 8, marginBottom: 12, justifyContent: "center" }}>
-                        {Array.from({ length: totalPages }, (_, p) => (
-                          <button key={p} onClick={() => setLbPage(p)} style={{ padding: "6px 16px", borderRadius: 8, fontSize: 12, fontWeight: 800, background: lbPage === p ? "#CCF71D" : "#1a1a1a", color: lbPage === p ? "#000" : "#888", border: lbPage === p ? "none" : "1px solid #2a2a2a", cursor: "pointer" }}>
-                            {p * PAGE_SIZE + 1}–{Math.min((p + 1) * PAGE_SIZE, top150.length)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {pageItems.map((u, i) => renderRow(u, lbPage * PAGE_SIZE + i))}
-                    {showFixedBar && (
-                      <div style={{ position: "sticky", bottom: 0, left: 0, right: 0, marginTop: 8, marginLeft: -16, marginRight: -16, padding: "8px 16px", background: "rgba(10,10,10,0.95)", backdropFilter: "blur(8px)", borderTop: "1px solid #262626", zIndex: 10 }}>
-                        {renderRow({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, displayPts: score }, myRankIdx >= 0 ? myRankIdx : filtered.length - 1)}
-                      </div>
-                    )}
+                    {allItems.map((u, i) => renderRow(u, i))}
                   </>
                 );
               })()}
@@ -10447,9 +10500,7 @@ function AuthScreen({ onAuth }) {
           <div style={{ flex: 1, height: 1, background: "#222" }} />
         </div>
 
-        {/* Connexion Google desactivee temporairement — cf reset comptes.
-            Reactivation: retirer le "false &&" ci-dessous. */}
-        {false && import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
+        {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
           <>
             {isIOS ? (
               <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
@@ -10611,21 +10662,28 @@ export default function ClutchApp() {
             return;
           }
           if (!r.ok) return;
-          // Force-wipe check: si le backend a set wipe_at et qu'il est plus recent
-          // que notre dernier wipe local → purge TOUT le state client + reload
+          // Wipe checks: (1) force-wipe explicite via wipe_at, (2) desync
+          // detecte (serveur a xp=0/points=0 mais local a des valeurs > 0 →
+          // le row a ete reset/recree cote serveur).
           try {
             const data = await r.json();
             const serverWipe = data?.wipe_at;
             const localWipe = localStorage.getItem("split_last_wipe_at") || "";
-            if (serverWipe && serverWipe > localWipe) {
+            const forceWipe = serverWipe && serverWipe > localWipe;
+            const serverXp = Number(data?.xp || 0);
+            const serverPts = Number(data?.points || 0);
+            const localXp = Number(localStorage.getItem("split_xp") || 0);
+            const localPts = Number(localStorage.getItem("split_points_total") || 0);
+            const desyncWipe = serverXp === 0 && serverPts === 0 && (localXp > 0 || localPts > 0);
+            if (forceWipe || desyncWipe) {
               const freshToken = localStorage.getItem("split_token");
               const freshAuth = localStorage.getItem("split_auth_user");
               resetClientState();
               if (freshToken) localStorage.setItem("split_token", freshToken);
               if (freshAuth) localStorage.setItem("split_auth_user", freshAuth);
-              localStorage.setItem("split_last_wipe_at", serverWipe);
+              if (serverWipe) localStorage.setItem("split_last_wipe_at", serverWipe);
               localStorage.setItem("split_migration_seen", "1");
-              console.log("[force-wipe] server wipe_at=" + serverWipe + " > local, reload");
+              console.log(`[wipe] reason=${forceWipe ? "force" : "desync"} serverXp=${serverXp} serverPts=${serverPts} localXp=${localXp} localPts=${localPts}, reload`);
               window.location.reload();
             }
           } catch {}
@@ -11921,17 +11979,21 @@ export default function ClutchApp() {
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {
-            // Si l'user vient d'une migration (popup active) OU si un ancien
-            // état résiduel est présent (points, palier, inventory...),
-            // on wipe TOUT le client-state avant d'accepter la nouvelle session,
-            // puis reload complet → l'app redémarre fresh sur le nouveau compte.
-            const migrationPending = localStorage.getItem("split_migration_pending") === "1";
-            const hasResidual = ["split_points_total", "split_xp", "split_inventory", "split_streak", "split_quests", "split_claimed_tiers"].some((k) => localStorage.getItem(k));
-            if (migrationPending || hasResidual) {
+            // Wipe TOUT le state client avant d'accepter la session, sauf :
+            // - user id STRICTEMENT identique a celui deja en local (re-login
+            //   sur le meme compte apres refresh) → on garde le state
+            // Autrement (nouveau compte, changement de compte, migration) →
+            // purge totale + reload. Ca vire aussi les paliers/xp/inventaire/
+            // backgrounds equipes/quetes qui trainaient d'un ancien compte.
+            const prevAuthRaw = localStorage.getItem("split_auth_user");
+            let prevId = null;
+            try { prevId = prevAuthRaw ? JSON.parse(prevAuthRaw).id : null; } catch {}
+            const sameAccount = prevId && user.id && prevId === user.id;
+            if (!sameAccount) {
               const freshToken = localStorage.getItem("split_token");
               const freshAuth = localStorage.getItem("split_auth_user");
               resetClientState();
-              // Ré-écrit les data auth fraîches que AuthScreen vient de poser
+              // Re-ecrit auth fraiche que AuthScreen vient de poser
               if (freshToken) localStorage.setItem("split_token", freshToken);
               if (freshAuth) localStorage.setItem("split_auth_user", freshAuth);
               localStorage.setItem("split_migration_seen", "1");

@@ -113,7 +113,7 @@ const stmts = {
       updated_at = datetime('now')
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
-  searchUsers: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE pseudo_lower LIKE ? AND id != ? AND profile_ready = 1 LIMIT 20`),
+  searchUsers: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE pseudo_lower LIKE ? AND id != ? AND profile_ready = 1 AND pseudo_lower NOT LIKE '__wiped_%' LIMIT 20`),
   follow: db.prepare(`INSERT OR IGNORE INTO follows (follower_id, followed_id) VALUES (?, ?)`),
   unfollow: db.prepare(`DELETE FROM follows WHERE follower_id = ? AND followed_id = ?`),
   getFollowing: db.prepare(`
@@ -139,7 +139,7 @@ const stmts = {
     WHERE pv.viewed_id = ? AND pv.viewer_id != ?
     ORDER BY pv.viewed_at DESC LIMIT 10
   `),
-  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner FROM users WHERE profile_ready = 1 ORDER BY points DESC, pseudo ASC LIMIT 100`),
+  getLeaderboard: db.prepare(`SELECT id, pseudo, avatar, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, bets_correct, bets_exact, bets_total FROM users WHERE profile_ready = 1 AND pseudo_lower NOT LIKE '__wiped_%' ORDER BY points DESC, pseudo ASC LIMIT 500`),
   addXp: db.prepare(`UPDATE users SET xp = xp + ? WHERE id = ?`),
   setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };

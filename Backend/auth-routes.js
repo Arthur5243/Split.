@@ -112,7 +112,7 @@ router.get("/api/auth/me", (req, res) => {
   if (!payload) return res.status(401).json({ error: "Token invalide" });
   const user = getUser(payload.sub);
   if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
-  res.json({ id: user.id, pseudo: user.pseudo, email: user.email, avatar: user.avatar, provider: user.provider, wipe_at: user.wipe_at || null });
+  res.json({ id: user.id, pseudo: user.pseudo, email: user.email, avatar: user.avatar, provider: user.provider, wipe_at: user.wipe_at || null, xp: user.xp || 0, points: user.points || 0, created_at: user.created_at || null });
 });
 
 router.patch("/api/auth/pseudo", authMiddleware, (req, res) => {
