@@ -4696,11 +4696,9 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      {/* Meme users que ClassementTab, layout compact type liste horizontale
-          (rank + avatar rond + pseudo + rank badge + pts). Pas d'affichage
-          pseudo-en-dessous-avatar (trop haut), pas de banner background
-          (trop lourd sur l'accueil). Tap = ouvre classement complet. */}
-      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #262626" }}>
+      {/* Layout compact type carte-par-user avec contour (comme dans le
+          Classement complet), limite a 20. Tap = ouvre classement complet. */}
+      <div className="flex flex-col gap-1.5 mb-6">
         {homeLeaderboard.length === 0 ? (
           <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
         ) : (
@@ -4709,29 +4707,28 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
             const logoSize = 18;
             const isUnranked = rankLogo.name === "Unranked";
             const rankColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#888";
+            const isMe = profile && u.id === profile.userId;
             return (
               <button
                 key={u.id}
                 onClick={() => setActiveTab("classement")}
-                className="w-full flex items-center gap-2.5 px-3 py-2"
+                className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2"
                 style={{
                   textAlign: "left",
-                  background: "transparent",
-                  borderBottom: i < Math.min(19, homeLeaderboard.length - 1) ? "1px solid #232323" : "none",
-                  border: "none",
-                  borderTop: "none", borderLeft: "none", borderRight: "none",
+                  background: isMe ? "#141414" : "#101010",
+                  border: isMe ? "1px solid #CCF71D44" : "1px solid #262626",
                   cursor: "pointer",
                 }}
               >
                 <span className="font-black shrink-0" style={{ color: rankColor, fontSize: "13px", width: 22, textAlign: "center" }}>{i + 1}</span>
-                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: isMe ? "1px solid #CCF71D" : "1px solid #2a2a2a" }}>
                   {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={13} color="#555" />}
                 </div>
-                <span className="flex-1 truncate" style={{ color: "#ccc", fontSize: "13px", fontWeight: 700 }}>{u.pseudo}</span>
+                <span className="flex-1 truncate" style={{ color: isMe ? "#fff" : "#ccc", fontSize: "13px", fontWeight: 700 }}>{u.pseudo}</span>
                 {!isUnranked && rankLogo.logo && (
                   <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} />
                 )}
-                <span className="shrink-0" style={{ color: "#ddd", fontSize: "13px", fontWeight: 800, minWidth: 42, textAlign: "right" }}>{u.points || 0}<span style={{ color: "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span></span>
+                <span className="shrink-0" style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "13px", fontWeight: 800, minWidth: 42, textAlign: "right" }}>{u.points || 0}<span style={{ color: "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span></span>
               </button>
             );
           })
