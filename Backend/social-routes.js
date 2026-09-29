@@ -125,7 +125,7 @@ router.post("/api/social/bet-stats", (req, res) => {
   res.json({ ok: true });
 });
 
-setXpByPseudo("ggez", 99999);
+// Retire: setXpByPseudo("ggez", 99999); boostait un compte test au boot.
 
 router.get("/api/referral/:userId", (req, res) => {
   const code = ensureReferralCode(req.params.userId);

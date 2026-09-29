@@ -10974,54 +10974,9 @@ export default function ClutchApp() {
         if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
       }).catch(() => {});
     }
-    const adminPseudos = ["ggez", "sayzox"];
-    if (adminPseudos.includes(profile?.pseudo?.toLowerCase()) && !localStorage.getItem("split_admin_v2_" + profile.pseudo.toLowerCase())) {
-      localStorage.setItem("split_admin_v2_" + profile.pseudo.toLowerCase(), "1");
-      const adminXp = 50000;
-      setUserXp(adminXp); saveXp(adminXp);
-      const allTiers = [];
-      for (let t = 1; t <= 100; t++) allTiers.push(String(t));
-      localStorage.setItem("split_claimed_tiers", JSON.stringify(allTiers));
-      const adminInv = [
-        { emoji: "🏷️", name: "Rookie", type: "title", rarity: "commun" },
-        { emoji: "🏷️", name: "Débutant", type: "title", rarity: "commun" },
-        { emoji: "🏷️", name: "Challenger", type: "title", rarity: "commun" },
-        { emoji: "🏷️", name: "Vétéran", type: "title", rarity: "rare" },
-        { emoji: "🏷️", name: "Expert", type: "title", rarity: "rare" },
-        { emoji: "🏷️", name: "GOD Tier", type: "title", rarity: "legendaire" },
-        { emoji: "🏷️", name: "GOAT", type: "title", rarity: "legendaire" },
-        { emoji: "🖼️", name: "Bannière Setup", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
-        { emoji: "🖼️", name: "Bannière Sunset", type: "banner", bannerImage: "/banner-10.png", rarity: "commun" },
-        { emoji: "🖼️", name: "Bannière Play Grind", type: "banner", bannerImage: "/banner-1.png", rarity: "rare" },
-        { emoji: "🖼️", name: "Bannière Speed", type: "banner", bannerImage: "/banner-5.png", rarity: "legendaire" },
-        { emoji: "🖼️", name: "Bannière Diamant", type: "banner", bannerImage: "/banner-2.png", rarity: "legendaire" },
-        { emoji: "🎴", name: "Fond Match Néon", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
-        { emoji: "🎴", name: "Fond Match Fire", type: "match_bg", matchBgImage: "/match-bg-2.png", rarity: "commun" },
-        { emoji: "🎴", name: "Fond Match Galaxy", type: "match_bg", matchBgImage: "/match-bg-3.png", rarity: "rare" },
-        { emoji: "🎴", name: "Fond Match Storm", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
-        { emoji: "🎴", name: "Fond Match Cyber", type: "match_bg", matchBgImage: "/match-bg-5.png", rarity: "epique" },
-        { emoji: "🎴", name: "Fond Match Aurora", type: "match_bg", matchBgImage: "/match-bg-6.png", rarity: "epique" },
-        { emoji: "🎴", name: "Fond Match Blaze", type: "match_bg", matchBgImage: "/match-bg-7.png", rarity: "legendaire" },
-        { emoji: "🎴", name: "Fond Match Inferno", type: "match_bg", matchBgImage: "/match-bg-8.png", rarity: "legendaire" },
-        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
-        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
-        { emoji: "🔥", name: "Boost ×2", type: "boost", rarity: "rare" },
-        { emoji: "⭐", name: "Boost XP +500", type: "xp_bonus", xpAmount: 500, rarity: "rare" },
-      ];
-      localStorage.setItem("split_inventory", JSON.stringify(adminInv));
-      const pseudoLow = profile.pseudo.toLowerCase();
-      const adminBgs = [
-        { name: "Fond Match Néon", image: "/match-bg-1.png", game: "valo", scope: "all" },
-        { name: "Fond Match Galaxy", image: "/match-bg-3.png", game: "cs2", scope: "all" },
-        { name: "Fond Match Cyber", image: "/match-bg-5.png", game: "rl", scope: "all" },
-      ];
-      localStorage.setItem("split_equipped_match_bg", JSON.stringify(adminBgs));
-      localStorage.setItem("split_equipped_title", "GOD Tier");
-      localStorage.setItem("split_equipped_banner", "Bannière Speed");
-      localStorage.setItem("split_equipped_banner_color", "/banner-5.png");
-      setTimeout(() => setXpPopup(adminXp), 800);
-      if (profile.userId) fetch(API_BASE + "/api/social/xp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, amount: adminXp }) }).catch(() => {});
-    }
+    // Auto-boost admin retire: donnait 50000 xp + tous tiers + inventaire
+    // complet au premier boot pour pseudos ggez/sayzox. Reactive uniquement
+    // depuis un bouton settings protege si besoin.
   }, []);
 
   const [scoreCats, setScoreCats] = useState(["tout"]);

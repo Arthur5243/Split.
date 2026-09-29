@@ -92,7 +92,7 @@ db.exec(`
 const stmts = {
   upsertUser: db.prepare(`
     INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, profile_ready, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, @points, @points_valo, @points_cs2, @points_rl, @xp, @pseudo_color, @equipped_title, @equipped_banner, 1, datetime('now'))
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, 0, 0, 0, 0, 0, @pseudo_color, @equipped_title, @equipped_banner, 1, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -101,16 +101,14 @@ const stmts = {
       fav_valo = @fav_valo,
       fav_cs2 = @fav_cs2,
       fav_rl = @fav_rl,
-      points = @points,
-      points_valo = @points_valo,
-      points_cs2 = @points_cs2,
-      points_rl = @points_rl,
-      xp = CASE WHEN @xp > 0 THEN @xp ELSE users.xp END,
       pseudo_color = COALESCE(@pseudo_color, users.pseudo_color),
       equipped_title = COALESCE(@equipped_title, users.equipped_title),
       equipped_banner = COALESCE(@equipped_banner, users.equipped_banner),
       profile_ready = 1,
       updated_at = datetime('now')
+    /* NOTE: points/xp/points_valo/cs2/rl JAMAIS mis a jour ici. Ces valeurs
+       viennent uniquement du serveur via /api/social/xp ou du settlement de
+       matches. Sinon un client pourrait injecter des faux xp au boot. */
   `),
   getUser: db.prepare(`SELECT * FROM users WHERE id = ?`),
   searchUsers: db.prepare(`SELECT id, pseudo, avatar, points FROM users WHERE pseudo_lower LIKE ? AND id != ? AND profile_ready = 1 AND pseudo_lower NOT LIKE '__wiped_%' LIMIT 20`),
