@@ -49,7 +49,7 @@ import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
-import { getCitoApiMatch, setCitoHasLiveMatches, bulkImportCitoFinished, getAllCachedFinished } from "./cito-api.js";
+import { getCitoApiMatch, setCitoHasLiveMatches, bulkImportCitoFinished, getAllCachedFinished, fetchOneMatchOnDemand } from "./cito-api.js";
 
 // Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
 // hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
@@ -1258,6 +1258,36 @@ router.post("/api/admin/cs2-bulk-import-cito", async (req, res) => {
     });
   } catch (e) {
     console.error("[cs2-bulk-import-cito]", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Fetch UN seul match Cito et save direct. Test/one-shot pour un match
+// precis. Usage: POST /api/admin/cs2-cito-one-match?key=X&team1=NIP&team2=GamerLegion&date=2026-09-28
+router.post("/api/admin/cs2-cito-one-match", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "forbidden" });
+  const team1 = req.query.team1;
+  const team2 = req.query.team2;
+  const date = req.query.date || null;
+  if (!team1 || !team2) return res.status(400).json({ error: "team1 & team2 requis" });
+  try {
+    const maps = await fetchOneMatchOnDemand(team1, team2, date);
+    if (!maps) return res.json({ ok: false, reason: "aucun match Cito trouve pour ces teams", team1, team2, date });
+    // Match dans la DB par teams
+    const dbMatches = getFullHistoryFlat(500).filter((m) => m.status === "finished");
+    const n1 = (team1 || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const n2 = (team2 || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const hit = dbMatches.find((m) => {
+      const t1 = (m.team1Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const t2 = (m.team2Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const match = (t1.includes(n1) || n1.includes(t1)) && (t2.includes(n2) || n2.includes(t2));
+      const swap = (t1.includes(n2) || n2.includes(t1)) && (t2.includes(n1) || n1.includes(t2));
+      return match || swap;
+    });
+    if (!hit) return res.json({ ok: false, reason: "match Cito trouve mais pas dans notre DB CS2", cito_maps: maps });
+    saveMapScores(hit.id, maps, { force: true });
+    res.json({ ok: true, dbMatchId: hit.id, teams: `${hit.team1Name} vs ${hit.team2Name}`, maps });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

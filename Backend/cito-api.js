@@ -404,11 +404,55 @@ export function startCitoApiWorker() {
     console.log("[cito-api] CITO_API_KEY absent, worker skipped");
     return;
   }
-  console.log(`[cito-api] worker started, poll ${POLL_INTERVAL_MS / 1000}s live + ${FINISHED_POLL_MS / 60000}min finished | ${CITO_API_KEYS.length} token(s) en rotation`);
-  async function loop() {
-    try { await refreshLive(); } catch (e) { console.error("[cito-api] live loop:", e.message); }
-    try { await refreshRecentFinished(); } catch (e) { console.error("[cito-api] finished loop:", e.message); }
-    setTimeout(loop, POLL_INTERVAL_MS);
+  // Polling loop DESACTIVE - Cito API est rate-limitee a ~50 req/jour total
+  // (3 tokens x 500 req/mois). Le polling continu bouffait tout le quota.
+  // Desormais Cito est appele UNIQUEMENT: (1) via endpoint admin bulk-import
+  // one-shot, (2) via fetchOneMatchOnDemand quand un match specifique passe
+  // finished dans le pipeline (declenche 1x par match, cf cs2-routes.js).
+  console.log(`[cito-api] worker STARTED en mode on-demand (polling desactive pour economiser le quota)`);
+}
+
+// Fetch on-demand pour UN seul match (utilise quand un match passe finished
+// dans le pipeline). 1 seule requete Cito par appel. Cible ce match precis
+// par teams. Sauve dans finishedByTeamsCache pour usage suivant.
+export async function fetchOneMatchOnDemand(team1Name, team2Name, dateISO) {
+  if (CITO_API_KEYS.length === 0) return null;
+  try {
+    // On cherche les completed de la journee (ou +/- 1 jour de tolerance)
+    const from = dateISO ? new Date(new Date(dateISO).getTime() - 24 * 3600 * 1000).toISOString().slice(0, 10) : new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const to = dateISO ? new Date(new Date(dateISO).getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+    const url = `${CITO_API_BASE}/cs2/matches?status=completed&from=${from}&to=${to}&limit=50&sort=startsAt&order=desc`;
+    const res = await citoFetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    const n1 = normalize(team1Name);
+    const n2 = normalize(team2Name);
+    const hit = rows.find((m) => {
+      const t1 = normalize(m.team1Name || "");
+      const t2 = normalize(m.team2Name || "");
+      const match = (n1.includes(t1) || t1.includes(n1)) && (n2.includes(t2) || t2.includes(n2));
+      const swap = (n1.includes(t2) || t2.includes(n1)) && (n2.includes(t1) || t1.includes(n2));
+      return match || swap;
+    });
+    if (!hit) return null;
+    const matchId = hit.matchId || hit.id;
+    const maps = await fetchMatchMaps(matchId, hit.team1Id);
+    if (!maps || maps.length === 0) return null;
+    const swap = !normalize(hit.team1Name).includes(n1.slice(0, 3));
+    const mapScores = maps.map((mp) => swap
+      ? { map: mapNameClean(mp.map), score1: mp.score2, score2: mp.score1 }
+      : { map: mapNameClean(mp.map), score1: mp.score1, score2: mp.score2 });
+    finishedByTeamsCache.set(normalize(team1Name) + "|" + normalize(team2Name), {
+      team1: team1Name, team2: team2Name,
+      seriesScore: swap ? { a: hit.team2Score ?? 0, b: hit.team1Score ?? 0 } : { a: hit.team1Score ?? 0, b: hit.team2Score ?? 0 },
+      mapScores,
+      matchId,
+      scrapedAt: Date.now(),
+    });
+    return mapScores;
+  } catch (e) {
+    console.log(`[cito-api] fetchOneMatchOnDemand erreur: ${e.message}`);
+    return null;
   }
-  setTimeout(loop, BOOT_DELAY_MS);
 }
