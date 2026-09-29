@@ -1264,29 +1264,46 @@ router.post("/api/admin/cs2-bulk-import-cito", async (req, res) => {
 
 // Fetch UN seul match Cito et save direct. Test/one-shot pour un match
 // precis. Usage: POST /api/admin/cs2-cito-one-match?key=X&team1=NIP&team2=GamerLegion&date=2026-09-28
+// Les args team1/team2 peuvent etre les noms Cito (longs, ex "Ninjas in
+// Pyjamas") ou les noms courts de notre DB (ex "NIP"): matching bidirectionnel
+// avec substring, acronym (initiales) et Levenshtein-like.
 router.post("/api/admin/cs2-cito-one-match", async (req, res) => {
   if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "forbidden" });
   const team1 = req.query.team1;
   const team2 = req.query.team2;
   const date = req.query.date || null;
   if (!team1 || !team2) return res.status(400).json({ error: "team1 & team2 requis" });
+  const norm = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const acro = (s) => (s || "").split(/[\s\-_.]+/).filter(Boolean).map((w) => w[0]).join("").toLowerCase();
+  const teamsMatch = (a, b) => {
+    const na = norm(a), nb = norm(b);
+    if (!na || !nb) return false;
+    if (na === nb) return true;
+    if (na.includes(nb) || nb.includes(na)) return true;
+    // Acronym: "Ninjas in Pyjamas" → "nip"
+    const acroA = acro(a), acroB = acro(b);
+    if (acroA && acroB && (acroA === nb || acroB === na || acroA === acroB)) return true;
+    if (acroA === nb || acroB === na) return true;
+    return false;
+  };
   try {
     const maps = await fetchOneMatchOnDemand(team1, team2, date);
     if (!maps) return res.json({ ok: false, reason: "aucun match Cito trouve pour ces teams", team1, team2, date });
-    // Match dans la DB par teams
+    // Match dans la DB par teams (bidir avec acronym)
     const dbMatches = getFullHistoryFlat(500).filter((m) => m.status === "finished");
-    const n1 = (team1 || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const n2 = (team2 || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     const hit = dbMatches.find((m) => {
-      const t1 = (m.team1Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const t2 = (m.team2Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-      const match = (t1.includes(n1) || n1.includes(t1)) && (t2.includes(n2) || n2.includes(t2));
-      const swap = (t1.includes(n2) || n2.includes(t1)) && (t2.includes(n1) || n1.includes(t2));
+      const match = teamsMatch(m.team1Name, team1) && teamsMatch(m.team2Name, team2);
+      const swap = teamsMatch(m.team1Name, team2) && teamsMatch(m.team2Name, team1);
       return match || swap;
     });
-    if (!hit) return res.json({ ok: false, reason: "match Cito trouve mais pas dans notre DB CS2", cito_maps: maps });
-    saveMapScores(hit.id, maps, { force: true });
-    res.json({ ok: true, dbMatchId: hit.id, teams: `${hit.team1Name} vs ${hit.team2Name}`, maps });
+    if (!hit) return res.json({ ok: false, reason: "match Cito trouve mais pas dans notre DB CS2 (mm avec acronym match)", cito_maps: maps, hint: "essaie de passer team1/team2 avec les noms exacts de notre DB (ex NIP au lieu de Ninjas in Pyjamas)" });
+    // Swap si l'ordre DB est inverse du Cito
+    const dbSwap = teamsMatch(hit.team1Name, team2) && teamsMatch(hit.team2Name, team1);
+    const finalMaps = dbSwap
+      ? maps.map((mp) => ({ map: mp.map, score1: mp.score2, score2: mp.score1 }))
+      : maps;
+    saveMapScores(hit.id, finalMaps, { force: true });
+    res.json({ ok: true, dbMatchId: hit.id, teams: `${hit.team1Name} vs ${hit.team2Name}`, swapped: dbSwap, maps: finalMaps });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
