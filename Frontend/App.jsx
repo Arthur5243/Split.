@@ -4583,13 +4583,29 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp }) {
-  const [homeLeaderboard, setHomeLeaderboard] = useState([]);
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile, score }) {
+  const [rawLeaderboard, setRawLeaderboard] = useState([]);
   useEffect(() => {
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
-      if (Array.isArray(d)) setHomeLeaderboard(d);
+      if (Array.isArray(d)) setRawLeaderboard(d);
     }).catch(() => {});
   }, []);
+  // Injecte l'user actif dans la liste si pas deja present (row backend pas
+  // encore synced ou profile_ready = 0). Sinon merge pour reflechir son score
+  // reel cote client (au cas ou le leaderboard backend serait en retard).
+  const homeLeaderboard = React.useMemo(() => {
+    if (!profile?.userId) return rawLeaderboard;
+    const merged = [...rawLeaderboard];
+    const myIdx = merged.findIndex(u => u.id === profile.userId);
+    const myPts = Math.max(score || 0, userPoints || 0);
+    if (myIdx === -1) {
+      merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: myPts, points_valo: 0, points_cs2: 0, points_rl: 0, xp: userXp || 0, equipped_title: null, equipped_banner: null });
+    } else {
+      merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points || 0, myPts) };
+    }
+    merged.sort((a, b) => (b.points || 0) - (a.points || 0));
+    return merged;
+  }, [rawLeaderboard, profile?.userId, profile?.pseudo, profile?.avatar, score, userPoints, userXp]);
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -12050,7 +12066,7 @@ export default function ClutchApp() {
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
         <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
-            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} />
+            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} score={score} />
           </div>
           <div style={{ display: activeTab === "valorant" ? "block" : "none" }}>
             <ValorantTab
