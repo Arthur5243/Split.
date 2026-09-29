@@ -344,6 +344,61 @@ export function getCitoApiMatch(team1Name, team2Name) {
   return lookupInCache(cache, team1Name, team2Name) || lookupInCache(finishedByTeamsCache, team1Name, team2Name);
 }
 
+// Bulk import: fetch Cito API pour les N derniers jours (paginé), remplit
+// finishedByTeamsCache avec tous les matchs trouves + leurs maps. Utilisable
+// via un endpoint admin one-shot pour rattraper l'historique CS2.
+export async function bulkImportCitoFinished({ days = 30, maxPages = 20 } = {}) {
+  if (CITO_API_KEYS.length === 0) return { ok: false, error: "CITO_API_KEY absent" };
+  const from = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  let totalFetched = 0;
+  let totalIndexed = 0;
+  const results = [];
+  for (let page = 0; page < maxPages; page++) {
+    const skip = page * 50;
+    const url = `${CITO_API_BASE}/cs2/matches?status=completed&from=${from}&limit=50&skip=${skip}&sort=startsAt&order=desc`;
+    const res = await citoFetch(url);
+    if (!res.ok) {
+      results.push({ page, error: `HTTP ${res.status}` });
+      break;
+    }
+    const data = await res.json();
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    if (rows.length === 0) break;
+    totalFetched += rows.length;
+    for (const m of rows) {
+      const t1 = m.team1Name;
+      const t2 = m.team2Name;
+      const matchId = m.matchId || m.id;
+      if (!t1 || !t2 || !matchId) continue;
+      if (!finishedMapsCache.has(matchId)) {
+        const maps = await fetchMatchMaps(matchId, m.team1Id);
+        if (maps) finishedMapsCache.set(matchId, { maps, seriesTotal: (m.team1Score || 0) + (m.team2Score || 0), at: Date.now() });
+        // Petit sleep pour ne pas hammer l'API
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      const finishedMaps = finishedMapsCache.get(matchId);
+      if (!finishedMaps || finishedMaps.maps.length === 0) continue;
+      const key = normalize(t1) + "|" + normalize(t2);
+      finishedByTeamsCache.set(key, {
+        team1: t1, team2: t2,
+        seriesScore: { a: m.team1Score ?? 0, b: m.team2Score ?? 0 },
+        mapScores: finishedMaps.maps.map((mp) => ({ map: mapNameClean(mp.map), score1: mp.score1, score2: mp.score2 })),
+        matchId,
+        scrapedAt: Date.now(),
+      });
+      totalIndexed++;
+    }
+    results.push({ page, fetched: rows.length, cumulative_indexed: totalIndexed });
+    if (rows.length < 50) break;
+  }
+  return { ok: true, days, totalFetched, totalIndexed, cacheSize: finishedByTeamsCache.size, pages: results };
+}
+
+// Expose l'entierete du cache pour matching cote appelant
+export function getAllCachedFinished() {
+  return Array.from(finishedByTeamsCache.values());
+}
+
 export function startCitoApiWorker() {
   if (CITO_API_KEYS.length === 0) {
     console.log("[cito-api] CITO_API_KEY absent, worker skipped");

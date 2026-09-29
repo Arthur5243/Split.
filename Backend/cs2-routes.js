@@ -49,7 +49,7 @@ import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
-import { getCitoApiMatch, setCitoHasLiveMatches } from "./cito-api.js";
+import { getCitoApiMatch, setCitoHasLiveMatches, bulkImportCitoFinished, getAllCachedFinished } from "./cito-api.js";
 
 // Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
 // hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
@@ -1200,6 +1200,65 @@ router.get("/api/cs2-bracket/:serieId", async (req, res) => {
   } catch (e) {
     console.error("cs2-bracket error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer le bracket CS2." });
+  }
+});
+
+// Bulk import Cito API: fetch tous les matchs completed des N derniers jours
+// via Cito, matche avec les rows de notre DB (par teams), sauvegarde les
+// map_scores manquants. Ecrase les vieux "null" (retentative). One-shot.
+// Usage: POST /api/admin/cs2-bulk-import-cito?key=ADMIN_KEY&days=30
+router.post("/api/admin/cs2-bulk-import-cito", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  const days = Math.max(1, Math.min(90, parseInt(req.query.days) || 30));
+  try {
+    const importResult = await bulkImportCitoFinished({ days, maxPages: Math.ceil(days / 2) });
+    if (!importResult.ok) return res.status(500).json({ error: importResult.error });
+    // Match avec notre DB
+    const dbMatches = getFullHistoryFlat(2000).filter((m) => m.status === "finished" && (!m.map_scores || m.map_scores === "null"));
+    const cachedFinished = getAllCachedFinished();
+    let matched = 0;
+    const details = [];
+    for (const dbMatch of dbMatches) {
+      const t1n = (dbMatch.team1Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const t2n = (dbMatch.team2Name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!t1n || !t2n) continue;
+      const hit = cachedFinished.find((c) => {
+        const ct1 = c.team1.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const ct2 = c.team2.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const match = (t1n === ct1 || t1n.includes(ct1) || ct1.includes(t1n)) && (t2n === ct2 || t2n.includes(ct2) || ct2.includes(t2n));
+        const swap = (t1n === ct2 || t1n.includes(ct2) || ct2.includes(t1n)) && (t2n === ct1 || t2n.includes(ct1) || ct1.includes(t2n));
+        return match || swap;
+      });
+      if (!hit) continue;
+      const swap = !((dbMatch.team1Name || "").toLowerCase().includes(hit.team1.toLowerCase().slice(0, 3)));
+      const finalMaps = swap
+        ? hit.mapScores.map((mp) => ({ map: mp.map, score1: mp.score2, score2: mp.score1 }))
+        : hit.mapScores;
+      // Coherence check simple: nb maps > 0 et scores > 0
+      if (finalMaps.length === 0) continue;
+      const s1s2 = finalMaps.reduce((acc, mp) => acc + (mp.score1 || 0) + (mp.score2 || 0), 0);
+      if (s1s2 < 5) continue;
+      saveMapScores(dbMatch.id, finalMaps, { force: true });
+      matched++;
+      if (details.length < 20) details.push({ id: dbMatch.id, teams: `${dbMatch.team1Name} vs ${dbMatch.team2Name}`, maps: finalMaps.length });
+    }
+    res.json({
+      ok: true,
+      cito: {
+        days: importResult.days,
+        totalFetched: importResult.totalFetched,
+        totalIndexed: importResult.totalIndexed,
+        cacheSize: importResult.cacheSize,
+      },
+      dbMatchesSansScore: dbMatches.length,
+      matched,
+      samples: details,
+    });
+  } catch (e) {
+    console.error("[cs2-bulk-import-cito]", e.message);
+    res.status(500).json({ error: e.message });
   }
 });
 
