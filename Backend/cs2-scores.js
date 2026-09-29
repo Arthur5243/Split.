@@ -102,14 +102,25 @@ async function fetchGameMapScore(gameId, team1Id, team2Id) {
   try {
     game = await pandaFetch("/" + CS2_SLUG + "/games/" + gameId);
   } catch (e) {
-    return null; // pas encore dispo / erreur réseau -> on retentera plus tard
+    console.log(`[cs2-scores] game/${gameId} fetch failed: ${e.message}`);
+    return null;
   }
-  if (!game || game.finished !== true) return null;
+  if (!game) {
+    console.log(`[cs2-scores] game/${gameId} empty response`);
+    return null;
+  }
+  if (game.finished !== true && game.status !== "finished") {
+    console.log(`[cs2-scores] game/${gameId} not finished (status=${game.status}, finished=${game.finished})`);
+    return null;
+  }
 
   const sides = [game.counter_terrorists, game.terrorists].filter(Boolean);
   const side1 = sides.find((s) => String(s.id) === String(team1Id));
   const side2 = sides.find((s) => String(s.id) === String(team2Id));
-  if (!side1 || !side2 || side1.round_score == null || side2.round_score == null) return null;
+  if (!side1 || !side2 || side1.round_score == null || side2.round_score == null) {
+    console.log(`[cs2-scores] game/${gameId} sides incomplet: side1=${!!side1} side2=${!!side2} s1=${side1?.round_score} s2=${side2?.round_score}`);
+    return null;
+  }
 
   return {
     map: (game.map && (game.map.name || game.map.slug)) || null,
@@ -135,8 +146,13 @@ async function getMapScoresForMatch(match, team1Id, team2Id) {
     results[idx] = await fetchGameMapScore(g.id, team1Id, team2Id);
   });
 
-  if (results.some((r) => r === null)) return null; // incomplet -> on retente le lot entier plus tard
-  return results;
+  // Retourne les results partiels (avec des null pour les maps manquantes)
+  // au lieu de tout rejeter. Le pipeline aval (isMapScoresConsistent) fera
+  // la validation par rapport a la serie. Un match 3-1 avec 3 maps recuperees
+  // et 1 null est mieux que rien du tout.
+  const nonNull = results.filter((r) => r !== null);
+  if (nonNull.length === 0) return null;
+  return nonNull;
 }
 
 export {

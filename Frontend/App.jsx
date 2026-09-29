@@ -4680,53 +4680,42 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
         <button onClick={() => setActiveTab("classement")} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.seeAll}</button>
       </div>
-      {/* Meme rendu que ClassementTab: tous les users listes (pas de top3),
-          meme style avec avatar/badge/pseudo/rank/pts, transparent (sans bg),
-          affiche tout le monde meme a 0 pts. */}
-      <div className="flex flex-col gap-2 mb-6">
+      {/* Meme users que ClassementTab, layout compact type liste horizontale
+          (rank + avatar rond + pseudo + rank badge + pts). Pas d'affichage
+          pseudo-en-dessous-avatar (trop haut), pas de banner background
+          (trop lourd sur l'accueil). Tap = ouvre classement complet. */}
+      <div className="rounded-2xl mb-6 overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #262626" }}>
         {homeLeaderboard.length === 0 ? (
           <p className="text-center px-4 py-6" style={{ color: "#666", fontSize: "12px" }}>{T.classementEmptyHome}</p>
         ) : (
-          homeLeaderboard.map((u, i) => {
-            const uBanner = u.equipped_banner || "";
-            const uTitle = u.equipped_title || "";
-            const uBadge = u.equipped_badge || "";
-            const uBadgeEmoji = u.equipped_badge_emoji || "";
+          homeLeaderboard.slice(0, 20).map((u, i) => {
             const rankLogo = getUserRank(u.points || 0);
-            const logoSize = rankLogo.name === "Immortal" ? 24 : 20;
+            const logoSize = 18;
             const isUnranked = rankLogo.name === "Unranked";
-            const rowBg = uBanner
-              ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
-              : "transparent";
+            const rankColor = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : i === 2 ? "#CD7F32" : "#888";
             return (
               <button
                 key={u.id}
                 onClick={() => setActiveTab("classement")}
-                className="flex items-center gap-2.5 rounded-2xl px-3 py-2"
+                className="w-full flex items-center gap-2.5 px-3 py-2"
                 style={{
-                  position: "relative", overflow: "hidden", textAlign: "left",
-                  background: rowBg,
-                  border: uBanner ? "1px solid rgba(255,255,255,0.18)" : "none",
+                  textAlign: "left",
+                  background: "transparent",
+                  borderBottom: i < Math.min(19, homeLeaderboard.length - 1) ? "1px solid #232323" : "none",
+                  border: "none",
+                  borderTop: "none", borderLeft: "none", borderRight: "none",
+                  cursor: "pointer",
                 }}
               >
-                <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
-                <div className="flex flex-col items-center shrink-0" style={{ width: 42 }}>
-                  <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32, background: "#1e1e1e", border: uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
-                    {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
-                  </div>
-                  <span className="font-bold truncate" style={{ fontSize: "9px", color: uBanner ? "#eee" : "#ccc", textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}</span>
+                <span className="font-black shrink-0" style={{ color: rankColor, fontSize: "13px", width: 22, textAlign: "center" }}>{i + 1}</span>
+                <div className="rounded-full overflow-hidden flex items-center justify-center shrink-0" style={{ width: 28, height: 28, background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+                  {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={13} color="#555" />}
                 </div>
-                <div className="flex-1 min-w-0 flex items-center gap-1.5">
-                  {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
-                  {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none" }}>{uTitle}</span>}
-                </div>
-                {!isUnranked && rankLogo.logo ? (
+                <span className="flex-1 truncate" style={{ color: "#ccc", fontSize: "13px", fontWeight: 700 }}>{u.pseudo}</span>
+                {!isUnranked && rankLogo.logo && (
                   <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain", flexShrink: 0 }} />
-                ) : null}
-                <div className="text-right shrink-0">
-                  <span style={{ color: "#ddd", fontSize: "15px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.points || 0}</span>
-                  <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
-                </div>
+                )}
+                <span className="shrink-0" style={{ color: "#ddd", fontSize: "13px", fontWeight: 800, minWidth: 42, textAlign: "right" }}>{u.points || 0}<span style={{ color: "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span></span>
               </button>
             );
           })
