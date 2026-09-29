@@ -22,14 +22,42 @@
 
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "node:fs";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "matches.db");
-const db = new Database(DB_PATH);
 
-db.pragma("journal_mode = WAL");
+// Ouverture defensive: si la DB est corrompue (SQLITE_CORRUPT, "malformed",
+// ou disk image is malformed), on delete .db + -wal + -shm et on recrée une
+// DB vide. Les CREATE TABLE IF NOT EXISTS plus bas rebâtissent le schema
+// depuis zero. Perte: rows accumules dans la table matches (le vrai historique
+// profond reste dans data/matches.json cote fichier statique), users, follows,
+// posts, messages, referrals — tout ce qui vivait uniquement dans la DB.
+function openDbSafe(dbPath) {
+  try {
+    const d = new Database(dbPath);
+    d.pragma("journal_mode = WAL");
+    // Force un check leger: si la DB est corrompue, la 1ere prepare/exec pete.
+    d.prepare("SELECT 1").get();
+    return d;
+  } catch (e) {
+    const msg = String(e && e.message || "");
+    const isCorrupt = /SQLITE_CORRUPT|malformed|not a database|disk image/i.test(msg);
+    if (!isCorrupt) throw e;
+    console.warn(`[match-history-store] DB corrompue detectee (${msg}) — wipe + recreation vide`);
+    for (const suffix of ["", "-wal", "-shm"]) {
+      const f = dbPath + suffix;
+      try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
+    }
+    const fresh = new Database(dbPath);
+    fresh.pragma("journal_mode = WAL");
+    return fresh;
+  }
+}
+
+const db = openDbSafe(DB_PATH);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS matches (
