@@ -5218,24 +5218,45 @@ function ChampionsView({ T, accent, onViewMatch }) {
       teams: g.teams.map((t) => ({ ...t, wins: 0, losses: 0 })),
       matches: g.matches.map((m) => ({ ...m })),
     }));
+    // Adapte n'importe quel shape API vers { t1, t2, s1, s2, status }
+    // Supporte:
+    // - PandaScore raw (opponents[].opponent.name + results[].score)
+    // - Transforme (team1Name/team2Name/score1/score2)
+    const extractMatch = (r) => {
+      if (!r) return null;
+      const t1 = r.team1Name || r.team1 || r.opponents?.[0]?.opponent?.name || null;
+      const t2 = r.team2Name || r.team2 || r.opponents?.[1]?.opponent?.name || null;
+      let s1 = r.score1 ?? null;
+      let s2 = r.score2 ?? null;
+      if (s1 == null && Array.isArray(r.results)) {
+        const oid1 = r.opponents?.[0]?.opponent?.id;
+        const oid2 = r.opponents?.[1]?.opponent?.id;
+        const rs1 = r.results.find((x) => x.team_id === oid1);
+        const rs2 = r.results.find((x) => x.team_id === oid2);
+        if (rs1) s1 = rs1.score;
+        if (rs2) s2 = rs2.score;
+      }
+      return { t1, t2, s1, s2, status: (r.status || "").toLowerCase() };
+    };
     // Cherche chaque match du hardcoded dans les results reels (par teams)
     for (const g of groups) {
       for (const m of g.matches) {
         if (m.team1 === "TBD" || m.team2 === "TBD") continue;
         const n1 = normName(m.team1);
         const n2 = normName(m.team2);
-        const hit = (liveResults || []).find((r) => {
-          const rt1 = normName(r.team1Name || r.team1);
-          const rt2 = normName(r.team2Name || r.team2);
+        const hit = (liveResults || []).map(extractMatch).filter(Boolean).find((r) => {
+          const rt1 = normName(r.t1);
+          const rt2 = normName(r.t2);
+          if (!rt1 || !rt2) return false;
           const match = (rt1.includes(n1) || n1.includes(rt1)) && (rt2.includes(n2) || n2.includes(rt2));
           const swap = (rt1.includes(n2) || n2.includes(rt1)) && (rt2.includes(n1) || n1.includes(rt2));
           return match || swap;
         });
         if (!hit) continue;
-        const swap = normName(hit.team1Name || hit.team1) !== n1 && (normName(hit.team1Name || hit.team1).includes(n2) || n2.includes(normName(hit.team1Name || hit.team1)));
-        const s1 = swap ? hit.score2 : hit.score1;
-        const s2 = swap ? hit.score1 : hit.score2;
-        const st = (hit.status || "").toLowerCase();
+        const swap = !(normName(hit.t1).includes(n1) || n1.includes(normName(hit.t1)));
+        const s1 = swap ? hit.s2 : hit.s1;
+        const s2 = swap ? hit.s1 : hit.s2;
+        const st = hit.status;
         if (st === "finished" || st === "completed") {
           m.status = "finished";
           if (s1 != null && s2 != null) m.score = [s1, s2];
@@ -5254,15 +5275,18 @@ function ChampionsView({ T, accent, onViewMatch }) {
         if (wt) wt.wins++;
         if (lt) lt.losses++;
       }
-      // Sort par W-L descendant
-      const sorted = [...g.teams].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses));
+      // Sort par W-L descendant (tiebreaker: acronym asc pour stabilite)
+      const sorted = [...g.teams].sort((a, b) => {
+        const d = (b.wins - b.losses) - (a.wins - a.losses);
+        if (d !== 0) return d;
+        return (a.acronym || "").localeCompare(b.acronym || "");
+      });
       sorted.forEach((t, i) => {
         t.rank = i + 1;
-        // Qualif confirmee: top 2 ET a au moins gagne son match Winner (2W)
-        // ou au moins 2 wins totaux. Simplification: 2W = qualified.
-        t.qualified = t.wins >= 2 && i < 2;
-        // Elim confirmee: 2 defaites.
-        t.eliminated = t.losses >= 2;
+        // Top 2 = qualif (meme si pas encore mathematiquement acquis).
+        // Bottom 2 = elim (idem, prevision par ranking actuel).
+        t.qualified = i < 2;
+        t.eliminated = i >= 2;
       });
       g.teams = sorted;
       // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
@@ -5312,7 +5336,10 @@ function ChampionsView({ T, accent, onViewMatch }) {
     grandFinal: { id: "gf", label: "Grand Final", team1: "TBD", team2: "TBD", score: null },
   };
 
-  const [view, setView] = useState("menu");
+  // Vue par defaut = groups (pas menu). Retour depuis detail groupe = 1 clic
+  // pour aller a la overview 4-groupes. Retour depuis overview = via backBtn
+  // du parent BracketPage (deja present en haut). Zero niveau intermediaire.
+  const [view, setView] = useState("groups");
   const [groupSel, setGroupSel] = useState(null);
 
   // Style gris uniforme (comme les autres modules Settings/Calendar)
@@ -5329,27 +5356,20 @@ function ChampionsView({ T, accent, onViewMatch }) {
 
   const data = { groups: HARDCODED_GROUPS, playoffs: HARDCODED_PLAYOFFS };
 
-  // MENU: 2 gros boutons Groupes / Playoffs (fond gris uniforme)
-  if (view === "menu") {
-    return (
-      <div style={{ padding: "12px 0 120px" }}>
-        <button onClick={() => setView("groups")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 10, textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
-          <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
-        </button>
-        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
-          <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
-        </button>
-      </div>
-    );
-  }
+  // Onglets Groupes/Playoffs en haut (affiches dans les deux vues overview
+  // et detail groupe). Le detail groupe cache les tabs et affiche "← Groupes".
+  const TabsHeader = () => (
+    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+      <button onClick={() => { setView("groups"); setGroupSel(null); }} style={{ flex: 1, padding: "12px", background: view === "groups" ? "#ff4655" : modBg, border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 900, fontSize: 12, color: view === "groups" ? "#fff" : "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>Phase de groupes</button>
+      <button onClick={() => { setView("playoffs"); setGroupSel(null); }} style={{ flex: 1, padding: "12px", background: view === "playoffs" ? "#FFD700" : modBg, border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 900, fontSize: 12, color: view === "playoffs" ? "#000" : "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>Playoffs</button>
+    </div>
+  );
 
   // GROUPS overview: 4 tuiles
   if (view === "groups" && !groupSel) {
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
+        <TabsHeader />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
             <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: "none", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
@@ -5438,7 +5458,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
     };
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
+        <TabsHeader />
         <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
         <DragScroll>
           <BracketTree rounds={tbdBracket.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
