@@ -5140,7 +5140,15 @@ function ChampionsView({ T, accent, onViewMatch }) {
   // sont mis a jour en background depuis /api/valorant-results (tous les
   // matchs valo terminés). Les W-L, ranks, qualified/eliminated se
   // recalculent apres chaque refresh.
-  const [liveResults, setLiveResults] = useState([]);
+  // Cache dans localStorage pour eviter le "flash" au reload (les scores
+  // sont deja disponibles au 1er render, plus besoin d'attendre le fetch).
+  const [liveResults, setLiveResults] = useState(() => {
+    try {
+      const raw = localStorage.getItem("split_champions_live_cache");
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  });
   useEffect(() => {
     async function loadAll() {
       try {
@@ -5150,6 +5158,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
         ]);
         const all = [...(Array.isArray(res) ? res : []), ...(Array.isArray(live) ? live : [])];
         setLiveResults(all);
+        try { localStorage.setItem("split_champions_live_cache", JSON.stringify(all.slice(0, 100))); } catch {}
       } catch {}
     }
     loadAll();
@@ -5275,20 +5284,30 @@ function ChampionsView({ T, accent, onViewMatch }) {
         if (wt) wt.wins++;
         if (lt) lt.losses++;
       }
-      // Sort par W-L descendant (tiebreaker: acronym asc pour stabilite)
-      const sorted = [...g.teams].sort((a, b) => {
-        const d = (b.wins - b.losses) - (a.wins - a.losses);
-        if (d !== 0) return d;
-        return (a.acronym || "").localeCompare(b.acronym || "");
-      });
-      sorted.forEach((t, i) => {
-        t.rank = i + 1;
-        // Top 2 = qualif (meme si pas encore mathematiquement acquis).
-        // Bottom 2 = elim (idem, prevision par ranking actuel).
-        t.qualified = i < 2;
-        t.eliminated = i >= 2;
-      });
-      g.teams = sorted;
+      // Sort par W-L descendant (tiebreaker: acronym asc pour stabilite).
+      // On ne sort QUE si on a des donnees liveResults, sinon on garde
+      // l'ordre BASE_GROUPS (evite le flash de position au 1er render tant
+      // que le fetch initial n'est pas revenu).
+      if (liveResults && liveResults.length > 0) {
+        const sorted = [...g.teams].sort((a, b) => {
+          const d = (b.wins - b.losses) - (a.wins - a.losses);
+          if (d !== 0) return d;
+          return (a.acronym || "").localeCompare(b.acronym || "");
+        });
+        sorted.forEach((t, i) => {
+          t.rank = i + 1;
+          t.qualified = i < 2;
+          t.eliminated = i >= 2;
+        });
+        g.teams = sorted;
+      } else {
+        // Pas encore de fetch: applique juste rank par ordre BASE_GROUPS.
+        g.teams.forEach((t, i) => {
+          t.rank = i + 1;
+          t.qualified = i < 2;
+          t.eliminated = i >= 2;
+        });
+      }
       // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
       // Winner ni Elimination. Si Winner ou Elimination finished → on peut
       // determiner. Sinon TBD.
@@ -5336,10 +5355,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
     grandFinal: { id: "gf", label: "Grand Final", team1: "TBD", team2: "TBD", score: null },
   };
 
-  // Vue par defaut = groups (pas menu). Retour depuis detail groupe = 1 clic
-  // pour aller a la overview 4-groupes. Retour depuis overview = via backBtn
-  // du parent BracketPage (deja present en haut). Zero niveau intermediaire.
-  const [view, setView] = useState("groups");
+  const [view, setView] = useState("menu");
   const [groupSel, setGroupSel] = useState(null);
 
   // Style gris uniforme (comme les autres modules Settings/Calendar)
@@ -5356,20 +5372,27 @@ function ChampionsView({ T, accent, onViewMatch }) {
 
   const data = { groups: HARDCODED_GROUPS, playoffs: HARDCODED_PLAYOFFS };
 
-  // Onglets Groupes/Playoffs en haut (affiches dans les deux vues overview
-  // et detail groupe). Le detail groupe cache les tabs et affiche "← Groupes".
-  const TabsHeader = () => (
-    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-      <button onClick={() => { setView("groups"); setGroupSel(null); }} style={{ flex: 1, padding: "12px", background: view === "groups" ? "#ff4655" : modBg, border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 900, fontSize: 12, color: view === "groups" ? "#fff" : "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>Phase de groupes</button>
-      <button onClick={() => { setView("playoffs"); setGroupSel(null); }} style={{ flex: 1, padding: "12px", background: view === "playoffs" ? "#FFD700" : modBg, border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 900, fontSize: 12, color: view === "playoffs" ? "#000" : "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>Playoffs</button>
-    </div>
-  );
+  // MENU: 2 gros boutons Groupes / Playoffs (fond gris uniforme)
+  if (view === "menu") {
+    return (
+      <div style={{ padding: "12px 0 120px" }}>
+        <button onClick={() => setView("groups")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 10, textAlign: "left" }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
+          <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
+        </button>
+        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
+          <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
+        </button>
+      </div>
+    );
+  }
 
   // GROUPS overview: 4 tuiles
   if (view === "groups" && !groupSel) {
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <TabsHeader />
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
             <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: "none", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
@@ -5458,7 +5481,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
     };
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <TabsHeader />
+        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
         <DragScroll>
           <BracketTree rounds={tbdBracket.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
