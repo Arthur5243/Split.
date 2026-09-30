@@ -571,10 +571,15 @@ async function processOneMatch(m, data) {
 
     // TOUTES les sources lancées en parallèle (les async ET les sync).
     // Aucun early return — on collecte tout puis on garde la plus complète.
-    const [pandaDetailed, liquipedia, bo3gg] = await Promise.all([
+    const [pandaDetailed, liquipedia, bo3gg, citoApi] = await Promise.all([
       getMapScoresForMatch(m, t1.id, t2.id).catch((e) => { console.log(`[cs2 map_scores] pandascore-detailed → ${e.message}`); return null; }),
       getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName).catch((e) => { console.log(`[cs2 map_scores] liquipedia → ${e.message}`); return null; }),
       getMapScoresFromBo3gg(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] bo3.gg → ${e.message}`); return null; }),
+      // Cito on-demand: 1 requete par nouveau match finished. Tres economique
+      // en quota car appele seulement pour les matchs qui n'ont pas encore
+      // de scores (le pipeline enrichWithMapScores skip les matchs qui en
+      // ont deja). fetchOneMatchOnDemand retourne null si tokens epuises.
+      fetchOneMatchOnDemand(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] cito-on-demand → ${e.message}`); return null; }),
     ]);
     // Sources cache-only (sync)
     const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
@@ -594,6 +599,7 @@ async function processOneMatch(m, data) {
       { src: "liquipedia", data: liquipedia },
       { src: "bo3gg", data: bo3gg },
       { src: "cito", data: cito?.mapScores },
+      { src: "cito-api", data: citoApi },
       { src: "manual", data: manual },
     ].filter((c) => Array.isArray(c.data) && c.data.length > 0);
 
