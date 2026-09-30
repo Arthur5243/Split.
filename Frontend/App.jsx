@@ -10414,18 +10414,27 @@ function AdInterstitial({ onClose }) {
     if (elapsed >= AUTO_CLOSE) { setFading(true); setTimeout(onClose, 400); }
   }, [elapsed]);
 
-  // Charge le script Adsterra une seule fois quand l'AdInterstitial mount.
-  // Le script s'auto-injecte dans son parent conteneur.
+  // Charge le Native Banner Adsterra. Le script injecte le contenu dans
+  // la div avec id="container-<HASH>" — donc on cree cette div puis on
+  // append le script async au container.
+  const ADSTERRA_HASH = "a97bdbc5bb199f647fa1d54b8266c4f4";
+  const ADSTERRA_SRC = `https://pl31595702.profitableratecpmnetwork.com/${ADSTERRA_HASH}/invoke.js`;
   useEffect(() => {
     if (!adContainerRef.current) return;
-    // Nettoie ce qui pourrait rester d'un mount precedent
     adContainerRef.current.innerHTML = "";
+    // Div cible que Adsterra va peupler
+    const targetDiv = document.createElement("div");
+    targetDiv.id = "container-" + ADSTERRA_HASH;
+    targetDiv.style.width = "100%";
+    targetDiv.style.minHeight = "300px";
+    adContainerRef.current.appendChild(targetDiv);
+    // Script async qui injecte la pub dans le container par id
     const s = document.createElement("script");
-    s.src = "https://pl31595004.profitableratecpmnetwork.com/ee/3b/93/ee3b9395fc63b3aead224a750c73774c.js";
+    s.src = ADSTERRA_SRC;
     s.async = true;
+    s.setAttribute("data-cfasync", "false");
     adContainerRef.current.appendChild(s);
     return () => {
-      // Cleanup best-effort
       try { adContainerRef.current && (adContainerRef.current.innerHTML = ""); } catch {}
     };
   }, []);
@@ -10452,20 +10461,9 @@ function AdInterstitial({ onClose }) {
           </span>
         )}
       </div>
-      {/* Zone Adsterra plein ecran + fallback visuel */}
-      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {/* Fallback affiche tant que le script Adsterra n'a rien injecte de visible.
-            Le script actuel (pl31595004) est un Popunder → n'affiche rien mais
-            declenche une popup au clic. Sans un snippet Banner/Native, l'ecran
-            est vide, donc on met un placeholder pour au moins prouver que
-            l'interstitial s'ouvre bien. */}
-        <div style={{ textAlign: "center", padding: 32 }}>
-          <span style={{ fontSize: 48 }}>📢</span>
-          <p style={{ color: "#aaa", fontSize: 14, fontWeight: 700, marginTop: 12 }}>Publicité en cours de chargement…</p>
-          <p style={{ color: "#666", fontSize: 11, marginTop: 8, maxWidth: 300 }}>Si vous n'utilisez pas de bloqueur de pubs et que rien ne s'affiche, le format Adsterra configuré est un Popunder qui s'ouvre au clic ailleurs sur la page.</p>
-          <p style={{ color: "#555", fontSize: 9, marginTop: 12 }}>Cliquez n'importe où pour continuer à naviguer</p>
-        </div>
-      </div>
+      {/* Zone Adsterra Native Banner — la div-container est cree via
+          useEffect ci-dessus. Le script injecte les pubs dedans. */}
+      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", padding: "16px" }} />
       {/* Progress bar en bas */}
       <div style={{ height: 3, background: "#151515" }}>
         <div style={{ height: "100%", background: "#CCF71D", width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
