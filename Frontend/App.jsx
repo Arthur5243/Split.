@@ -10452,8 +10452,20 @@ function AdInterstitial({ onClose }) {
           </span>
         )}
       </div>
-      {/* Zone Adsterra plein ecran */}
-      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", position: "relative" }} />
+      {/* Zone Adsterra plein ecran + fallback visuel */}
+      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* Fallback affiche tant que le script Adsterra n'a rien injecte de visible.
+            Le script actuel (pl31595004) est un Popunder → n'affiche rien mais
+            declenche une popup au clic. Sans un snippet Banner/Native, l'ecran
+            est vide, donc on met un placeholder pour au moins prouver que
+            l'interstitial s'ouvre bien. */}
+        <div style={{ textAlign: "center", padding: 32 }}>
+          <span style={{ fontSize: 48 }}>📢</span>
+          <p style={{ color: "#aaa", fontSize: 14, fontWeight: 700, marginTop: 12 }}>Publicité en cours de chargement…</p>
+          <p style={{ color: "#666", fontSize: 11, marginTop: 8, maxWidth: 300 }}>Si vous n'utilisez pas de bloqueur de pubs et que rien ne s'affiche, le format Adsterra configuré est un Popunder qui s'ouvre au clic ailleurs sur la page.</p>
+          <p style={{ color: "#555", fontSize: 9, marginTop: 12 }}>Cliquez n'importe où pour continuer à naviguer</p>
+        </div>
+      </div>
       {/* Progress bar en bas */}
       <div style={{ height: 3, background: "#151515" }}>
         <div style={{ height: "100%", background: "#CCF71D", width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
