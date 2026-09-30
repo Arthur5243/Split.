@@ -1244,6 +1244,9 @@ router.post("/api/admin/cs2-bulk-import-cito", async (req, res) => {
       matched++;
       if (details.length < 20) details.push({ id: dbMatch.id, teams: `${dbMatch.team1Name} vs ${dbMatch.team2Name}`, maps: finalMaps.length });
     }
+    // Invalide le cache RAM pour que /api/cs2-results rebuild avec les
+    // nouveaux map_scores au prochain appel.
+    enrichedResultsCache = null;
     res.json({
       ok: true,
       cito: {
@@ -1303,6 +1306,9 @@ router.post("/api/admin/cs2-cito-one-match", async (req, res) => {
       ? maps.map((mp) => ({ map: mp.map, score1: mp.score2, score2: mp.score1 }))
       : maps;
     saveMapScores(hit.id, finalMaps, { force: true });
+    // Invalide le cache RAM pour que /api/cs2-results rebuild avec les
+    // nouveaux map_scores au prochain appel.
+    enrichedResultsCache = null;
     res.json({ ok: true, dbMatchId: hit.id, teams: `${hit.team1Name} vs ${hit.team2Name}`, swapped: dbSwap, maps: finalMaps });
   } catch (e) {
     res.status(500).json({ error: e.message });
