@@ -10849,10 +10849,13 @@ export default function ClutchApp() {
   }, []);
   useEffect(() => {
     if (showAuth || showIntroCards) return;
-    const delay = 120000 + Math.random() * 60000;
+    // Mode test pour arthur.cambin@gmail.com uniquement: pub 10 sec apres
+    // le lancement. Pour tous les autres users: 2-3 min aleatoire.
+    const isTester = authUser?.email === "arthur.cambin@gmail.com";
+    const delay = isTester ? 10000 : (120000 + Math.random() * 60000);
     adTimerRef.current = setTimeout(triggerAd, delay);
     return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
-  }, [showAuth, showIntroCards, triggerAd]);
+  }, [showAuth, showIntroCards, triggerAd, authUser?.email]);
   useEffect(() => {
     if (streak.justExpired) {
       const t = setTimeout(() => setStreakExpiredNotif({ lostStreak: streak.lostStreak }), 1500);
