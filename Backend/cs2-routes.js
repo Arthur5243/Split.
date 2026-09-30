@@ -50,6 +50,7 @@ import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
 import { getCitoApiMatch, setCitoHasLiveMatches, bulkImportCitoFinished, getAllCachedFinished, fetchOneMatchOnDemand } from "./cito-api.js";
+import { findMapScoresViaGoogle } from "./google-scores.js";
 
 // Cache mémoire des matchs CS2 running pour le tracker HLTV (poll par
 // hltv-scores.js toutes les 60s). hltv-match-api utilise browserless +
@@ -571,15 +572,17 @@ async function processOneMatch(m, data) {
 
     // TOUTES les sources lancées en parallèle (les async ET les sync).
     // Aucun early return — on collecte tout puis on garde la plus complète.
-    const [pandaDetailed, liquipedia, bo3gg, citoApi] = await Promise.all([
+    const [pandaDetailed, liquipedia, bo3gg, citoApi, googleScrape] = await Promise.all([
       getMapScoresForMatch(m, t1.id, t2.id).catch((e) => { console.log(`[cs2 map_scores] pandascore-detailed → ${e.message}`); return null; }),
       getMapScoresFromLiquipedia(t1.name, t2.name, leagueName, date, serieName).catch((e) => { console.log(`[cs2 map_scores] liquipedia → ${e.message}`); return null; }),
       getMapScoresFromBo3gg(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] bo3.gg → ${e.message}`); return null; }),
-      // Cito on-demand: 1 requete par nouveau match finished. Tres economique
-      // en quota car appele seulement pour les matchs qui n'ont pas encore
-      // de scores (le pipeline enrichWithMapScores skip les matchs qui en
-      // ont deja). fetchOneMatchOnDemand retourne null si tokens epuises.
+      // Cito on-demand: 1 requete par nouveau match finished. Retourne null
+      // si tokens epuises. Utilise en dernier recours si les sources gratuites
+      // n'ont rien.
       fetchOneMatchOnDemand(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] cito-on-demand → ${e.message}`); return null; }),
+      // Google/DuckDuckGo scrape: cherche l'URL bo3.gg via search engine
+      // puis hit bo3.gg direct. Zero API key, gratuit, evite le quota Cito.
+      findMapScoresViaGoogle(t1.name, t2.name, date).catch((e) => { console.log(`[cs2 map_scores] google-scrape → ${e.message}`); return null; }),
     ]);
     // Sources cache-only (sync)
     const hltvScraped = getHltvScrapedScores(t1.name, t2.name);
@@ -598,6 +601,7 @@ async function processOneMatch(m, data) {
       { src: "ggscore", data: gg?.mapScores },
       { src: "liquipedia", data: liquipedia },
       { src: "bo3gg", data: bo3gg },
+      { src: "google-scrape", data: googleScrape },
       { src: "cito", data: cito?.mapScores },
       { src: "cito-api", data: citoApi },
       { src: "manual", data: manual },
@@ -1317,6 +1321,51 @@ router.post("/api/admin/cs2-cito-one-match", async (req, res) => {
     enrichedResultsCache = null;
     res.json({ ok: true, dbMatchId: hit.id, teams: `${hit.team1Name} vs ${hit.team2Name}`, swapped: dbSwap, maps: finalMaps });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Bulk import Google Search: rattrape tous les matchs finis sans map_scores
+// via une recherche web + bo3.gg direct. Zero cout API Cito.
+// Usage: POST /api/admin/cs2-bulk-import-google?key=X&limit=100
+router.post("/api/admin/cs2-bulk-import-google", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "forbidden" });
+  const limit = Math.max(1, Math.min(500, parseInt(req.query.limit) || 100));
+  try {
+    const dbMatches = getFullHistoryFlat(2000).filter((m) => m.status === "finished" && (!m.map_scores || m.map_scores === "null")).slice(0, limit);
+    let matched = 0;
+    const details = [];
+    const isMapScoresConsistentLocal = (mapScores, s1, s2) => {
+      if (!Array.isArray(mapScores) || mapScores.length === 0) return false;
+      let w1 = 0, w2 = 0;
+      for (const mp of mapScores) {
+        if (mp.score1 > mp.score2) w1++;
+        else if (mp.score2 > mp.score1) w2++;
+      }
+      return w1 === s1 && w2 === s2;
+    };
+    for (const dbMatch of dbMatches) {
+      const t1n = dbMatch.team1Name;
+      const t2n = dbMatch.team2Name;
+      if (!t1n || !t2n) continue;
+      const maps = await findMapScoresViaGoogle(t1n, t2n, dbMatch.day);
+      // Filet: si la source google-scrape donne des scores incoherents avec
+      // la serie stored, on skip (bo3.gg peut renvoyer un autre match).
+      if (!maps || maps.length === 0) continue;
+      if (!isMapScoresConsistentLocal(maps, dbMatch.score1, dbMatch.score2)) {
+        details.push({ id: dbMatch.id, teams: `${t1n} vs ${t2n}`, skip: "incoherent" });
+        continue;
+      }
+      saveMapScores(dbMatch.id, maps, { force: true });
+      matched++;
+      if (details.length < 30) details.push({ id: dbMatch.id, teams: `${t1n} vs ${t2n}`, maps: maps.length });
+      // Petit sleep pour ne pas hammer DuckDuckGo/bo3.gg
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    enrichedResultsCache = null;
+    res.json({ ok: true, dbMatchesSansScore: dbMatches.length, matched, samples: details });
+  } catch (e) {
+    console.error("[cs2-bulk-import-google]", e.message);
     res.status(500).json({ error: e.message });
   }
 });
