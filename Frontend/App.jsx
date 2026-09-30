@@ -5136,10 +5136,28 @@ function GroupStandings({ standings, accent, T }) {
 }
 
 function ChampionsView({ T, accent, onViewMatch }) {
-  // DATA HARDCODEE — pas de chargement, tout dispo instant.
-  // Backend fetch en arriere-plan pour update scores si dispo, mais l'UI
-  // affiche deja les groupes complets des le premier render.
-  const HARDCODED_GROUPS = [
+  // Structure hardcodee des 4 groupes + matches Champions 2026. Les scores
+  // sont mis a jour en background depuis /api/valorant-results (tous les
+  // matchs valo terminés). Les W-L, ranks, qualified/eliminated se
+  // recalculent apres chaque refresh.
+  const [liveResults, setLiveResults] = useState([]);
+  useEffect(() => {
+    async function loadAll() {
+      try {
+        const [res, live] = await Promise.all([
+          fetch(API_BASE + "/api/valorant-results").then(r => r.json()).catch(() => []),
+          fetch(API_BASE + "/api/valorant-live").then(r => r.json()).catch(() => []),
+        ]);
+        const all = [...(Array.isArray(res) ? res : []), ...(Array.isArray(live) ? live : [])];
+        setLiveResults(all);
+      } catch {}
+    }
+    loadAll();
+    // Refresh h24: toutes les 60s
+    const id = setInterval(loadAll, 60000);
+    return () => clearInterval(id);
+  }, []);
+  const BASE_GROUPS = [
     { name: "A", teams: [
       { name: "100 Thieves", acronym: "100T", wins: 1, losses: 0 },
       { name: "FUT Esports", acronym: "FUT", wins: 1, losses: 0 },
@@ -5189,39 +5207,88 @@ function ChampionsView({ T, accent, onViewMatch }) {
       { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
     ] },
   ];
-  // Applique qualified/eliminated selon W-L
-  HARDCODED_GROUPS.forEach((g) => {
-    const sorted = [...g.teams].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses));
-    sorted.forEach((t, i) => {
-      t.rank = i + 1;
-      t.qualified = i < 2;
-      t.eliminated = i >= 2;
-    });
-    g.teams = sorted;
-    // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
-    // Winner ni Elimination. Si Winner ou Elimination finished → on peut
-    // determiner. Sinon TBD.
-    const decider = g.matches.find((m) => m.phase === "decider");
-    const winner = g.matches.find((m) => m.phase === "winners");
-    const elim = g.matches.find((m) => m.phase === "elimination");
-    if (decider && decider.team1 === "TBD" && winner && elim) {
-      // Perdant du Winner Match
-      let winnerLoser = null;
-      if (winner.status === "finished" && winner.score) {
-        winnerLoser = winner.score[0] < winner.score[1] ? winner.team1 : winner.team2;
+  // Merge scores en live depuis /api/valorant-results. Chaque match structure
+  // est cherche par teams dans les results reels → update status + score si
+  // trouve + calcul W-L par equipe.
+  const HARDCODED_GROUPS = React.useMemo(() => {
+    const normName = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    // Copie deep de BASE_GROUPS
+    const groups = BASE_GROUPS.map((g) => ({
+      name: g.name,
+      teams: g.teams.map((t) => ({ ...t, wins: 0, losses: 0 })),
+      matches: g.matches.map((m) => ({ ...m })),
+    }));
+    // Cherche chaque match du hardcoded dans les results reels (par teams)
+    for (const g of groups) {
+      for (const m of g.matches) {
+        if (m.team1 === "TBD" || m.team2 === "TBD") continue;
+        const n1 = normName(m.team1);
+        const n2 = normName(m.team2);
+        const hit = (liveResults || []).find((r) => {
+          const rt1 = normName(r.team1Name || r.team1);
+          const rt2 = normName(r.team2Name || r.team2);
+          const match = (rt1.includes(n1) || n1.includes(rt1)) && (rt2.includes(n2) || n2.includes(rt2));
+          const swap = (rt1.includes(n2) || n2.includes(rt1)) && (rt2.includes(n1) || n1.includes(rt2));
+          return match || swap;
+        });
+        if (!hit) continue;
+        const swap = normName(hit.team1Name || hit.team1) !== n1 && (normName(hit.team1Name || hit.team1).includes(n2) || n2.includes(normName(hit.team1Name || hit.team1)));
+        const s1 = swap ? hit.score2 : hit.score1;
+        const s2 = swap ? hit.score1 : hit.score2;
+        const st = (hit.status || "").toLowerCase();
+        if (st === "finished" || st === "completed") {
+          m.status = "finished";
+          if (s1 != null && s2 != null) m.score = [s1, s2];
+        } else if (st === "running" || st === "live") {
+          m.status = "live";
+          if (s1 != null && s2 != null) m.score = [s1, s2];
+        }
       }
-      // Gagnant de l'Elimination Match
-      let elimWinner = null;
-      if (elim.status === "finished" && elim.score) {
-        elimWinner = elim.score[0] > elim.score[1] ? elim.team1 : elim.team2;
+      // Recalcule W-L a partir des matches finished
+      for (const m of g.matches) {
+        if (m.status !== "finished" || !m.score) continue;
+        const winner = m.score[0] > m.score[1] ? m.team1 : m.team2;
+        const loser = m.score[0] > m.score[1] ? m.team2 : m.team1;
+        const wt = g.teams.find((t) => t.name === winner);
+        const lt = g.teams.find((t) => t.name === loser);
+        if (wt) wt.wins++;
+        if (lt) lt.losses++;
       }
-      if (winnerLoser && elimWinner) {
-        decider.team1 = winnerLoser;
-        decider.team2 = elimWinner;
-        decider.status = "upcoming";
+      // Sort par W-L descendant
+      const sorted = [...g.teams].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses));
+      sorted.forEach((t, i) => {
+        t.rank = i + 1;
+        // Qualif confirmee: top 2 ET a au moins gagne son match Winner (2W)
+        // ou au moins 2 wins totaux. Simplification: 2W = qualified.
+        t.qualified = t.wins >= 2 && i < 2;
+        // Elim confirmee: 2 defaites.
+        t.eliminated = t.losses >= 2;
+      });
+      g.teams = sorted;
+      // Logique GSL Decider: 2 equipes du meme groupe non impliquees dans
+      // Winner ni Elimination. Si Winner ou Elimination finished → on peut
+      // determiner. Sinon TBD.
+      const decider = g.matches.find((m) => m.phase === "decider");
+      const winner = g.matches.find((m) => m.phase === "winners");
+      const elim = g.matches.find((m) => m.phase === "elimination");
+      if (decider && decider.team1 === "TBD" && winner && elim) {
+        let winnerLoser = null;
+        if (winner.status === "finished" && winner.score) {
+          winnerLoser = winner.score[0] < winner.score[1] ? winner.team1 : winner.team2;
+        }
+        let elimWinner = null;
+        if (elim.status === "finished" && elim.score) {
+          elimWinner = elim.score[0] > elim.score[1] ? elim.team1 : elim.team2;
+        }
+        if (winnerLoser && elimWinner) {
+          decider.team1 = winnerLoser;
+          decider.team2 = elimWinner;
+          decider.status = "upcoming";
+        }
       }
     }
-  });
+    return groups;
+  }, [liveResults]);
 
   // Playoffs TBD (structure 8 equipes upper/lower)
   const HARDCODED_PLAYOFFS = {
@@ -5283,9 +5350,6 @@ function ChampionsView({ T, accent, onViewMatch }) {
     return (
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
-        <p style={{ fontSize: 10, color: "#888", fontStyle: "italic", marginBottom: 10, textAlign: "center" }}>
-          Les 2 équipes en tête sont <span style={{ color: "#7ec850" }}>prévues qualifiées</span> (non confirmé)
-        </p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
             <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: "none", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
@@ -5314,9 +5378,6 @@ function ChampionsView({ T, accent, onViewMatch }) {
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Groupes</button>
         <div style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", marginBottom: 10 }}>Groupe {g.name}</div>
-        <p style={{ fontSize: 10, color: "#888", fontStyle: "italic", marginBottom: 10 }}>
-          Les qualifications ne sont pas encore confirmées — prévision basée sur les scores actuels.
-        </p>
         {/* Standings */}
         <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: "none", marginBottom: 16 }}>
           {g.teams.map((t, i) => (
@@ -5324,7 +5385,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
               <span style={{ fontSize: 12, fontWeight: 800, color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#666" }}>{i + 1}.</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#aaa" }}>{t.wins}-{t.losses}</span>
-              <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Prévu qualif." : t.eliminated ? "Élim." : "—"}</span>
+              <span style={{ fontSize: 9, fontWeight: 800, textAlign: "right", color: t.qualified ? "#7ec850" : t.eliminated ? "#c14a4a" : "#555", textTransform: "uppercase" }}>{t.qualified ? "Qualif." : t.eliminated ? "Élim." : "—"}</span>
             </div>
           ))}
         </div>
