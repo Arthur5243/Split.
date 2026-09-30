@@ -10400,10 +10400,10 @@ function AdInterstitial({ onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [fading, setFading] = useState(false);
   const adContainerRef = useRef(null);
-  // Duree totale: 10s. Bouton "Passer" visible seulement apres 8s (2s de
-  // marge pour laisser voir la pub). Auto-close: 10s.
-  const SKIP_AFTER = 8;
-  const AUTO_CLOSE = 10;
+  // Duree totale: 12s. Bouton "Passer" visible seulement apres 10s (2s de
+  // marge pour laisser voir la pub). Auto-close: 12s.
+  const SKIP_AFTER = 10;
+  const AUTO_CLOSE = 12;
 
   useEffect(() => {
     const iv = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -10862,13 +10862,12 @@ export default function ClutchApp() {
   }, []);
   useEffect(() => {
     if (showAuth || showIntroCards) return;
-    // Mode test pour arthur.cambin@gmail.com uniquement: pub 10 sec apres
-    // le lancement. Pour tous les autres users: 2-3 min aleatoire.
-    const isTester = authUser?.email === "arthur.cambin@gmail.com";
-    const delay = isTester ? 10000 : (120000 + Math.random() * 60000);
+    // Mode normal pour tout le monde: pub 2-3 min aleatoire apres le
+    // lancement.
+    const delay = 120000 + Math.random() * 60000;
     adTimerRef.current = setTimeout(triggerAd, delay);
     return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
-  }, [showAuth, showIntroCards, triggerAd, authUser?.email]);
+  }, [showAuth, showIntroCards, triggerAd]);
   useEffect(() => {
     if (streak.justExpired) {
       const t = setTimeout(() => setStreakExpiredNotif({ lostStreak: streak.lostStreak }), 1500);
