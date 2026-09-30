@@ -10399,10 +10399,11 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
 function AdInterstitial({ onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [fading, setFading] = useState(false);
-  const adSlot = getAdSlotHtml();
   const adContainerRef = useRef(null);
-  const SKIP_AFTER = 5;
-  const AUTO_CLOSE = 15;
+  // Duree totale: 10s. Bouton "Passer" visible seulement apres 8s (2s de
+  // marge pour laisser voir la pub). Auto-close: 10s.
+  const SKIP_AFTER = 8;
+  const AUTO_CLOSE = 10;
 
   useEffect(() => {
     const iv = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -10413,47 +10414,49 @@ function AdInterstitial({ onClose }) {
     if (elapsed >= AUTO_CLOSE) { setFading(true); setTimeout(onClose, 400); }
   }, [elapsed]);
 
+  // Charge le script Adsterra une seule fois quand l'AdInterstitial mount.
+  // Le script s'auto-injecte dans son parent conteneur.
   useEffect(() => {
-    if (adSlot && adContainerRef.current) {
-      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch {}
-    }
-  }, [adSlot]);
+    if (!adContainerRef.current) return;
+    // Nettoie ce qui pourrait rester d'un mount precedent
+    adContainerRef.current.innerHTML = "";
+    const s = document.createElement("script");
+    s.src = "https://pl31595004.profitableratecpmnetwork.com/ee/3b/93/ee3b9395fc63b3aead224a750c73774c.js";
+    s.async = true;
+    adContainerRef.current.appendChild(s);
+    return () => {
+      // Cleanup best-effort
+      try { adContainerRef.current && (adContainerRef.current.innerHTML = ""); } catch {}
+    };
+  }, []);
 
   const canSkip = elapsed >= SKIP_AFTER;
+  const secondsLeft = Math.max(0, AUTO_CLOSE - elapsed);
 
   return (
     <div style={{
-      position: "fixed", inset: 0, zIndex: 11000, background: "rgba(0,0,0,0.95)",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      position: "fixed", inset: 0, zIndex: 11000, background: "#000",
+      display: "flex", flexDirection: "column",
       opacity: fading ? 0 : 1, transition: "opacity 0.4s ease",
     }}>
-      <div style={{ width: "min(340px, 88%)", background: "#111", borderRadius: 20, overflow: "hidden", border: "1px solid #222" }}>
-        <div ref={adContainerRef} style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          {adSlot ? (
-            <ins className="adsbygoogle" style={{ display: "block", width: "100%", height: "100%" }}
-              data-ad-client={adSlot.pubId} {...(adSlot.slotId ? { "data-ad-slot": adSlot.slotId } : {})} data-ad-format="auto" data-full-width-responsive="true" />
-          ) : (
-            <>
-              <span style={{ fontSize: 32 }}>📢</span>
-              <p style={{ color: "#aaa", fontSize: 11, fontWeight: 600, textAlign: "center" }}>Espace publicitaire</p>
-              <p style={{ color: "#555", fontSize: 9 }}>Votre annonce ici</p>
-            </>
-          )}
-        </div>
-        <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ width: "100%", height: 3, background: "#222", borderRadius: 2, position: "relative", marginRight: 12 }}>
-            <div style={{ height: "100%", background: "#CCF71D", borderRadius: 2, width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
-          </div>
-          {canSkip ? (
-            <button onClick={() => { setFading(true); setTimeout(onClose, 300); }} style={{ background: "#222", border: "1px solid #333", borderRadius: 8, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-              Passer ✕
-            </button>
-          ) : (
-            <span style={{ color: "#555", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>
-              {SKIP_AFTER - elapsed}s
-            </span>
-          )}
-        </div>
+      {/* Header avec timer + skip */}
+      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0a0a0a", borderBottom: "1px solid #222" }}>
+        <span style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Publicité · Adsterra</span>
+        {canSkip ? (
+          <button onClick={() => { setFading(true); setTimeout(onClose, 300); }} style={{ background: "#CCF71D", border: "none", borderRadius: 8, padding: "6px 14px", color: "#000", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>
+            Passer ✕
+          </button>
+        ) : (
+          <span style={{ color: "#888", fontSize: 12, fontWeight: 700, background: "#161616", padding: "6px 12px", borderRadius: 8, border: "1px solid #262626" }}>
+            {secondsLeft}s
+          </span>
+        )}
+      </div>
+      {/* Zone Adsterra plein ecran */}
+      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", position: "relative" }} />
+      {/* Progress bar en bas */}
+      <div style={{ height: 3, background: "#151515" }}>
+        <div style={{ height: "100%", background: "#CCF71D", width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
       </div>
     </div>
   );
