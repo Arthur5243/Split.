@@ -10844,16 +10844,54 @@ export default function ClutchApp() {
   const [showAd, setShowAd] = useState(false);
   const adShownRef = useRef(false);
   const adTimerRef = useRef(null);
+  const lastInteractionRef = useRef(Date.now());
+  const lastAdAtRef = useRef(0);
   const tabSwitchCountRef = useRef(0);
-  const triggerAd = useCallback(async () => {
+  const tabSwitchSinceAdRef = useRef(0);
+  const predictionsSinceAdRef = useRef(0);
+  // Cooldown entre 2 pubs: 2 min (meme si plusieurs triggers consecutifs).
+  // AFK: 2 min sans aucune interaction (pointer/key/scroll).
+  const AD_COOLDOWN_MS = 2 * 60 * 1000;
+  const AFK_THRESHOLD_MS = 2 * 60 * 1000;
+  const triggerAd = useCallback(async (reason = "manual") => {
+    const now = Date.now();
+    if (now - lastAdAtRef.current < AD_COOLDOWN_MS) return;
     if (adShownRef.current) return;
     adShownRef.current = true;
+    lastAdAtRef.current = now;
+    tabSwitchSinceAdRef.current = 0;
+    predictionsSinceAdRef.current = 0;
+    console.log(`[ad-trigger] reason=${reason}`);
     if (isNative()) {
       const shown = await showInterstitial();
       if (shown) return;
     }
     setShowAd(true);
   }, []);
+  // Reset adShown quand on ferme la pub (sinon on peut plus trigger a nouveau)
+  useEffect(() => {
+    if (!showAd) adShownRef.current = false;
+  }, [showAd]);
+  // Listener global: reset lastInteraction a chaque action user. Permet de
+  // detecter AFK. Debounce leger pour pas tasser trop d'updates.
+  useEffect(() => {
+    const bump = () => { lastInteractionRef.current = Date.now(); };
+    const opts = { passive: true, capture: true };
+    window.addEventListener("pointerdown", bump, opts);
+    window.addEventListener("keydown", bump, opts);
+    window.addEventListener("scroll", bump, opts);
+    return () => {
+      window.removeEventListener("pointerdown", bump, opts);
+      window.removeEventListener("keydown", bump, opts);
+      window.removeEventListener("scroll", bump, opts);
+    };
+  }, []);
+  // Expose triggerAd via window pour qu'on puisse l'appeler depuis des
+  // handlers specifiques (changement de tab, prono termine, map scores remplis)
+  useEffect(() => {
+    window.__splitTriggerAd = (reason) => triggerAd(reason || "event");
+    return () => { delete window.__splitTriggerAd; };
+  }, [triggerAd]);
   useEffect(() => { initAdMob(); }, []);
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
@@ -10862,11 +10900,18 @@ export default function ClutchApp() {
   }, []);
   useEffect(() => {
     if (showAuth || showIntroCards) return;
-    // Mode normal pour tout le monde: pub 2-3 min aleatoire apres le
-    // lancement.
-    const delay = 120000 + Math.random() * 60000;
-    adTimerRef.current = setTimeout(triggerAd, delay);
-    return () => { if (adTimerRef.current) clearTimeout(adTimerRef.current); };
+    // Nouveau trigger pub: polling toutes les 20s qui check si l'user est
+    // AFK depuis AFK_THRESHOLD_MS. Si oui + cooldown respecte → trigger.
+    // Les autres triggers (swipe tab, prono termine) appellent window.
+    // __splitTriggerAd via leurs handlers specifiques.
+    const iv = setInterval(() => {
+      const now = Date.now();
+      const idleMs = now - lastInteractionRef.current;
+      if (idleMs >= AFK_THRESHOLD_MS) {
+        triggerAd("afk");
+      }
+    }, 20000);
+    return () => clearInterval(iv);
   }, [showAuth, showIntroCards, triggerAd]);
   useEffect(() => {
     if (streak.justExpired) {
@@ -10933,8 +10978,13 @@ export default function ClutchApp() {
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     setShowSettings(false); setShowNotifs(false);
     tabSwitchCountRef.current++;
+    tabSwitchSinceAdRef.current++;
     setActiveTab(tab);
     try { history.pushState({ tab }, "", ""); } catch {}
+    // Trigger pub tous les 3 swipes de tab (si cooldown ok)
+    if (tabSwitchSinceAdRef.current >= 3) {
+      triggerAd("tab-swipe-3x");
+    }
   }
   useEffect(() => {
     try { history.replaceState({ tab: "home" }, "", ""); } catch {}
@@ -11938,6 +11988,8 @@ export default function ClutchApp() {
   function applySettlement(newlySettled, pointsToAdd, game) {
     if (newlySettled.length === 0) return;
     const winsCount = newlySettled.length;
+    // Trigger pub quand un pari est regle (match finished avec prono)
+    try { window.__splitTriggerAd && window.__splitTriggerAd("bet-settled"); } catch {}
     setSettledMatchIds((prev) => {
       const next = new Set(prev);
       newlySettled.forEach((id) => next.add(id));
@@ -12036,7 +12088,14 @@ export default function ClutchApp() {
       const m = prev[matchId];
       if (!m) return prev;
       const games = m.games.map((g, i) => (i === gameIndex ? { ...g, [team]: value } : g));
-      return { ...prev, [matchId]: { ...m, games } };
+      const next = { ...prev, [matchId]: { ...m, games } };
+      // Trigger pub quand TOUS les map scores d'un match sont remplis
+      // (chaque game a a!=="" ET b!=="")
+      try {
+        const allFilled = games.length > 0 && games.every((g) => g && g.a !== "" && g.b !== "");
+        if (allFilled) window.__splitTriggerAd && window.__splitTriggerAd("map-scores-filled");
+      } catch {}
+      return next;
     });
   }
 
@@ -12464,10 +12523,6 @@ export default function ClutchApp() {
                 <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #262626" }}>
                   <p style={{ color: "#FFD700", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>{streak.best}</p>
                   <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T.streakBest}</p>
-                </div>
-                <div style={{ flex: 1, background: "#111", borderRadius: 14, padding: "14px 12px", border: "1px solid #262626" }}>
-                  <p style={{ color: "#A855F7", fontSize: 20, fontWeight: 900, lineHeight: 1, marginBottom: 4 }}>x{Math.max(1, streak.current)}</p>
-                  <p style={{ color: "#555", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Bonus</p>
                 </div>
               </div>
               <p style={{ color: "#666", fontSize: 12, lineHeight: 1.6, marginBottom: 20 }}>{T.streakExplain}</p>
