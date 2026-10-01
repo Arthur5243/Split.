@@ -64,6 +64,8 @@ try { db.exec(`ALTER TABLE users ADD COLUMN wipe_at TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN bets_correct INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN bets_exact INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN bets_total INTEGER DEFAULT 0`); } catch {}
+// Presence: last activity (ping) timestamp. Mis a jour via /api/social/ping.
+try { db.exec(`ALTER TABLE users ADD COLUMN last_seen_at TEXT`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
@@ -227,6 +229,30 @@ const setBetStatsStmt = db.prepare(`
 `);
 export function setBetStats(userId, correct, exact, total) {
   setBetStatsStmt.run(correct | 0, exact | 0, total | 0, userId);
+}
+
+// Presence: ping le user comme actif maintenant.
+const pingStmt = db.prepare(`UPDATE users SET last_seen_at = datetime('now') WHERE id = ?`);
+export function pingUser(userId) {
+  if (!userId) return;
+  try { pingStmt.run(userId); } catch {}
+}
+
+// Renvoie { userId: boolean } indiquant si chaque user est online (last_seen_at < 2min).
+export function getOnlineStatus(ids) {
+  if (!ids || !ids.length) return {};
+  const placeholders = ids.map(() => "?").join(",");
+  try {
+    const rows = db.prepare(`SELECT id, last_seen_at FROM users WHERE id IN (${placeholders})`).all(...ids);
+    const now = Date.now();
+    const out = {};
+    for (const r of rows) {
+      const ts = r.last_seen_at ? new Date(r.last_seen_at + "Z").getTime() : 0;
+      out[r.id] = ts > 0 && (now - ts) < 2 * 60 * 1000;
+    }
+    for (const id of ids) if (!(id in out)) out[id] = false;
+    return out;
+  } catch { return {}; }
 }
 
 export function setXpByPseudo(pseudo, xp) {

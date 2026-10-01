@@ -8599,6 +8599,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [eqBadgeTick, setEqBadgeTick] = useState(0);
   const [leaderboard, setLeaderboard] = useState(prefetchedLeaderboard || []);
   const [lbLoaded, setLbLoaded] = useState(!!prefetchedLeaderboard);
+  // Sync si le prefetched parent change (nouveau fetch depuis ClutchApp)
+  useEffect(() => {
+    if (Array.isArray(prefetchedLeaderboard) && prefetchedLeaderboard.length > 0) {
+      setLeaderboard(prefetchedLeaderboard);
+      setLbLoaded(true);
+    }
+  }, [prefetchedLeaderboard]);
   const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
   const carouselDragX = useRef(null);
@@ -8631,6 +8638,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [dmInput, setDmInput] = useState("");
   const [dmSending, setDmSending] = useState(false);
   const [dmCryptoKeys, setDmCryptoKeys] = useState(null);
+  const [dmUnreadByPeer, setDmUnreadByPeer] = useState(() => {
+    try {
+      const raw = localStorage.getItem("split_dm_unread_" + (profile?.userId || ""));
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  const [onlineUsers, setOnlineUsers] = useState({});
   const dmEndRef = useRef(null);
 
   useEffect(() => {
@@ -8709,38 +8723,113 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   function loadDmConversations() {
     if (!profile?.userId) return;
     fetch(API_BASE + "/api/messages/conversations/" + profile.userId).then(r => r.json()).then(d => {
-      if (Array.isArray(d)) setDmConversations(d);
+      if (!Array.isArray(d)) return;
+      setDmConversations(d);
+      // Détecte nouveaux messages depuis derniere consultation
+      try {
+        const key = "split_dm_lastseen_" + profile.userId;
+        const lastSeenRaw = localStorage.getItem(key);
+        const lastSeen = lastSeenRaw ? JSON.parse(lastSeenRaw) : {};
+        const unreadKey = "split_dm_unread_" + profile.userId;
+        const unreadRaw = localStorage.getItem(unreadKey);
+        const unread = unreadRaw ? JSON.parse(unreadRaw) : {};
+        let changed = false;
+        for (const c of d) {
+          if (!c.lastMessage || c.lastMessage.fromMe) continue;
+          const last = c.lastMessage.at;
+          const prev = lastSeen[c.partnerId];
+          if (!prev || new Date(last) > new Date(prev)) {
+            // Message plus récent que la derniere consultation ET on n'est pas en train de regarder cette conv
+            if (dmActivePeer?.partnerId !== c.partnerId) {
+              unread[c.partnerId] = (unread[c.partnerId] || 0) + 1;
+              changed = true;
+            }
+            lastSeen[c.partnerId] = last;
+          }
+        }
+        localStorage.setItem(key, JSON.stringify(lastSeen));
+        if (changed) {
+          localStorage.setItem(unreadKey, JSON.stringify(unread));
+          setDmUnreadByPeer(unread);
+        }
+      } catch {}
     }).catch(() => {});
   }
+
+  // Poll conversations toutes les 15s pour détecter nouveaux DMs
+  useEffect(() => {
+    if (!profile?.userId) return;
+    const t = setInterval(() => loadDmConversations(), 15000);
+    return () => clearInterval(t);
+  }, [profile?.userId, dmActivePeer?.partnerId]);
+
+  // Heartbeat presence toutes les 60s pour indicateur online/offline
+  useEffect(() => {
+    if (!profile?.userId) return;
+    const ping = () => {
+      try {
+        fetch(API_BASE + "/api/social/ping", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId }) });
+      } catch {}
+    };
+    ping();
+    const t = setInterval(ping, 60000);
+    return () => clearInterval(t);
+  }, [profile?.userId]);
+
+  // Récupere online status (last_seen_at > 2min = online)
+  useEffect(() => {
+    if (!profile?.userId || dmConversations.length === 0) return;
+    const ids = dmConversations.map(c => c.partnerId).join(",");
+    if (!ids) return;
+    fetch(API_BASE + "/api/social/online?ids=" + encodeURIComponent(ids)).then(r => r.json()).then(d => {
+      if (d && typeof d === "object") setOnlineUsers(d);
+    }).catch(() => {});
+  }, [dmConversations.length, profile?.userId, discussionSubTab]);
 
   async function openDmConv(partner) {
     setDmActivePeer(partner);
     setDmInput("");
     if (!profile?.userId) return;
+    // Reset compteur unread pour ce peer
+    try {
+      const key = "split_dm_unread_" + profile.userId;
+      const raw = localStorage.getItem(key);
+      const obj = raw ? JSON.parse(raw) : {};
+      if (obj[partner.partnerId]) {
+        delete obj[partner.partnerId];
+        localStorage.setItem(key, JSON.stringify(obj));
+        setDmUnreadByPeer(obj);
+      }
+    } catch {}
     const msgs = await fetch(API_BASE + "/api/messages/dm/" + profile.userId + "/" + partner.partnerId).then(r => r.json()).catch(() => []);
     if (!Array.isArray(msgs)) { setDmMessages([]); return; }
-    const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json()).catch(() => null);
-    if (!keyResp?.publicKey || !dmCryptoKeys) { setDmMessages(msgs.reverse().map(m => ({ ...m, text: "[Clé manquante]", isMe: m.sender_id === profile.userId }))); return; }
-    const sharedKey = await dmDeriveKey(JSON.parse(keyResp.publicKey));
-    const decrypted = await Promise.all(msgs.reverse().map(async m => {
+    // Plain text first (content). Fallback: legacy decrypt.
+    const sharedKey = dmCryptoKeys ? await (async () => {
+      try {
+        const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json());
+        if (!keyResp?.publicKey) return null;
+        return await dmDeriveKey(JSON.parse(keyResp.publicKey));
+      } catch { return null; }
+    })() : null;
+    const mapped = await Promise.all(msgs.reverse().map(async m => {
       const isMe = m.sender_id === profile.userId;
-      const text = await dmDecrypt(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
-      return { ...m, text, isMe };
+      if (m.content) return { ...m, text: m.content, isMe };
+      if (sharedKey) {
+        const text = await dmDecrypt(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
+        return { ...m, text, isMe };
+      }
+      return { ...m, text: "[Message indisponible]", isMe };
     }));
-    setDmMessages(decrypted);
+    setDmMessages(mapped);
   }
 
   async function sendDmMsg() {
-    if (!dmInput.trim() || !dmActivePeer || !profile?.userId || !dmCryptoKeys) return;
+    if (!dmInput.trim() || !dmActivePeer || !profile?.userId) return;
     setDmSending(true);
+    const text = dmInput.trim();
     try {
-      const keyResp = await fetch(API_BASE + "/api/messages/keys/" + dmActivePeer.partnerId).then(r => r.json());
-      if (!keyResp?.publicKey) return;
-      const sharedKey = await dmDeriveKey(JSON.parse(keyResp.publicKey));
-      const { ciphertext, iv } = await dmEncrypt(dmInput.trim(), sharedKey);
-      const { ciphertext: senderCopy, iv: senderIv } = await dmEncrypt(dmInput.trim(), sharedKey);
-      await fetch(API_BASE + "/api/messages/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: profile.userId, receiverId: dmActivePeer.partnerId, ciphertext, iv, senderCopy, senderIv }) });
-      setDmMessages(prev => [...prev, { text: dmInput.trim(), isMe: true, created_at: new Date().toISOString() }]);
+      await fetch(API_BASE + "/api/messages/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: profile.userId, receiverId: dmActivePeer.partnerId, content: text }) });
+      setDmMessages(prev => [...prev, { text, isMe: true, content: text, created_at: new Date().toISOString() }]);
       setDmInput("");
     } catch {} finally { setDmSending(false); }
   }
@@ -9242,9 +9331,24 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
           {/* Bouton Discussion gros a droite quand slide = Communaute */}
           {carouselSlide === 1 && (
-            <button onClick={() => setShowMessages(true)} style={{ background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowMessages(true)} style={{ position: "relative", background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <MessageCircle size={14} color="#CCF71D" />
               <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>Discussion</span>
+              {(() => {
+                try {
+                  const raw = localStorage.getItem("split_dm_unread_" + (profile?.userId || ""));
+                  const obj = raw ? JSON.parse(raw) : {};
+                  const total = Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0);
+                  if (total > 0) {
+                    return (
+                      <span style={{ position: "absolute", top: -4, right: -4, background: "#ff3b30", color: "#fff", borderRadius: 10, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, padding: "0 4px", boxShadow: "0 1px 4px rgba(255,59,48,0.5)" }}>
+                        {total > 9 ? "9+" : total}
+                      </span>
+                    );
+                  }
+                } catch {}
+                return null;
+              })()}
             </button>
           )}
         </div>
@@ -9509,10 +9613,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <div ref={discussionRef} style={{ display: "flex", flexDirection: "column", height: discussionH ? discussionH + "px" : "calc(100dvh - 180px)", overflow: "hidden" }}>
                 {/* Sub-tabs: Principal (DMs) first, then Général (community) */}
                 <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", marginBottom: 8, flexShrink: 0 }}>
-                  <button onClick={() => { setDiscussionSubTab("private"); loadDmConversations(); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "private" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "private" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                  <button onClick={() => { setDiscussionSubTab("private"); setDmActivePeer(null); setDmMessages([]); loadDmConversations(); }} style={{ position: "relative", flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "private" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "private" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
                     Principal
+                    {(() => {
+                      const total = Object.values(dmUnreadByPeer || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+                      if (total > 0 && discussionSubTab !== "private") {
+                        return (
+                          <span style={{ position: "absolute", top: 4, right: 8, background: "#ff3b30", color: "#fff", borderRadius: 10, minWidth: 14, height: 14, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, padding: "0 4px" }}>
+                            {total > 9 ? "9+" : total}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </button>
-                  <button onClick={() => { setDiscussionSubTab("community"); setDmActivePeer(null); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "community" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "community" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
+                  <button onClick={() => { setDiscussionSubTab("community"); setDmActivePeer(null); setDmMessages([]); }} style={{ flex: 1, padding: "10px 0", background: "none", border: "none", borderBottom: discussionSubTab === "community" ? "2px solid #CCF71D" : "2px solid transparent", color: discussionSubTab === "community" ? "#CCF71D" : "#666", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s" }}>
                     {"Général"}
                   </button>
                 </div>
@@ -9574,13 +9689,23 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         )}
                         {dmConversations.map(c => (
                           <button key={c.partnerId} onClick={() => openDmConv(c)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", background: "none", border: "none", borderBottom: "1px solid #1a1a1a", cursor: "pointer", width: "100%", textAlign: "left" }}>
-                            <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                            <div style={{ position: "relative", width: 38, height: 38, flexShrink: 0 }}>
+                              <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                {c.avatar ? <img src={c.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
+                              </div>
+                              <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", background: onlineUsers[c.partnerId] ? "#2ecc71" : "#555", border: "2px solid #000" }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p style={{ color: "#fff", fontSize: 13, fontWeight: 700, margin: 0 }}>{c.pseudo || "?"}</p>
-                              <p style={{ color: "#666", fontSize: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.lastMessage || "..."}</p>
+                              <p style={{ color: "#666", fontSize: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {c.lastMessage?.content ? (c.lastMessage.fromMe ? "Toi : " : "") + c.lastMessage.content : "..."}
+                              </p>
                             </div>
+                            {dmUnreadByPeer?.[c.partnerId] > 0 && (
+                              <div style={{ background: "#CCF71D", color: "#000", fontSize: 9, fontWeight: 800, borderRadius: 10, padding: "2px 6px", minWidth: 16, textAlign: "center" }}>
+                                {dmUnreadByPeer[c.partnerId]}
+                              </div>
+                            )}
                             <ChevronRight size={14} color="#444" />
                           </button>
                         ))}
@@ -10755,6 +10880,26 @@ export default function ClutchApp() {
     }
   });
 
+  // Compteur global DMs non lus pour bubble bottom nav Classement
+  const [totalDmUnread, setTotalDmUnread] = useState(0);
+  useEffect(() => {
+    function refresh() {
+      try {
+        const uid = JSON.parse(localStorage.getItem("split_profile") || "null")?.userId;
+        if (!uid) { setTotalDmUnread(0); return; }
+        const raw = localStorage.getItem("split_dm_unread_" + uid);
+        const obj = raw ? JSON.parse(raw) : {};
+        const total = Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0);
+        setTotalDmUnread(total);
+      } catch { setTotalDmUnread(0); }
+    }
+    refresh();
+    const t = setInterval(refresh, 5000);
+    const onStorage = (e) => { if (e.key && e.key.startsWith("split_dm_unread_")) refresh(); };
+    window.addEventListener("storage", onStorage);
+    return () => { clearInterval(t); window.removeEventListener("storage", onStorage); };
+  }, []);
+
   const [questState, setQuestState] = useState(() => assignDailyQuests(new Set()));
   const questMatchRefDone = useRef(false);
   const questSlotRef = useRef(halfDaySlot());
@@ -11035,6 +11180,14 @@ export default function ClutchApp() {
     }
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     setShowSettings(false); setShowNotifs(false);
+    // Reset tous les matchs 'expanded' (map scores ouverts) au switch tab:
+    // sinon un match ouvert dans Valorant reste ouvert au retour. Garde
+    // les predictions (seriesA/B, games) intactes.
+    setPredictions((prev) => {
+      const next = {};
+      for (const k in prev) next[k] = { ...prev[k], expanded: false };
+      return next;
+    });
     tabSwitchCountRef.current++;
     tabSwitchSinceAdRef.current++;
     setActiveTab(tab);
@@ -11101,9 +11254,15 @@ export default function ClutchApp() {
 
   // Prefetch leaderboard depuis localStorage en initial state (survit aux reloads,
   // pas de frame de chargement visible) + refresh backend en background.
+  // Fix flash: on n'utilise le cache QUE s'il est frais (<2min). Au dela c'est trop
+  // stale → on prefere afficher rien le temps du fetch (<300ms) que l'ancien.
   const [prefetchedLeaderboard, setPrefetchedLeaderboard] = useState(() => {
     try {
       const cached = JSON.parse(localStorage.getItem("split_leaderboard_cache") || "null");
+      if (cached && cached.data && cached.at && Array.isArray(cached.data) && cached.data.length > 0) {
+        if (Date.now() - cached.at < 2 * 60 * 1000) return cached.data;
+      }
+      // Legacy: support ancien format sans timestamp
       if (Array.isArray(cached) && cached.length > 0) return cached;
     } catch {}
     return null;
@@ -11112,8 +11271,9 @@ export default function ClutchApp() {
     fetch((import.meta.env.VITE_API_BASE || "") + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) {
         setPrefetchedLeaderboard(d);
-        // Cache pour prochain boot: le classement s'affiche instant sans frame de chargement
-        try { localStorage.setItem("split_leaderboard_cache", JSON.stringify(d.slice(0, 100))); } catch {}
+        // Cache pour prochain boot avec timestamp: evite d'afficher un classement
+        // perime au prochain mount puis flash sur la version a jour.
+        try { localStorage.setItem("split_leaderboard_cache", JSON.stringify({ at: Date.now(), data: d.slice(0, 100) })); } catch {}
       }
     }).catch(() => {});
   }, []);
@@ -12471,6 +12631,11 @@ export default function ClutchApp() {
                   {item.key === "home" && streak.current > 0 && (
                     <span style={{ position: "absolute", top: 0, right: -4, display: "flex", alignItems: "center", gap: 1, background: "linear-gradient(135deg, #FF6B00, #FF9500)", borderRadius: 8, padding: "1px 5px 1px 3px", fontSize: 9, fontWeight: 900, color: "#fff", lineHeight: 1, boxShadow: "0 2px 6px rgba(255,107,0,0.4)" }}>
                       <span style={{ fontSize: 8 }}>&#x1F525;</span>{streak.current}
+                    </span>
+                  )}
+                  {item.key === "classement" && totalDmUnread > 0 && (
+                    <span style={{ position: "absolute", top: -2, right: -6, background: "#ff3b30", color: "#fff", borderRadius: 10, minWidth: 14, height: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, padding: "0 4px", boxShadow: "0 1px 4px rgba(255,59,48,0.5)" }}>
+                      {totalDmUnread > 9 ? "9+" : totalDmUnread}
                     </span>
                   )}
                 </div>

@@ -117,12 +117,32 @@ export function getDmConversation(userId1, userId2, limit = 50, offset = 0) {
 }
 
 export function getConversations(userId) {
-  return stmts.getConversations.all(userId, userId, userId).map(c => ({
-    partnerId: c.user1 === userId ? c.user2 : c.user1,
-    pseudo: c.pseudo,
-    avatar: c.avatar,
-    lastMessageAt: c.last_message_at,
-  }));
+  return stmts.getConversations.all(userId, userId, userId).map(c => {
+    const partnerId = c.user1 === userId ? c.user2 : c.user1;
+    // Fetch le dernier message plain text pour preview
+    let lastMessage = null;
+    try {
+      const row = db.prepare(`
+        SELECT content, sender_id, created_at FROM dm_messages
+        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
+        ORDER BY created_at DESC LIMIT 1
+      `).get(userId, partnerId, partnerId, userId);
+      if (row) {
+        lastMessage = {
+          content: row.content || "[Message chiffré]",
+          fromMe: row.sender_id === userId,
+          at: row.created_at,
+        };
+      }
+    } catch {}
+    return {
+      partnerId,
+      pseudo: c.pseudo,
+      avatar: c.avatar,
+      lastMessageAt: c.last_message_at,
+      lastMessage,
+    };
+  });
 }
 
 export function deleteDmMessage(messageId, senderId) {

@@ -22,6 +22,8 @@ import {
   getReferrals,
   cleanupOldAccounts,
   setBetStats,
+  pingUser,
+  getOnlineStatus,
 } from "./social-store.js";
 
 const router = Router();
@@ -48,7 +50,25 @@ router.get("/api/social/me/:userId", (req, res) => {
   const user = getUser(req.params.userId);
   if (!user) return res.status(404).json({ error: "not found" });
   const stats = getSocialStats(req.params.userId);
+  // Ping le user comme actif a chaque appel /me (frontend polle le profil assez souvent)
+  pingUser(req.params.userId);
   res.json({ ...user, ...stats });
+});
+
+// Ping explicite (heartbeat). Appeler toutes les ~60s depuis le frontend.
+router.post("/api/social/ping", (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  pingUser(userId);
+  res.json({ ok: true });
+});
+
+// Statut en ligne de plusieurs users (comma-separated ids).
+router.get("/api/social/online", (req, res) => {
+  const raw = (req.query.ids || "").toString();
+  const ids = raw.split(",").map(s => s.trim()).filter(Boolean).slice(0, 100);
+  if (!ids.length) return res.json({});
+  res.json(getOnlineStatus(ids));
 });
 
 router.get("/api/social/search", (req, res) => {
