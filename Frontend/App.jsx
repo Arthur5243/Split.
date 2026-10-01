@@ -2877,52 +2877,79 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                     </div>
                   );
                 }
-                // Valorant/RL: rendu live avec un design "en direct" bien
-                // marque (bordure rouge, badge LIVE par map en cours, pulse)
-                // + le pronostic du joueur affiche a cote pour chaque map.
+                // Valorant/RL: rendu live avec un design "en direct" complet:
+                // - Score global en haut (gros, calcule depuis maps gagnees)
+                // - Liste maps avec scores + pronos par map en vert lime
+                // - Badge LIVE discret en bas
                 if (!hasLiveScores) return null;
+                // Calcul du score global live (nb maps gagnees par chaque team)
+                let gw1 = 0, gw2 = 0;
+                for (const mp of match.live_map_scores) {
+                  const hi = Math.max(mp.score1 || 0, mp.score2 || 0);
+                  const diff = Math.abs((mp.score1 || 0) - (mp.score2 || 0));
+                  if (hi >= 13 && diff >= 2) {
+                    if ((mp.score1 || 0) > (mp.score2 || 0)) gw1++; else gw2++;
+                  }
+                }
+                // Series prono user (seriesA/B) si existe
+                const sPred = pred && pred.seriesA !== "" && pred.seriesB !== "" ? { a: pred.seriesA, b: pred.seriesB } : null;
                 return (
-                  <div className="flex flex-col gap-2">
-                    {match.live_map_scores.map((lm, i) => {
-                      const gamePred = (pred && pred.games && pred.games[i]) || null;
-                      const s1 = lm.score1 != null ? lm.score1 : 0;
-                      const s2 = lm.score2 != null ? lm.score2 : 0;
-                      const hi = Math.max(s1, s2);
-                      const diff = Math.abs(s1 - s2);
-                      const mapDone = hi >= 13 && diff >= 2;
-                      const mapLive = !mapDone && (s1 > 0 || s2 > 0);
-                      return (
-                        <div key={i} className="flex items-center justify-between" style={{
-                          background: mapLive ? "rgba(255,59,59,0.06)" : "transparent",
-                          border: mapLive ? "1px solid rgba(255,59,59,0.35)" : "1px solid #1e1e1e",
-                          borderRadius: 8,
-                          padding: "6px 10px",
-                        }}>
-                          <div className="flex items-center gap-1.5">
-                            <span style={{ color: mapLive ? "#ff3b3b" : "#fff", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>Map {i + 1}</span>
-                            {lm.map && (
-                              <span style={{ color: "#8a8a8a", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>{lm.map}</span>
-                            )}
-                            {mapLive && (
-                              <span className="flex items-center gap-1" style={{ background: "rgba(255,59,59,0.15)", padding: "1px 6px", borderRadius: 4 }}>
-                                <span style={{ width: 4, height: 4, borderRadius: 9999, background: "#ff3b3b", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-                                <span style={{ color: "#ff3b3b", fontSize: 8, fontWeight: 900, letterSpacing: "0.06em" }}>LIVE</span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <span style={{ color: mapLive ? "#ff3b3b" : "#fff", fontSize: "13px", fontWeight: 800, fontStyle: mapLive ? "italic" : "normal" }}>
-                              {s1} - {s2}
-                            </span>
-                            {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
-                              <span style={{ color: "#CCF71D", fontSize: "9px", fontWeight: 700, marginTop: "1px", background: "rgba(204,247,29,0.08)", padding: "1px 5px", borderRadius: 3 }}>
-                                {T.yourBet || "Ton pari"} : {gamePred.a}-{gamePred.b}
-                              </span>
-                            )}
-                          </div>
+                  <div className="flex flex-col">
+                    {/* Score global principal + prono user en gros */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", marginBottom: 10, background: "linear-gradient(90deg, rgba(255,59,59,0.05) 0%, rgba(255,59,59,0.12) 50%, rgba(255,59,59,0.05) 100%)", borderRadius: 10, border: "1px solid rgba(255,59,59,0.25)" }}>
+                      <div style={{ textAlign: "center", flex: 1 }}>
+                        <p style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>Score</p>
+                        <p style={{ color: "#fff", fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{gw1} <span style={{ color: "#555" }}>-</span> {gw2}</p>
+                      </div>
+                      {sPred && (
+                        <div style={{ textAlign: "center", flex: 1, borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
+                          <p style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{T.yourBet || "Ton pari"}</p>
+                          <p style={{ color: "#CCF71D", fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{sPred.a} <span style={{ color: "#555" }}>-</span> {sPred.b}</p>
                         </div>
-                      );
-                    })}
+                      )}
+                    </div>
+                    {/* Liste maps */}
+                    <div className="flex flex-col gap-1.5">
+                      {match.live_map_scores.map((lm, i) => {
+                        const gamePred = (pred && pred.games && pred.games[i]) || null;
+                        const s1 = lm.score1 != null ? lm.score1 : 0;
+                        const s2 = lm.score2 != null ? lm.score2 : 0;
+                        const hi = Math.max(s1, s2);
+                        const diff = Math.abs(s1 - s2);
+                        const mapDone = hi >= 13 && diff >= 2;
+                        const mapLive = !mapDone && (s1 > 0 || s2 > 0);
+                        return (
+                          <div key={i} className="flex items-center justify-between" style={{
+                            background: mapLive ? "rgba(255,59,59,0.06)" : "transparent",
+                            border: mapLive ? "1px solid rgba(255,59,59,0.35)" : "1px solid #1a1a1a",
+                            borderRadius: 8,
+                            padding: "6px 10px",
+                          }}>
+                            <div className="flex items-center gap-1.5">
+                              <span style={{ color: mapLive ? "#ff3b3b" : "#888", fontSize: 9, fontWeight: 800, textTransform: "uppercase" }}>M{i + 1}</span>
+                              {lm.map && (
+                                <span style={{ color: mapLive ? "#eee" : "#aaa", fontSize: 11, fontWeight: 700 }}>{lm.map}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span style={{ color: mapLive ? "#ff3b3b" : "#fff", fontSize: 13, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
+                                {s1} - {s2}
+                              </span>
+                              {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
+                                <span style={{ color: "#CCF71D", fontSize: 10, fontWeight: 800, background: "rgba(204,247,29,0.1)", padding: "2px 6px", borderRadius: 4, fontVariantNumeric: "tabular-nums" }}>
+                                  {gamePred.a}-{gamePred.b}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* LIVE badge discret en bas */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 10 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: 9999, background: "#ff3b3b", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                      <span style={{ color: "#ff3b3b", fontSize: 9, fontWeight: 900, fontStyle: "italic", letterSpacing: "0.08em", textTransform: "uppercase" }}>LIVE</span>
+                    </div>
                   </div>
                 );
               })()}
