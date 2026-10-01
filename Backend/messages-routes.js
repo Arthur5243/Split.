@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  setPublicKey, getPublicKey, sendDm, deleteDmMessage, getDmConversation,
+  setPublicKey, getPublicKey, sendDm, sendDmPlain, deleteDmMessage, getDmConversation,
   getConversations, sendCommunityMessage, deleteCommunityMessage, getCommunityMessages, getCommunityAfter
 } from "./messages-store.js";
 import { containsBlockedWord, sanitizeMessage } from "./word-filter.js";
@@ -21,9 +21,15 @@ router.get("/api/messages/keys/:userId", (req, res) => {
 });
 
 router.post("/api/messages/dm", (req, res) => {
-  const { senderId, receiverId, ciphertext, iv, senderCopy, senderIv } = req.body;
-  if (!senderId || !receiverId || !ciphertext || !iv || !senderCopy || !senderIv) {
-    return res.status(400).json({ error: "missing fields" });
+  const { senderId, receiverId, content, ciphertext, iv, senderCopy, senderIv } = req.body;
+  if (!senderId || !receiverId) return res.status(400).json({ error: "missing fields" });
+  // Preferred: plain text content. Fallback: legacy encrypted format.
+  if (content) {
+    const id = sendDmPlain(senderId, receiverId, content);
+    return res.json({ id });
+  }
+  if (!ciphertext || !iv || !senderCopy || !senderIv) {
+    return res.status(400).json({ error: "missing fields (content or encrypted set)" });
   }
   const id = sendDm(senderId, receiverId, ciphertext, iv, senderCopy, senderIv);
   res.json({ id });

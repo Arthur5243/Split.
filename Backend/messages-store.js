@@ -19,10 +19,11 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sender_id TEXT NOT NULL,
     receiver_id TEXT NOT NULL,
-    ciphertext TEXT NOT NULL,
-    iv TEXT NOT NULL,
-    sender_copy TEXT NOT NULL,
-    sender_iv TEXT NOT NULL,
+    ciphertext TEXT,
+    iv TEXT,
+    sender_copy TEXT,
+    sender_iv TEXT,
+    content TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_dm_sender ON dm_messages(sender_id, created_at DESC);
@@ -45,10 +46,15 @@ db.exec(`
   );
 `);
 
+// Migration: ajoute colonne content pour plain text (remplace E2E chiffrement
+// qui causait des bugs 'cle manquante' quand un user etait wipe/supprime).
+try { db.exec(`ALTER TABLE dm_messages ADD COLUMN content TEXT`); } catch {}
+
 const stmts = {
   setKey: db.prepare(`INSERT OR REPLACE INTO user_keys (user_id, public_key, updated_at) VALUES (?, ?, datetime('now'))`),
   getKey: db.prepare(`SELECT public_key FROM user_keys WHERE user_id = ?`),
 
+  sendDmPlain: db.prepare(`INSERT INTO dm_messages (sender_id, receiver_id, content) VALUES (?, ?, ?)`),
   sendDm: db.prepare(`INSERT INTO dm_messages (sender_id, receiver_id, ciphertext, iv, sender_copy, sender_iv) VALUES (?, ?, ?, ?, ?, ?)`),
   getDmConv: db.prepare(`
     SELECT * FROM dm_messages
@@ -96,6 +102,13 @@ export function sendDm(senderId, receiverId, ciphertext, iv, senderCopy, senderI
   const convKey = [senderId, receiverId].sort();
   stmts.upsertConv.run(convKey[0], convKey[1]);
   const r = stmts.sendDm.run(senderId, receiverId, ciphertext, iv, senderCopy, senderIv);
+  return r.lastInsertRowid;
+}
+
+export function sendDmPlain(senderId, receiverId, content) {
+  const convKey = [senderId, receiverId].sort();
+  stmts.upsertConv.run(convKey[0], convKey[1]);
+  const r = stmts.sendDmPlain.run(senderId, receiverId, content);
   return r.lastInsertRowid;
 }
 

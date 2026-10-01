@@ -8391,31 +8391,38 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
     if (!profile?.userId) return;
     const msgs = await fetch(API_BASE + "/api/messages/dm/" + profile.userId + "/" + partner.partnerId).then(r => r.json());
     if (!Array.isArray(msgs)) { setDmMessages([]); return; }
-    const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json()).catch(() => null);
-    if (!keyResp?.publicKey || !cryptoKeys) { setDmMessages(msgs.reverse().map(m => ({ ...m, text: "[Clé manquante]" }))); return; }
-    const theirKeyJwk = JSON.parse(keyResp.publicKey);
-    const sharedKey = await deriveSharedKey(theirKeyJwk);
-    const decrypted = await Promise.all(msgs.reverse().map(async m => {
+    // Plain text mode: on utilise m.content direct, sinon fallback decrypt
+    // legacy pour les anciens messages chiffres (si on a encore les cles).
+    const processed = [];
+    for (const m of msgs.reverse()) {
       const isMe = m.sender_id === profile.userId;
-      const text = await decryptMessage(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
-      return { ...m, text, isMe };
-    }));
-    setDmMessages(decrypted);
+      let text = m.content || "";
+      if (!text && m.ciphertext && cryptoKeys) {
+        // Tentative best-effort decrypt legacy
+        try {
+          const keyResp = await fetch(API_BASE + "/api/messages/keys/" + partner.partnerId).then(r => r.json()).catch(() => null);
+          if (keyResp?.publicKey) {
+            const sharedKey = await deriveSharedKey(JSON.parse(keyResp.publicKey));
+            text = await decryptMessage(isMe ? m.sender_copy : m.ciphertext, isMe ? m.sender_iv : m.iv, sharedKey);
+          }
+        } catch {}
+      }
+      if (!text) text = "[Message ancien format, impossible à afficher]";
+      processed.push({ ...m, text, isMe });
+    }
+    setDmMessages(processed);
   }
 
   async function sendDm() {
-    if (!input.trim() || !activeDm || !profile?.userId || !cryptoKeys) return;
+    if (!input.trim() || !activeDm || !profile?.userId) return;
     setSending(true);
     try {
-      const keyResp = await fetch(API_BASE + "/api/messages/keys/" + activeDm.partnerId).then(r => r.json());
-      if (!keyResp?.publicKey) { setSending(false); return; }
-      const theirKeyJwk = JSON.parse(keyResp.publicKey);
-      const sharedKey = await deriveSharedKey(theirKeyJwk);
-      const { ciphertext, iv } = await encryptMessage(input.trim(), sharedKey);
-      const { ciphertext: senderCopy, iv: senderIv } = await encryptMessage(input.trim(), sharedKey);
+      // Plain text mode: envoie directement le contenu sans chiffrement.
+      // Resout le bug 'cle manquante' qui apparaissait quand l'autre user
+      // etait wipe/re-cree et avait perdu ses cles publiques.
       await fetch(API_BASE + "/api/messages/dm", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ senderId: profile.userId, receiverId: activeDm.partnerId, ciphertext, iv, senderCopy, senderIv }),
+        body: JSON.stringify({ senderId: profile.userId, receiverId: activeDm.partnerId, content: input.trim() }),
       });
       setDmMessages(prev => [...prev, { text: input.trim(), isMe: true, created_at: new Date().toISOString() }]);
       setInput("");
