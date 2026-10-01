@@ -29,6 +29,24 @@ const HEADERS = {
 const liveScrapedScores = new Map();
 const SCRAPED_TTL_MS = 4 * 60 * 60 * 1000; // 4h au lieu de 30min
 
+// Table d'aliases: PandaScore name → VLR.gg name. Charge au boot et expose
+// un reverse-lookup pour que getScrapedScores matche quand le scraper
+// persiste "Xi Lai Gaming" alors que PandaScore utilise "XLG Gaming".
+let TEAM_ALIAS_PANDA_TO_VLR = {};
+let TEAM_ALIAS_VLR_TO_PANDA = {};
+try {
+  const aliasRaw = JSON.parse(readFileSync(join(__dirname, "data", "team-aliases.json"), "utf8"));
+  for (const [pandaName, info] of Object.entries(aliasRaw)) {
+    const vlr = info?.vlr_name;
+    if (!vlr) continue;
+    TEAM_ALIAS_PANDA_TO_VLR[pandaName.toLowerCase()] = vlr;
+    TEAM_ALIAS_VLR_TO_PANDA[vlr.toLowerCase()] = pandaName;
+  }
+  console.log(`[vlr-scraper] ${Object.keys(TEAM_ALIAS_PANDA_TO_VLR).length} alias charges`);
+} catch (e) {
+  console.log(`[vlr-scraper] team-aliases.json pas charge: ${e.message}`);
+}
+
 // Charger les scores persistés au démarrage
 try {
   const raw = JSON.parse(readFileSync(PERSISTED_PATH, "utf8"));
@@ -61,14 +79,28 @@ function normalize(s) {
 
 function getScrapedScores(team1Name, team2Name) {
   const now = Date.now();
+  // Build list of candidate names for each query team: raw + alias VLR
+  // (ex: "XLG Gaming" → ["xlg gaming", "xi lai gaming"])
+  const candidates = (name) => {
+    const n = normalize(name);
+    const out = new Set([n]);
+    const vlr = TEAM_ALIAS_PANDA_TO_VLR[n];
+    if (vlr) out.add(normalize(vlr));
+    const panda = TEAM_ALIAS_VLR_TO_PANDA[n];
+    if (panda) out.add(normalize(panda));
+    return out;
+  };
+  const q1Set = candidates(team1Name);
+  const q2Set = candidates(team2Name);
   for (const [, entry] of liveScrapedScores) {
     if (now - entry.scrapedAt > SCRAPED_TTL_MS) continue;
     const t1 = normalize(entry.team1);
     const t2 = normalize(entry.team2);
-    const q1 = normalize(team1Name);
-    const q2 = normalize(team2Name);
-    if ((t1 === q1 && t2 === q2) || (t1 === q2 && t2 === q1)) {
-      const swap = t1 === q2;
+    // Match si t1/t2 appartient aux candidats q1/q2 (dans un sens ou l'autre)
+    const matchDirect = q1Set.has(t1) && q2Set.has(t2);
+    const matchSwap = q1Set.has(t2) && q2Set.has(t1);
+    if (matchDirect || matchSwap) {
+      const swap = matchSwap;
       // On renvoie TOUTES les maps (in-progress + finies), pas seulement
       // celles qui ont atteint 13. Sans ça, un match live avec 1ère map à
       // 4-10 renvoie null et le front affiche "Scores par map en attente"

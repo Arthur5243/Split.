@@ -2866,14 +2866,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <div className="px-4 py-3" style={{ background: "#0d0d0d" }}>
               {running && (() => {
                 const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
-                // CS2: on masque tout le rendu maps en live (demande user).
-                // Affichage minimal juste pour indiquer "en cours, prono impossible".
+                // CS2: affiche uniquement les pronos series si l'user en a
+                // fait. Pas d'autre indication. Si pas de prono, rien.
                 if (gt === "cs2") {
+                  const hasPred = pred && pred.seriesA !== "" && pred.seriesB !== "";
+                  if (!hasPred) return null;
                   return (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 0" }}>
-                      <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-                      <span style={{ color: "#ff3b3b", fontSize: 12, fontWeight: 800, fontStyle: "italic", letterSpacing: "0.04em" }}>MATCH EN COURS</span>
-                      <span style={{ color: "#666", fontSize: 11, fontWeight: 600 }}>· pronostic impossible</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 0" }}>
+                      <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 700, background: "rgba(204,247,29,0.08)", padding: "4px 10px", borderRadius: 6 }}>{T.yourBet || "Ton pari"} : {pred.seriesA}-{pred.seriesB}</span>
                     </div>
                   );
                 }
