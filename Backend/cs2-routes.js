@@ -1370,4 +1370,40 @@ router.post("/api/admin/cs2-bulk-import-google", async (req, res) => {
   }
 });
 
+// Worker diag: liste tous les matchs CS2 finished > 10 min sans map_scores.
+// Pour chacun, remonte les infos utiles (teams, date, ms depuis fin, tentatives).
+// Usage: GET /api/admin/diag-missing-scores?key=X
+router.get("/api/admin/diag-missing-scores", async (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "forbidden" });
+  try {
+    const now = Date.now();
+    const TEN_MIN_MS = 10 * 60 * 1000;
+    const all = getFullHistoryFlat(1000);
+    const missing = [];
+    for (const m of all) {
+      if (m.status !== "finished") continue;
+      if (m.map_scores && m.map_scores !== "null") continue;
+      const endTs = m.day ? new Date(m.day + "T" + (m.time || "00:00") + ":00Z").getTime() : 0;
+      const ageMs = endTs ? now - endTs : null;
+      if (ageMs != null && ageMs < TEN_MIN_MS) continue;
+      const state = getMapScoresState(m.id);
+      missing.push({
+        id: m.id,
+        teams: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2}`,
+        day: m.day,
+        time: m.time,
+        score: `${m.score1}-${m.score2}`,
+        ageMin: ageMs != null ? Math.round(ageMs / 60000) : null,
+        league: m.league,
+        attempts: state?.attempts || 0,
+        nextRetryAt: state?.nextRetryAt || null,
+      });
+    }
+    missing.sort((a, b) => (b.ageMin || 0) - (a.ageMin || 0));
+    res.json({ ok: true, total: missing.length, matches: missing });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;

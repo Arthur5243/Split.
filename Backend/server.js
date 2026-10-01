@@ -75,6 +75,7 @@ import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdm
 
 // VCT Champions 2026 bracket aggregator (multi-source: PandaScore + fallbacks)
 import("./valorant-champions-bracket.js").then(({ mountChampionsBracketEndpoint }) => mountChampionsBracketEndpoint(app));
+import("./generic-bracket.js").then(({ mountGenericBracketEndpoint }) => mountGenericBracketEndpoint(app));
 
 const PORT = process.env.PORT || 3000;
 const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
