@@ -9230,14 +9230,23 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
   return (
     <div style={{ minHeight: "100%" }}>
-      {/* Sticky Classement / Communauté header */}
+      {/* Sticky Classement / Communauté header + bouton Discussion a droite */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#000", paddingBottom: 2 }}>
-        <div className="flex items-center justify-center gap-4 pt-2 pb-0">
-          {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
-            <button key={i} onClick={() => userSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
-              <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
+        <div className="flex items-center justify-between pt-2 pb-0 px-4">
+          <div className="flex items-center gap-4">
+            {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
+              <button key={i} onClick={() => userSlide(i)} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 0", borderBottom: carouselSlide === i ? "2px solid #CCF71D" : "2px solid transparent", transition: "all 0.25s" }}>
+                <span style={{ color: carouselSlide === i ? "#fff" : "rgba(255,255,255,0.35)", fontSize: "11px", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>{label}</span>
+              </button>
+            ))}
+          </div>
+          {/* Bouton Discussion gros a droite quand slide = Communaute */}
+          {carouselSlide === 1 && (
+            <button onClick={() => setShowMessages(true)} style={{ background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              <MessageCircle size={14} color="#CCF71D" />
+              <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>Discussion</span>
             </button>
-          ))}
+          )}
         </div>
       </div>
 
@@ -9617,6 +9626,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         </div>
       </div>
       </div>
+
+      {/* FAB flottant 'Creer un post' en bas droite, visible seulement sur
+          le slide Communaute. Position fixed au viewport. */}
+      {carouselSlide === 1 && (
+        <button onClick={() => setAppCreatePost(true)} style={{
+          position: "fixed", bottom: 90, right: 20, zIndex: 50,
+          width: 56, height: 56, borderRadius: "50%",
+          background: "linear-gradient(135deg, #CCF71D 0%, #a8d900 100%)",
+          border: "none", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 20px rgba(204,247,29,0.4), 0 2px 8px rgba(0,0,0,0.6)",
+        }} aria-label="Créer un post">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      )}
 
       {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} initialFollowing={friendsList} initialFollowers={followersList} />}
 
@@ -12145,8 +12169,12 @@ export default function ClutchApp() {
     { key: "discussion", label: "Discussion", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> },
     { key: "post", label: "Post", svgIcon: (color) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   ];
-  const isInCommunity = activeTab === "classement" && carouselSlide === 1;
-  const navItems = isInCommunity ? communityNavItems : mainNavItems;
+  // Nav communaute REMPLACEE par la nav principale: on garde les 5 categories
+  // (Home/Valo/CS2/RL/Classement) meme sur le slide Communaute. Les actions
+  // Discussion/Post deviennent des boutons dans le header du slide Communaute
+  // (geres dans ClassementCommunityTab).
+  const isInCommunity = false;
+  const navItems = mainNavItems;
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
