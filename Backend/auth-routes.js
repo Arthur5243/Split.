@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange } from "./social-store.js";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange, linkGoogleToUser } from "./social-store.js";
 import crypto from "crypto";
 
 const router = Router();
@@ -102,7 +102,14 @@ router.post("/api/auth/google", async (req, res) => {
     if (!pseudo || pseudo.length < 2) return res.status(400).json({ error: "Pseudo requis (2 caractères min)", needsPseudo: true });
 
     const existingPseudo = getUserByPseudo(pseudo);
-    if (existingPseudo) return res.status(409).json({ error: "Ce pseudo est déjà pris" });
+    if (existingPseudo) {
+      if (!existingPseudo.email) {
+        linkGoogleToUser(existingPseudo.id, email.toLowerCase());
+        const token = signToken(existingPseudo.id);
+        return res.json({ token, user: { id: existingPseudo.id, pseudo: existingPseudo.pseudo, email: email.toLowerCase() } });
+      }
+      return res.status(409).json({ error: "Ce pseudo est déjà pris" });
+    }
 
     const id = generateUserId();
     createAuthUser({ id, email: email.toLowerCase(), passwordHash: null, pseudo, provider: "google" });
