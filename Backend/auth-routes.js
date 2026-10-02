@@ -37,7 +37,16 @@ router.post("/api/auth/register", async (req, res) => {
     if (pseudo.length < 2 || pseudo.length > 20) return res.status(400).json({ error: "Pseudo entre 2 et 20 caractères" });
 
     const existing = getUserByEmail(email.toLowerCase());
-    if (existing) return res.status(409).json({ error: "Email déjà utilisé" });
+    if (existing) {
+      if (existing.password_hash) {
+        const match = await bcrypt.compare(password, existing.password_hash);
+        if (match) {
+          const token = signToken(existing.id);
+          return res.json({ token, user: { id: existing.id, pseudo: existing.pseudo, email: existing.email } });
+        }
+      }
+      return res.status(409).json({ error: "Email déjà utilisé" });
+    }
 
     const existingPseudo = getUserByPseudo(pseudo);
     if (existingPseudo) return res.status(409).json({ error: "Ce pseudo est déjà pris" });

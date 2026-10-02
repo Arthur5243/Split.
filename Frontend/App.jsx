@@ -2622,9 +2622,14 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   }
                 }
                 return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: justRevealedL ? "scoreReveal 0.3s ease-out" : "none" }}>
-                    <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-                    <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
+                  <div className="flex flex-col items-center">
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "3px 12px", animation: justRevealedL ? "scoreReveal 0.3s ease-out" : "none" }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 9999, background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+                      <span style={{ color: "#ff3b3b", fontSize: "15px", fontWeight: 900, fontStyle: "italic", letterSpacing: "0.02em" }}>{s1} - {s2}</span>
+                    </div>
+                    {pred && pred.seriesA !== "" && pred.seriesB !== "" && (
+                      <span style={{ color: "#777", fontSize: "9px", fontWeight: 700, marginTop: 2 }}>{T.yourBet || "Ton pari"} : {pred.seriesA}-{pred.seriesB}</span>
+                    )}
                   </div>
                 );
               })() : (
@@ -2895,20 +2900,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 const sPred = pred && pred.seriesA !== "" && pred.seriesB !== "" ? { a: pred.seriesA, b: pred.seriesB } : null;
                 return (
                   <div className="flex flex-col">
-                    {/* Score global principal + prono user en gros */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", marginBottom: 10, background: "linear-gradient(90deg, rgba(255,59,59,0.05) 0%, rgba(255,59,59,0.12) 50%, rgba(255,59,59,0.05) 100%)", borderRadius: 10, border: "1px solid rgba(255,59,59,0.25)" }}>
-                      <div style={{ textAlign: "center", flex: 1 }}>
-                        <p style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>Score</p>
-                        <p style={{ color: "#fff", fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{gw1} <span style={{ color: "#555" }}>-</span> {gw2}</p>
-                      </div>
-                      {sPred && (
-                        <div style={{ textAlign: "center", flex: 1, borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
-                          <p style={{ color: "#888", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{T.yourBet || "Ton pari"}</p>
-                          <p style={{ color: "#CCF71D", fontSize: 22, fontWeight: 900, lineHeight: 1 }}>{sPred.a} <span style={{ color: "#555" }}>-</span> {sPred.b}</p>
-                        </div>
-                      )}
-                    </div>
-                    {/* Liste maps */}
                     <div className="flex flex-col gap-1.5">
                       {match.live_map_scores.map((lm, i) => {
                         const gamePred = (pred && pred.games && pred.games[i]) || null;
@@ -2944,11 +2935,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           </div>
                         );
                       })}
-                    </div>
-                    {/* LIVE badge discret en bas */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 10 }}>
-                      <span style={{ width: 5, height: 5, borderRadius: 9999, background: "#ff3b3b", animation: "pulseLive 1.2s ease-in-out infinite" }} />
-                      <span style={{ color: "#ff3b3b", fontSize: 9, fontWeight: 900, fontStyle: "italic", letterSpacing: "0.08em", textTransform: "uppercase" }}>LIVE</span>
                     </div>
                   </div>
                 );
@@ -8823,15 +8809,12 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     setDmMessages(mapped);
   }
 
-  async function sendDmMsg() {
+  function sendDmMsg() {
     if (!dmInput.trim() || !dmActivePeer || !profile?.userId) return;
-    setDmSending(true);
     const text = dmInput.trim();
-    try {
-      await fetch(API_BASE + "/api/messages/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: profile.userId, receiverId: dmActivePeer.partnerId, content: text }) });
-      setDmMessages(prev => [...prev, { text, isMe: true, content: text, created_at: new Date().toISOString() }]);
-      setDmInput("");
-    } catch {} finally { setDmSending(false); }
+    setDmMessages(prev => [...prev, { text, isMe: true, content: text, created_at: new Date().toISOString() }]);
+    setDmInput("");
+    fetch(API_BASE + "/api/messages/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senderId: profile.userId, receiverId: dmActivePeer.partnerId, content: text }) }).catch(() => {});
   }
 
   function containsBadWords(text) {
@@ -8842,10 +8825,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   function sendCommunityMsg() {
     if (!communityInput.trim() || !profile?.userId) return;
     const msg = communityInput.trim();
+    const tempId = "tmp_" + Date.now();
+    const optimistic = { id: tempId, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: msg, created_at: new Date().toISOString() };
+    setCommunityMsgs(prev => [...prev, optimistic]);
+    setCommunityInput("");
     fetch(API_BASE + "/api/messages/community", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: profile.userId, content: msg }) })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => {
-        if (d.id) { setCommunityMsgs(prev => [...prev, { id: d.id, user_id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, content: msg, created_at: new Date().toISOString() }]); setCommunityInput(""); }
-      }).catch(() => {});
+        if (d.id) setCommunityMsgs(prev => prev.map(m => m.id === tempId ? { ...m, id: d.id } : m));
+      }).catch(() => { setCommunityMsgs(prev => prev.filter(m => m.id !== tempId)); });
   }
   useEffect(() => {
     if (appCreatePost) setCarouselSlide(1);
@@ -9197,7 +9184,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             }} className="flex-1 rounded-xl font-bold py-2.5" style={{ background: ss.iFollow ? "#1a1a1a" : "#CCF71D", color: ss.iFollow ? "#aaa" : "#000", fontSize: "13px", border: ss.iFollow ? "1px solid #333" : "none" }}>
               {ss.iFollow ? (T.friendUnfollow || "Ne plus suivre") : (T.friendFollow || "S'abonner")}
             </button>
-            <button onClick={() => { setDmTarget({ partnerId: su.id, pseudo: su.pseudo }); setShowMessages(true); }} className="flex-1 rounded-xl font-bold py-2.5 flex items-center justify-center gap-2" style={{ background: "#1a1a1a", color: "#ccc", fontSize: "13px", border: "1px solid #333" }}>
+            <button onClick={() => { setSpectatorUser(null); setSpectatorStats(null); setCommunityNavTab("discussion"); setDiscussionSubTab("private"); setCarouselSlide(1); openDmConv({ partnerId: su.id, pseudo: su.pseudo, avatar: su.avatar || null }); }} className="flex-1 rounded-xl font-bold py-2.5 flex items-center justify-center gap-2" style={{ background: "#1a1a1a", color: "#ccc", fontSize: "13px", border: "1px solid #333" }}>
               <MessageCircle size={14} /> Discussion
             </button>
           </div>
@@ -9331,7 +9318,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           </div>
           {/* Bouton Discussion gros a droite quand slide = Communaute */}
           {carouselSlide === 1 && (
-            <button onClick={() => setShowMessages(true)} style={{ position: "relative", background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setCommunityNavTab("discussion")} style={{ position: "relative", background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               <MessageCircle size={14} color="#CCF71D" />
               <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>Discussion</span>
               {(() => {
