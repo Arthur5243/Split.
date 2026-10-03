@@ -6069,6 +6069,292 @@ const CS2_BRACKET_COMPS = [
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
 ];
 
+const SWISS_RECORDS_BY_ROUND = {
+  1: [["0-0"]],
+  2: [["1-0"], ["0-1"]],
+  3: [["2-0"], ["1-1"], ["0-2"]],
+  4: [["2-1"], ["1-2"]],
+  5: [["2-2"]],
+};
+
+function CS2SwissView({ serieData, onBack, T, accent }) {
+  const [swissTab, setSwissTab] = useState("round");
+  const [activeRound, setActiveRound] = useState(1);
+  const [activeRecord, setActiveRecord] = useState(null);
+
+  const matches = [];
+  if (serieData?.phases) {
+    for (const p of serieData.phases) {
+      const gsMatches = p.group_stage?.matches || [];
+      for (const m of gsMatches) matches.push(m);
+      const plMatches = p.playoffs?.bracket;
+      if (plMatches) {
+        for (const round of [...(plMatches.upper || []), ...(plMatches.lower || []), ...(plMatches.grand_final || [])]) {
+          for (const m of (round.matches || [])) matches.push({ ...m, _isPlayoff: true });
+        }
+      }
+    }
+  }
+
+  function parseRound(m) {
+    const name = (m.name || "").toLowerCase();
+    const rMatch = name.match(/round\s*(\d)/);
+    if (rMatch) return parseInt(rMatch[1]);
+    if (name.includes("opening")) return 1;
+    return null;
+  }
+
+  function parseRecord(m) {
+    const name = (m.name || "").toLowerCase();
+    const rec = name.match(/(\d)-(\d)/);
+    if (rec) return `${rec[1]}-${rec[2]}`;
+    return null;
+  }
+
+  const roundMatches = {};
+  const playoffMatches = [];
+  for (const m of matches) {
+    if (m._isPlayoff) { playoffMatches.push(m); continue; }
+    const r = parseRound(m);
+    if (r && r >= 1 && r <= 5) {
+      if (!roundMatches[r]) roundMatches[r] = [];
+      roundMatches[r].push(m);
+    }
+  }
+
+  const recordsForRound = SWISS_RECORDS_BY_ROUND[activeRound] || [];
+  const currentMatches = (roundMatches[activeRound] || []).filter((m) => {
+    if (!activeRecord) return true;
+    const rec = parseRecord(m);
+    return rec === activeRecord;
+  });
+
+  const teamRecords = {};
+  for (let r = 1; r <= 5; r++) {
+    for (const m of (roundMatches[r] || [])) {
+      if (!m.opponents || m.opponents.length < 2) continue;
+      const t1 = m.opponents[0]?.opponent;
+      const t2 = m.opponents[1]?.opponent;
+      if (!t1 || !t2) continue;
+      const s1 = m.results?.[0]?.score ?? null;
+      const s2 = m.results?.[1]?.score ?? null;
+      if (s1 == null || s2 == null) continue;
+      if (!teamRecords[t1.id]) teamRecords[t1.id] = { name: t1.name, logo: t1.image_url, wins: 0, losses: 0, rounds: [] };
+      if (!teamRecords[t2.id]) teamRecords[t2.id] = { name: t2.name, logo: t2.image_url, wins: 0, losses: 0, rounds: [] };
+      if (s1 > s2) {
+        teamRecords[t1.id].wins++; teamRecords[t1.id].rounds.push({ round: r, result: "W", vs: t2.name });
+        teamRecords[t2.id].losses++; teamRecords[t2.id].rounds.push({ round: r, result: "L", vs: t1.name });
+      } else {
+        teamRecords[t2.id].wins++; teamRecords[t2.id].rounds.push({ round: r, result: "W", vs: t1.name });
+        teamRecords[t1.id].losses++; teamRecords[t1.id].rounds.push({ round: r, result: "L", vs: t2.name });
+      }
+    }
+  }
+
+  const qualified = Object.values(teamRecords).filter((t) => t.wins >= 3).sort((a, b) => a.losses - b.losses);
+  const eliminated = Object.values(teamRecords).filter((t) => t.losses >= 3).sort((a, b) => b.wins - a.wins);
+
+  const pageStyle = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
+  const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
+
+  return (
+    <div style={pageStyle}>
+      <div style={headerStyle}>
+        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL Swiss Stage</span>
+      </div>
+
+      <div className="flex" style={{ borderBottom: "1px solid #1a1a1a", padding: "0 16px" }}>
+        {["round", "playoff"].map((tab) => (
+          <button key={tab} onClick={() => setSwissTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: swissTab === tab ? `2px solid ${accent}` : "2px solid transparent", color: swissTab === tab ? accent : "#666", fontSize: 12, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            {tab === "round" ? "ROUND" : "PLAY-OFF"}
+          </button>
+        ))}
+      </div>
+
+      {swissTab === "round" && (
+        <div style={{ padding: "16px" }}>
+          <div className="flex" style={{ gap: 6, marginBottom: 16, overflowX: "auto" }}>
+            {[1, 2, 3, 4, 5].map((r) => (
+              <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
+                padding: "8px 16px", borderRadius: 8, border: activeRound === r ? `1px solid ${accent}` : "1px solid #222",
+                background: activeRound === r ? accent + "15" : "#111", color: activeRound === r ? accent : "#666",
+                fontSize: 12, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+              }}>
+                R{r}
+              </button>
+            ))}
+          </div>
+
+          {recordsForRound.length > 0 && (
+            <div className="flex" style={{ gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+              <button onClick={() => setActiveRecord(null)} style={{
+                padding: "6px 12px", borderRadius: 6, border: !activeRecord ? `1px solid ${accent}` : "1px solid #222",
+                background: !activeRecord ? accent + "15" : "#111", color: !activeRecord ? accent : "#555",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
+              }}>Tous</button>
+              {recordsForRound.flat().map((rec) => (
+                <button key={rec} onClick={() => setActiveRecord(rec)} style={{
+                  padding: "6px 12px", borderRadius: 6, border: activeRecord === rec ? `1px solid ${accent}` : "1px solid #222",
+                  background: activeRecord === rec ? accent + "15" : "#111", color: activeRecord === rec ? accent : "#555",
+                  fontSize: 11, fontWeight: 700, cursor: "pointer",
+                }}>{rec}</button>
+              ))}
+            </div>
+          )}
+
+          {currentMatches.length === 0 && (
+            <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match pour ce round</p>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {currentMatches.map((m, i) => {
+              const t1 = m.opponents?.[0]?.opponent;
+              const t2 = m.opponents?.[1]?.opponent;
+              const s1 = m.results?.[0]?.score;
+              const s2 = m.results?.[1]?.score;
+              const isDone = m.status === "finished";
+              const rec = parseRecord(m);
+              return (
+                <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                    {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
+                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
+                    <span style={{ color: "#333", fontSize: 10 }}>:</span>
+                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
+                    {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                  </div>
+                  {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {(qualified.length > 0 || eliminated.length > 0) && (
+            <div style={{ marginTop: 24 }}>
+              {qualified.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 3, height: 14, borderRadius: 2, background: "#4CAF50" }} />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#4CAF50", textTransform: "uppercase", letterSpacing: "0.08em" }}>Qualifiés ({qualified.length})</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {qualified.map((t) => (
+                      <span key={t.name} style={{ fontSize: 11, fontWeight: 700, color: "#4CAF50", background: "#4CAF5015", border: "1px solid #4CAF5030", borderRadius: 6, padding: "4px 10px" }}>
+                        {t.name} ({t.wins}-{t.losses})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {eliminated.length > 0 && (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 3, height: 14, borderRadius: 2, background: "#ff3b3b" }} />
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Éliminés ({eliminated.length})</span>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {eliminated.map((t) => (
+                      <span key={t.name} style={{ fontSize: 11, fontWeight: 700, color: "#ff3b3b", background: "#ff3b3b15", border: "1px solid #ff3b3b30", borderRadius: 6, padding: "4px 10px", textDecoration: "line-through", opacity: 0.7 }}>
+                        {t.name} ({t.wins}-{t.losses})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {Object.keys(teamRecords).length > 0 && (
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <div style={{ width: 3, height: 14, borderRadius: 2, background: accent }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.08em" }}>Parcours des équipes</span>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <div style={{ minWidth: 400 }}>
+                  <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", paddingBottom: 6, marginBottom: 8 }}>
+                    <span style={{ width: 120, fontSize: 10, fontWeight: 700, color: "#444", flexShrink: 0 }}>Équipe</span>
+                    {[1, 2, 3, 4, 5].map((r) => (
+                      <span key={r} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: "#444", textAlign: "center" }}>R{r}</span>
+                    ))}
+                    <span style={{ width: 50, fontSize: 10, fontWeight: 700, color: "#444", textAlign: "center" }}>W-L</span>
+                  </div>
+                  {Object.values(teamRecords).sort((a, b) => b.wins - a.wins || a.losses - b.losses).map((t) => (
+                    <div key={t.name} className="flex items-center" style={{ gap: 0, padding: "5px 0", borderBottom: "1px solid #0f0f0f" }}>
+                      <div style={{ width: 120, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, overflow: "hidden" }}>
+                        {t.logo && <img src={t.logo} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />}
+                        <span style={{ fontSize: 11, fontWeight: 700, color: t.wins >= 3 ? "#4CAF50" : t.losses >= 3 ? "#ff3b3b" : "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
+                      </div>
+                      {[1, 2, 3, 4, 5].map((r) => {
+                        const rd = t.rounds.find((x) => x.round === r);
+                        return (
+                          <div key={r} style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                            {rd ? (
+                              <span style={{ fontSize: 10, fontWeight: 800, color: rd.result === "W" ? "#4CAF50" : "#ff3b3b", background: rd.result === "W" ? "#4CAF5020" : "#ff3b3b20", borderRadius: 4, padding: "2px 6px", minWidth: 18, textAlign: "center" }}>{rd.result}</span>
+                            ) : (
+                              <span style={{ fontSize: 10, color: "#222" }}>—</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <span style={{ width: 50, fontSize: 11, fontWeight: 800, color: t.wins >= 3 ? "#4CAF50" : t.losses >= 3 ? "#ff3b3b" : "#888", textAlign: "center" }}>{t.wins}-{t.losses}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {swissTab === "playoff" && (
+        <div style={{ padding: "16px" }}>
+          {playoffMatches.length === 0 && (
+            <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match de playoff disponible</p>
+          )}
+          {playoffMatches.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {playoffMatches.map((m, i) => {
+                const t1 = m.opponents?.[0]?.opponent;
+                const t2 = m.opponents?.[1]?.opponent;
+                const s1 = m.results?.[0]?.score;
+                const s2 = m.results?.[1]?.score;
+                const isDone = m.status === "finished";
+                return (
+                  <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                      {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
+                      <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
+                      <span style={{ color: "#333", fontSize: 10 }}>:</span>
+                      <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
+                      {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function getCS2Phases(compKey, serieName) {
   const s = (serieName || "").toLowerCase();
   if (compKey === "major" || (compKey === "iem" && s.includes("major"))) {
@@ -6110,11 +6396,13 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSwiss, setShowSwiss] = useState(false);
+  const [swissSerie, setSwissSerie] = useState(null);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase]);
+  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase, showSwiss]);
 
   const goBack = () => {
     if (phase) setPhase(null);
@@ -6280,6 +6568,12 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     );
   }
 
+  // --- Swiss EPL view ---
+  if (showSwiss) {
+    const swissData = swissSerie ? bracketData["cs2:" + swissSerie.serie_id] : null;
+    return <CS2SwissView serieData={swissData} onBack={() => { setShowSwiss(false); setSwissSerie(null); }} T={T} accent="#0078D4" />;
+  }
+
   // --- Historique brackets CS2 ---
   if (showHistory) {
     const historyEvents = [];
@@ -6364,7 +6658,36 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           );
         })}
       </div>
-      <div style={{ padding: "0 16px 20px" }}>
+      <div style={{ padding: "0 16px 10px", display: "flex", flexDirection: "column", gap: 10 }}>
+        {(() => {
+          const eslEvents = cs2Events ? (cs2Events.esl || []) : [];
+          const eslActive = eslEvents.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
+          const hasEpl = eslActive.length > 0;
+          return (
+            <button onClick={() => {
+              if (!hasEpl) return;
+              const best = eslActive.find((e) => e.status === "running") || eslActive[0];
+              setSwissSerie(best);
+              const cacheKey = "cs2:" + best.serie_id;
+              if (!bracketData[cacheKey]) {
+                setLoading(true);
+                fetchCs2Bracket(best.serie_id).finally(() => setLoading(false));
+              }
+              setShowSwiss(true);
+            }} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: hasEpl ? "linear-gradient(90deg, #0078D408 0%, #1e1e1e 50%)" : "#0d0d0d", border: `1px solid ${hasEpl ? "#0078D440" : "#1a1a1a"}`, cursor: hasEpl ? "pointer" : "default", opacity: hasEpl ? 1 : 0.35 }} disabled={!hasEpl}>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: hasEpl ? "#0078D415" : "#1c1c1c" }}>
+                  <Trophy size={15} color={hasEpl ? "#0078D4" : "#333"} />
+                </span>
+                <div style={{ textAlign: "left" }}>
+                  <span style={{ color: hasEpl ? "#0078D4" : "#444", fontSize: "12px", fontWeight: 800 }}>EPL</span>
+                  <span className="block" style={{ color: "#555", fontSize: "10px" }}>ESL Pro League · Swiss Format</span>
+                </div>
+              </div>
+              <ChevronRight size={16} color={hasEpl ? "#0078D4" : "#222"} />
+            </button>
+          );
+        })()}
         <button onClick={() => setShowHistory(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: hasHistoryEvents ? "#1e1e1e" : "#0d0d0d", border: `1px solid ${hasHistoryEvents ? "#333" : "#1a1a1a"}`, cursor: hasHistoryEvents ? "pointer" : "default", opacity: hasHistoryEvents ? 1 : 0.35 }} disabled={!hasHistoryEvents}>
           <div className="flex items-center gap-3">
             <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
