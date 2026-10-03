@@ -4524,8 +4524,8 @@ function NewsCarousel({ T, splashDone }) {
           {T.newsBadge}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{daysToChampions > 0 ? `J-${daysToChampions}` : "LES VCT CHAMPIONS ONT COMMENCÉ"}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{daysToChampions > 0 ? T.newsTitle : ""}</p>
+          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.newsTitle}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.newsSub}</p>
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
@@ -4548,8 +4548,8 @@ function NewsCarousel({ T, splashDone }) {
           {T.news3Badge || "CS2"}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>J-{daysToMajor} {T.news3Title || "AVANT LES CHAMPIONS CS2"}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news3Sub || ""}</p>
+          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{daysToMajor > 0 ? `J-${daysToMajor} ${T.news3Title || "AVANT LES CHAMPIONS CS2"}` : "LES CHAMPIONS CS2 ONT COMMENCÉ"}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{daysToMajor > 0 ? (T.news3Sub || "") : ""}</p>
         </div>
       </div>
 
@@ -6169,22 +6169,29 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     if (!t1Name || !t2Name || t1Name === "TBD" || t2Name === "TBD") continue;
     const tr1 = teamRecords[t1Name];
     const tr2 = teamRecords[t2Name];
-    if (!tr1 || !tr2) continue;
-    if (tr1.wins === tr2.wins && tr1.losses === tr2.losses) {
-      const ir = tr1.wins + tr1.losses + 1;
-      if (ir >= 1 && ir <= 5) {
-        m._inferredRound = ir;
-        m._inferredRecord = `${tr1.wins}-${tr1.losses}`;
-        if (!roundMatches[ir]) roundMatches[ir] = [];
-        roundMatches[ir].push(m);
-      }
+    let w, l;
+    if (tr1 && tr2 && tr1.wins === tr2.wins && tr1.losses === tr2.losses) {
+      w = tr1.wins; l = tr1.losses;
+    } else if (tr1 && !tr2) {
+      w = tr1.wins; l = tr1.losses;
+    } else if (!tr1 && tr2) {
+      w = tr2.wins; l = tr2.losses;
+    } else if (!tr1 && !tr2) {
+      w = 0; l = 0;
+    } else { continue; }
+    const ir = w + l + 1;
+    if (ir >= 1 && ir <= 5) {
+      m._inferredRound = ir;
+      m._inferredRecord = `${w}-${l}`;
+      if (!roundMatches[ir]) roundMatches[ir] = [];
+      roundMatches[ir].push(m);
     }
   }
   for (const r of Object.keys(roundMatches)) {
     roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   }
 
-  const pageStyle = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
+  const pageStyle = { minHeight: "100vh", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
   const backBtnStyle = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 };
   const backIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
