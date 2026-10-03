@@ -6146,13 +6146,76 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   const chevron = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 
   const recordsForRound = activeRound ? (SWISS_RECORDS_BY_ROUND[activeRound] || []) : [];
+  const isSingleRecord = recordsForRound.flat().length <= 1;
   const currentMatches = activeRound ? (roundMatches[activeRound] || []).filter((m) => {
     if (!activeRecord) return true;
     return parseRecord(m) === activeRecord;
   }) : [];
 
-  // --- Page 3: Inside a record (or all matches for a round) ---
-  if (activeRound && activeRecord) {
+  const isRoundFinished = (r) => {
+    const rm = roundMatches[r] || [];
+    return rm.length > 0 && rm.every((m) => m.status === "finished");
+  };
+  const isRoundAvailable = (r) => {
+    if (r === 1) return true;
+    return isRoundFinished(r - 1);
+  };
+  const getRoundStatus = (r) => {
+    const rm = roundMatches[r] || [];
+    if (rm.length === 0) return "upcoming";
+    const done = rm.filter((m) => m.status === "finished").length;
+    if (done === rm.length) return "finished";
+    if (rm.some((m) => m.status === "running")) return "live";
+    if (done > 0) return "partial";
+    return "upcoming";
+  };
+
+  const qualifiedAtRound = {};
+  const eliminatedAtRound = {};
+  for (const t of Object.values(teamRecords)) {
+    let w = 0, l = 0;
+    for (const rd of t.rounds.sort((a, b) => a.round - b.round)) {
+      if (rd.result === "W") w++; else l++;
+      if (w === 3 && !qualifiedAtRound[rd.round]) qualifiedAtRound[rd.round] = [];
+      if (w === 3 && qualifiedAtRound[rd.round] && !qualifiedAtRound[rd.round].find((x) => x.name === t.name)) {
+        qualifiedAtRound[rd.round].push({ name: t.name, record: `${w}-${l}` });
+      }
+      if (l === 3 && !eliminatedAtRound[rd.round]) eliminatedAtRound[rd.round] = [];
+      if (l === 3 && eliminatedAtRound[rd.round] && !eliminatedAtRound[rd.round].find((x) => x.name === t.name)) {
+        eliminatedAtRound[rd.round].push({ name: t.name, record: `${w}-${l}` });
+      }
+    }
+  }
+
+  const renderMatchCard = (m, i) => {
+    const t1 = m.opponents?.[0]?.opponent;
+    const t2 = m.opponents?.[1]?.opponent;
+    const s1 = m.results?.[0]?.score;
+    const s2 = m.results?.[1]?.score;
+    const isDone = m.status === "finished";
+    const rec = parseRecord(m);
+    return (
+      <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+          {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+          <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
+          <span style={{ color: "#333", fontSize: 10 }}>:</span>
+          <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
+          {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+        </div>
+        {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
+      </div>
+    );
+  };
+
+  // --- Page 3: Inside a specific record ---
+  if (activeRound && activeRecord && !isSingleRecord) {
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
@@ -6161,168 +6224,53 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         </div>
         <div style={{ padding: 16 }}>
           {currentMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match</p>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {currentMatches.map((m, i) => {
-              const t1 = m.opponents?.[0]?.opponent;
-              const t2 = m.opponents?.[1]?.opponent;
-              const s1 = m.results?.[0]?.score;
-              const s2 = m.results?.[1]?.score;
-              const isDone = m.status === "finished";
-              return (
-                <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                    {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
-                    <span style={{ color: "#333", fontSize: 10 }}>:</span>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
-                    {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{currentMatches.map(renderMatchCard)}</div>
         </div>
       </div>
     );
   }
 
-  // --- Page 2: Inside a round — show records as buttons + all matches ---
+  // --- Page 2: Inside a round — records as buttons (or direct matches for R1/R5) ---
   if (activeRound) {
     const allRoundMatches = roundMatches[activeRound] || [];
+    const headerLabel = isSingleRecord ? `Round ${activeRound} · ${recordsForRound.flat()[0] || ""}` : `Round ${activeRound}`;
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
           <button onClick={() => { setActiveRound(null); setActiveRecord(null); }} style={backBtnStyle}>{backIcon}</button>
-          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>Round {activeRound}</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>{headerLabel}</span>
         </div>
-        {recordsForRound.length > 0 && (
+        {!isSingleRecord && recordsForRound.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
-            {recordsForRound.flat().map((rec) => (
-              <button key={rec} onClick={() => setActiveRecord(rec)} style={{
-                background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-                border: `1px solid ${accent}20`,
-                borderRadius: 10, padding: "20px 18px", cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                boxShadow: `0 2px 12px ${accent}08`,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 3, height: 18, borderRadius: 2, background: accent }} />
-                  <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{rec}</span>
-                </div>
-                {chevron}
-              </button>
-            ))}
-          </div>
-        )}
-        <div style={{ padding: "0 16px 16px" }}>
-          {allRoundMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match pour ce round</p>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {allRoundMatches.map((m, i) => {
-              const t1 = m.opponents?.[0]?.opponent;
-              const t2 = m.opponents?.[1]?.opponent;
-              const s1 = m.results?.[0]?.score;
-              const s2 = m.results?.[1]?.score;
-              const isDone = m.status === "finished";
-              const rec = parseRecord(m);
+            {recordsForRound.flat().map((rec) => {
+              const recMatches = allRoundMatches.filter((m) => parseRecord(m) === rec);
+              const recDone = recMatches.length > 0 && recMatches.every((m) => m.status === "finished");
+              const recLive = recMatches.some((m) => m.status === "running");
               return (
-                <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                    {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+                <button key={rec} onClick={() => setActiveRecord(rec)} style={{
+                  background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
+                  border: `1px solid ${accent}20`,
+                  borderRadius: 10, padding: "20px 18px", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  boxShadow: `0 2px 12px ${accent}08`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 3, height: 18, borderRadius: 2, background: accent }} />
+                    <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{rec}</span>
+                    {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
+                    {recDone && <span style={{ fontSize: 9, color: "#4CAF50", fontWeight: 700 }}>✓</span>}
+                    <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>{recMatches.length} match{recMatches.length > 1 ? "s" : ""}</span>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
-                    <span style={{ color: "#333", fontSize: 10 }}>:</span>
-                    <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
-                    {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                  </div>
-                  {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
-                </div>
+                  {chevron}
+                </button>
               );
             })}
           </div>
-        </div>
-        {(qualified.length > 0 || eliminated.length > 0) && (
-          <div style={{ padding: "0 16px" }}>
-            {qualified.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 3, height: 14, borderRadius: 2, background: "#4CAF50" }} />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#4CAF50", textTransform: "uppercase", letterSpacing: "0.08em" }}>Qualifiés ({qualified.length})</span>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {qualified.map((t) => (
-                    <span key={t.name} style={{ fontSize: 11, fontWeight: 700, color: "#4CAF50", background: "#4CAF5015", border: "1px solid #4CAF5030", borderRadius: 6, padding: "4px 10px" }}>
-                      {t.name} ({t.wins}-{t.losses})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {eliminated.length > 0 && (
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 3, height: 14, borderRadius: 2, background: "#ff3b3b" }} />
-                  <span style={{ fontSize: 11, fontWeight: 800, color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Éliminés ({eliminated.length})</span>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {eliminated.map((t) => (
-                    <span key={t.name} style={{ fontSize: 11, fontWeight: 700, color: "#ff3b3b", background: "#ff3b3b15", border: "1px solid #ff3b3b30", borderRadius: 6, padding: "4px 10px", textDecoration: "line-through", opacity: 0.7 }}>
-                      {t.name} ({t.wins}-{t.losses})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         )}
-        {Object.keys(teamRecords).length > 0 && (
+        {isSingleRecord && (
           <div style={{ padding: "16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <div style={{ width: 3, height: 14, borderRadius: 2, background: accent }} />
-              <span style={{ fontSize: 11, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.08em" }}>Parcours des équipes</span>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <div style={{ minWidth: 400 }}>
-                <div className="flex" style={{ gap: 0, borderBottom: "1px solid #1a1a1a", paddingBottom: 6, marginBottom: 8 }}>
-                  <span style={{ width: 120, fontSize: 10, fontWeight: 700, color: "#444", flexShrink: 0 }}>Équipe</span>
-                  {[1, 2, 3, 4, 5].map((r) => (
-                    <span key={r} style={{ flex: 1, fontSize: 10, fontWeight: 700, color: "#444", textAlign: "center" }}>R{r}</span>
-                  ))}
-                  <span style={{ width: 50, fontSize: 10, fontWeight: 700, color: "#444", textAlign: "center" }}>W-L</span>
-                </div>
-                {Object.values(teamRecords).sort((a, b) => b.wins - a.wins || a.losses - b.losses).map((t) => (
-                  <div key={t.name} className="flex items-center" style={{ gap: 0, padding: "5px 0", borderBottom: "1px solid #0f0f0f" }}>
-                    <div style={{ width: 120, display: "flex", alignItems: "center", gap: 6, flexShrink: 0, overflow: "hidden" }}>
-                      {t.logo && <img src={t.logo} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />}
-                      <span style={{ fontSize: 11, fontWeight: 700, color: t.wins >= 3 ? "#4CAF50" : t.losses >= 3 ? "#ff3b3b" : "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
-                    </div>
-                    {[1, 2, 3, 4, 5].map((r) => {
-                      const rd = t.rounds.find((x) => x.round === r);
-                      return (
-                        <div key={r} style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-                          {rd ? (
-                            <span style={{ fontSize: 10, fontWeight: 800, color: rd.result === "W" ? "#4CAF50" : "#ff3b3b", background: rd.result === "W" ? "#4CAF5020" : "#ff3b3b20", borderRadius: 4, padding: "2px 6px", minWidth: 18, textAlign: "center" }}>{rd.result}</span>
-                          ) : (
-                            <span style={{ fontSize: 10, color: "#222" }}>—</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                    <span style={{ width: 50, fontSize: 11, fontWeight: 800, color: t.wins >= 3 ? "#4CAF50" : t.losses >= 3 ? "#ff3b3b" : "#888", textAlign: "center" }}>{t.wins}-{t.losses}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {allRoundMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match pour ce round</p>}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{allRoundMatches.map(renderMatchCard)}</div>
           </div>
         )}
       </div>
@@ -6337,21 +6285,54 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
-        {[1, 2, 3, 4, 5].map((r) => (
-          <button key={r} onClick={() => setActiveRound(r)} style={{
-            background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-            border: `1px solid ${accent}20`,
-            borderRadius: 10, padding: "24px 18px", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            boxShadow: `0 2px 12px ${accent}08`,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-              <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>Round {r}</span>
-            </div>
-            {chevron}
-          </button>
-        ))}
+        {[1, 2, 3, 4, 5].map((r) => {
+          const available = isRoundAvailable(r);
+          const status = getRoundStatus(r);
+          const rm = roundMatches[r] || [];
+          const qAt = qualifiedAtRound[r] || [];
+          const eAt = eliminatedAtRound[r] || [];
+          return (
+            <React.Fragment key={r}>
+              <button onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{
+                background: available ? `linear-gradient(90deg, ${accent}08 0%, #111 50%)` : "#0d0d0d",
+                border: `1px solid ${available ? accent + "20" : "#1a1a1a"}`,
+                borderRadius: 10, padding: "20px 18px", cursor: available ? "pointer" : "default",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                boxShadow: available ? `0 2px 12px ${accent}08` : "none",
+                opacity: available ? 1 : 0.35,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 3, height: 20, borderRadius: 2, background: available ? accent : "#333" }} />
+                  <div>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: available ? accent : "#444", textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>Round {r}</span>
+                    <span style={{ fontSize: 10, color: status === "live" ? "#ff3b3b" : status === "finished" ? "#4CAF50" : "#555", fontWeight: 700, marginTop: 2, display: "block" }}>
+                      {status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : "À venir"}
+                    </span>
+                  </div>
+                </div>
+                {available ? chevron : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
+              </button>
+              {(qAt.length > 0 || eAt.length > 0) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px" }}>
+                  <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                    {qAt.map((t) => (
+                      <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: "#4CAF50", background: "#4CAF5012", border: "1px solid #4CAF5025", borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>
+                        Qualifié R{r} [{t.record}]
+                      </span>
+                    ))}
+                    {eAt.map((t) => (
+                      <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: "#ff3b3b", background: "#ff3b3b12", border: "1px solid #ff3b3b25", borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>
+                        Éliminé R{r} [{t.record}]
+                      </span>
+                    ))}
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
