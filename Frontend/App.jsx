@@ -12275,13 +12275,9 @@ export default function ClutchApp() {
     if (!cs2Events) return;
     const allSeries = [];
     for (const bucket of Object.values(cs2Events)) {
-      if (Array.isArray(bucket)) {
-        for (const s of bucket) {
-          if (s.serie_id && s.status !== "canceled") {
-            allSeries.push(s.serie_id);
-          }
-        }
-      }
+      if (!Array.isArray(bucket)) continue;
+      const first = bucket.find(s => s.serie_id && (s.status === "running" || s.status === "upcoming" || s.status === "unknown"));
+      if (first) allSeries.push(first.serie_id);
     }
     if (allSeries.length === 0) return;
     async function prefetchCs2() {
