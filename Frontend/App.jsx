@@ -6067,7 +6067,7 @@ const CS2_BRACKET_COMPS = [
   { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡" },
   { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥" },
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
-  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡", swiss: true },
+  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
 ];
 
 const SWISS_RECORDS_BY_ROUND = {
@@ -6079,7 +6079,6 @@ const SWISS_RECORDS_BY_ROUND = {
 };
 
 function CS2SwissView({ serieData, onBack, T, accent }) {
-  const [swissTab, setSwissTab] = useState("round");
   const [activeRound, setActiveRound] = useState(1);
   const [activeRecord, setActiveRecord] = useState(null);
 
@@ -6088,12 +6087,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     for (const p of serieData.phases) {
       const gsMatches = p.group_stage?.matches || [];
       for (const m of gsMatches) matches.push(m);
-      const plMatches = p.playoffs?.bracket;
-      if (plMatches) {
-        for (const round of [...(plMatches.upper || []), ...(plMatches.lower || []), ...(plMatches.grand_final || [])]) {
-          for (const m of (round.matches || [])) matches.push({ ...m, _isPlayoff: true });
-        }
-      }
     }
   }
 
@@ -6113,9 +6106,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   const roundMatches = {};
-  const playoffMatches = [];
   for (const m of matches) {
-    if (m._isPlayoff) { playoffMatches.push(m); continue; }
     const r = parseRound(m);
     if (r && r >= 1 && r <= 5) {
       if (!roundMatches[r]) roundMatches[r] = [];
@@ -6164,19 +6155,10 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <button onClick={onBack} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL Swiss Stage</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
       </div>
 
-      <div className="flex" style={{ borderBottom: "1px solid #1a1a1a", padding: "0 16px" }}>
-        {["round", "playoff"].map((tab) => (
-          <button key={tab} onClick={() => setSwissTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: swissTab === tab ? `2px solid ${accent}` : "2px solid transparent", color: swissTab === tab ? accent : "#666", fontSize: 12, fontWeight: 800, cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            {tab === "round" ? "ROUND" : "PLAY-OFF"}
-          </button>
-        ))}
-      </div>
-
-      {swissTab === "round" && (
-        <div style={{ padding: "16px" }}>
+      <div style={{ padding: "16px" }}>
           <div className="flex" style={{ gap: 6, marginBottom: 16, overflowX: "auto" }}>
             {[1, 2, 3, 4, 5].map((r) => (
               <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
@@ -6315,43 +6297,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
             </div>
           )}
         </div>
-      )}
-
-      {swissTab === "playoff" && (
-        <div style={{ padding: "16px" }}>
-          {playoffMatches.length === 0 && (
-            <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match de playoff disponible</p>
-          )}
-          {playoffMatches.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {playoffMatches.map((m, i) => {
-                const t1 = m.opponents?.[0]?.opponent;
-                const t2 = m.opponents?.[1]?.opponent;
-                const s1 = m.results?.[0]?.score;
-                const s2 = m.results?.[1]?.score;
-                const isDone = m.status === "finished";
-                return (
-                  <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                      <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
-                      <span style={{ color: "#333", fontSize: 10 }}>:</span>
-                      <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
-                      {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -6370,6 +6316,12 @@ function getCS2Phases(compKey, serieName) {
     return [
       { key: "play_ins", labelKey: "cs2BracketPlayIns" },
       { key: "final", labelKey: "cs2BracketFinal" },
+    ];
+  }
+  if (compKey === "esl") {
+    return [
+      { key: "swiss_round", label: "Round" },
+      { key: "playoffs", labelKey: "cs2BracketPlayoffs" },
     ];
   }
   return [
@@ -6397,13 +6349,11 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showSwiss, setShowSwiss] = useState(false);
-  const [swissSerie, setSwissSerie] = useState(null);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase, showSwiss]);
+  useEffect(() => { window.scrollTo(0, 0); }, [comp, serie, phase]);
 
   const goBack = () => {
     if (phase) setPhase(null);
@@ -6473,6 +6423,9 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
 
   // --- Step 3: Show phase content ---
   if (comp && phase) {
+    if (phase === "swiss_round" && serie && currentData) {
+      return <CS2SwissView serieData={currentData} onBack={() => setPhase(null)} T={T} accent={accent} />;
+    }
     if (!serie && !loading) {
       return (
         <div style={pageStylePlain}>
@@ -6491,7 +6444,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     }
     const phases = getCS2Phases(comp, serie.title);
     const phaseInfo = phases.find((p) => p.key === phase);
-    const phaseLabel = phaseInfo ? (T[phaseInfo.labelKey] || phaseInfo.key) : phase;
+    const phaseLabel = phaseInfo ? (phaseInfo.label || T[phaseInfo.labelKey] || phaseInfo.key) : phase;
 
     const matchingPhases = (currentData.phases || []).filter((p) => matchPhaseToTournament({ key: phase }, p));
     const fallbackPhases = matchingPhases.length > 0 ? matchingPhases : (currentData.phases || []);
@@ -6559,7 +6512,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label || T[p.labelKey] || p.key}</span>
               </div>
               <ChevronRight size={16} color="#444" />
             </button>
@@ -6567,12 +6520,6 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         </div>
       </div>
     );
-  }
-
-  // --- Swiss EPL view ---
-  if (showSwiss) {
-    const swissData = swissSerie ? bracketData["cs2:" + swissSerie.serie_id] : null;
-    return <CS2SwissView serieData={swissData} onBack={() => { setShowSwiss(false); setSwissSerie(null); }} T={T} accent="#0078D4" />;
   }
 
   // --- Historique brackets CS2 ---
@@ -6640,16 +6587,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const hasActive = activeEvents.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => {
-              if (!hasActive) return;
-              if (c.swiss) {
-                const best = activeEvents.find((e) => e.status === "running") || activeEvents[0];
-                setSwissSerie(best);
-                const cacheKey = "cs2:" + best.serie_id;
-                if (!bracketData[cacheKey]) { setLoading(true); fetchCs2Bracket(best.serie_id).finally(() => setLoading(false)); }
-                setShowSwiss(true);
-              } else { setComp(c.key); }
-            }} disabled={!hasActive} style={{
+            <button key={c.key} onClick={() => { if (hasActive) setComp(c.key); }} disabled={!hasActive} style={{
               background: hasActive ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
               border: `1px solid ${hasActive ? c.color + "30" : "#1a1a1a"}`,
               borderRadius: 12, padding: "32px 12px",
