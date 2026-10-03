@@ -11399,7 +11399,7 @@ export default function ClutchApp() {
   const tabSwitchSinceAdRef = useRef(0);
   const predictionsSinceAdRef = useRef(0);
   const AD_COOLDOWN_MS = 2 * 60 * 1000;
-  const AFK_THRESHOLD_MS = 2 * 60 * 1000;
+  const AFK_THRESHOLD_MS = 60 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
     if (showAuthRef.current) return;
     const now = Date.now();
@@ -11717,6 +11717,25 @@ export default function ClutchApp() {
     // complet au premier boot pour pseudos ggez/sayzox. Reactive uniquement
     // depuis un bouton settings protege si besoin.
   }, []);
+
+  useEffect(() => {
+    if (profile || !authUser?.id) return;
+    fetch(API_BASE + "/api/social/me/" + authUser.id)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => {
+        if (!d || !d.pseudo) return;
+        const restored = {
+          userId: d.id, pseudo: d.pseudo, avatar: d.avatar || null,
+          bio: d.bio || "", favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
+          pseudoColor: d.pseudo_color || null,
+        };
+        setProfile(restored);
+        localStorage.setItem("split_profile", JSON.stringify(restored));
+        if (d.xp && d.xp > 0) { setUserXp(d.xp); saveXp(d.xp); }
+        if (d.points && d.points > 0) { setUserPoints(d.points); localStorage.setItem("split_points", String(d.points)); }
+      })
+      .catch(() => {});
+  }, [authUser]);
 
   const [scoreCats, setScoreCats] = useState(["tout"]);
 
