@@ -6199,6 +6199,20 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   }
 
+  for (const r of Object.keys(roundMatches)) {
+    for (const m of roundMatches[r]) {
+      if (!parseRecord(m)) {
+        const t1Name = getT1(m)?.name;
+        const t2Name = getT2(m)?.name;
+        const tr1 = t1Name ? teamRecords[t1Name] : null;
+        const tr2 = t2Name ? teamRecords[t2Name] : null;
+        const tr = tr1 || tr2;
+        if (tr) m._inferredRecord = `${tr.wins}-${tr.losses}`;
+        else if (parseInt(r) === 1) m._inferredRecord = "0-0";
+      }
+    }
+  }
+
   const pageStyle = { minHeight: "100vh", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
   const backBtnStyle = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 };
@@ -12263,7 +12277,7 @@ export default function ClutchApp() {
     for (const bucket of Object.values(cs2Events)) {
       if (Array.isArray(bucket)) {
         for (const s of bucket) {
-          if (s.serie_id && (s.status === "running" || s.status === "upcoming")) {
+          if (s.serie_id && s.status !== "canceled") {
             allSeries.push(s.serie_id);
           }
         }
