@@ -6244,37 +6244,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     return "upcoming";
   };
 
-  const qualifiedAtRound = {};
-  const eliminatedAtRound = {};
-  for (const t of Object.values(teamRecords)) {
-    let w = 0, l = 0;
-    for (const rd of t.rounds.sort((a, b) => a.round - b.round)) {
-      if (rd.result === "W") w++; else l++;
-      if (w === 3 && !qualifiedAtRound[rd.round]) qualifiedAtRound[rd.round] = [];
-      if (w === 3 && qualifiedAtRound[rd.round] && !qualifiedAtRound[rd.round].find((x) => x.name === t.name)) {
-        qualifiedAtRound[rd.round].push({ name: t.name, record: `${w}-${l}` });
-      }
-      if (l === 3 && !eliminatedAtRound[rd.round]) eliminatedAtRound[rd.round] = [];
-      if (l === 3 && eliminatedAtRound[rd.round] && !eliminatedAtRound[rd.round].find((x) => x.name === t.name)) {
-        eliminatedAtRound[rd.round].push({ name: t.name, record: `${w}-${l}` });
-      }
-    }
-  }
-
-  const getTeamOutcomeAfterRound = (teamName, round) => {
-    const tr = teamRecords[teamName];
-    if (!tr) return null;
-    let w = 0, l = 0;
-    const sorted = [...tr.rounds].sort((a, b) => a.round - b.round);
-    for (const rd of sorted) {
-      if (rd.round > round) break;
-      if (rd.result === "W") w++; else l++;
-    }
-    if (w >= 3) return { type: "qualified", record: `${w}-${l}` };
-    if (l >= 3) return { type: "eliminated", record: `${w}-${l}` };
-    return { type: "next", nextRound: w + l + 1, record: `${w}-${l}` };
-  };
-
   const renderMatchCard = (m, i) => {
     const t1 = getT1(m);
     const t2 = getT2(m);
@@ -6282,29 +6251,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     const s2 = getS2(m);
     const isDone = m.status === "finished";
     const rec = parseRecord(m);
-    const matchRound = parseRound(m);
-
-    let outcomeT1 = null, outcomeT2 = null;
-    if (isDone && s1 != null && s2 != null && s1 !== s2 && matchRound) {
-      outcomeT1 = getTeamOutcomeAfterRound(t1?.name, matchRound);
-      outcomeT2 = getTeamOutcomeAfterRound(t2?.name, matchRound);
-    }
-
-    const renderOutcome = (outcome) => {
-      if (!outcome) return <span />;
-      let text, color, bg, border;
-      if (outcome.type === "qualified") {
-        text = `Qualifié Playoffs [${outcome.record}]`;
-        color = "#4CAF50"; bg = "#4CAF5012"; border = "#4CAF5025";
-      } else if (outcome.type === "eliminated") {
-        text = `Éliminé [${outcome.record}]`;
-        color = "#ff3b3b"; bg = "#ff3b3b12"; border = "#ff3b3b25";
-      } else {
-        text = `→ Round ${outcome.nextRound} [${outcome.record}]`;
-        color = "#888"; bg = "transparent"; border = "#1a1a1a";
-      }
-      return <span style={{ fontSize: 9, fontWeight: 700, color, background: bg, border: `1px solid ${border}`, borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>{text}</span>;
-    };
 
     return (
       <div key={mId(m) || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, overflow: "hidden" }}>
@@ -6328,12 +6274,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
           </div>
           {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
         </div>
-        {(outcomeT1 || outcomeT2) && (
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 14px 8px", gap: 8 }}>
-            {renderOutcome(outcomeT1)}
-            {renderOutcome(outcomeT2)}
-          </div>
-        )}
       </div>
     );
   };
@@ -6413,8 +6353,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
           const available = isRoundAvailable(r);
           const status = getRoundStatus(r);
           const rm = roundMatches[r] || [];
-          const qAt = qualifiedAtRound[r] || [];
-          const eAt = eliminatedAtRound[r] || [];
           return (
             <React.Fragment key={r}>
               <button onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{
@@ -6436,24 +6374,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
                 </div>
                 {available ? chevron : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
               </button>
-              {(qAt.length > 0 || eAt.length > 0) && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px" }}>
-                  <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" }}>
-                    {qAt.map((t) => (
-                      <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: "#4CAF50", background: "#4CAF5012", border: "1px solid #4CAF5025", borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>
-                        Qualifié R{r} [{t.record}]
-                      </span>
-                    ))}
-                    {eAt.map((t) => (
-                      <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: "#ff3b3b", background: "#ff3b3b12", border: "1px solid #ff3b3b25", borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>
-                        Éliminé R{r} [{t.record}]
-                      </span>
-                    ))}
-                  </div>
-                  <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
-                </div>
-              )}
             </React.Fragment>
           );
         })}
@@ -11350,6 +11270,8 @@ export default function ClutchApp() {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
   const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const showAuthRef = useRef(showAuth);
+  useEffect(() => { showAuthRef.current = showAuth; }, [showAuth]);
   const [showMigrationNotice, setShowMigrationNotice] = useState(() => {
     // Persiste le flag entre reloads : si la popup n'a pas encore été fermée
     // lors d'une visite précédente, on la remontre au prochain boot.
@@ -11467,15 +11389,19 @@ export default function ClutchApp() {
   const adShownRef = useRef(false);
   const adTimerRef = useRef(null);
   const lastInteractionRef = useRef(Date.now());
-  const lastAdAtRef = useRef(Date.now());
+  const lastAdAtRef = useRef(() => {
+    const nac = localStorage.getItem("split_new_account_ts");
+    if (nac) { localStorage.removeItem("split_new_account_ts"); return Number(nac) + 8 * 60 * 1000; }
+    return Date.now();
+  });
+  if (typeof lastAdAtRef.current === "function") lastAdAtRef.current = lastAdAtRef.current();
   const tabSwitchCountRef = useRef(0);
   const tabSwitchSinceAdRef = useRef(0);
   const predictionsSinceAdRef = useRef(0);
-  // Cooldown entre 2 pubs: 2 min (meme si plusieurs triggers consecutifs).
-  // AFK: 2 min sans aucune interaction (pointer/key/scroll).
   const AD_COOLDOWN_MS = 2 * 60 * 1000;
   const AFK_THRESHOLD_MS = 2 * 60 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
+    if (showAuthRef.current) return;
     const now = Date.now();
     if (now - lastAdAtRef.current < AD_COOLDOWN_MS) return;
     if (adShownRef.current) return;
@@ -12770,15 +12696,16 @@ export default function ClutchApp() {
               const freshToken = localStorage.getItem("split_token");
               const freshAuth = localStorage.getItem("split_auth_user");
               resetClientState();
-              // Re-ecrit auth fraiche que AuthScreen vient de poser
               if (freshToken) localStorage.setItem("split_token", freshToken);
               if (freshAuth) localStorage.setItem("split_auth_user", freshAuth);
               localStorage.setItem("split_migration_seen", "1");
+              localStorage.setItem("split_new_account_ts", String(Date.now()));
               window.location.reload();
               return;
             }
             setAuthUser(user);
             setShowAuth(false);
+            lastAdAtRef.current = Date.now();
             if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
           }
         }} />
