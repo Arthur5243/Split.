@@ -6296,7 +6296,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
               </div>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
