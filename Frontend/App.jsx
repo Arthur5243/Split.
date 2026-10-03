@@ -6584,9 +6584,10 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
           const activeEvents = events.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
           const hasActive = activeEvents.length > 0;
+          const hasAny = events.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => { if (hasActive) setComp(c.key); }} disabled={!hasActive} style={{
+            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{
               background: hasActive ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
               border: `1px solid ${hasActive ? c.color + "30" : "#1a1a1a"}`,
               borderRadius: 12, padding: "32px 12px",
