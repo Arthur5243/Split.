@@ -6064,9 +6064,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
 const CS2_BRACKET_COMPS = [
   { key: "major", labelKey: "cs2BracketMajor", color: "#FFD700", icon: "🏆" },
-  { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡" },
-  { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥" },
-  { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
   { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
 ];
 
@@ -6091,6 +6088,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   function parseRound(m) {
+    if (m._inferredRound) return m._inferredRound;
     const name = (m.round || m.name || "").toLowerCase();
     const rMatch = name.match(/round\s*(\d)/);
     if (rMatch) return parseInt(rMatch[1]);
@@ -6099,6 +6097,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   function parseRecord(m) {
+    if (m._inferredRecord) return m._inferredRecord;
     const name = (m.round || m.name || "").toLowerCase();
     const rec = name.match(/(\d)-(\d)/);
     if (rec) return `${rec[1]}-${rec[2]}`;
@@ -6157,6 +6156,31 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   const qualified = Object.values(teamRecords).filter((t) => t.wins >= 3).sort((a, b) => a.losses - b.losses);
   const eliminated = Object.values(teamRecords).filter((t) => t.losses >= 3).sort((a, b) => b.wins - a.wins);
 
+  const unclassified = matches.filter((m) => {
+    const r = parseRound(m);
+    return !r || r < 1 || r > 5;
+  });
+  for (const m of unclassified) {
+    const t1Name = getT1(m)?.name;
+    const t2Name = getT2(m)?.name;
+    if (!t1Name || !t2Name || t1Name === "TBD" || t2Name === "TBD") continue;
+    const tr1 = teamRecords[t1Name];
+    const tr2 = teamRecords[t2Name];
+    if (!tr1 || !tr2) continue;
+    if (tr1.wins === tr2.wins && tr1.losses === tr2.losses) {
+      const ir = tr1.wins + tr1.losses + 1;
+      if (ir >= 1 && ir <= 5) {
+        m._inferredRound = ir;
+        m._inferredRecord = `${tr1.wins}-${tr1.losses}`;
+        if (!roundMatches[ir]) roundMatches[ir] = [];
+        roundMatches[ir].push(m);
+      }
+    }
+  }
+  for (const r of Object.keys(roundMatches)) {
+    roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  }
+
   const pageStyle = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
   const backBtnStyle = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 };
@@ -6205,6 +6229,20 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     }
   }
 
+  const getTeamOutcomeAfterRound = (teamName, round) => {
+    const tr = teamRecords[teamName];
+    if (!tr) return null;
+    let w = 0, l = 0;
+    const sorted = [...tr.rounds].sort((a, b) => a.round - b.round);
+    for (const rd of sorted) {
+      if (rd.round > round) break;
+      if (rd.result === "W") w++; else l++;
+    }
+    if (w >= 3) return { type: "qualified", record: `${w}-${l}` };
+    if (l >= 3) return { type: "eliminated", record: `${w}-${l}` };
+    return { type: "next", nextRound: w + l + 1, record: `${w}-${l}` };
+  };
+
   const renderMatchCard = (m, i) => {
     const t1 = getT1(m);
     const t2 = getT2(m);
@@ -6212,22 +6250,54 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     const s2 = getS2(m);
     const isDone = m.status === "finished";
     const rec = parseRecord(m);
+    const matchRound = parseRound(m);
+
+    let outcomeT1 = null, outcomeT2 = null;
+    if (isDone && s1 != null && s2 != null && s1 !== s2 && matchRound) {
+      outcomeT1 = getTeamOutcomeAfterRound(t1?.name, matchRound);
+      outcomeT2 = getTeamOutcomeAfterRound(t2?.name, matchRound);
+    }
+
+    const renderOutcome = (outcome) => {
+      if (!outcome) return <span />;
+      let text, color, bg, border;
+      if (outcome.type === "qualified") {
+        text = `Qualifié Playoffs [${outcome.record}]`;
+        color = "#4CAF50"; bg = "#4CAF5012"; border = "#4CAF5025";
+      } else if (outcome.type === "eliminated") {
+        text = `Éliminé [${outcome.record}]`;
+        color = "#ff3b3b"; bg = "#ff3b3b12"; border = "#ff3b3b25";
+      } else {
+        text = `→ R${outcome.nextRound} [${outcome.record}]`;
+        color = "#888"; bg = "transparent"; border = "#1a1a1a";
+      }
+      return <span style={{ fontSize: 9, fontWeight: 700, color, background: bg, border: `1px solid ${border}`, borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>{text}</span>;
+    };
+
     return (
-      <div key={mId(m) || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-          {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-          <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+      <div key={mId(m) || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+            {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
+            <span style={{ color: "#333", fontSize: 10 }}>:</span>
+            <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
+            {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+          </div>
+          {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
-          <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
-          <span style={{ color: "#333", fontSize: 10 }}>:</span>
-          <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
-          {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-        </div>
-        {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
+        {(outcomeT1 || outcomeT2) && (
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "0 14px 8px", gap: 8 }}>
+            {renderOutcome(outcomeT1)}
+            {renderOutcome(outcomeT2)}
+          </div>
+        )}
       </div>
     );
   };
