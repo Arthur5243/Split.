@@ -5641,6 +5641,27 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     window.scrollTo(0, 0);
   }, [stage, phase, region]);
 
+  useEffect(() => {
+    if (!stage || phase || stage === "masters" || stage === "champions" || !vlrEvents) return;
+    let hasData = false;
+    let allDone = true;
+    for (const r of REGIONS) {
+      const ev = vlrEvents[stage]?.[r.key];
+      if (!ev) continue;
+      const data = bracketData[ev.event_id + ":all"];
+      if (!data) continue;
+      hasData = true;
+      const pi = data.play_ins?.bracket;
+      if (!pi) continue;
+      const matches = [...(pi.upper || []).flat(), ...(pi.lower || []).flat()];
+      if (matches.some(m => m.team1?.name !== "TBD" && (m.status || "").toLowerCase() !== "completed")) {
+        allDone = false;
+        break;
+      }
+    }
+    if (hasData && allDone) setPhase("playoffs");
+  }, [stage, phase, vlrEvents, bracketData]);
+
   const goBack = () => {
     if (region) setRegion(null);
     else if (phase) setPhase(null);
