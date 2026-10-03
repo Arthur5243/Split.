@@ -6067,6 +6067,7 @@ const CS2_BRACKET_COMPS = [
   { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡" },
   { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥" },
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
+  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡", swiss: true },
 ];
 
 const SWISS_RECORDS_BY_ROUND = {
@@ -6639,7 +6640,16 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const hasActive = activeEvents.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => { if (hasActive) setComp(c.key); }} disabled={!hasActive} style={{
+            <button key={c.key} onClick={() => {
+              if (!hasActive) return;
+              if (c.swiss) {
+                const best = activeEvents.find((e) => e.status === "running") || activeEvents[0];
+                setSwissSerie(best);
+                const cacheKey = "cs2:" + best.serie_id;
+                if (!bracketData[cacheKey]) { setLoading(true); fetchCs2Bracket(best.serie_id).finally(() => setLoading(false)); }
+                setShowSwiss(true);
+              } else { setComp(c.key); }
+            }} disabled={!hasActive} style={{
               background: hasActive ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
               border: `1px solid ${hasActive ? c.color + "30" : "#1a1a1a"}`,
               borderRadius: 12, padding: "32px 12px",
@@ -6658,36 +6668,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           );
         })}
       </div>
-      <div style={{ padding: "0 16px 10px", display: "flex", flexDirection: "column", gap: 10 }}>
-        {(() => {
-          const eslEvents = cs2Events ? (cs2Events.esl || []) : [];
-          const eslActive = eslEvents.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
-          const hasEpl = eslActive.length > 0;
-          return (
-            <button onClick={() => {
-              if (!hasEpl) return;
-              const best = eslActive.find((e) => e.status === "running") || eslActive[0];
-              setSwissSerie(best);
-              const cacheKey = "cs2:" + best.serie_id;
-              if (!bracketData[cacheKey]) {
-                setLoading(true);
-                fetchCs2Bracket(best.serie_id).finally(() => setLoading(false));
-              }
-              setShowSwiss(true);
-            }} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: hasEpl ? "linear-gradient(90deg, #0078D408 0%, #1e1e1e 50%)" : "#0d0d0d", border: `1px solid ${hasEpl ? "#0078D440" : "#1a1a1a"}`, cursor: hasEpl ? "pointer" : "default", opacity: hasEpl ? 1 : 0.35 }} disabled={!hasEpl}>
-              <div className="flex items-center gap-3">
-                <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: hasEpl ? "#0078D415" : "#1c1c1c" }}>
-                  <Trophy size={15} color={hasEpl ? "#0078D4" : "#333"} />
-                </span>
-                <div style={{ textAlign: "left" }}>
-                  <span style={{ color: hasEpl ? "#0078D4" : "#444", fontSize: "12px", fontWeight: 800 }}>EPL</span>
-                  <span className="block" style={{ color: "#555", fontSize: "10px" }}>ESL Pro League · Swiss Format</span>
-                </div>
-              </div>
-              <ChevronRight size={16} color={hasEpl ? "#0078D4" : "#222"} />
-            </button>
-          );
-        })()}
+      <div style={{ padding: "0 16px 20px" }}>
         <button onClick={() => setShowHistory(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: hasHistoryEvents ? "#1e1e1e" : "#0d0d0d", border: `1px solid ${hasHistoryEvents ? "#333" : "#1a1a1a"}`, cursor: hasHistoryEvents ? "pointer" : "default", opacity: hasHistoryEvents ? 1 : 0.35 }} disabled={!hasHistoryEvents}>
           <div className="flex items-center gap-3">
             <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
