@@ -6158,35 +6158,41 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
       </div>
 
-      <div style={{ padding: "16px" }}>
-          <div className="flex" style={{ gap: 6, marginBottom: 16, overflowX: "auto" }}>
-            {[1, 2, 3, 4, 5].map((r) => (
-              <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
-                padding: "8px 16px", borderRadius: 8, border: activeRound === r ? `1px solid ${accent}` : "1px solid #222",
-                background: activeRound === r ? accent + "15" : "#111", color: activeRound === r ? accent : "#666",
-                fontSize: 12, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+      <div style={{ position: "sticky", top: 52, zIndex: 19, background: "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="flex items-center" style={{ gap: 0, padding: "0 16px", overflowX: "auto" }}>
+          {[1, 2, 3, 4, 5].map((r) => (
+            <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
+              background: "none", border: "none", cursor: "pointer", padding: "10px 14px",
+              borderBottom: activeRound === r ? `2px solid ${accent}` : "2px solid transparent",
+              transition: "all 0.25s",
+            }}>
+              <span style={{ color: activeRound === r ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>R{r}</span>
+            </button>
+          ))}
+        </div>
+        {recordsForRound.length > 0 && (
+          <div className="flex items-center" style={{ gap: 0, padding: "0 16px", overflowX: "auto", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <button onClick={() => setActiveRecord(null)} style={{
+              background: "none", border: "none", cursor: "pointer", padding: "8px 12px",
+              borderBottom: !activeRecord ? `2px solid ${accent}` : "2px solid transparent",
+              transition: "all 0.25s",
+            }}>
+              <span style={{ color: !activeRecord ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>Tous</span>
+            </button>
+            {recordsForRound.flat().map((rec) => (
+              <button key={rec} onClick={() => setActiveRecord(rec)} style={{
+                background: "none", border: "none", cursor: "pointer", padding: "8px 12px",
+                borderBottom: activeRecord === rec ? `2px solid ${accent}` : "2px solid transparent",
+                transition: "all 0.25s",
               }}>
-                R{r}
+                <span style={{ color: activeRecord === rec ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em", transition: "color 0.25s" }}>{rec}</span>
               </button>
             ))}
           </div>
+        )}
+      </div>
 
-          {recordsForRound.length > 0 && (
-            <div className="flex" style={{ gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-              <button onClick={() => setActiveRecord(null)} style={{
-                padding: "6px 12px", borderRadius: 6, border: !activeRecord ? `1px solid ${accent}` : "1px solid #222",
-                background: !activeRecord ? accent + "15" : "#111", color: !activeRecord ? accent : "#555",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-              }}>Tous</button>
-              {recordsForRound.flat().map((rec) => (
-                <button key={rec} onClick={() => setActiveRecord(rec)} style={{
-                  padding: "6px 12px", borderRadius: 6, border: activeRecord === rec ? `1px solid ${accent}` : "1px solid #222",
-                  background: activeRecord === rec ? accent + "15" : "#111", color: activeRecord === rec ? accent : "#555",
-                  fontSize: 11, fontWeight: 700, cursor: "pointer",
-                }}>{rec}</button>
-              ))}
-            </div>
-          )}
+      <div style={{ padding: "16px" }}>
 
           {currentMatches.length === 0 && (
             <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match pour ce round</p>
