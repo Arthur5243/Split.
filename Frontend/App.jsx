@@ -6122,6 +6122,12 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   const mId = (m) => m.match_id || m.id;
 
   const roundMatches = {};
+  const teamRecords = {};
+
+  const initTR = (name, logo) => {
+    if (!teamRecords[name]) teamRecords[name] = { name, logo, wins: 0, losses: 0, rounds: [] };
+  };
+
   for (const m of matches) {
     const r = parseRound(m);
     if (r && r >= 1 && r <= 5) {
@@ -6129,56 +6135,58 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
       roundMatches[r].push(m);
     }
   }
-  for (const r of Object.keys(roundMatches)) {
-    roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  }
 
-  const teamRecords = {};
-  for (let r = 1; r <= 5; r++) {
-    for (const m of (roundMatches[r] || [])) {
-      const t1 = getT1(m);
-      const t2 = getT2(m);
-      if (!t1.name || !t2.name || t1.name === "TBD" || t2.name === "TBD") continue;
-      const s1 = getS1(m);
-      const s2 = getS2(m);
-      if (s1 == null || s2 == null) continue;
-      const t1k = t1.name;
-      const t2k = t2.name;
-      if (!teamRecords[t1k]) teamRecords[t1k] = { name: t1.name, logo: t1.image_url, wins: 0, losses: 0, rounds: [] };
-      if (!teamRecords[t2k]) teamRecords[t2k] = { name: t2.name, logo: t2.image_url, wins: 0, losses: 0, rounds: [] };
-      if (s1 > s2) {
-        teamRecords[t1k].wins++; teamRecords[t1k].rounds.push({ round: r, result: "W", vs: t2.name });
-        teamRecords[t2k].losses++; teamRecords[t2k].rounds.push({ round: r, result: "L", vs: t1.name });
-      } else if (s2 > s1) {
-        teamRecords[t2k].wins++; teamRecords[t2k].rounds.push({ round: r, result: "W", vs: t1.name });
-        teamRecords[t1k].losses++; teamRecords[t1k].rounds.push({ round: r, result: "L", vs: t2.name });
-      }
+  const finished = matches
+    .filter((m) => { const s1 = getS1(m); const s2 = getS2(m); return s1 != null && s2 != null && (s1 !== 0 || s2 !== 0); })
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  for (const m of finished) {
+    const t1 = getT1(m); const t2 = getT2(m);
+    if (!t1.name || !t2.name || t1.name === "TBD" || t2.name === "TBD") continue;
+    initTR(t1.name, t1.image_url); initTR(t2.name, t2.image_url);
+    let r = parseRound(m);
+    if (!r) {
+      r = Math.max(teamRecords[t1.name].wins + teamRecords[t1.name].losses, teamRecords[t2.name].wins + teamRecords[t2.name].losses) + 1;
+      if (r > 5) r = 5;
+      m._inferredRound = r;
+      m._inferredRecord = `${teamRecords[t1.name].wins}-${teamRecords[t1.name].losses}`;
+      if (!roundMatches[r]) roundMatches[r] = [];
+      if (!roundMatches[r].includes(m)) roundMatches[r].push(m);
+    }
+    const s1 = getS1(m); const s2 = getS2(m);
+    if (s1 > s2) {
+      teamRecords[t1.name].wins++; teamRecords[t1.name].rounds.push({ round: r, result: "W", vs: t2.name });
+      teamRecords[t2.name].losses++; teamRecords[t2.name].rounds.push({ round: r, result: "L", vs: t1.name });
+    } else if (s2 > s1) {
+      teamRecords[t2.name].wins++; teamRecords[t2.name].rounds.push({ round: r, result: "W", vs: t1.name });
+      teamRecords[t1.name].losses++; teamRecords[t1.name].rounds.push({ round: r, result: "L", vs: t2.name });
     }
   }
 
   const qualified = Object.values(teamRecords).filter((t) => t.wins >= 3).sort((a, b) => a.losses - b.losses);
   const eliminated = Object.values(teamRecords).filter((t) => t.losses >= 3).sort((a, b) => b.wins - a.wins);
 
-  const unclassified = matches.filter((m) => {
+  const upcoming = matches.filter((m) => {
     const r = parseRound(m);
-    return !r || r < 1 || r > 5;
+    if (r && r >= 1 && r <= 5) return false;
+    const s1 = getS1(m); const s2 = getS2(m);
+    return s1 == null || s2 == null || (s1 === 0 && s2 === 0);
   });
-  for (const m of unclassified) {
+  for (const m of upcoming) {
     const t1Name = getT1(m)?.name;
     const t2Name = getT2(m)?.name;
     if (!t1Name || !t2Name || t1Name === "TBD" || t2Name === "TBD") continue;
     const tr1 = teamRecords[t1Name];
     const tr2 = teamRecords[t2Name];
     let w, l;
-    if (tr1 && tr2 && tr1.wins === tr2.wins && tr1.losses === tr2.losses) {
+    if (tr1 && tr2) {
       w = tr1.wins; l = tr1.losses;
-    } else if (tr1 && !tr2) {
+    } else if (tr1) {
       w = tr1.wins; l = tr1.losses;
-    } else if (!tr1 && tr2) {
+    } else if (tr2) {
       w = tr2.wins; l = tr2.losses;
-    } else if (!tr1 && !tr2) {
+    } else {
       w = 0; l = 0;
-    } else { continue; }
+    }
     const ir = w + l + 1;
     if (ir >= 1 && ir <= 5) {
       m._inferredRound = ir;
