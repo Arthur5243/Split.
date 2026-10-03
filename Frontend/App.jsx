@@ -283,7 +283,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Résultats RLCS · toutes les régions",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Océanie",
     cs2CircuitToggleShow: "Voir le circuit CS2", cs2CircuitToggleHide: "Masquer le circuit",
-    cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
+    cs2BracketShow: "Voir le Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Phase de groupes", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Aucun event CS2 disponible",
     cs2CircuitTitle: "Circuit CS2", cs2CircuitIntro: "Inspiré du système régional de Valorant, mais sans ligues fermées : les équipes progressent par classement, pas par franchise.",
     cs2CircuitRegions: "Régions", cs2CircuitRegionsDesc: "3 grandes régions suivies : Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking régional", cs2CircuitRankingDesc: "Chaque équipe est classée dans sa région selon ses résultats récents.",
@@ -374,7 +374,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS results · all regions",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "View the CS2 circuit", cs2CircuitToggleHide: "Hide the circuit",
-    cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
+    cs2BracketShow: "View Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Group Stage", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "No CS2 event available",
     cs2CircuitTitle: "CS2 Circuit", cs2CircuitIntro: "Inspired by Valorant's regional system, but without closed leagues: teams progress through rankings, not franchising.",
     cs2CircuitRegions: "Regions", cs2CircuitRegionsDesc: "3 major regions tracked: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regional ranking", cs2CircuitRankingDesc: "Each team is ranked within its region based on recent results.",
@@ -463,7 +463,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Resultados RLCS · todas las regiones",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceanía",
     cs2CircuitToggleShow: "Ver el circuito CS2", cs2CircuitToggleHide: "Ocultar el circuito",
-    cs2BracketShow: "Ver Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase de grupos", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Ningún evento CS2 disponible",
+    cs2BracketShow: "Ver Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase de grupos", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Final", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Ningún evento CS2 disponible",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Inspirado en el sistema regional de Valorant, pero sin ligas cerradas: los equipos progresan por clasificación, no por franquicia.",
     cs2CircuitRegions: "Regiones", cs2CircuitRegionsDesc: "3 grandes regiones: Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking regional", cs2CircuitRankingDesc: "Cada equipo se clasifica en su región según sus resultados recientes.",
@@ -532,7 +532,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "Risultati RLCS · tutte le regioni",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "Vedi il circuito CS2", cs2CircuitToggleHide: "Nascondi il circuito",
-    cs2BracketShow: "Vedi Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase a gironi", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Nessun evento CS2 disponibile",
+    cs2BracketShow: "Vedi Bracket", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Fase a gironi", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Nessun evento CS2 disponibile",
     cs2CircuitTitle: "Circuito CS2", cs2CircuitIntro: "Ispirato al sistema regionale di Valorant, ma senza leghe chiuse: le squadre avanzano tramite il ranking, non per franchising.",
     cs2CircuitRegions: "Regioni", cs2CircuitRegionsDesc: "3 grandi regioni seguite: Europe, Americas, Asia.",
     cs2CircuitRanking: "Ranking regionale", cs2CircuitRankingDesc: "Ogni squadra è classificata nella propria regione in base ai risultati recenti.",
@@ -601,7 +601,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS結果・全リージョン",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Oceania",
     cs2CircuitToggleShow: "CS2サーキットを見る", cs2CircuitToggleHide: "サーキットを隠す",
-    cs2BracketShow: "ブラケットを見る", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "グループステージ", cs2BracketPlayoffs: "プレイオフ", cs2BracketPlayIns: "プレイイン", cs2BracketFinal: "決勝", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "CS2イベントなし",
+    cs2BracketShow: "ブラケットを見る", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "グループステージ", cs2BracketPlayoffs: "プレイオフ", cs2BracketPlayIns: "プレイイン", cs2BracketFinal: "決勝", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "CS2イベントなし",
     cs2CircuitTitle: "CS2サーキット", cs2CircuitIntro: "Valorantの地域制度を参考にしつつ、クローズドリーグはなし：チームはフランチャイズではなくランキングで昇格します。",
     cs2CircuitRegions: "地域", cs2CircuitRegionsDesc: "追跡する3大地域：Europe、Americas、Asia。",
     cs2CircuitRanking: "地域ランキング", cs2CircuitRankingDesc: "各チームは直近の結果に基づき自地域内でランク付けされます。",
@@ -670,7 +670,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS-Ergebnisse · alle Regionen",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "Ozeanien",
     cs2CircuitToggleShow: "CS2-Circuit anzeigen", cs2CircuitToggleHide: "Circuit ausblenden",
-    cs2BracketShow: "Bracket anzeigen", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Gruppenphase", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Kein CS2-Event verfügbar",
+    cs2BracketShow: "Bracket anzeigen", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "Gruppenphase", cs2BracketPlayoffs: "Playoffs", cs2BracketPlayIns: "Play-ins", cs2BracketFinal: "Finale", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "Kein CS2-Event verfügbar",
     cs2CircuitTitle: "CS2-Circuit", cs2CircuitIntro: "Inspiriert vom Valorant-Regionalsystem, aber ohne geschlossene Ligen: Teams steigen über das Ranking auf, nicht über ein Franchise.",
     cs2CircuitRegions: "Regionen", cs2CircuitRegionsDesc: "3 große Regionen im Blick: Europe, Americas, Asia.",
     cs2CircuitRanking: "Regionales Ranking", cs2CircuitRankingDesc: "Jedes Team wird innerhalb seiner Region nach den jüngsten Ergebnissen eingestuft.",
@@ -739,7 +739,7 @@ const STR = {
     rlTitle: "ROCKET LEAGUE", rlSubtitle: "RLCS赛果 · 所有赛区",
     rlRegionEurope: "Europe", rlRegionAmericas: "Americas", rlRegionOceania: "大洋洲",
     cs2CircuitToggleShow: "查看CS2赛事体系", cs2CircuitToggleHide: "隐藏赛事体系",
-    cs2BracketShow: "查看赛程", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "ESL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "小组赛", cs2BracketPlayoffs: "淘汰赛", cs2BracketPlayIns: "入围赛", cs2BracketFinal: "决赛", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "暂无CS2赛事",
+    cs2BracketShow: "查看赛程", cs2BracketMajor: "Major", cs2BracketIEM: "IEM", cs2BracketBlast: "Blast", cs2BracketESL: "EPL", cs2BracketPGL: "PGL", cs2BracketGroupStage: "小组赛", cs2BracketPlayoffs: "淘汰赛", cs2BracketPlayIns: "入围赛", cs2BracketFinal: "决赛", cs2BracketStage1: "Stage 1", cs2BracketStage2: "Stage 2", cs2BracketStage3: "Stage 3", cs2BracketNoEvent: "暂无CS2赛事",
     cs2CircuitTitle: "CS2赛事体系", cs2CircuitIntro: "灵感来自Valorant的分区制度，但没有封闭联赛：战队凭积分晋级，而非特许经营。",
     cs2CircuitRegions: "赛区", cs2CircuitRegionsDesc: "追踪三大赛区：Europe、Americas、Asia。",
     cs2CircuitRanking: "赛区排名", cs2CircuitRankingDesc: "每支战队根据近期战绩在其赛区内排名。",
@@ -6064,6 +6064,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
 const CS2_BRACKET_COMPS = [
   { key: "major", labelKey: "cs2BracketMajor", color: "#FFD700", icon: "🏆" },
+  { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡", locked: true },
+  { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥", locked: true },
+  { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮", locked: true },
   { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
 ];
 
@@ -6268,7 +6271,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         text = `Éliminé [${outcome.record}]`;
         color = "#ff3b3b"; bg = "#ff3b3b12"; border = "#ff3b3b25";
       } else {
-        text = `→ R${outcome.nextRound} [${outcome.record}]`;
+        text = `→ Round ${outcome.nextRound} [${outcome.record}]`;
         color = "#888"; bg = "transparent"; border = "#1a1a1a";
       }
       return <span style={{ fontSize: 9, fontWeight: 700, color, background: bg, border: `1px solid ${border}`, borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap" }}>{text}</span>;
@@ -6713,6 +6716,20 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
         {CS2_BRACKET_COMPS.map((c) => {
+          if (c.locked) {
+            return (
+              <button key={c.key} disabled style={{
+                background: "#0d0d0d",
+                border: "1px solid #1a1a1a",
+                borderRadius: 12, padding: "32px 12px",
+                cursor: "default",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                opacity: 0.5,
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+              </button>
+            );
+          }
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
           const activeEvents = events.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
           const hasActive = activeEvents.length > 0;
