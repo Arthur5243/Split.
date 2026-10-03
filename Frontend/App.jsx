@@ -6091,7 +6091,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   function parseRound(m) {
-    const name = (m.name || "").toLowerCase();
+    const name = (m.round || m.name || "").toLowerCase();
     const rMatch = name.match(/round\s*(\d)/);
     if (rMatch) return parseInt(rMatch[1]);
     if (name.includes("opening")) return 1;
@@ -6099,11 +6099,25 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   function parseRecord(m) {
-    const name = (m.name || "").toLowerCase();
+    const name = (m.round || m.name || "").toLowerCase();
     const rec = name.match(/(\d)-(\d)/);
     if (rec) return `${rec[1]}-${rec[2]}`;
     return null;
   }
+
+  const getT1 = (m) => m.team1 || m.opponents?.[0]?.opponent || {};
+  const getT2 = (m) => m.team2 || m.opponents?.[1]?.opponent || {};
+  const getS1 = (m) => {
+    if (m.team1) { const s = parseInt(m.team1.score, 10); return isNaN(s) ? null : s; }
+    return m.results?.[0]?.score ?? null;
+  };
+  const getS2 = (m) => {
+    if (m.team2) { const s = parseInt(m.team2.score, 10); return isNaN(s) ? null : s; }
+    return m.results?.[1]?.score ?? null;
+  };
+  const isWinner1 = (m) => m.team1?.is_winner || false;
+  const isWinner2 = (m) => m.team2?.is_winner || false;
+  const mId = (m) => m.match_id || m.id;
 
   const roundMatches = {};
   for (const m of matches) {
@@ -6113,25 +6127,29 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
       roundMatches[r].push(m);
     }
   }
+  for (const r of Object.keys(roundMatches)) {
+    roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  }
 
   const teamRecords = {};
   for (let r = 1; r <= 5; r++) {
     for (const m of (roundMatches[r] || [])) {
-      if (!m.opponents || m.opponents.length < 2) continue;
-      const t1 = m.opponents[0]?.opponent;
-      const t2 = m.opponents[1]?.opponent;
-      if (!t1 || !t2) continue;
-      const s1 = m.results?.[0]?.score ?? null;
-      const s2 = m.results?.[1]?.score ?? null;
+      const t1 = getT1(m);
+      const t2 = getT2(m);
+      if (!t1.name || !t2.name || t1.name === "TBD" || t2.name === "TBD") continue;
+      const s1 = getS1(m);
+      const s2 = getS2(m);
       if (s1 == null || s2 == null) continue;
-      if (!teamRecords[t1.id]) teamRecords[t1.id] = { name: t1.name, logo: t1.image_url, wins: 0, losses: 0, rounds: [] };
-      if (!teamRecords[t2.id]) teamRecords[t2.id] = { name: t2.name, logo: t2.image_url, wins: 0, losses: 0, rounds: [] };
+      const t1k = t1.name;
+      const t2k = t2.name;
+      if (!teamRecords[t1k]) teamRecords[t1k] = { name: t1.name, logo: t1.image_url, wins: 0, losses: 0, rounds: [] };
+      if (!teamRecords[t2k]) teamRecords[t2k] = { name: t2.name, logo: t2.image_url, wins: 0, losses: 0, rounds: [] };
       if (s1 > s2) {
-        teamRecords[t1.id].wins++; teamRecords[t1.id].rounds.push({ round: r, result: "W", vs: t2.name });
-        teamRecords[t2.id].losses++; teamRecords[t2.id].rounds.push({ round: r, result: "L", vs: t1.name });
-      } else {
-        teamRecords[t2.id].wins++; teamRecords[t2.id].rounds.push({ round: r, result: "W", vs: t1.name });
-        teamRecords[t1.id].losses++; teamRecords[t1.id].rounds.push({ round: r, result: "L", vs: t2.name });
+        teamRecords[t1k].wins++; teamRecords[t1k].rounds.push({ round: r, result: "W", vs: t2.name });
+        teamRecords[t2k].losses++; teamRecords[t2k].rounds.push({ round: r, result: "L", vs: t1.name });
+      } else if (s2 > s1) {
+        teamRecords[t2k].wins++; teamRecords[t2k].rounds.push({ round: r, result: "W", vs: t1.name });
+        teamRecords[t1k].losses++; teamRecords[t1k].rounds.push({ round: r, result: "L", vs: t2.name });
       }
     }
   }
@@ -6188,14 +6206,14 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   const renderMatchCard = (m, i) => {
-    const t1 = m.opponents?.[0]?.opponent;
-    const t2 = m.opponents?.[1]?.opponent;
-    const s1 = m.results?.[0]?.score;
-    const s2 = m.results?.[1]?.score;
+    const t1 = getT1(m);
+    const t2 = getT2(m);
+    const s1 = getS1(m);
+    const s2 = getS2(m);
     const isDone = m.status === "finished";
     const rec = parseRecord(m);
     return (
-      <div key={m.id || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+      <div key={mId(m) || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
           {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
           <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
@@ -6243,7 +6261,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         {!isSingleRecord && recordsForRound.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
             {recordsForRound.flat().map((rec) => {
-              const recMatches = allRoundMatches.filter((m) => parseRecord(m) === rec);
+              const recMatches = allRoundMatches.filter((mm) => parseRecord(mm) === rec);
               const recDone = recMatches.length > 0 && recMatches.every((m) => m.status === "finished");
               const recLive = recMatches.some((m) => m.status === "running");
               return (
@@ -6306,7 +6324,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
                   <div>
                     <span style={{ fontSize: 14, fontWeight: 800, color: available ? accent : "#444", textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>Round {r}</span>
                     <span style={{ fontSize: 10, color: status === "live" ? "#ff3b3b" : status === "finished" ? "#4CAF50" : "#555", fontWeight: 700, marginTop: 2, display: "block" }}>
-                      {status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : "À venir"}
+                      {status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : ""}
                     </span>
                   </div>
                 </div>
