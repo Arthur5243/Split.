@@ -6066,7 +6066,6 @@ const CS2_BRACKET_COMPS = [
   { key: "major", labelKey: "cs2BracketMajor", color: "#FFD700", icon: "🏆" },
   { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡" },
   { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥" },
-  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮" },
 ];
 
@@ -6110,7 +6109,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   const [phase, setPhase] = useState(null);
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
-  const [showAutre, setShowAutre] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
@@ -6281,34 +6280,43 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     );
   }
 
-  // --- Autre CS2 competitions view ---
-  if (showAutre) {
-    const autreComps = [
-      { name: "ESL Challenger", desc: "Circuit Tier 2 ESL", color: "#00BFFF", regions: ["Europe", "NA", "Asia"], url: "https://liquipedia.net/counterstrike/ESL/Challenger" },
-      { name: "BLAST Rising", desc: "Développement de talents BLAST", color: "#FF6B00", regions: ["Europe", "Americas"], url: "https://liquipedia.net/counterstrike/BLAST/Rising" },
-      { name: "CCT", desc: "Champions Cup Tour", color: "#4CAF50", regions: ["Europe", "South America"], url: "https://liquipedia.net/counterstrike/Champions_Cup_Tour" },
-    ];
+  // --- Historique brackets CS2 ---
+  if (showHistory) {
+    const historyEvents = [];
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    for (const c of CS2_BRACKET_COMPS) {
+      const events = cs2Events ? (cs2Events[c.key] || []) : [];
+      for (const ev of events) {
+        if (ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < sevenDaysAgo) {
+          historyEvents.push({ ...ev, compKey: c.key, compColor: c.color, compLabel: T[c.labelKey] || c.key });
+        }
+      }
+    }
+    historyEvents.sort((a, b) => (b.end_at || "").localeCompare(a.end_at || ""));
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>
-          {backBtn(() => setShowAutre(false))}
-          {titleSpan("Autres compétitions", "#FFD700")}
+          {backBtn(() => setShowHistory(false))}
+          {titleSpan("Historique", "#888")}
         </div>
-        <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
-          {autreComps.map((c) => (
-            <button key={c.name} onClick={() => window.open(c.url, "_blank")} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {historyEvents.length === 0 && (
+            <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun bracket dans l'historique</p>
+          )}
+          {historyEvents.map((ev) => (
+            <button key={ev.serie_id} onClick={() => { setShowHistory(false); setComp(ev.compKey); selectSerie(ev); }} style={{
+              background: "#111", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12,
+              padding: "16px", cursor: "pointer", textAlign: "left", width: "100%",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
+                  <div style={{ width: 8, height: 8, borderRadius: 4, background: ev.compColor }} />
+                  <div>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "#ccc" }}>{ev.title}</span>
+                    <span style={{ display: "block", fontSize: 10, color: "#555", marginTop: 2 }}>{ev.compLabel} · {new Date(ev.end_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
-                <ChevronRight size={14} color="#555" />
-              </div>
-              <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {c.regions.map((r) => (
-                  <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
-                ))}
+                <ChevronRight size={14} color="#444" />
               </div>
             </button>
           ))}
@@ -6316,6 +6324,12 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       </div>
     );
   }
+
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const hasHistoryEvents = CS2_BRACKET_COMPS.some((c) => {
+    const events = cs2Events ? (cs2Events[c.key] || []) : [];
+    return events.some((ev) => ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < sevenDaysAgo);
+  });
 
   // --- Step 1: Choose competition ---
   return (
@@ -6327,18 +6341,22 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
         {CS2_BRACKET_COMPS.map((c) => {
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
+          const activeEvents = events.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
+          const hasActive = activeEvents.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => setComp(c.key)} style={{
-              background: `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)`,
-              border: `1px solid ${c.color}30`,
-              borderRadius: 12, padding: "32px 12px", cursor: "pointer",
+            <button key={c.key} onClick={() => { if (hasActive) setComp(c.key); }} disabled={!hasActive} style={{
+              background: hasActive ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
+              border: `1px solid ${hasActive ? c.color + "30" : "#1a1a1a"}`,
+              borderRadius: 12, padding: "32px 12px",
+              cursor: hasActive ? "pointer" : "default",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: `0 4px 20px ${c.color}10`,
+              boxShadow: hasActive ? `0 4px 20px ${c.color}10` : "none",
               transition: "transform 0.15s",
               position: "relative",
+              opacity: hasActive ? 1 : 0.35,
             }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: hasActive ? c.color : "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
               )}
@@ -6347,17 +6365,17 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         })}
       </div>
       <div style={{ padding: "0 16px 20px" }}>
-        <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#1e1e1e", border: "1px solid #333", cursor: "pointer" }}>
+        <button onClick={() => setShowHistory(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: hasHistoryEvents ? "#1e1e1e" : "#0d0d0d", border: `1px solid ${hasHistoryEvents ? "#333" : "#1a1a1a"}`, cursor: hasHistoryEvents ? "pointer" : "default", opacity: hasHistoryEvents ? 1 : 0.35 }} disabled={!hasHistoryEvents}>
           <div className="flex items-center gap-3">
             <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
-              <Trophy size={15} color="#888" />
+              <Trophy size={15} color={hasHistoryEvents ? "#888" : "#333"} />
             </span>
             <div style={{ textAlign: "left" }}>
-              <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-              <span className="block" style={{ color: "#666", fontSize: "10px" }}>ESL Challenger · BLAST Rising · CCT</span>
+              <span style={{ color: hasHistoryEvents ? "#fff" : "#444", fontSize: "12px", fontWeight: 700 }}>Historique</span>
+              <span className="block" style={{ color: "#555", fontSize: "10px" }}>Brackets terminés</span>
             </div>
           </div>
-          <ChevronRight size={16} color="#555" />
+          <ChevronRight size={16} color={hasHistoryEvents ? "#555" : "#222"} />
         </button>
       </div>
     </div>
