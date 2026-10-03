@@ -4496,14 +4496,17 @@ function NewsCarousel({ T, splashDone }) {
     dragStartX.current = null;
   }
 
-  // Countdown "J-X" vers le prochain 1er octobre (Major CS2 Singapour).
-  // Re-calculé à chaque render (le carousel se rafraîchit toutes les 6s, donc
-  // le compteur reste à jour au 24h près sans avoir besoin de timer dédié).
   const daysToMajor = (() => {
     const now = new Date();
-    let target = new Date(Date.UTC(now.getUTCFullYear(), 9, 1)); // 1er octobre
+    let target = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
     if (target.getTime() < now.getTime()) target = new Date(Date.UTC(now.getUTCFullYear() + 1, 9, 1));
     return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000));
+  })();
+
+  const daysToChampions = (() => {
+    const now = new Date();
+    const target = new Date(Date.UTC(2026, 10, 27));
+    return Math.ceil((target.getTime() - now.getTime()) / 86400000);
   })();
 
   return (
@@ -4521,8 +4524,8 @@ function NewsCarousel({ T, splashDone }) {
           {T.newsBadge}
         </span>
         <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.newsTitle}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.newsSub}</p>
+          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{daysToChampions > 0 ? `J-${daysToChampions}` : "LES VCT CHAMPIONS ONT COMMENCÉ"}</p>
+          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{daysToChampions > 0 ? T.newsTitle : ""}</p>
         </div>
       </div>
       <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
@@ -9658,7 +9661,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       <div ref={communityEndRef} />
                     </div>
                     <div className="flex items-center gap-2" style={{ padding: "8px 4px 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0, background: "#000", position: "sticky", bottom: 0 }}>
-                      <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
+                      <input value={communityInput} onChange={e => setCommunityInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendCommunityMsg(); } }} enterKeyHint="send" placeholder={T.communityPlaceholder || "Message..."} style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
                       <button onClick={() => sendCommunityMsg()} disabled={!communityInput.trim()} className="rounded-full p-2.5" style={{ background: communityInput.trim() ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
                         <Send size={16} color={communityInput.trim() ? "#000" : "#555"} />
                       </button>
@@ -9723,7 +9726,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                           <div ref={dmEndRef} />
                         </div>
                         <div className="flex items-center gap-2" style={{ padding: "8px 4px 4px", borderTop: "1px solid #1a1a1a", flexShrink: 0, background: "#000", position: "sticky", bottom: 0 }}>
-                          <input value={dmInput} onChange={e => setDmInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendDmMsg(); } }} placeholder="Message..." style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
+                          <input value={dmInput} onChange={e => setDmInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendDmMsg(); } }} enterKeyHint="send" placeholder="Message..." style={{ flex: 1, background: "#141414", color: "#fff", fontSize: "13px", padding: "10px 14px", borderRadius: 12, border: "1px solid #222", outline: "none" }} />
                           <button onClick={() => sendDmMsg()} disabled={!dmInput.trim() || dmSending} className="rounded-full p-2.5" style={{ background: dmInput.trim() && !dmSending ? "#CCF71D" : "#222", border: "none", cursor: "pointer", transition: "all 0.2s" }}>
                             <Send size={16} color={dmInput.trim() && !dmSending ? "#000" : "#555"} />
                           </button>
@@ -11022,7 +11025,7 @@ export default function ClutchApp() {
   const adShownRef = useRef(false);
   const adTimerRef = useRef(null);
   const lastInteractionRef = useRef(Date.now());
-  const lastAdAtRef = useRef(0);
+  const lastAdAtRef = useRef(Date.now());
   const tabSwitchCountRef = useRef(0);
   const tabSwitchSinceAdRef = useRef(0);
   const predictionsSinceAdRef = useRef(0);
