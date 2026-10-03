@@ -6598,17 +6598,17 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const hasRunning = events.some((e) => e.status === "running");
           return (
             <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{
-              background: hasActive ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
-              border: `1px solid ${hasActive ? c.color + "30" : "#1a1a1a"}`,
+              background: hasAny ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
+              border: `1px solid ${hasAny ? c.color + "30" : "#1a1a1a"}`,
               borderRadius: 12, padding: "32px 12px",
-              cursor: hasActive ? "pointer" : "default",
+              cursor: hasAny ? "pointer" : "default",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: hasActive ? `0 4px 20px ${c.color}10` : "none",
+              boxShadow: hasAny ? `0 4px 20px ${c.color}10` : "none",
               transition: "transform 0.15s",
               position: "relative",
-              opacity: hasActive ? 1 : 0.35,
+              opacity: hasAny ? 1 : 0.35,
             }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: hasActive ? c.color : "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: hasAny ? c.color : "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
               )}
