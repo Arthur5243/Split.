@@ -6158,39 +6158,43 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
       </div>
 
-      <div style={{ position: "sticky", top: 52, zIndex: 19, background: "#0a0a0a", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="flex items-center" style={{ gap: 0, padding: "0 16px", overflowX: "auto" }}>
-          {[1, 2, 3, 4, 5].map((r) => (
-            <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
-              background: "none", border: "none", cursor: "pointer", padding: "10px 14px",
-              borderBottom: activeRound === r ? `2px solid ${accent}` : "2px solid transparent",
-              transition: "all 0.25s",
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+        {[1, 2, 3, 4, 5].map((r) => (
+          <button key={r} onClick={() => { setActiveRound(r); setActiveRecord(null); }} style={{
+            background: activeRound === r ? `linear-gradient(90deg, ${accent}15 0%, #111 50%)` : `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
+            border: `1px solid ${activeRound === r ? accent + "40" : accent + "20"}`,
+            borderRadius: 10, padding: "24px 18px", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            boxShadow: `0 2px 12px ${accent}08`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
+              <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>Round {r}</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        ))}
+      </div>
+
+      {activeRound && recordsForRound.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 16px 10px" }}>
+          {recordsForRound.flat().map((rec) => (
+            <button key={rec} onClick={() => setActiveRecord(activeRecord === rec ? null : rec)} style={{
+              background: activeRecord === rec ? `linear-gradient(90deg, ${accent}15 0%, #111 50%)` : `linear-gradient(90deg, ${accent}05 0%, #0d0d0d 50%)`,
+              border: `1px solid ${activeRecord === rec ? accent + "40" : "#1a1a1a"}`,
+              borderRadius: 10, padding: "18px 18px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              boxShadow: activeRecord === rec ? `0 2px 12px ${accent}08` : "none",
             }}>
-              <span style={{ color: activeRound === r ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>R{r}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 3, height: 16, borderRadius: 2, background: activeRecord === rec ? accent : "#333" }} />
+                <span style={{ fontSize: 13, fontWeight: 800, color: activeRecord === rec ? accent : "#888", letterSpacing: "0.04em" }}>{rec}</span>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={activeRecord === rec ? accent : "#444"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           ))}
         </div>
-        {recordsForRound.length > 0 && (
-          <div className="flex items-center" style={{ gap: 0, padding: "0 16px", overflowX: "auto", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-            <button onClick={() => setActiveRecord(null)} style={{
-              background: "none", border: "none", cursor: "pointer", padding: "8px 12px",
-              borderBottom: !activeRecord ? `2px solid ${accent}` : "2px solid transparent",
-              transition: "all 0.25s",
-            }}>
-              <span style={{ color: !activeRecord ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", transition: "color 0.25s" }}>Tous</span>
-            </button>
-            {recordsForRound.flat().map((rec) => (
-              <button key={rec} onClick={() => setActiveRecord(rec)} style={{
-                background: "none", border: "none", cursor: "pointer", padding: "8px 12px",
-                borderBottom: activeRecord === rec ? `2px solid ${accent}` : "2px solid transparent",
-                transition: "all 0.25s",
-              }}>
-                <span style={{ color: activeRecord === rec ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em", transition: "color 0.25s" }}>{rec}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       <div style={{ padding: "16px" }}>
 
