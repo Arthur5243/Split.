@@ -1025,6 +1025,7 @@ function classifyCS2Round(matchData) {
 
 function classifyCS2MatchRound(series) {
   const s = (series || "").toLowerCase().trim();
+  if (s.includes("3rd") || s.includes("third place") || s.includes("3ème") || s.includes("3e place") || s.includes("3rd place")) return { bracket: "third_place", round: s, sort: 99 };
   if (s.includes("grand final")) return { bracket: "grand_final", round: s, sort: 100 };
   if (s.includes("upper") && s.includes("quarter")) return { bracket: "upper", round: s, sort: 10 };
   if (s.includes("upper") && s.includes("semi")) return { bracket: "upper", round: s, sort: 20 };
@@ -1042,6 +1043,7 @@ function classifyCS2MatchRound(series) {
 }
 
 function roundDisplayName(bracket, sort) {
+  if (bracket === "third_place") return "Match 3ème place";
   if (bracket === "grand_final") return "Grand Final";
   const p = bracket === "upper" ? "Upper Bracket" : "Lower Bracket";
   if (sort === 5) return p + " Round 1";
@@ -1068,7 +1070,8 @@ function buildCS2Bracket(matches) {
   const upper = Object.values(rounds).filter((r) => r.bracket === "upper").sort((a, b) => a.sort - b.sort);
   const lower = Object.values(rounds).filter((r) => r.bracket === "lower").sort((a, b) => a.sort - b.sort);
   const grandFinal = Object.values(rounds).filter((r) => r.bracket === "grand_final").sort((a, b) => a.sort - b.sort);
-  return { upper, lower, grand_final: grandFinal };
+  const thirdPlace = Object.values(rounds).filter((r) => r.bracket === "third_place").sort((a, b) => a.sort - b.sort);
+  return { upper, lower, grand_final: grandFinal, third_place: thirdPlace };
 }
 
 router.get("/api/cs2-bracket/:serieId", async (req, res) => {

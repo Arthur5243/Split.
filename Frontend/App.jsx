@@ -6398,11 +6398,18 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
 
   const renderBracketSection = (bracket, accentColor, isGroupStage) => {
     if (!bracket) return null;
+    const hasGF = bracket.grand_final?.length > 0;
+    const has3rd = bracket.third_place?.length > 0;
     return <>
       <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
         {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
+        {(hasGF || has3rd) && (
+          <div style={{ display: "flex", gap: 24 }}>
+            {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
+            {has3rd && <BracketTree rounds={bracket.third_place} accent={accentColor} label="Match 3ème place" labelColor="#C0C0C0" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
+          </div>
+        )}
       </DragScroll>
     </>;
   };
@@ -6460,7 +6467,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
 
     const hasAnyContent = fallbackPhases.some((p) => {
       const b = p.playoffs?.bracket;
-      const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+      const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0 || b.third_place?.length > 0);
       const hasGroup = p.group_stage?.matches?.length > 0 || Object.keys(p.group_stage?.standings || {}).length > 0;
       return hasBracket || hasGroup;
     });
@@ -6474,7 +6481,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         {loading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
         {!loading && fallbackPhases.map((p) => {
           const b = p.playoffs?.bracket;
-          const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0);
+          const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0 || b.third_place?.length > 0);
           const hasStandings = Object.keys(p.group_stage?.standings || {}).length > 0;
           if (!hasBracket && !hasStandings) return null;
           const showLabel = fallbackPhases.length > 1;
