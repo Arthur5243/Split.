@@ -11,6 +11,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("/sw.js").then((reg) => {
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (nw) nw.addEventListener("statechange", () => {
+          if (nw.state === "activated" && navigator.serviceWorker.controller) {
+            window.location.reload();
+          }
+        });
+      });
+      setInterval(() => reg.update().catch(() => {}), 60000);
+    }).catch(() => {});
   });
 }
