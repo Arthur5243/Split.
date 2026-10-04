@@ -58,6 +58,7 @@ const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.png";
+const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
 // Valorant / CS2 / Rocket League — fichiers fournis par l'utilisateur.
@@ -3529,6 +3530,19 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const scrollDirTimer = useRef(null);
   const invScrollRef = useRef(null);
   const lastScrollY = useRef(0);
+  const [tiersLoaded, setTiersLoaded] = useState(false);
+
+  const visibleTiers = useMemo(() => {
+    if (tiersLoaded) return allTiers;
+    const start = Math.max(1, currentTier - REWARDS_INITIAL_RANGE);
+    const end = Math.min(100, currentTier + REWARDS_INITIAL_RANGE);
+    return allTiers.filter(t => t >= start && t <= end);
+  }, [tiersLoaded, currentTier, allTiers]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setTiersLoaded(true), 120);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (tab === "rewards" && currentRef.current && scrollRef.current) {
@@ -3540,7 +3554,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     if (tab === "inventory" && invScrollRef.current) {
       invScrollRef.current.scrollTo({ top: 0 });
     }
-  }, [tab]);
+  }, [tab, tiersLoaded]);
   const [openingChest, setOpeningChest] = useState(null);
   const [chestPhase, setChestPhase] = useState("idle");
   const [chestResult, setChestResult] = useState(null);
@@ -3793,10 +3807,10 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
         <div style={{ width: 20 }} />
       </div>
 
-      <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 120 }}>
-        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=240&fit=crop" alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 100%)" }} />
-        <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+      <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 130 }}>
+        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.15) 100%)" }} />
+        <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <span style={{ fontSize: 22 }}>🏆</span>
             <span style={{ color: "#CCF71D", fontSize: 22, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
@@ -3823,7 +3837,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       {tab === "rewards" ? (
         <div ref={scrollRef} onScroll={handleRewardsScroll} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px", position: "relative" }}>
           {scrollDir && <div style={{ position: "sticky", top: scrollDir === "up" ? 8 : "auto", bottom: scrollDir === "down" ? 8 : "auto", left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none", animation: "fadeInOut 1.2s ease forwards" }}><div style={{ background: "rgba(204,247,29,0.15)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><ChevronDown size={18} color="#CCF71D" style={{ transform: scrollDir === "up" ? "rotate(180deg)" : "none" }} /></div></div>}
-          {allTiers.map(tier => {
+          {visibleTiers.map(tier => {
             const reward = getTierReward(tier);
             const unlocked = tier <= currentTier;
             const isCurrent = tier === currentTier;
