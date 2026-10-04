@@ -34,6 +34,7 @@ import {
   Zap,
   Award,
   ListChecks,
+  Check,
   CheckCircle,
   Crosshair,
   MessageCircle,
@@ -3866,18 +3867,18 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                   background: isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
                   {previewImg ? (
-                    <div style={{ width: 62, height: 62, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "55" : "#222"}` }}>
+                    <div style={{ width: 72, height: 52, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
                       <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
                     </div>
                   ) : (
                     <div style={{
-                      width: 62, height: 62, borderRadius: 12,
+                      width: 52, height: 52, borderRadius: 10,
                       background: unlocked ? rc.bg : "#141414",
                       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       border: `1px solid ${unlocked ? rc.border + "55" : "#1e1e1e"}`,
                       boxShadow: unlocked ? rc.glow : "none",
                     }}>
-                      <span style={{ fontSize: 28, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                      <span style={{ fontSize: 26, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -3885,28 +3886,28 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                       <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
                       <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 9, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 6px", borderRadius: 5 }}>Lv.{tier}</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
-                      {previewImg && (
-                        <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#aaa", fontSize: 8, fontWeight: 800, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, padding: "2px 7px", cursor: "pointer", letterSpacing: 0.5, textTransform: "uppercase" }}>Aperçu</button>
-                      )}
-                    </div>
+                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
                   </div>
-                  {unlocked && !claimed && isChest && (
-                    <button onClick={() => openChestAnim(tier)} style={{
-                      padding: "8px 12px", borderRadius: 10, background: "#CCF71D", color: "#000",
-                      fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer", flexShrink: 0,
-                      animation: "chestPulse 2s ease infinite",
-                    }}>OUVRIR</button>
-                  )}
-                  {unlocked && !claimed && !isChest && (
-                    <button onClick={() => claimTier(tier, chest)} style={{
-                      padding: "8px 12px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
-                      color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
-                      cursor: "pointer", flexShrink: 0,
-                    }}>Réclamer</button>
-                  )}
-                  {claimed && <CheckCircle size={18} color="#4CAF50" style={{ flexShrink: 0 }} />}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    {previewImg && (
+                      <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#aaa", fontSize: 8, fontWeight: 800, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, padding: "3px 8px", cursor: "pointer", letterSpacing: 0.5, textTransform: "uppercase" }}>Aperçu</button>
+                    )}
+                    {unlocked && !claimed && isChest && (
+                      <button onClick={() => openChestAnim(tier)} style={{
+                        padding: "8px 12px", borderRadius: 10, background: "#CCF71D", color: "#000",
+                        fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer",
+                        animation: "chestPulse 2s ease infinite",
+                      }}>OUVRIR</button>
+                    )}
+                    {unlocked && !claimed && !isChest && (
+                      <button onClick={() => claimTier(tier, chest)} style={{
+                        padding: "8px 12px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
+                        color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
+                        cursor: "pointer",
+                      }}>Réclamer</button>
+                    )}
+                    {claimed && <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={14} color="#000" strokeWidth={3} /></div>}
+                  </div>
                 </div>
               </div>
             );
