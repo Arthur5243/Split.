@@ -57,7 +57,7 @@ const SPLIT_HEADER_LOGO = "/split-header-logo.png";
 const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
-const REWARDS_BANNER = "/rewards-banner.png";
+const REWARDS_BANNER = "/rewards-banner.webp";
 const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -66,7 +66,12 @@ const NAV_VALORANT_IMG = "/Valo(1).png";
 const NAV_CSGO_IMG = "/Cs2(2).png";
 const NAV_RL_IMG = "/Rl(1).png";
 
-[NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE, REWARDS_BANNER].forEach(src => { const img = new Image(); img.src = src; });
+[NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE, REWARDS_BANNER,
+  "/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png",
+  "/banner-6.png","/banner-7.png","/banner-8.png","/banner-9.png","/banner-10.png",
+  "/match-bg-1.png","/match-bg-2.png","/match-bg-3.png","/match-bg-4.png",
+  "/match-bg-5.png","/match-bg-6.png","/match-bg-7.png","/match-bg-8.png",
+].forEach(src => { const img = new Image(); img.src = src; });
 
 // Régions VCT suivies par l'app (couleurs d'accent par région)
 const REGIONS = [
