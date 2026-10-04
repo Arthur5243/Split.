@@ -3536,6 +3536,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
   const invScrollRef = useRef(null);
   const lastScrollY = useRef(0);
   const [tiersLoaded, setTiersLoaded] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
 
   const visibleTiers = useMemo(() => {
     if (tiersLoaded) return allTiers;
@@ -3818,7 +3819,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
         <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
             <span style={{ color: "#CCF71D", fontSize: 28, fontWeight: 900, letterSpacing: "-0.5px", lineHeight: 1 }}>{currentTier}</span>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>Niveau</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>Palier</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ flex: 1, height: 6, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
@@ -3831,7 +3832,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
 
       <div style={{ display: "flex", gap: 0, margin: "0 12px 10px", borderRadius: 12, overflow: "hidden", border: "1px solid #222", flexShrink: 0 }}>
         {[{ key: "rewards", label: "Récompenses" }, { key: "inventory", label: "Inventaire" }].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
+          <button key={t.key} onClick={() => { setTab(t.key); setPreviewItem(null); }} style={{
             flex: 1, padding: "10px 0", background: tab === t.key ? "#CCF71D" : "#111",
             color: tab === t.key ? "#000" : "#888", fontSize: 12, fontWeight: 800,
             border: "none", cursor: "pointer", transition: "all 0.2s",
@@ -3849,53 +3850,34 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             const claimed = claimedTiers.includes(tier);
             const chest = getChest(tier);
             const previewImg = chest.bannerImage || chest.matchBgImage || null;
-            const isBanner = !!chest.bannerImage;
-            const isMatchBg = !!chest.matchBgImage;
             const rar = getRar(chest);
             const rc = RAR[rar];
             const isChest = isChestItem(chest);
+            const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.5 : 0.35;
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
-                marginBottom: 10, borderRadius: 16, overflow: "hidden",
+                marginBottom: 8, borderRadius: 14, overflow: "hidden",
                 border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
-                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.5,
+                opacity: tierOpacity,
               }}>
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 12,
-                  padding: "14px 14px",
+                  padding: "12px 12px",
                   background: isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
-                  {previewImg && isBanner ? (
-                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "66" : "#222"}` }}>
-                      <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.35)" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6))" }} />
-                      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#222", border: "1px solid #444", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <User size={8} color="#888" />
-                        </div>
-                        <div style={{ width: 24, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.4)" }} />
-                        <div style={{ width: 16, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.2)" }} />
-                      </div>
-                    </div>
-                  ) : previewImg && isMatchBg ? (
-                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "66" : "#222"}` }}>
-                      <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.35)" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
-                      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                        <div style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.15)" }} />
-                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 7, fontWeight: 900 }}>VS</span>
-                        <div style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.15)" }} />
-                      </div>
+                  {previewImg ? (
+                    <div style={{ width: 62, height: 62, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "55" : "#222"}` }}>
+                      <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
                     </div>
                   ) : (
                     <div style={{
-                      width: 56, height: 56, borderRadius: 12,
+                      width: 62, height: 62, borderRadius: 12,
                       background: unlocked ? rc.bg : "#141414",
                       display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      border: `1px solid ${unlocked ? rc.border + "66" : "#1e1e1e"}`,
+                      border: `1px solid ${unlocked ? rc.border + "55" : "#1e1e1e"}`,
                       boxShadow: unlocked ? rc.glow : "none",
                     }}>
-                      <span style={{ fontSize: 26, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                      <span style={{ fontSize: 28, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -3903,7 +3885,12 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                       <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
                       <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 9, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 6px", borderRadius: 5 }}>Lv.{tier}</span>
                     </div>
-                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
+                      {previewImg && (
+                        <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#888", fontSize: 9, fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Aperçu</button>
+                      )}
+                    </div>
                   </div>
                   {unlocked && !claimed && isChest && (
                     <button onClick={() => openChestAnim(tier)} style={{
@@ -4009,6 +3996,53 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             </div>
             );
           })()}
+        </div>
+      )}
+
+      {previewItem && (
+        <div onClick={() => setPreviewItem(null)} style={{ position: "absolute", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 300, borderRadius: 16, overflow: "hidden", border: "1px solid #333" }}>
+            {previewItem.bannerImage ? (() => {
+              const p = (() => { try { return JSON.parse(localStorage.getItem("split_profile")) || {}; } catch { return {}; } })();
+              const pts = parseInt(localStorage.getItem("split_points") || "0", 10);
+              return (
+                <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
+                  <img src={previewItem.bannerImage} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
+                  <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "0 16px 14px" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#222", border: "2px solid #444", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
+                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : <User size={18} color="#888" />}
+                    </div>
+                    <span style={{ color: p.pseudoColor || "#fff", fontSize: 14, fontWeight: 900, marginBottom: 2 }}>{p.pseudo || "Pseudo"}</span>
+                    <span style={{ color: "#aaa", fontSize: 10, fontWeight: 700 }}>{pts} pts</span>
+                  </div>
+                </div>
+              );
+            })() : previewItem.matchBgImage ? (
+              <div style={{ position: "relative", height: 100, overflow: "hidden" }}>
+                <img src={previewItem.matchBgImage} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
+                <div style={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.1)" }} />
+                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700 }}>Team A</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <span style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>0 - 0</span>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700 }}>Bo3</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.1)" }} />
+                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700 }}>Team B</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            <div style={{ background: "#161616", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{previewItem.name}</span>
+              <span style={{ color: RAR[getRar(previewItem)]?.text || "#888", fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>{RAR[getRar(previewItem)]?.label}</span>
+            </div>
+          </div>
         </div>
       )}
 
