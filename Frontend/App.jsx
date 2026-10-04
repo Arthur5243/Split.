@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID } from "./admob.js";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
@@ -3376,7 +3376,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
     try { return JSON.parse(localStorage.getItem("split_inventory")) || []; } catch { return []; }
   });
 
-  const allTiers = Array.from({ length: 100 }, (_, i) => i + 1);
+  const allTiers = useMemo(() => Array.from({ length: 100 }, (_, i) => i + 1), []);
   const progressPct = tierInfo.xpNeeded > 0 ? Math.min(100, (tierInfo.xpInTier / tierInfo.xpNeeded) * 100) : 100;
 
   function handleRewardsScroll(e) {
