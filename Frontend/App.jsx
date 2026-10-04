@@ -3853,7 +3853,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             const rar = getRar(chest);
             const rc = RAR[rar];
             const isChest = isChestItem(chest);
-            const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.5 : 0.35;
+            const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.55 : 0.4;
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
                 marginBottom: 8, borderRadius: 14, overflow: "hidden",
@@ -3888,7 +3888,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
                       {previewImg && (
-                        <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#888", fontSize: 9, fontWeight: 700, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline", textUnderlineOffset: 2 }}>Aperçu</button>
+                        <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#aaa", fontSize: 8, fontWeight: 800, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, padding: "2px 7px", cursor: "pointer", letterSpacing: 0.5, textTransform: "uppercase" }}>Aperçu</button>
                       )}
                     </div>
                   </div>
@@ -4000,40 +4000,58 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       )}
 
       {previewItem && (
-        <div onClick={() => setPreviewItem(null)} style={{ position: "absolute", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 300, borderRadius: 16, overflow: "hidden", border: "1px solid #333" }}>
+        <div onClick={() => setPreviewItem(null)} style={{ position: "absolute", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 320, borderRadius: 16, overflow: "hidden", border: "1px solid #2a2a2a", background: "#111" }}>
             {previewItem.bannerImage ? (() => {
               const p = (() => { try { return JSON.parse(localStorage.getItem("split_profile")) || {}; } catch { return {}; } })();
               const pts = parseInt(localStorage.getItem("split_points") || "0", 10);
+              const uTitle = localStorage.getItem("split_equipped_title") || "";
+              const uBadge = localStorage.getItem("split_equipped_badge") || "";
+              const uBadgeEmoji = localStorage.getItem("split_equipped_badge_emoji") || "";
               return (
-                <div style={{ position: "relative", height: 160, overflow: "hidden" }}>
-                  <img src={previewItem.bannerImage} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)" }} />
-                  <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", padding: "0 16px 14px" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#222", border: "2px solid #444", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 6 }}>
-                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : <User size={18} color="#888" />}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 10, borderRadius: 16, padding: "8px 12px",
+                  position: "relative", overflow: "hidden",
+                  background: `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${previewItem.bannerImage}) center/cover no-repeat`,
+                  border: "1px solid rgba(255,255,255,0.18)",
+                }}>
+                  <span style={{ color: "#CCF71D", fontSize: 14, fontWeight: 900, width: 20, textAlign: "center", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}>1</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 42 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", overflow: "hidden", background: "#1e1e1e", border: "2px solid #CCF71D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {p.avatar ? <img src={p.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
                     </div>
-                    <span style={{ color: p.pseudoColor || "#fff", fontSize: 14, fontWeight: 900, marginBottom: 2 }}>{p.pseudo || "Pseudo"}</span>
-                    <span style={{ color: "#aaa", fontSize: 10, fontWeight: 700 }}>{pts} pts</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: "#CCF71D", textShadow: "0 1px 4px rgba(0,0,0,0.8)", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.pseudo || "Pseudo"}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                    {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }}>{uBadgeEmoji || "🏅"}</span>}
+                    {uTitle && <span style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: "rgba(0,0,0,0.65)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: "1px solid rgba(168,85,247,0.3)" }}>{uTitle}</span>}
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <span style={{ color: "#CCF71D", fontSize: 15, fontWeight: 900, textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}>{pts}</span>
+                    <span style={{ color: "#bbb", fontSize: 10, fontWeight: 600, marginLeft: 2 }}>pts</span>
                   </div>
                 </div>
               );
             })() : previewItem.matchBgImage ? (
-              <div style={{ position: "relative", height: 100, overflow: "hidden" }}>
-                <img src={previewItem.matchBgImage} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
-                <div style={{ position: "relative", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.1)" }} />
-                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700 }}>Team A</span>
+              <div style={{ position: "relative", overflow: "hidden", borderRadius: "16px 16px 0 0" }}>
+                <img src={previewItem.matchBgImage} alt="" style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.5) 100%)" }} />
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 20, padding: "0 16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Shield size={16} color="rgba(255,255,255,0.4)" />
+                    </div>
+                    <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 10, fontWeight: 700 }}>Equipe A</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    <span style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>0 - 0</span>
-                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8, fontWeight: 700 }}>Bo3</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <span style={{ color: "#fff", fontSize: 20, fontWeight: 900, textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>0 - 0</span>
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: 700, background: "rgba(0,0,0,0.4)", padding: "2px 8px", borderRadius: 4 }}>Bo3</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.1)" }} />
-                    <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 9, fontWeight: 700 }}>Team B</span>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Shield size={16} color="rgba(255,255,255,0.4)" />
+                    </div>
+                    <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 10, fontWeight: 700 }}>Equipe B</span>
                   </div>
                 </div>
               </div>
