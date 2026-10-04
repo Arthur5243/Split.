@@ -5569,9 +5569,15 @@ function ChampionsView({ T, accent, onViewMatch }) {
       team2: { name: "TBD", is_winner: false },
       status: "upcoming",
     });
+    const seedMatch = (id, t1Name) => ({
+      match_id: id,
+      team1: { name: t1Name, is_winner: false },
+      team2: { name: "TBD", is_winner: false },
+      status: "upcoming",
+    });
     const tbdBracket = {
       upper: [
-        { name: "Upper Quarterfinals", matches: [tbdMatch("uqf1"), tbdMatch("uqf2"), tbdMatch("uqf3"), tbdMatch("uqf4")] },
+        { name: "Upper Quarterfinals", matches: [seedMatch("uqf1", "100 Thieves"), seedMatch("uqf2", "Team Vitality"), seedMatch("uqf3", "NRG"), seedMatch("uqf4", "Paper Rex")] },
         { name: "Upper Semifinals", matches: [tbdMatch("usf1"), tbdMatch("usf2")] },
         { name: "Upper Final", matches: [tbdMatch("uf")] },
       ],
