@@ -3814,17 +3814,17 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
 
       <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 130 }}>
         <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.15) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)" }} />
         <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 22 }}>🏆</span>
-            <span style={{ color: "#CCF71D", fontSize: 22, fontWeight: 900 }}>{T.tierLabel || "Palier"} {currentTier}</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
+            <span style={{ color: "#CCF71D", fontSize: 28, fontWeight: 900, letterSpacing: "-0.5px", lineHeight: 1 }}>{currentTier}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>Niveau</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ flex: 1, height: 7, borderRadius: 4, background: "rgba(255,255,255,0.12)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "#CCF71D", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
+            <div style={{ flex: 1, height: 6, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #a8d90a)", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
             </div>
-            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
           </div>
         </div>
       </div>
@@ -3847,61 +3847,79 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             const unlocked = tier <= currentTier;
             const isCurrent = tier === currentTier;
             const claimed = claimedTiers.includes(tier);
-            const isMilestone = reward.milestone;
             const chest = getChest(tier);
-            const hasPreview = !!(chest.preview || chest.bannerImage || chest.matchBgImage);
+            const previewImg = chest.bannerImage || chest.matchBgImage || null;
+            const isBanner = !!chest.bannerImage;
+            const isMatchBg = !!chest.matchBgImage;
             const rar = getRar(chest);
             const rc = RAR[rar];
             const isChest = isChestItem(chest);
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
-                marginBottom: 10, borderRadius: 18, overflow: "hidden",
-                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "44" : "#222"}`,
-                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.3,
+                marginBottom: 10, borderRadius: 16, overflow: "hidden",
+                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
+                opacity: unlocked || tier === currentTier + 1 ? 1 : 0.5,
               }}>
-                {hasPreview && (
-                  <div style={{ overflow: "hidden", height: 70, position: "relative" }}>
-                    <img src={chest.preview || chest.bannerImage || chest.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.3)" }} />
-                    {!unlocked && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />}
-                  </div>
-                )}
                 <div style={{
-                  width: "100%", display: "flex", alignItems: "center", gap: 14,
-                  padding: "20px 18px",
-                  background: isCurrent ? "rgba(204,247,29,0.08)" : "#121212",
+                  width: "100%", display: "flex", alignItems: "center", gap: 12,
+                  padding: "14px 14px",
+                  background: isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
-                  <div style={{
-                    width: 54, height: 54, borderRadius: 14,
-                    background: unlocked ? rc.bg : "#141414",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    border: `1.5px solid ${unlocked ? rc.border : "#1e1e1e"}`,
-                    boxShadow: unlocked ? rc.glow : "none",
-                  }}>
-                    <span style={{ fontSize: 28, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 15, fontWeight: 800 }}>{chest.name}</span>
-                      <span style={{ color: isCurrent ? "#CCF71D" : "#777", fontSize: 10, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 8px", borderRadius: 6 }}>Lv.{tier}</span>
+                  {previewImg && isBanner ? (
+                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "66" : "#222"}` }}>
+                      <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.35)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.6))" }} />
+                      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1 }}>
+                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#222", border: "1px solid #444", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <User size={8} color="#888" />
+                        </div>
+                        <div style={{ width: 24, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.4)" }} />
+                        <div style={{ width: 16, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.2)" }} />
+                      </div>
                     </div>
-                    <p style={{ color: unlocked ? "#ccc" : "#555", fontSize: 13, fontWeight: 600, marginBottom: 5 }}>{chest.desc}</p>
-                    <span style={{ color: rc.text, fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>{rc.label}</span>
+                  ) : previewImg && isMatchBg ? (
+                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", flexShrink: 0, position: "relative", border: `1px solid ${unlocked ? rc.border + "66" : "#222"}` }}>
+                      <img src={previewImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: unlocked ? "none" : "grayscale(1) brightness(0.35)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
+                      <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <div style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.15)" }} />
+                        <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 7, fontWeight: 900 }}>VS</span>
+                        <div style={{ width: 12, height: 12, borderRadius: 3, background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.15)" }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: 56, height: 56, borderRadius: 12,
+                      background: unlocked ? rc.bg : "#141414",
+                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      border: `1px solid ${unlocked ? rc.border + "66" : "#1e1e1e"}`,
+                      boxShadow: unlocked ? rc.glow : "none",
+                    }}>
+                      <span style={{ fontSize: 26, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                      <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
+                      <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 9, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 6px", borderRadius: 5 }}>Lv.{tier}</span>
+                    </div>
+                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
                   </div>
                   {unlocked && !claimed && isChest && (
                     <button onClick={() => openChestAnim(tier)} style={{
-                      padding: "9px 14px", borderRadius: 10, background: "#CCF71D", color: "#000",
+                      padding: "8px 12px", borderRadius: 10, background: "#CCF71D", color: "#000",
                       fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer", flexShrink: 0,
                       animation: "chestPulse 2s ease infinite",
                     }}>OUVRIR</button>
                   )}
                   {unlocked && !claimed && !isChest && (
                     <button onClick={() => claimTier(tier, chest)} style={{
-                      padding: "9px 14px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
+                      padding: "8px 12px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
                       color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
                       cursor: "pointer", flexShrink: 0,
                     }}>Réclamer</button>
                   )}
-                  {claimed && <CheckCircle size={20} color="#4CAF50" style={{ flexShrink: 0 }} />}
+                  {claimed && <CheckCircle size={18} color="#4CAF50" style={{ flexShrink: 0 }} />}
                 </div>
               </div>
             );
