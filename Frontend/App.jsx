@@ -10956,9 +10956,6 @@ function AdInterstitial({ onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [fading, setFading] = useState(false);
   const adContainerRef = useRef(null);
-  // Duree totale: 12s. Bouton "Passer" visible seulement apres 10s (2s de
-  // marge pour laisser voir la pub). Auto-close: 12s.
-  const SKIP_AFTER = 10;
   const AUTO_CLOSE = 12;
 
   useEffect(() => {
@@ -10995,7 +10992,6 @@ function AdInterstitial({ onClose }) {
     };
   }, []);
 
-  const canSkip = elapsed >= SKIP_AFTER;
   const secondsLeft = Math.max(0, AUTO_CLOSE - elapsed);
 
   return (
@@ -11007,15 +11003,9 @@ function AdInterstitial({ onClose }) {
       {/* Header avec timer + skip */}
       <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0a0a0a", borderBottom: "1px solid #222" }}>
         <span style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Publicité · Adsterra</span>
-        {canSkip ? (
-          <button onClick={() => { setFading(true); setTimeout(onClose, 300); }} style={{ background: "#CCF71D", border: "none", borderRadius: 8, padding: "6px 14px", color: "#000", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>
-            Passer ✕
-          </button>
-        ) : (
-          <span style={{ color: "#888", fontSize: 12, fontWeight: 700, background: "#161616", padding: "6px 12px", borderRadius: 8, border: "1px solid #262626" }}>
-            {secondsLeft}s
-          </span>
-        )}
+        <span style={{ color: "#888", fontSize: 12, fontWeight: 700, background: "#161616", padding: "6px 12px", borderRadius: 8, border: "1px solid #262626" }}>
+          {secondsLeft}s
+        </span>
       </div>
       {/* Zone Adsterra Native Banner — la div-container est cree via
           useEffect ci-dessus. Le script injecte les pubs dedans. */}
@@ -11937,6 +11927,7 @@ export default function ClutchApp() {
     setMatchNotifOverrides((p) => ({ ...p, [matchId]: !currentlyActive }));
   }
 
+  const valoLoadedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
 
@@ -11959,6 +11950,8 @@ export default function ClutchApp() {
         const upT = Array.isArray(up) ? up.map(transformMatch).filter((m) => m.region) : [];
         const liT = Array.isArray(li) ? li.map(transformMatch).filter((m) => m.region) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatch).filter((m) => m.region) : [];
+        if (valoLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
+        valoLoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatch).filter((m) => m.region) : [];
         const finishedMatches = historyT.length > paT.length ? historyT : paT;
         setUpcomingMatches(attachComputedOdds(upT, finishedMatches));
@@ -11981,9 +11974,6 @@ export default function ClutchApp() {
     }
 
     load();
-    // 30s: cache backend est deja 30s cote /api/valorant-*, donc pas de hit
-    // PandaScore supplementaire; on gagne juste 2x en reactivite pour les
-    // scores live/finished.
     const interval = setInterval(load, 30000);
     return () => {
       cancelled = true;
@@ -11991,11 +11981,7 @@ export default function ClutchApp() {
     };
   }, []);
 
-  // Même chose pour CS2, dans un effect séparé (pas de mélange des deux
-  // jeux). Différence avec Valorant : /api/cs2-results renvoie déjà
-  // l'historique accumulé fusionné côté backend (buildMergedResults dans
-  // cs2-routes.js), donc pas besoin d'un 2e appel séparé façon
-  // /api/match-history — `pa` fait déjà office de `finishedMatches`.
+  const cs2LoadedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
 
@@ -12011,12 +11997,6 @@ export default function ClutchApp() {
           fetchJson("/api/cs2-upcoming"),
           fetchJson("/api/cs2-live"),
           fetchJson("/api/cs2-results"),
-          // Historique profond CS2 (data/matches-cs2.json côté backend, même
-          // principe que /api/match-history pour Valorant) — sans ça, le
-          // calcul de cotes n'avait que l'historique accumulé organiquement
-          // depuis qu'on travaille sur ce projet, bien trop mince pour des
-          // winrates fiables. Jamais bloquant : liste vide tant que le
-          // backfill n'a pas été fait côté backend.
           fetchJson("/api/cs2-match-history").catch(() => null),
         ]);
         if (cancelled) return;
@@ -12024,6 +12004,8 @@ export default function ClutchApp() {
         const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
+        if (cs2LoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
+        cs2LoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchCS2) : [];
         const finishedMatchesCS2 = historyT.length > paT.length ? historyT : paT;
 
@@ -12082,6 +12064,7 @@ export default function ClutchApp() {
     };
   }, []);
 
+  const rlLoadedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     async function fetchJson(path) {
@@ -12102,6 +12085,8 @@ export default function ClutchApp() {
         const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
+        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
+        rlLoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchRL) : [];
         const finishedMatchesRL = historyT.length > paT.length ? historyT : paT;
 
