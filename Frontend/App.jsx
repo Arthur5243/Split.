@@ -283,7 +283,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendrier CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programme CS2 2026", cs2CalendarEmpty: "Aucun évènement à afficher.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostics BO3 · toutes les ligues",
-    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Aucun event disponible", bracketTeams: "Équipes", bracketStandings: "Classement", bracketHistory: "Historique", bracketQualified: "Qualifié", bracketDirectQual: "Qualification directe", bracketPoints: "Points Championship",
+    bracketShow: "Voir le Bracket", bracketHide: "Masquer le Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grande Finale", bracketTBD: "TBD", bracketGroupStage: "Phase de groupes", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketStage2: "Stage 2", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Aucun event disponible", bracketTeams: "Équipes", bracketStandings: "Classement", bracketHistory: "Historique", bracketQualified: "Qualifié", bracketDirectQual: "Qualification directe", bracketPoints: "Points Championship",
     regionAll: "Tout", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Chine",
     cs2Title: "CS2", cs2Subtitle: "Pronostics BO3 · circuit mondial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -374,7 +374,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2 Calendar", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2 Program 2026", cs2CalendarEmpty: "No events to display.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3 predictions · all leagues",
-    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "No event available", bracketTeams: "Teams", bracketStandings: "Standings", bracketHistory: "History", bracketQualified: "Qualified", bracketDirectQual: "Direct Qualification", bracketPoints: "Championship Points",
+    bracketShow: "View Bracket", bracketHide: "Hide Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Grand Final", bracketTBD: "TBD", bracketGroupStage: "Group Stage", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketStage2: "Stage 2", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "No event available", bracketTeams: "Teams", bracketStandings: "Standings", bracketHistory: "History", bracketQualified: "Qualified", bracketDirectQual: "Direct Qualification", bracketPoints: "Championship Points",
     regionAll: "All", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3 predictions · worldwide circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -463,7 +463,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programa CS2 2026", cs2CalendarEmpty: "Sin eventos para mostrar.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronósticos BO3 · todas las ligas",
-    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Sin evento disponible", bracketTeams: "Equipos", bracketStandings: "Clasificación", bracketHistory: "Historial", bracketQualified: "Clasificado", bracketDirectQual: "Clasificación directa", bracketPoints: "Puntos Championship",
+    bracketShow: "Ver Bracket", bracketHide: "Ocultar Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Final", bracketTBD: "TBD", bracketGroupStage: "Fase de grupos", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketStage2: "Stage 2", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Sin evento disponible", bracketTeams: "Equipos", bracketStandings: "Clasificación", bracketHistory: "Historial", bracketQualified: "Clasificado", bracketDirectQual: "Clasificación directa", bracketPoints: "Puntos Championship",
     regionAll: "Todo", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "Pronósticos BO3 · circuito mundial",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -532,7 +532,7 @@ const STR = {
     cs2CalendarCardTitle: "Calendario CS2", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "Programma CS2 2026", cs2CalendarEmpty: "Nessun evento da mostrare.",
     valorantTitle: "VALORANT", valorantSubtitle: "Pronostici BO3 · tutte le leghe",
-    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Nessun evento disponibile", bracketTeams: "Squadre", bracketStandings: "Classifica", bracketHistory: "Storico", bracketQualified: "Qualificato", bracketDirectQual: "Qualificazione diretta", bracketPoints: "Punti Championship",
+    bracketShow: "Vedi Bracket", bracketHide: "Nascondi Bracket", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Gran Finale", bracketTBD: "TBD", bracketGroupStage: "Fase a gironi", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketStage2: "Stage 2", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Nessun evento disponibile", bracketTeams: "Squadre", bracketStandings: "Classifica", bracketHistory: "Storico", bracketQualified: "Qualificato", bracketDirectQual: "Qualificazione diretta", bracketPoints: "Punti Championship",
     regionAll: "Tutto", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "Cina",
     cs2Title: "CS2", cs2Subtitle: "Pronostici BO3 · circuito mondiale",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -601,7 +601,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2カレンダー", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2プログラム 2026", cs2CalendarEmpty: "表示するイベントはありません。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3予想・全リーグ",
-    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ", bracketPlayIns: "プレイイン", bracketPlayoffs: "プレイオフ", bracketKickoff: "キックオフ", bracketStage: "ステージ", bracketMasters: "マスターズ", bracketChampions: "チャンピオンズ", bracketNoEvent: "イベントなし", bracketTeams: "チーム", bracketStandings: "順位表", bracketHistory: "履歴", bracketQualified: "出場確定", bracketDirectQual: "直接予選通過", bracketPoints: "チャンピオンシップポイント",
+    bracketShow: "ブラケットを見る", bracketHide: "ブラケットを隠す", bracketUpper: "アッパーブラケット", bracketLower: "ロワーブラケット", bracketGrandFinal: "グランドファイナル", bracketTBD: "TBD", bracketGroupStage: "グループステージ", bracketPlayIns: "プレイイン", bracketPlayoffs: "プレイオフ", bracketKickoff: "キックオフ", bracketStage: "ステージ", bracketStage2: "ステージ2", bracketMasters: "マスターズ", bracketChampions: "チャンピオンズ", bracketNoEvent: "イベントなし", bracketTeams: "チーム", bracketStandings: "順位表", bracketHistory: "履歴", bracketQualified: "出場確定", bracketDirectQual: "直接予選通過", bracketPoints: "チャンピオンシップポイント",
     regionAll: "すべて", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3予想・世界サーキット",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -670,7 +670,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2-Kalender", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2-Programm 2026", cs2CalendarEmpty: "Keine Ereignisse anzuzeigen.",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3-Tipps · alle Ligen",
-    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Kein Event verfügbar", bracketTeams: "Teams", bracketStandings: "Tabelle", bracketHistory: "Verlauf", bracketQualified: "Qualifiziert", bracketDirectQual: "Direkte Qualifikation", bracketPoints: "Championship-Punkte",
+    bracketShow: "Bracket anzeigen", bracketHide: "Bracket ausblenden", bracketUpper: "Upper Bracket", bracketLower: "Lower Bracket", bracketGrandFinal: "Großes Finale", bracketTBD: "TBD", bracketGroupStage: "Gruppenphase", bracketPlayIns: "Play-ins", bracketPlayoffs: "Playoffs", bracketKickoff: "Kickoff", bracketStage: "Stage", bracketStage2: "Stage 2", bracketMasters: "Masters", bracketChampions: "Champions", bracketNoEvent: "Kein Event verfügbar", bracketTeams: "Teams", bracketStandings: "Tabelle", bracketHistory: "Verlauf", bracketQualified: "Qualifiziert", bracketDirectQual: "Direkte Qualifikation", bracketPoints: "Championship-Punkte",
     regionAll: "Alle", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "China",
     cs2Title: "CS2", cs2Subtitle: "BO3-Tipps · weltweite Circuit",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -739,7 +739,7 @@ const STR = {
     cs2CalendarCardTitle: "CS2赛程", cs2CalendarCardSub: "Stages · IEM · Playoffs · Major",
     cs2CalendarModalTitle: "CS2赛程 2026", cs2CalendarEmpty: "暂无赛事。",
     valorantTitle: "VALORANT", valorantSubtitle: "BO3竞猜 · 全部赛区",
-    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛", bracketPlayIns: "入围赛", bracketPlayoffs: "季后赛", bracketKickoff: "揭幕战", bracketStage: "常规赛", bracketMasters: "大师赛", bracketChampions: "冠军赛", bracketNoEvent: "暂无赛事", bracketTeams: "战队", bracketStandings: "积分榜", bracketHistory: "历史", bracketQualified: "已晋级", bracketDirectQual: "直接晋级", bracketPoints: "冠军积分",
+    bracketShow: "查看赛程", bracketHide: "隐藏赛程", bracketUpper: "胜者组", bracketLower: "败者组", bracketGrandFinal: "总决赛", bracketTBD: "待定", bracketGroupStage: "小组赛", bracketPlayIns: "入围赛", bracketPlayoffs: "季后赛", bracketKickoff: "揭幕战", bracketStage: "常规赛", bracketStage2: "常规赛2", bracketMasters: "大师赛", bracketChampions: "冠军赛", bracketNoEvent: "暂无赛事", bracketTeams: "战队", bracketStandings: "积分榜", bracketHistory: "历史", bracketQualified: "已晋级", bracketDirectQual: "直接晋级", bracketPoints: "冠军积分",
     regionAll: "全部", regionEmea: "Emea", regionPacific: "Pacific", regionAmericas: "Americas", regionChine: "中国",
     cs2Title: "CS2", cs2Subtitle: "BO3竞猜 · 全球赛事体系",
     cs2RegionEurope: "Europe", cs2RegionAmericas: "Americas", cs2RegionAsia: "Asia",
@@ -5289,12 +5289,12 @@ function ChampionsView({ T, accent, onViewMatch }) {
       { name: "LOUD", acronym: "LOUD", wins: 1, losses: 0 },
       { name: "Team Vitality", acronym: "VIT", wins: 1, losses: 0 },
       { name: "EDward Gaming", acronym: "EDG", wins: 0, losses: 1 },
-      { name: "Global Esports", acronym: "GE", wins: 0, losses: 1 },
+      { name: "Nongshim RedForce", acronym: "NS", wins: 0, losses: 1 },
     ], matches: [
-      { phase: "opening1", team1: "Global Esports", team2: "Team Vitality", score: [1, 2], status: "finished" },
+      { phase: "opening1", team1: "Nongshim RedForce", team2: "Team Vitality", score: [1, 2], status: "finished" },
       { phase: "opening2", team1: "LOUD", team2: "EDward Gaming", score: [2, 0], status: "finished" },
       { phase: "winners", team1: "Team Vitality", team2: "LOUD", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "Global Esports", team2: "EDward Gaming", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "Nongshim RedForce", team2: "EDward Gaming", score: null, status: "upcoming" },
       { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
     ] },
     { name: "C", teams: [
@@ -5312,13 +5312,13 @@ function ChampionsView({ T, accent, onViewMatch }) {
     { name: "D", teams: [
       { name: "Karmine Corp", acronym: "KC", wins: 1, losses: 0 },
       { name: "NRG", acronym: "NRG", wins: 1, losses: 0 },
-      { name: "Nongshim RedForce", acronym: "NS", wins: 0, losses: 1 },
+      { name: "Global Esports", acronym: "GE", wins: 0, losses: 1 },
       { name: "XLG Esports", acronym: "XLG", wins: 0, losses: 1 },
     ], matches: [
       { phase: "opening1", team1: "Karmine Corp", team2: "XLG Esports", score: [2, 0], status: "finished" },
-      { phase: "opening2", team1: "Nongshim RedForce", team2: "NRG", score: [0, 2], status: "finished" },
+      { phase: "opening2", team1: "Global Esports", team2: "NRG", score: [0, 2], status: "finished" },
       { phase: "winners", team1: "Karmine Corp", team2: "NRG", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "XLG Esports", team2: "Nongshim RedForce", score: null, status: "upcoming" },
+      { phase: "elimination", team1: "XLG Esports", team2: "Global Esports", score: null, status: "upcoming" },
       { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
     ] },
   ];
@@ -5869,7 +5869,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const historyBracketData = historyEvent ? bracketData[historyEvent.event_id + ":all"] : null;
 
-  const stageInfo = BRACKET_STAGES.find((s) => s.key === stage);
+  const stageInfo = BRACKET_STAGES.find((s) => s.key === stage) || (stage === "stage2" ? { key: "stage2", labelKey: "bracketStage2", color: "#FF6B35" } : null);
   const phaseInfo = BRACKET_PHASES.find(p => p.key === phase);
   let headerTitle = "Bracket VCT";
   if (stage && !phase) headerTitle = T[stageInfo?.labelKey] || stage;
@@ -5923,6 +5923,21 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           {titleSpan("Autres compétitions", "#C4F000")}
         </div>
         <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
+          <button onClick={() => { setShowAutre(false); setStage("stage2"); }} style={{ background: "linear-gradient(135deg, #FF6B3510 0%, #111 60%)", border: "1px solid #FF6B3530", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 4, background: "#FF6B35" }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{T.bracketStage2 || "Stage 2"}</span>
+              </div>
+              <ChevronRight size={14} color="#555" />
+            </div>
+            <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Play-ins · Playoffs · Ligues régionales</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {["EMEA", "Pacific", "Americas", "CN"].map((r) => (
+                <span key={r} style={{ fontSize: 10, fontWeight: 700, color: "#FF6B35", background: "#FF6B3515", border: "1px solid #FF6B3530", borderRadius: 6, padding: "3px 8px" }}>{r}</span>
+              ))}
+            </div>
+          </button>
           {autreComps.map((c) => (
             <button key={c.name} onClick={() => window.open(c.url, "_blank")} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -6036,7 +6051,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
               </span>
               <div style={{ textAlign: "left" }}>
                 <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-                <span className="block" style={{ color: "#666", fontSize: "10px" }}>Challengers · Game Changers · Ascension</span>
+                <span className="block" style={{ color: "#666", fontSize: "10px" }}>Stage 2 · Challengers · Game Changers · Ascension</span>
               </div>
             </div>
             <ChevronRight size={16} color="#555" />
@@ -12321,7 +12336,7 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!vlrEvents || Object.keys(vlrEvents).length === 0) return;
     const ids = new Set();
-    for (const stageKey of ["kickoff", "stage1", "stage2"]) {
+    for (const stageKey of ["kickoff", "stage", "stage2"]) {
       const stageData = vlrEvents[stageKey];
       if (!stageData) continue;
       for (const regionKey of Object.keys(stageData)) {

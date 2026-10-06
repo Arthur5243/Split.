@@ -1442,7 +1442,7 @@ app.get("/api/vlr-events", async (req, res) => {
 
     const isVCT = (t) => (t.includes("vct") || t.includes("champions tour") || t.includes("valorant champions") || t.includes("valorant masters")) && !t.includes("game changers") && !t.includes("challengers");
 
-    const result = { kickoff: {}, stage: {}, masters: null, champions: null };
+    const result = { kickoff: {}, stage: {}, stage2: {}, masters: null, champions: null };
 
     for (const e of events) {
       const t = (e.title || "").toLowerCase();
@@ -1460,7 +1460,8 @@ app.get("/api/vlr-events", async (req, res) => {
       }
 
       const isKickoff = t.includes("kickoff");
-      const bucket = isKickoff ? "kickoff" : "stage";
+      const isStage2 = t.includes("stage 2") || t.includes("split 2");
+      const bucket = isKickoff ? "kickoff" : isStage2 ? "stage2" : "stage";
 
       for (const [region, keywords] of Object.entries(VCT_REGION_MAP)) {
         if (keywords.some((kw) => t.includes(kw))) {
