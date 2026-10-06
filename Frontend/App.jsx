@@ -11627,10 +11627,9 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!isDemoPortable) return;
     setPredictions(prev => {
-      if (prev[DEMO_MATCH_ID]) return prev;
-      return {
-        ...prev,
-        [DEMO_MATCH_ID]: {
+      const next = { ...prev };
+      if (!next[DEMO_MATCH_ID]) {
+        next[DEMO_MATCH_ID] = {
           seriesA: "1",
           seriesB: "2",
           expanded: false,
@@ -11639,9 +11638,56 @@ export default function ClutchApp() {
             { a: "13", b: "6" },
             { a: "10", b: "13" },
           ],
-        },
-      };
+        };
+      }
+      if (!next[DEMO_CS2_MATCH_ID]) {
+        next[DEMO_CS2_MATCH_ID] = {
+          seriesA: "2",
+          seriesB: "1",
+          expanded: false,
+          games: [
+            { a: "13", b: "7" },
+            { a: "11", b: "13" },
+            { a: "13", b: "6" },
+          ],
+        };
+      }
+      return next;
     });
+  }, [isDemoPortable]);
+
+  const DEMO_CS2_MATCH_ID = "demo-9z-b8-2026";
+  const demoMatchCs2 = useMemo(() => {
+    if (!isDemoPortable) return null;
+    const today = new Date();
+    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+    return {
+      id: DEMO_CS2_MATCH_ID,
+      day,
+      time: "14:00",
+      beginAt: day + "T14:00:00Z",
+      league: "ESL",
+      phase: "Pro League Season 21",
+      tournamentName: "Pro League Season 21",
+      team1: "9Z",
+      team2: "B8",
+      team1Name: "9z",
+      team2Name: "B8",
+      team1Logo: null,
+      team2Logo: null,
+      team1Region: "AMERICAS",
+      team2Region: "EUROPE",
+      status: "running",
+      score1: 1,
+      score2: 1,
+      odds1: 45,
+      odds2: 55,
+      tier: "ESL",
+      map_scores: null,
+      live_map_scores: null,
+      number_of_games: 3,
+      _isDemo: true,
+    };
   }, [isDemoPortable]);
 
   const [showIntroCards, setShowIntroCards] = useState(false);
@@ -13152,7 +13198,7 @@ export default function ClutchApp() {
               T={T}
               lang={currentLang}
               upcoming={cs2UpcomingMatches}
-              live={cs2LiveMatches}
+              live={demoMatchCs2 ? [demoMatchCs2, ...cs2LiveMatches] : cs2LiveMatches}
               results={cs2ResultsMatches}
               teamLogoCache={cs2TeamLogoCache}
               loading={cs2DataLoading}
