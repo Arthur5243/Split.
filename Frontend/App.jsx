@@ -11615,7 +11615,7 @@ export default function ClutchApp() {
         clearInterval(demoTimerRef.current);
         demoTimerRef.current = null;
         setDemoScoreUpdated(true);
-        setTimeout(() => setDemoFinished(true), 1500);
+        setTimeout(() => setDemoFinished(true), 10000);
       }
     }, 1000);
   }
