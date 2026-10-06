@@ -59,6 +59,7 @@ const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.png";
+const CLASSEMENT_BANNER = "/rewards-banner.webp";
 const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -67,7 +68,7 @@ const NAV_VALORANT_IMG = "/Valo(1).png";
 const NAV_CSGO_IMG = "/Cs2(2).png";
 const NAV_RL_IMG = "/Rl(1).png";
 
-[NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE, REWARDS_BANNER,
+[NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE, REWARDS_BANNER, CLASSEMENT_BANNER,
   "/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png",
   "/banner-6.png","/banner-7.png","/banner-8.png","/banner-9.png","/banner-10.png",
   "/match-bg-1.png","/match-bg-2.png","/match-bg-3.png","/match-bg-4.png",
@@ -3881,12 +3882,12 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                       <span style={{ fontSize: 26, filter: unlocked ? "none" : "grayscale(1) brightness(0.4)" }}>{chest.emoji}</span>
                     </div>
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                       <span style={{ color: isCurrent ? "#CCF71D" : unlocked ? "#fff" : "#666", fontSize: 14, fontWeight: 800 }}>{chest.name}</span>
                       <span style={{ color: isCurrent ? "#CCF71D" : "#555", fontSize: 9, fontWeight: 700, background: isCurrent ? "rgba(204,247,29,0.12)" : "#1a1a1a", padding: "2px 6px", borderRadius: 5 }}>Lv.{tier}</span>
                     </div>
-                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2 }}>{rc.label}</span>
+                    <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textAlign: "center", display: "inline-block", background: rc.bg, border: `1px solid ${rc.border}33`, borderRadius: 4, padding: "1px 8px" }}>{rc.label}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                     {previewImg && (
@@ -3906,7 +3907,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                         cursor: "pointer",
                       }}>Réclamer</button>
                     )}
-                    {claimed && <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={14} color="#000" strokeWidth={3} /></div>}
+                    {claimed && <div style={{ width: 22, height: 22, borderRadius: "50%", background: "transparent", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={12} color="#fff" strokeWidth={3} /></div>}
                   </div>
                 </div>
               </div>
@@ -4911,7 +4912,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
             }}>
               <span style={{
                 fontSize: 12, fontWeight: won ? 700 : 500,
-                color: won ? "#fff" : "#aaa",
+                color: won ? accent : "#aaa",
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
               }}>
                 {team.name || "TBD"}
@@ -5589,7 +5590,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
               <button key={ph} onClick={() => clickable && clickTeamMatch(m)} disabled={!clickable} style={{ background: rowBg, borderRadius: 10, padding: "10px 12px", border: "none", cursor: clickable ? "pointer" : "default", textAlign: "left", width: "100%" }}>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{phaseLabel[ph]}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: "#fff", fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team1} vs {m.team2}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><span style={{ color: "#CCF71D" }}>{m.team1}</span> <span style={{ color: "#555" }}>vs</span> <span style={{ color: "#CCF71D" }}>{m.team2}</span></span>
                   <span style={{ color: m.status === "finished" ? "#7ec850" : m.status === "upcoming" ? "#CCF71D" : "#555", fontSize: 12, fontWeight: 800 }}>{m.score ? `${m.score[0]}-${m.score[1]}` : m.status === "upcoming" ? "À venir" : "TBD"}</span>
                 </div>
               </button>
@@ -6399,7 +6400,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
             {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
-            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? accent : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
             {!isDone && (s1 == null || s1 === 0) && (s2 == null || s2 === 0) ? (
@@ -6411,7 +6412,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
             </>)}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? "#fff" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? accent : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
             {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
           </div>
           {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
@@ -6754,11 +6755,10 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   // --- Historique brackets CS2 ---
   if (showHistory) {
     const historyEvents = [];
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     for (const c of CS2_BRACKET_COMPS) {
       const events = cs2Events ? (cs2Events[c.key] || []) : [];
       for (const ev of events) {
-        if (ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < sevenDaysAgo) {
+        if (ev.status === "finished") {
           historyEvents.push({ ...ev, compKey: c.key, compColor: c.color, compLabel: T[c.labelKey] || c.key });
         }
       }
@@ -6796,10 +6796,9 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     );
   }
 
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const hasHistoryEvents = CS2_BRACKET_COMPS.some((c) => {
     const events = cs2Events ? (cs2Events[c.key] || []) : [];
-    return events.some((ev) => ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < sevenDaysAgo);
+    return events.some((ev) => ev.status === "finished");
   });
 
   // --- Step 1: Choose competition ---
@@ -7372,6 +7371,8 @@ function RlBracketPage({ onBack, T, predictions }) {
   };
 
   if (!phase) {
+    const allPlayInDone = playInBracket.upper.every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed")) && playInBracket.lower.every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed"));
+    const allPlayoffsDone = [...playoffsBracket.upper, ...playoffsBracket.lower, ...playoffsBracket.grand_final].every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed"));
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
@@ -7380,8 +7381,8 @@ function RlBracketPage({ onBack, T, predictions }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
           {[
-            { key: "playin", label: T.rlPlayIn || "Play-In" },
-            { key: "playoffs", label: T.rlPlayoffs || "Playoffs" },
+            { key: "playin", label: T.rlPlayIn || "Play-In", done: allPlayInDone },
+            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", done: allPlayoffsDone },
           ].map((p) => (
             <button key={p.key} onClick={() => setPhase(p.key)} style={{
               background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
@@ -7392,6 +7393,7 @@ function RlBracketPage({ onBack, T, predictions }) {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
                 <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label}</span>
+                {p.done && <span style={{ fontSize: 9, fontWeight: 700, color: "#4CAF50" }}>✓ Terminé</span>}
               </div>
               <ChevronRight size={16} color="#555" />
             </button>
@@ -9886,9 +9888,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${REWARDS_BANNER})`, backgroundSize: "cover", backgroundPosition: "20% center", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
-              {/* Preload synchrone: image en <img> hidden pour forcer fetch prioritaire, background-image peint des que caché */}
-              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "20% center", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
                 <Trophy size={16} color="#bf9b30" />
@@ -10270,7 +10271,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "115%", height: "102%", objectFit: "cover", objectPosition: "0% center", marginLeft: "-2%", marginTop: "-1%" }} />
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "115%", height: "102%", objectFit: "cover", objectPosition: "0% center", marginLeft: "-2%", marginTop: "-1%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -12942,6 +12943,7 @@ export default function ClutchApp() {
             <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={NEWS_CS2_IMAGE} alt="" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+            <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             {/* Preload cartes match backgrounds (home-card-1/2/3, doree/gris/immortal-back) */}
             {["/home-card-1.png","/home-card-2.png","/home-card-3.png","/doree-back.png","/gris-back.png","/immortal-back.png","/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png"].map((src) => (
               <img key={src} src={src} alt="" loading="eager" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
