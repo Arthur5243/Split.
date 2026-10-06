@@ -6030,13 +6030,13 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
             const avail = stageAvailable(s.key);
             return (
               <button key={s.key} onClick={() => avail && setStage(s.key)} style={{
-                background: avail ? `linear-gradient(135deg, ${s.color}0A 0%, #111 60%)` : "#111",
-                border: avail ? `1px solid ${s.color}30` : "1px solid rgba(255,255,255,0.04)",
+                background: avail ? `linear-gradient(135deg, ${s.color}0A 0%, #111 60%)` : "#0d0d0d",
+                border: avail ? `1px solid ${s.color}30` : `1px solid ${s.color}15`,
                 borderRadius: 12, padding: "36px 12px", cursor: avail ? "pointer" : "default",
-                opacity: avail ? 1 : 0.25,
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
                 boxShadow: avail ? `0 4px 20px ${s.color}10` : "none",
                 transition: "transform 0.15s",
+                opacity: avail ? 1 : 0.55,
               }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
               </button>
@@ -6223,7 +6223,7 @@ const CS2_BRACKET_COMPS = [
   { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡", locked: true },
   { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥", locked: true },
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮", locked: true },
-  { key: "esl", labelKey: "cs2BracketESL", color: "#0078D4", icon: "🛡" },
+  { key: "esl", labelKey: "cs2BracketESL", color: "#1E90FF", icon: "🛡" },
 ];
 
 const SWISS_RECORDS_BY_ROUND = {
@@ -11588,7 +11588,16 @@ export default function ClutchApp() {
   }, [triggerAd]);
   useEffect(() => { initAdMob(); }, []);
   useEffect(() => {
-    const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; setCanInstall(true); };
+    const handler = (e) => {
+      e.preventDefault();
+      deferredPromptRef.current = e;
+      setCanInstall(true);
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      if (!isIOS && !localStorage.getItem("split_pwa_prompted")) {
+        localStorage.setItem("split_pwa_prompted", "1");
+        e.prompt();
+      }
+    };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
