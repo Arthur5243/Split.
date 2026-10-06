@@ -11581,12 +11581,11 @@ export default function ClutchApp() {
     if (!isDemoPortable) return null;
     const today = new Date();
     const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-    const time = String(today.getHours()).padStart(2, "0") + ":" + String(today.getMinutes()).padStart(2, "0");
     return {
       id: DEMO_MATCH_ID,
       day,
-      time,
-      beginAt: today.toISOString(),
+      time: "11:00",
+      beginAt: day + "T11:00:00Z",
       league: "VCT",
       phase: "Champions 2026",
       tournamentName: "Champions 2026",
@@ -11600,6 +11599,8 @@ export default function ClutchApp() {
       status: demoFinished ? "finished" : "running",
       score1: 1,
       score2: demoScoreUpdated ? 2 : 1,
+      odds1: 33,
+      odds2: 67,
       tier: "VCT",
       map_scores: demoFinished ? [
         { map: "Ascent", score1: 4, score2: 13 },
