@@ -6218,6 +6218,45 @@ const SWISS_RECORDS_BY_ROUND = {
 };
 const SWISS_RECORD_LABEL = { "2-0": "High", "1-1": "Mid", "0-2": "Low", "1-0": "High", "0-1": "Low", "2-1": "High", "1-2": "Low", "2-2": "Decider" };
 
+const MANUAL_EPL_SWISS = (() => {
+  const mm = (id, r, rec, t1, s1, t2, s2, st = "finished") => {
+    const done = st === "finished";
+    return { match_id: id, round: `Round ${r} ${rec}`, status: st, team1: { name: t1, score: s1, is_winner: done && s1 > s2 }, team2: { name: t2, score: s2, is_winner: done && s2 > s1 } };
+  };
+  return [
+    mm("epl-r1-1",1,"0-0","Falcons",2,"TYLOO",0),
+    mm("epl-r1-2",1,"0-0","Legacy",1,"paiN",2),
+    mm("epl-r1-3",1,"0-0","Spirit",2,"ShindeN",1),
+    mm("epl-r1-4",1,"0-0","Vitality",2,"1w",0),
+    mm("epl-r1-5",1,"0-0","MOUZ",2,"M80",0),
+    mm("epl-r1-6",1,"0-0","Aurora",2,"9z",0),
+    mm("epl-r1-7",1,"0-0","FURIA",2,"B8",0),
+    mm("epl-r1-8",1,"0-0","G2",0,"NAVI",2),
+    mm("epl-r2-1",2,"1-0","Spirit",2,"paiN",0),
+    mm("epl-r2-2",2,"1-0","Falcons",2,"Aurora",0),
+    mm("epl-r2-3",2,"1-0","MOUZ",2,"FURIA",0),
+    mm("epl-r2-4",2,"1-0","Vitality",2,"NAVI",1),
+    mm("epl-r2-5",2,"0-1","Legacy",2,"ShindeN",0),
+    mm("epl-r2-6",2,"0-1","9z",2,"TYLOO",0),
+    mm("epl-r2-7",2,"0-1","G2",1,"1w",2),
+    mm("epl-r2-8",2,"0-1","B8",2,"M80",0),
+    mm("epl-r3-1",3,"2-0","Spirit",0,"MOUZ",2),
+    mm("epl-r3-2",3,"2-0","Vitality",2,"Falcons",1),
+    mm("epl-r3-3",3,"1-1","paiN",1,"FURIA",2),
+    mm("epl-r3-4",3,"1-1","9z",0,"NAVI",2),
+    mm("epl-r3-5",3,"1-1","Legacy",0,"1w",2),
+    mm("epl-r3-6",3,"1-1","Aurora",2,"B8",0),
+    mm("epl-r3-7",3,"0-2","ShindeN",0,"G2",2),
+    mm("epl-r3-8",3,"0-2","M80",2,"TYLOO",1),
+    mm("epl-r4-1",4,"2-1","Spirit",0,"1w",2),
+    mm("epl-r4-2",4,"2-1","FURIA",0,"Aurora",2),
+    mm("epl-r4-3",4,"2-1","Falcons",0,"NAVI",2),
+    mm("epl-r4-4",4,"1-2","G2",1,"paiN",1,"running"),
+    mm("epl-r4-5",4,"1-2","9z",0,"B8",0,"not_started"),
+    mm("epl-r4-6",4,"1-2","Legacy",0,"M80",0,"not_started"),
+  ];
+})();
+
 function CS2SwissView({ serieData, onBack, T, accent }) {
   const [activeRound, setActiveRound] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
@@ -6227,6 +6266,12 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     for (const p of serieData.phases) {
       const gsMatches = p.group_stage?.matches || [];
       for (const m of gsMatches) matches.push(m);
+    }
+  }
+  if (matches.length < 8) {
+    const existing = new Set(matches.map(m => m.match_id || m.id));
+    for (const m of MANUAL_EPL_SWISS) {
+      if (!existing.has(m.match_id)) matches.push(m);
     }
   }
 
