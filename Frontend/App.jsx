@@ -58,8 +58,8 @@ const SPLIT_HEADER_LOGO = "/split-header-logo.png";
 const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
-const REWARDS_BANNER = "/rewards-banner.png";
-const CLASSEMENT_BANNER = "/rewards-banner.webp";
+const REWARDS_BANNER = "/rewards-banner.webp";
+const CLASSEMENT_BANNER = "/rewards-banner.png";
 const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -2947,12 +2947,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   </div>
                 );
               })()}
-              {running && (() => {
-                const gt = match._gameType || (String(match.id).startsWith("cs2-") ? "cs2" : String(match.id).startsWith("rl-") ? "rl" : "valo");
-                if (gt === "cs2") return null;
-                if (hasLiveScores) return null;
-                return <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>;
-              })()}
+              {running && !hasLiveScores && (
+                <p className="text-center" style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 600 }}>Le match est en cours</p>
+              )}
               {!running && games.length === 0 ? (
                 <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.seriesHint}</p>
               ) : !running && (
@@ -4589,9 +4586,8 @@ function NewsCarousel({ T, splashDone }) {
 
   const daysToMajor = (() => {
     const now = new Date();
-    let target = new Date(Date.UTC(now.getUTCFullYear(), 9, 1));
-    if (target.getTime() < now.getTime()) target = new Date(Date.UTC(now.getUTCFullYear() + 1, 9, 1));
-    return Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 86400000));
+    const target = new Date(Date.UTC(2026, 10, 25));
+    return Math.ceil((target.getTime() - now.getTime()) / 86400000);
   })();
 
   const daysToChampions = (() => {
@@ -6220,6 +6216,7 @@ const SWISS_RECORDS_BY_ROUND = {
   4: [["2-1"], ["1-2"]],
   5: [["2-2"]],
 };
+const SWISS_RECORD_LABEL = { "2-0": "High", "1-1": "Mid", "0-2": "Low", "1-0": "High", "0-1": "Low", "2-1": "High", "1-2": "Low", "2-2": "Decider" };
 
 function CS2SwissView({ serieData, onBack, T, accent }) {
   const [activeRound, setActiveRound] = useState(null);
@@ -6415,7 +6412,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
             <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? accent : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
             {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
           </div>
-          {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{rec}</span>}
+          {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{SWISS_RECORD_LABEL[rec] || rec}</span>}
         </div>
       </div>
     );
@@ -6427,7 +6424,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
       <div style={pageStyle}>
         <div style={headerStyle}>
           <button onClick={() => setActiveRecord(null)} style={backBtnStyle}>{backIcon}</button>
-          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>Round {activeRound} · {activeRecord}</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>Round {activeRound} · {SWISS_RECORD_LABEL[activeRecord] || activeRecord} ({activeRecord})</span>
         </div>
         <div style={{ padding: 16 }}>
           {currentMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match</p>}
@@ -6440,7 +6437,8 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   // --- Page 2: Inside a round — records as buttons (or direct matches for R1/R5) ---
   if (activeRound) {
     const allRoundMatches = roundMatches[activeRound] || [];
-    const headerLabel = isSingleRecord ? `Round ${activeRound} · ${recordsForRound.flat()[0] || ""}` : `Round ${activeRound}`;
+    const singleRec = recordsForRound.flat()[0] || "";
+    const headerLabel = isSingleRecord ? `Round ${activeRound}` : `Round ${activeRound}`;
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
@@ -6463,7 +6461,8 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 3, height: 18, borderRadius: 2, background: accent }} />
-                    <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{rec}</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{SWISS_RECORD_LABEL[rec] || rec}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: "#555" }}>({rec})</span>
                     {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
                     {recDone && <span style={{ fontSize: 9, color: "#4CAF50", fontWeight: 700 }}>✓</span>}
                     <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>{recMatches.length} match{recMatches.length > 1 ? "s" : ""}</span>
