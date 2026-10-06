@@ -6251,7 +6251,9 @@ const MANUAL_EPL_SWISS = (() => {
     mm("epl-r4-1",4,"2-1","Spirit",0,"1w",2),
     mm("epl-r4-2",4,"2-1","FURIA",0,"Aurora",2),
     mm("epl-r4-3",4,"2-1","Falcons",0,"NAVI",2),
-    mm("epl-r4-4",4,"1-2","G2",1,"paiN",1,"running"),
+    mm("epl-r4-4",4,"1-2","G2",2,"paiN",1),
+    mm("epl-r4-5",4,"1-2","9z",0,"B8",0,"running"),
+    mm("epl-r4-6",4,"1-2","Legacy",0,"M80",0,"not_started"),
   ];
 })();
 
