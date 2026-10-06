@@ -2948,7 +2948,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 );
               })()}
               {running && !hasLiveScores && (
-                <p className="text-center" style={{ color: "#ff3b3b", fontSize: "11px", fontWeight: 600 }}>Le match est en cours</p>
+                <p className="text-center" style={{ color: "#666", fontSize: "11px", fontWeight: 600 }}>Le match est en cours</p>
               )}
               {!running && games.length === 0 ? (
                 <p className="text-center" style={{ color: "#777", fontSize: "11px" }}>{T.seriesHint}</p>
@@ -6252,8 +6252,6 @@ const MANUAL_EPL_SWISS = (() => {
     mm("epl-r4-2",4,"2-1","FURIA",0,"Aurora",2),
     mm("epl-r4-3",4,"2-1","Falcons",0,"NAVI",2),
     mm("epl-r4-4",4,"1-2","G2",1,"paiN",1,"running"),
-    mm("epl-r4-5",4,"1-2","9z",0,"B8",0,"not_started"),
-    mm("epl-r4-6",4,"1-2","Legacy",0,"M80",0,"not_started"),
   ];
 })();
 
@@ -6435,30 +6433,30 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     const s1 = getS1(m);
     const s2 = getS2(m);
     const isDone = m.status === "finished";
-    const rec = parseRecord(m);
+    const isLive = m.status === "running";
 
     return (
-      <div key={mId(m) || i} style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+      <div key={mId(m) || i} style={{ background: "#111", borderRadius: 12, overflow: "hidden", borderLeft: isLive ? `2px solid #ff3b3b` : "2px solid transparent" }}>
+        <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-            {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+            {t1?.image_url && <img src={t1.image_url} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
             <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s1 > s2 ? accent : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1?.name || "TBD"}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "0 10px" }}>
-            {!isDone && (s1 == null || s1 === 0) && (s2 == null || s2 === 0) ? (
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#555" }}>vs</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, padding: "0 8px" }}>
+            {!isDone && !isLive && (s1 == null || s1 === 0) && (s2 == null || s2 === 0) ? (
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#333" }}>vs</span>
             ) : (<>
-              <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s1 ?? "-"}</span>
-              <span style={{ color: "#333", fontSize: 10 }}>:</span>
-              <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : "#666", minWidth: 14, textAlign: "center" }}>{s2 ?? "-"}</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s1 > s2 ? accent : isLive ? "#fff" : "#555", minWidth: 12, textAlign: "center" }}>{s1 ?? "-"}</span>
+              <span style={{ color: "#333", fontSize: 9 }}>:</span>
+              <span style={{ fontSize: 14, fontWeight: 900, color: isDone && s2 > s1 ? accent : isLive ? "#fff" : "#555", minWidth: 12, textAlign: "center" }}>{s2 ?? "-"}</span>
             </>)}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, justifyContent: "flex-end" }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: isDone && s2 > s1 ? accent : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{t2?.name || "TBD"}</span>
-            {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />}
+            {t2?.image_url && <img src={t2.image_url} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
           </div>
-          {rec && <span style={{ position: "absolute", right: 8, top: 4, fontSize: 9, color: "#333", fontWeight: 600 }}>{SWISS_RECORD_LABEL[rec] || rec}</span>}
         </div>
+        {isLive && <div style={{ background: "#ff3b3b15", padding: "3px 0", textAlign: "center" }}><span style={{ fontSize: 9, fontWeight: 800, color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.08em" }}>LIVE</span></div>}
       </div>
     );
   };
@@ -6469,11 +6467,11 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
       <div style={pageStyle}>
         <div style={headerStyle}>
           <button onClick={() => setActiveRecord(null)} style={backBtnStyle}>{backIcon}</button>
-          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>Round {activeRound} · {SWISS_RECORD_LABEL[activeRecord] || activeRecord} ({activeRecord})</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>Round {activeRound} <span style={{ color: "#555" }}>·</span> <span style={{ color: accent }}>{SWISS_RECORD_LABEL[activeRecord] || activeRecord}</span> <span style={{ color: "#444", fontSize: 11, fontWeight: 600 }}>({activeRecord})</span></span>
         </div>
         <div style={{ padding: 16 }}>
           {currentMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match</p>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{currentMatches.map(renderMatchCard)}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{currentMatches.map(renderMatchCard)}</div>
         </div>
       </div>
     );
@@ -6482,35 +6480,33 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   // --- Page 2: Inside a round — records as buttons (or direct matches for R1/R5) ---
   if (activeRound) {
     const allRoundMatches = roundMatches[activeRound] || [];
-    const singleRec = recordsForRound.flat()[0] || "";
-    const headerLabel = isSingleRecord ? `Round ${activeRound}` : `Round ${activeRound}`;
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
           <button onClick={() => { setActiveRound(null); setActiveRecord(null); }} style={backBtnStyle}>{backIcon}</button>
-          <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>{headerLabel}</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>Round {activeRound}</span>
         </div>
         {!isSingleRecord && recordsForRound.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 16px" }}>
             {recordsForRound.flat().map((rec) => {
               const recMatches = allRoundMatches.filter((mm) => parseRecord(mm) === rec);
               const recDone = recMatches.length > 0 && recMatches.every((m) => m.status === "finished");
               const recLive = recMatches.some((m) => m.status === "running");
               return (
                 <button key={rec} onClick={() => setActiveRecord(rec)} style={{
-                  background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-                  border: `1px solid ${accent}20`,
-                  borderRadius: 10, padding: "20px 18px", cursor: "pointer",
+                  background: "#111",
+                  border: "none",
+                  borderRadius: 12, padding: "14px 16px", cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "space-between",
-                  boxShadow: `0 2px 12px ${accent}08`,
+                  borderLeft: recLive ? "2px solid #ff3b3b" : recDone ? `2px solid ${accent}` : "2px solid #222",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 3, height: 18, borderRadius: 2, background: accent }} />
-                    <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{SWISS_RECORD_LABEL[rec] || rec}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: "#555" }}>({rec})</span>
-                    {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
-                    {recDone && <span style={{ fontSize: 9, color: "#4CAF50", fontWeight: 700 }}>✓</span>}
-                    <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>{recMatches.length} match{recMatches.length > 1 ? "s" : ""}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "#fff", display: "block" }}>{SWISS_RECORD_LABEL[rec] || rec}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: "#444" }}>{rec} · {recMatches.length} match{recMatches.length > 1 ? "s" : ""}</span>
+                    </div>
+                    {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", background: "#ff3b3b15", borderRadius: 9999, padding: "2px 8px", textTransform: "uppercase" }}>LIVE</span>}
+                    {recDone && !recLive && <span style={{ fontSize: 9, color: accent, fontWeight: 700 }}>✓</span>}
                   </div>
                   {chevron}
                 </button>
@@ -6521,7 +6517,7 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         {isSingleRecord && (
           <div style={{ padding: "16px" }}>
             {allRoundMatches.length === 0 && <p style={{ textAlign: "center", color: "#444", fontSize: 13, padding: 30 }}>Aucun match pour ce round</p>}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{allRoundMatches.map(renderMatchCard)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{allRoundMatches.map(renderMatchCard)}</div>
           </div>
         )}
       </div>
@@ -6529,39 +6525,62 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
   // --- Page 1: Choose round (R1-R5) ---
+  const totalQualified = qualified.length;
+  const totalEliminated = eliminated.length;
   return (
     <div style={pageStyle}>
       <div style={headerStyle}>
         <button onClick={onBack} style={backBtnStyle}>{backIcon}</button>
-        <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
+        <span style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>EPL <span style={{ color: accent }}>Swiss</span></span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+      {(totalQualified > 0 || totalEliminated > 0) && (
+        <div style={{ display: "flex", gap: 8, padding: "12px 16px 4px" }}>
+          {totalQualified > 0 && <div style={{ flex: 1, background: "#111", borderRadius: 10, padding: "10px 12px", borderLeft: `2px solid ${accent}` }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.08em" }}>Qualifiés</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", display: "block", marginTop: 2 }}>{totalQualified}<span style={{ fontSize: 11, color: "#555" }}>/8</span></span>
+          </div>}
+          {totalEliminated > 0 && <div style={{ flex: 1, background: "#111", borderRadius: 10, padding: "10px 12px", borderLeft: "2px solid #ff3b3b" }}>
+            <span style={{ fontSize: 9, fontWeight: 700, color: "#ff3b3b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Éliminés</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", display: "block", marginTop: 2 }}>{totalEliminated}<span style={{ fontSize: 11, color: "#555" }}>/8</span></span>
+          </div>}
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "12px 16px" }}>
         {[1, 2, 3, 4, 5].map((r) => {
           const available = isRoundAvailable(r);
           const status = getRoundStatus(r);
           const rm = roundMatches[r] || [];
+          const doneCount = rm.filter((m) => m.status === "finished").length;
+          const progress = rm.length > 0 ? doneCount / rm.length : 0;
           return (
-            <React.Fragment key={r}>
-              <button onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{
-                background: available ? `linear-gradient(90deg, ${accent}08 0%, #111 50%)` : "#0d0d0d",
-                border: `1px solid ${available ? accent + "20" : "#1a1a1a"}`,
-                borderRadius: 10, padding: "20px 18px", cursor: available ? "pointer" : "default",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                boxShadow: available ? `0 2px 12px ${accent}08` : "none",
-                opacity: available ? 1 : 0.35,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 3, height: 20, borderRadius: 2, background: available ? accent : "#333" }} />
-                  <div>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: available ? accent : "#444", textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>Round {r}</span>
-                    <span style={{ fontSize: 10, color: status === "live" ? "#ff3b3b" : status === "finished" ? "#4CAF50" : "#555", fontWeight: 700, marginTop: 2, display: "block" }}>
-                      {status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : ""}
-                    </span>
-                  </div>
+            <button key={r} onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{
+              background: available ? "#111" : "#0c0c0c",
+              border: "none",
+              borderRadius: 12, padding: "14px 16px", cursor: available ? "pointer" : "default",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              opacity: available ? 1 : 0.3,
+              borderLeft: status === "live" ? "2px solid #ff3b3b" : status === "finished" ? `2px solid ${accent}` : available ? "2px solid #222" : "2px solid #1a1a1a",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: status === "finished" ? `${accent}15` : status === "live" ? "#ff3b3b15" : "#1a1a1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 15, fontWeight: 900, color: status === "finished" ? accent : status === "live" ? "#ff3b3b" : available ? "#fff" : "#333" }}>{r}</span>
                 </div>
-                {available ? chevron : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
-              </button>
-            </React.Fragment>
+                <div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: available ? "#fff" : "#444", display: "block" }}>Round {r}</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: status === "live" ? "#ff3b3b" : status === "finished" ? accent : "#444", display: "block", marginTop: 1 }}>
+                    {status === "finished" ? `Terminé` : status === "live" || status === "partial" ? `${doneCount}/${rm.length} matchs` : rm.length > 0 ? `${rm.length} matchs` : "À venir"}
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {available && rm.length > 0 && (
+                  <div style={{ width: 40, height: 3, borderRadius: 2, background: "#1a1a1a", overflow: "hidden" }}>
+                    <div style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 2, background: status === "live" ? "#ff3b3b" : accent, transition: "width 0.3s" }} />
+                  </div>
+                )}
+                {available ? chevron : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
+              </div>
+            </button>
           );
         })}
       </div>
@@ -11578,10 +11597,10 @@ export default function ClutchApp() {
   const adCountRef = useRef(0);
   const getAdCooldown = () => {
     const c = adCountRef.current;
-    if (c === 0) return 2 * 60 * 1000;
-    return 5 * 60 * 1000 + (c - 1) * 30 * 1000;
+    if (c === 0) return 3.5 * 60 * 1000;
+    return 5 * 60 * 1000;
   };
-  const AFK_THRESHOLD_MS = 60 * 1000;
+  const ACTIVE_THRESHOLD_MS = 30 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
     if (showAuthRef.current) return;
     const now = Date.now();
@@ -11647,8 +11666,8 @@ export default function ClutchApp() {
     const iv = setInterval(() => {
       const now = Date.now();
       const idleMs = now - lastInteractionRef.current;
-      if (idleMs >= AFK_THRESHOLD_MS) {
-        triggerAd("afk");
+      if (idleMs <= ACTIVE_THRESHOLD_MS) {
+        triggerAd("active");
       }
     }, 20000);
     return () => clearInterval(iv);
