@@ -1481,6 +1481,128 @@ app.get("/api/vlr-events", async (req, res) => {
   }
 });
 
+// --- Champions Groups (auto from PandaScore) ---
+const champGroupsCache = { data: null, at: 0 };
+const CHAMP_GROUPS_TTL = 3 * 60 * 1000;
+
+app.get("/api/champions-groups", async (req, res) => {
+  try {
+    if (champGroupsCache.data && Date.now() - champGroupsCache.at < CHAMP_GROUPS_TTL) {
+      return res.json(champGroupsCache.data);
+    }
+    const series = await pandaFetch(
+      "/valorant/series?filter[year]=2026&sort=-begin_at&per_page=25"
+    );
+    const champSerie = (series || []).find((s) => {
+      const n = (s.full_name || s.name || "").toLowerCase();
+      return n.includes("champions") && !n.includes("qualifier");
+    });
+    if (!champSerie) {
+      champGroupsCache.data = { groups: [], playoffs: [] };
+      champGroupsCache.at = Date.now();
+      return res.json(champGroupsCache.data);
+    }
+
+    let tournaments;
+    try {
+      tournaments = await pandaFetch("/valorant/series/" + champSerie.id + "/tournaments");
+    } catch {
+      tournaments = champSerie.tournaments || [];
+    }
+
+    const groups = [];
+    const playoffMatches = [];
+
+    for (let ti = 0; ti < tournaments.length; ti++) {
+      const t = tournaments[ti];
+      const tName = (t.name || "").toLowerCase();
+      if (ti > 0) await sleep(300);
+
+      let matches;
+      try {
+        matches = await pandaFetch("/valorant/tournaments/" + t.id + "/matches?per_page=100&sort=scheduled_at");
+      } catch {
+        continue;
+      }
+
+      const isGroup = tName.includes("group");
+      const groupLetter = (tName.match(/group\s*([a-d])/i) || [])[1]?.toUpperCase();
+
+      if (isGroup && groupLetter) {
+        const teams = new Map();
+        const groupMatches = [];
+
+        for (const m of matches) {
+          const t1 = m.opponents?.[0]?.opponent;
+          const t2 = m.opponents?.[1]?.opponent;
+          const r1 = (m.results || []).find((r) => t1 && r.team_id === t1.id);
+          const r2 = (m.results || []).find((r) => t2 && r.team_id === t2.id);
+
+          if (t1?.name && t1.name !== "TBD") {
+            if (!teams.has(t1.name)) teams.set(t1.name, { name: t1.name, acronym: t1.acronym || t1.name.slice(0, 3).toUpperCase(), logo: t1.image_url, wins: 0, losses: 0 });
+          }
+          if (t2?.name && t2.name !== "TBD") {
+            if (!teams.has(t2.name)) teams.set(t2.name, { name: t2.name, acronym: t2.acronym || t2.name.slice(0, 3).toUpperCase(), logo: t2.image_url, wins: 0, losses: 0 });
+          }
+
+          const s1 = r1?.score ?? null;
+          const s2 = r2?.score ?? null;
+          const finished = m.status === "finished";
+
+          if (finished && t1?.name && t2?.name) {
+            const tr1 = teams.get(t1.name);
+            const tr2 = teams.get(t2.name);
+            if (tr1 && s1 != null && s2 != null) { if (s1 > s2) tr1.wins++; else tr1.losses++; }
+            if (tr2 && s1 != null && s2 != null) { if (s2 > s1) tr2.wins++; else tr2.losses++; }
+          }
+
+          const roundName = (m.name || "").toLowerCase();
+          let phase = "opening1";
+          if (roundName.includes("winner")) phase = "winners";
+          else if (roundName.includes("elimination") || roundName.includes("loser")) phase = "elimination";
+          else if (roundName.includes("decider")) phase = "decider";
+          else if (roundName.includes("opening") && roundName.includes("2")) phase = "opening2";
+
+          groupMatches.push({
+            phase,
+            team1: t1?.name || "TBD",
+            team2: t2?.name || "TBD",
+            score: s1 != null && s2 != null ? [s1, s2] : null,
+            status: m.status || "upcoming",
+          });
+        }
+
+        const teamArr = [...teams.values()].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses) || b.wins - a.wins);
+        groups.push({ name: groupLetter, teams: teamArr, matches: groupMatches });
+      } else if (tName.includes("playoff") || tName.includes("bracket")) {
+        for (const m of matches) {
+          const t1 = m.opponents?.[0]?.opponent;
+          const t2 = m.opponents?.[1]?.opponent;
+          const r1 = (m.results || []).find((r) => t1 && r.team_id === t1.id);
+          const r2 = (m.results || []).find((r) => t2 && r.team_id === t2.id);
+          playoffMatches.push({
+            match_id: m.id,
+            name: m.name || "",
+            status: m.status || "upcoming",
+            team1: { name: t1?.name || "TBD", score: r1?.score ?? null, is_winner: m.winner_id && t1 && m.winner_id === t1.id },
+            team2: { name: t2?.name || "TBD", score: r2?.score ?? null, is_winner: m.winner_id && t2 && m.winner_id === t2.id },
+          });
+        }
+      }
+    }
+
+    groups.sort((a, b) => a.name.localeCompare(b.name));
+    const result = { groups, playoffs: playoffMatches, serie: { id: champSerie.id, name: champSerie.full_name || champSerie.name } };
+    champGroupsCache.data = result;
+    champGroupsCache.at = Date.now();
+    res.json(result);
+  } catch (e) {
+    console.error("champions-groups error:", e.message);
+    if (champGroupsCache.data) return res.json(champGroupsCache.data);
+    res.status(502).json({ error: "Impossible de récupérer les groupes Champions." });
+  }
+});
+
 const vlrHistoryCache = { data: null, at: 0 };
 
 app.get("/api/vlr-history", async (req, res) => {

@@ -58,7 +58,7 @@ const SPLIT_HEADER_LOGO = "/split-header-logo.png";
 const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
-const REWARDS_BANNER = "/rewards-banner.webp";
+const REWARDS_BANNER = "/rewards-banner.png";
 const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -5272,56 +5272,42 @@ function ChampionsView({ T, accent, onViewMatch }) {
     const id = setInterval(loadAll, 60000);
     return () => clearInterval(id);
   }, []);
-  const BASE_GROUPS = [
-    { name: "A", teams: [
-      { name: "100 Thieves", acronym: "100T", wins: 1, losses: 0 },
-      { name: "FUT Esports", acronym: "FUT", wins: 1, losses: 0 },
-      { name: "JD Gaming", acronym: "JDG", wins: 0, losses: 1 },
-      { name: "T1", acronym: "T1", wins: 0, losses: 1 },
-    ], matches: [
-      { phase: "opening1", team1: "100 Thieves", team2: "T1", score: [2, 0], status: "finished" },
-      { phase: "opening2", team1: "JD Gaming", team2: "FUT Esports", score: [0, 2], status: "finished" },
-      { phase: "winners", team1: "100 Thieves", team2: "FUT Esports", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "T1", team2: "JD Gaming", score: null, status: "upcoming" },
+  const [champGroupsData, setChampGroupsData] = useState(() => {
+    try {
+      const raw = localStorage.getItem("split_champions_groups_cache");
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && Array.isArray(parsed.groups) ? parsed : null;
+    } catch { return null; }
+  });
+  useEffect(() => {
+    async function fetchGroups() {
+      try {
+        const res = await fetch(API_BASE + "/api/champions-groups");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.groups)) {
+            setChampGroupsData(data);
+            try { localStorage.setItem("split_champions_groups_cache", JSON.stringify(data)); } catch {}
+          }
+        }
+      } catch {}
+    }
+    fetchGroups();
+    const id = setInterval(fetchGroups, 3 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+  const EMPTY_GROUPS = ["A", "B", "C", "D"].map(n => ({
+    name: n,
+    teams: Array.from({ length: 4 }, () => ({ name: "TBD", acronym: "TBD", wins: 0, losses: 0 })),
+    matches: [
+      { phase: "opening1", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+      { phase: "opening2", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+      { phase: "winners", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
+      { phase: "elimination", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
       { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
-    ] },
-    { name: "B", teams: [
-      { name: "LOUD", acronym: "LOUD", wins: 1, losses: 0 },
-      { name: "Team Vitality", acronym: "VIT", wins: 1, losses: 0 },
-      { name: "EDward Gaming", acronym: "EDG", wins: 0, losses: 1 },
-      { name: "Nongshim RedForce", acronym: "NS", wins: 0, losses: 1 },
-    ], matches: [
-      { phase: "opening1", team1: "Nongshim RedForce", team2: "Team Vitality", score: [1, 2], status: "finished" },
-      { phase: "opening2", team1: "LOUD", team2: "EDward Gaming", score: [2, 0], status: "finished" },
-      { phase: "winners", team1: "Team Vitality", team2: "LOUD", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "Nongshim RedForce", team2: "EDward Gaming", score: null, status: "upcoming" },
-      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
-    ] },
-    { name: "C", teams: [
-      { name: "G2 Esports", acronym: "G2", wins: 1, losses: 0 },
-      { name: "Paper Rex", acronym: "PRX", wins: 1, losses: 0 },
-      { name: "Team Liquid", acronym: "TL", wins: 0, losses: 1 },
-      { name: "TYLOO", acronym: "TYL", wins: 0, losses: 1 },
-    ], matches: [
-      { phase: "opening1", team1: "Team Liquid", team2: "Paper Rex", score: [1, 2], status: "finished" },
-      { phase: "opening2", team1: "TYLOO", team2: "G2 Esports", score: [0, 2], status: "finished" },
-      { phase: "winners", team1: "G2 Esports", team2: "Paper Rex", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "TYLOO", team2: "Team Liquid", score: null, status: "upcoming" },
-      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
-    ] },
-    { name: "D", teams: [
-      { name: "Karmine Corp", acronym: "KC", wins: 1, losses: 0 },
-      { name: "NRG", acronym: "NRG", wins: 1, losses: 0 },
-      { name: "Global Esports", acronym: "GE", wins: 0, losses: 1 },
-      { name: "XLG Esports", acronym: "XLG", wins: 0, losses: 1 },
-    ], matches: [
-      { phase: "opening1", team1: "Karmine Corp", team2: "XLG Esports", score: [2, 0], status: "finished" },
-      { phase: "opening2", team1: "Global Esports", team2: "NRG", score: [0, 2], status: "finished" },
-      { phase: "winners", team1: "Karmine Corp", team2: "NRG", score: null, status: "upcoming" },
-      { phase: "elimination", team1: "XLG Esports", team2: "Global Esports", score: null, status: "upcoming" },
-      { phase: "decider", team1: "TBD", team2: "TBD", score: null, status: "tbd" },
-    ] },
-  ];
+    ],
+  }));
+  const BASE_GROUPS = champGroupsData?.groups?.length > 0 ? champGroupsData.groups : EMPTY_GROUPS;
   // Merge scores en live depuis /api/valorant-results. Chaque match structure
   // est cherche par teams dans les results reels → update status + score si
   // trouve + calcul W-L par equipe.
@@ -5437,7 +5423,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
       }
     }
     return groups;
-  }, [liveResults]);
+  }, [liveResults, champGroupsData]);
 
   const computedPlayoffs = React.useMemo(() => {
     const normN = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -6223,7 +6209,7 @@ const CS2_BRACKET_COMPS = [
   { key: "iem", labelKey: "cs2BracketIEM", color: "#00BFFF", icon: "⚡", locked: true },
   { key: "blast", labelKey: "cs2BracketBlast", color: "#FF6B00", icon: "💥", locked: true },
   { key: "pgl", labelKey: "cs2BracketPGL", color: "#E040FB", icon: "🎮", locked: true },
-  { key: "esl", labelKey: "cs2BracketESL", color: "#1E90FF", icon: "🛡" },
+  { key: "esl", labelKey: "cs2BracketESL", color: "#4DB8FF", icon: "🛡" },
 ];
 
 const SWISS_RECORDS_BY_ROUND = {
@@ -6828,14 +6814,14 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           if (c.locked) {
             return (
               <button key={c.key} disabled style={{
-                background: "#0d0d0d",
-                border: "1px solid #1a1a1a",
+                background: "#0a0a0a",
+                border: "1px solid #161616",
                 borderRadius: 12, padding: "32px 12px",
                 cursor: "default",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                opacity: 0.5,
+                opacity: 0.3,
               }}>
-                <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+                <span style={{ fontSize: 14, fontWeight: 900, color: "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               </button>
             );
           }
@@ -6846,15 +6832,15 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const hasRunning = events.some((e) => e.status === "running");
           return (
             <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{
-              background: hasAny ? `linear-gradient(135deg, ${c.color}0A 0%, #111 60%)` : "#0d0d0d",
-              border: `1px solid ${hasAny ? c.color + "30" : "#1a1a1a"}`,
+              background: hasAny ? `linear-gradient(135deg, ${c.color}20 0%, ${c.color}08 50%, #0d0d0d 100%)` : "#0a0a0a",
+              border: `1px solid ${hasAny ? c.color + "55" : "#161616"}`,
               borderRadius: 12, padding: "32px 12px",
               cursor: hasAny ? "pointer" : "default",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: hasAny ? `0 4px 20px ${c.color}10` : "none",
+              boxShadow: hasAny ? `0 4px 24px ${c.color}30, inset 0 1px 0 ${c.color}18` : "none",
               transition: "transform 0.15s",
               position: "relative",
-              opacity: hasAny ? 1 : 0.35,
+              opacity: hasAny ? 1 : 0.3,
             }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: hasAny ? c.color : "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
@@ -11544,18 +11530,24 @@ export default function ClutchApp() {
   const tabSwitchCountRef = useRef(0);
   const tabSwitchSinceAdRef = useRef(0);
   const predictionsSinceAdRef = useRef(0);
-  const AD_COOLDOWN_MS = 2 * 60 * 1000;
+  const adCountRef = useRef(0);
+  const getAdCooldown = () => {
+    const c = adCountRef.current;
+    if (c === 0) return 2 * 60 * 1000;
+    return 5 * 60 * 1000 + (c - 1) * 30 * 1000;
+  };
   const AFK_THRESHOLD_MS = 60 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
     if (showAuthRef.current) return;
     const now = Date.now();
-    if (now - lastAdAtRef.current < AD_COOLDOWN_MS) return;
+    if (now - lastAdAtRef.current < getAdCooldown()) return;
     if (adShownRef.current) return;
     adShownRef.current = true;
     lastAdAtRef.current = now;
+    adCountRef.current++;
     tabSwitchSinceAdRef.current = 0;
     predictionsSinceAdRef.current = 0;
-    console.log(`[ad-trigger] reason=${reason}`);
+    console.log(`[ad-trigger] reason=${reason} cooldown-next=${getAdCooldown()}ms`);
     if (isNative()) {
       const shown = await showInterstitial();
       if (shown) return;
