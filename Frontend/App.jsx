@@ -2449,7 +2449,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
     <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#181818", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #2a2a2a", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "0 2px 8px rgba(0,0,0,0.4)" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
-      <div className="flex items-center justify-between px-4 pt-2">
+      <div className="flex items-center justify-between px-4 pt-3 pb-1">
         <div>
           <span style={{ color: accent, fontSize: "11.5px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", ...txtSt }}>
             {match.matchTier && (
@@ -2465,7 +2465,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             const boColor = bo >= 7 ? "#f87171" : bo === 5 ? "#e8a735" : bo === 1 ? "#888" : "#3B82F6";
             return <span style={{ color: boColor, fontWeight: 800, fontSize: 9, border: `1px solid ${boColor}44`, borderRadius: 4, padding: "1px 5px", marginTop: 3, display: "inline-flex", alignItems: "center" }}>{boLabel}</span>;
           })()}
-          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "2px" }}>
+          <div style={{ color: "#fff", fontSize: "14px", fontWeight: 600, marginTop: "3px" }}>
             {match.day ? dayLabel(match.day, lang, T) : ""}
             {match.time ? " · " + match.time : ""}
           </div>
@@ -2913,10 +2913,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       const mapLive = !mapDone && (s1 > 0 || s2 > 0);
                       return (
                         <div key={i} style={{
-                          border: mapLive ? "1px solid rgba(255,59,59,0.5)" : "none",
-                          borderRadius: mapLive ? 8 : 0,
+                          border: mapLive ? "1px solid rgba(255,59,59,0.5)" : "1px solid transparent",
+                          borderRadius: 8,
                           background: mapLive ? "rgba(255,59,59,0.06)" : "transparent",
-                          padding: mapLive ? "6px 10px" : 0,
+                          padding: "6px 10px",
                         }}>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
@@ -11580,7 +11580,7 @@ export default function ClutchApp() {
       phase: "Champions 2026",
       tournamentName: "Champions 2026",
       team1: "TL",
-      team2: "PRX",
+      team2: "PR",
       team1Name: "Liquid",
       team2Name: "Paper Rex",
       team1Logo: "https://cdn.pandascore.co/images/team/image/125977/team_liquid_valorant_2023_allmode.png",
