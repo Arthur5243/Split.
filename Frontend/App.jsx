@@ -2280,7 +2280,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached, demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -2873,6 +2873,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <button onClick={() => { if (!expanded && !tbd) { setScoresRevealed(true); setLiveRevealed(true); } onToggleExpand(match.id); }} disabled={tbd} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
               <ChevronDown size={16} color={accent} />
             </button>
+            {demoMatchId && String(match.id) === demoMatchId && !demoActive && !demoFinished && (
+              <button onClick={(e) => { e.stopPropagation(); onStartDemo && onStartDemo(); }} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "#CCF71D", color: "#000", fontSize: 11, fontWeight: 900, border: "none", borderRadius: 8, padding: "5px 14px", cursor: "pointer", zIndex: 2, letterSpacing: "0.02em" }}>
+                Démarrer
+              </button>
+            )}
+            {demoMatchId && String(match.id) === demoMatchId && demoActive && !demoFinished && demoCountdown != null && (
+              <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#ff3b3b", fontSize: 13, fontWeight: 900, fontVariantNumeric: "tabular-nums", zIndex: 2, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "4px 12px" }}>
+                {demoCountdown}s
+              </span>
+            )}
           </div>
 
           {expanded && !tbd && (
@@ -6909,7 +6919,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached, demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -7039,7 +7049,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} onLimitReached={onLimitReached} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} onLimitReached={onLimitReached} {...(demoMatchId && String(m.id) === demoMatchId ? { demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished } : {})} />
             </React.Fragment>
           );
         })}
@@ -11557,6 +11567,98 @@ export default function ClutchApp() {
       setUserXp(51000);
     }
   }, [isCaffioraDemo]);
+
+  const isDemoPortable = authUser?.email === "portable.coffee.maker.young@gmail.com";
+  const DEMO_MATCH_ID = "demo-tl-prx-2026";
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoCountdown, setDemoCountdown] = useState(null);
+  const [demoFinished, setDemoFinished] = useState(false);
+  const demoTimerRef = useRef(null);
+  const demoActiveRef = useRef(false);
+
+  const demoMatch = useMemo(() => {
+    if (!isDemoPortable) return null;
+    const today = new Date();
+    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+    const time = String(today.getHours()).padStart(2, "0") + ":" + String(today.getMinutes()).padStart(2, "0");
+    return {
+      id: DEMO_MATCH_ID,
+      day,
+      time,
+      beginAt: today.toISOString(),
+      league: "VCT",
+      phase: "Champions 2026",
+      tournamentName: "Champions 2026",
+      team1: "TL",
+      team2: "PRX",
+      team1Name: "Liquid",
+      team2Name: "Paper Rex",
+      team1Logo: "https://cdn.pandascore.co/images/team/image/125977/team_liquid_valorant_2023_allmode.png",
+      team2Logo: "https://cdn.pandascore.co/images/team/image/128477/paper_rex_2022_allmode.png",
+      region: "PACIFIC",
+      status: demoFinished ? "finished" : "running",
+      score1: 1,
+      score2: demoScoreUpdated ? 2 : 1,
+      tier: "VCT",
+      map_scores: demoFinished ? [
+        { map: "Ascent", score1: 4, score2: 13 },
+        { map: "Haven", score1: 13, score2: 7 },
+        { map: "Lotus", score1: 10, score2: 13 },
+      ] : null,
+      live_map_scores: demoFinished ? null : [
+        { map: "Ascent", score1: 4, score2: 13 },
+        { map: "Haven", score1: 13, score2: 7 },
+        { map: "Lotus", score1: 10, score2: demoScoreUpdated ? 13 : 12 },
+      ],
+      number_of_games: 3,
+      _isDemo: true,
+    };
+  }, [isDemoPortable, demoActive, demoFinished, demoScoreUpdated]);
+
+  const [demoScoreUpdated, setDemoScoreUpdated] = useState(false);
+
+  function startDemoCountdown() {
+    if (demoActive || demoFinished) return;
+    setDemoActive(true);
+    demoActiveRef.current = true;
+    setDemoCountdown(10);
+    let t = 10;
+    demoTimerRef.current = setInterval(() => {
+      t--;
+      setDemoCountdown(t);
+      if (t <= 0) {
+        clearInterval(demoTimerRef.current);
+        demoTimerRef.current = null;
+        setDemoScoreUpdated(true);
+        setTimeout(() => setDemoFinished(true), 1500);
+      }
+    }, 1000);
+  }
+
+  useEffect(() => {
+    return () => { if (demoTimerRef.current) clearInterval(demoTimerRef.current); };
+  }, []);
+
+  useEffect(() => {
+    if (!isDemoPortable) return;
+    setPredictions(prev => {
+      if (prev[DEMO_MATCH_ID]) return prev;
+      return {
+        ...prev,
+        [DEMO_MATCH_ID]: {
+          seriesA: "1",
+          seriesB: "2",
+          expanded: false,
+          games: [
+            { a: "4", b: "13" },
+            { a: "13", b: "6" },
+            { a: "10", b: "13" },
+          ],
+        },
+      };
+    });
+  }, [isDemoPortable]);
+
   const [showIntroCards, setShowIntroCards] = useState(false);
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
@@ -11581,6 +11683,7 @@ export default function ClutchApp() {
   };
   const ACTIVE_THRESHOLD_MS = 30 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
+    if (demoActiveRef.current) return;
     if (showAuthRef.current) return;
     const now = Date.now();
     if (now - lastAdAtRef.current < getAdCooldown()) return;
@@ -13030,8 +13133,8 @@ export default function ClutchApp() {
               T={T}
               lang={currentLang}
               upcoming={upcomingMatches}
-              live={liveMatches}
-              results={resultsMatches}
+              live={demoMatch && !demoFinished ? [demoMatch, ...liveMatches] : liveMatches}
+              results={demoMatch && demoFinished ? [demoMatch, ...resultsMatches] : resultsMatches}
               teamLogoCache={teamLogoCache}
               loading={dataLoading}
               error={dataError}
@@ -13044,6 +13147,11 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
               onLimitReached={() => setShowLimitPopup(true)}
+              demoMatchId={isDemoPortable ? DEMO_MATCH_ID : null}
+              onStartDemo={startDemoCountdown}
+              demoCountdown={demoCountdown}
+              demoActive={demoActive}
+              demoFinished={demoFinished}
             />
           </div>
           <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
