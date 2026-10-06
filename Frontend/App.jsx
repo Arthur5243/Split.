@@ -2878,11 +2878,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 Démarrer
               </button>
             )}
-            {demoMatchId && String(match.id) === demoMatchId && demoActive && !demoFinished && demoCountdown != null && (
-              <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#ff3b3b", fontSize: 13, fontWeight: 900, fontVariantNumeric: "tabular-nums", zIndex: 2, background: "rgba(255,59,59,0.12)", border: "1px solid rgba(255,59,59,0.4)", borderRadius: 8, padding: "4px 12px" }}>
-                {demoCountdown}s
-              </span>
-            )}
           </div>
 
           {expanded && !tbd && (
