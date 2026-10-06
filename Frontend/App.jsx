@@ -5439,27 +5439,81 @@ function ChampionsView({ T, accent, onViewMatch }) {
     return groups;
   }, [liveResults]);
 
-  // Playoffs TBD (structure 8 equipes upper/lower)
-  const HARDCODED_PLAYOFFS = {
-    upper: [
-      { id: "u-qf-1", label: "Upper QF 1", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-qf-2", label: "Upper QF 2", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-qf-3", label: "Upper QF 3", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-qf-4", label: "Upper QF 4", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-sf-1", label: "Upper Semi 1", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-sf-2", label: "Upper Semi 2", team1: "TBD", team2: "TBD", score: null },
-      { id: "u-f", label: "Upper Final", team1: "TBD", team2: "TBD", score: null },
-    ],
-    lower: [
-      { id: "l-r1-1", label: "Lower R1 M1", team1: "TBD", team2: "TBD", score: null },
-      { id: "l-r1-2", label: "Lower R1 M2", team1: "TBD", team2: "TBD", score: null },
-      { id: "l-r2-1", label: "Lower R2 M1", team1: "TBD", team2: "TBD", score: null },
-      { id: "l-r2-2", label: "Lower R2 M2", team1: "TBD", team2: "TBD", score: null },
-      { id: "l-sf", label: "Lower Semi", team1: "TBD", team2: "TBD", score: null },
-      { id: "l-f", label: "Lower Final", team1: "TBD", team2: "TBD", score: null },
-    ],
-    grandFinal: { id: "gf", label: "Grand Final", team1: "TBD", team2: "TBD", score: null },
-  };
+  const computedPlayoffs = React.useMemo(() => {
+    const normN = (s) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const gTop = {};
+    for (const g of HARDCODED_GROUPS) {
+      gTop[g.name] = [g.teams[0]?.name || "TBD", g.teams[1]?.name || "TBD"];
+    }
+    const findHit = (t1, t2) => {
+      if (t1 === "TBD" || t2 === "TBD") return null;
+      const n1 = normN(t1), n2 = normN(t2);
+      for (const r of (liveResults || [])) {
+        const rt1 = normN(r.team1Name || r.opponents?.[0]?.opponent?.name || "");
+        const rt2 = normN(r.team2Name || r.opponents?.[1]?.opponent?.name || "");
+        const ok = (rt1.includes(n1) || n1.includes(rt1)) && (rt2.includes(n2) || n2.includes(rt2));
+        const sw = (rt1.includes(n2) || n2.includes(rt1)) && (rt2.includes(n1) || n1.includes(rt2));
+        if (!ok && !sw) continue;
+        let s1 = r.score1 ?? null, s2 = r.score2 ?? null;
+        if (s1 == null && Array.isArray(r.results)) {
+          const o1 = r.opponents?.[0]?.opponent?.id, o2 = r.opponents?.[1]?.opponent?.id;
+          s1 = r.results.find(x => x.team_id === o1)?.score ?? null;
+          s2 = r.results.find(x => x.team_id === o2)?.score ?? null;
+        }
+        if (sw) [s1, s2] = [s2, s1];
+        return { s1, s2, st: (r.status || "").toLowerCase() };
+      }
+      return null;
+    };
+    const mk = (id, t1, t2) => {
+      const m = { match_id: id, team1: { name: t1, is_winner: false }, team2: { name: t2, is_winner: false }, status: "upcoming" };
+      const h = findHit(t1, t2);
+      if (h) {
+        if (h.st === "finished" || h.st === "completed") {
+          m.status = "finished";
+          if (h.s1 != null && h.s2 != null) { m.team1.score = h.s1; m.team2.score = h.s2; m.team1.is_winner = h.s1 > h.s2; m.team2.is_winner = h.s2 > h.s1; }
+        } else if (h.st === "running" || h.st === "live") {
+          m.status = "live";
+          if (h.s1 != null && h.s2 != null) { m.team1.score = h.s1; m.team2.score = h.s2; }
+        }
+      }
+      return m;
+    };
+    const win = (m) => m.status === "finished" ? (m.team1.is_winner ? m.team1.name : m.team2.name) : "TBD";
+    const lose = (m) => m.status === "finished" ? (m.team1.is_winner ? m.team2.name : m.team1.name) : "TBD";
+    const uqf = [
+      mk("uqf1", gTop.A?.[0] || "TBD", gTop.D?.[1] || "TBD"),
+      mk("uqf2", gTop.B?.[0] || "TBD", gTop.C?.[1] || "TBD"),
+      mk("uqf3", gTop.C?.[0] || "TBD", gTop.B?.[1] || "TBD"),
+      mk("uqf4", gTop.D?.[0] || "TBD", gTop.A?.[1] || "TBD"),
+    ];
+    const usf1 = mk("usf1", win(uqf[0]), win(uqf[1]));
+    const usf2 = mk("usf2", win(uqf[2]), win(uqf[3]));
+    const uf = mk("uf", win(usf1), win(usf2));
+    const lr1a = mk("lr1a", lose(uqf[0]), lose(uqf[3]));
+    const lr1b = mk("lr1b", lose(uqf[1]), lose(uqf[2]));
+    const lqf1 = mk("lqf1", win(lr1a), lose(usf2));
+    const lqf2 = mk("lqf2", win(lr1b), lose(usf1));
+    const lsf = mk("lsf1", win(lqf1), win(lqf2));
+    const lf = mk("lf", win(lsf), lose(uf));
+    const gf = mk("gf", win(uf), win(lf));
+    return {
+      upper: [
+        { name: "Upper Quarterfinals", matches: uqf },
+        { name: "Upper Semifinals", matches: [usf1, usf2] },
+        { name: "Upper Final", matches: [uf] },
+      ],
+      lower: [
+        { name: "Lower Round 1", matches: [lr1a, lr1b] },
+        { name: "Lower Quarterfinals", matches: [lqf1, lqf2] },
+        { name: "Lower Semifinals", matches: [lsf] },
+        { name: "Lower Final", matches: [lf] },
+      ],
+      grand_final: [
+        { name: "Grand Final", matches: [gf] },
+      ],
+    };
+  }, [HARDCODED_GROUPS, liveResults]);
 
   const [view, setView] = useState("menu");
   const [groupSel, setGroupSel] = useState(null);
@@ -5476,7 +5530,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
     }
   };
 
-  const data = { groups: HARDCODED_GROUPS, playoffs: HARDCODED_PLAYOFFS };
+  const data = { groups: HARDCODED_GROUPS };
 
   // MENU: 2 gros boutons Groupes / Playoffs (fond gris uniforme)
   if (view === "menu") {
@@ -5560,45 +5614,15 @@ function ChampionsView({ T, accent, onViewMatch }) {
     );
   }
 
-  // PLAYOFFS: utilise le meme composant BracketTree que les autres stages
-  // (Kickoff/Stage 1/Masters) avec flèches SVG, mais data TBD partout.
   if (view === "playoffs") {
-    const tbdMatch = (id) => ({
-      match_id: id,
-      team1: { name: "TBD", is_winner: false },
-      team2: { name: "TBD", is_winner: false },
-      status: "upcoming",
-    });
-    const seedMatch = (id, t1Name) => ({
-      match_id: id,
-      team1: { name: t1Name, is_winner: false },
-      team2: { name: "TBD", is_winner: false },
-      status: "upcoming",
-    });
-    const tbdBracket = {
-      upper: [
-        { name: "Upper Quarterfinals", matches: [seedMatch("uqf1", "100 Thieves"), seedMatch("uqf2", "Team Vitality"), seedMatch("uqf3", "NRG"), seedMatch("uqf4", "Paper Rex")] },
-        { name: "Upper Semifinals", matches: [tbdMatch("usf1"), tbdMatch("usf2")] },
-        { name: "Upper Final", matches: [tbdMatch("uf")] },
-      ],
-      lower: [
-        { name: "Lower Round 1", matches: [tbdMatch("lr1a"), tbdMatch("lr1b")] },
-        { name: "Lower Quarterfinals", matches: [tbdMatch("lqf1"), tbdMatch("lqf2")] },
-        { name: "Lower Semifinals", matches: [tbdMatch("lsf1")] },
-        { name: "Lower Final", matches: [tbdMatch("lf")] },
-      ],
-      grand_final: [
-        { name: "Grand Final", matches: [tbdMatch("gf")] },
-      ],
-    };
     return (
       <div style={{ padding: "8px 0 120px" }}>
         <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
-        <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Démarre le 7 octobre 2026</div>
+        <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Upper / Lower · Bo3/Bo5</div>
         <DragScroll>
-          <BracketTree rounds={tbdBracket.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
-          <BracketTree rounds={tbdBracket.lower} accent="#ff4655" label="Lower Bracket" labelColor="#ff4655" isPlayoffs />
-          <BracketTree rounds={tbdBracket.grand_final} accent="#FFD700" label="Grande Finale" labelColor="#FFD700" isPlayoffs />
+          <BracketTree rounds={computedPlayoffs.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
+          <BracketTree rounds={computedPlayoffs.lower} accent="#ff4655" label="Lower Bracket" labelColor="#ff4655" isPlayoffs />
+          <BracketTree rounds={computedPlayoffs.grand_final} accent="#FFD700" label="Grande Finale" labelColor="#FFD700" isPlayoffs />
         </DragScroll>
       </div>
     );
