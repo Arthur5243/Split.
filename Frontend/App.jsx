@@ -11575,6 +11575,7 @@ export default function ClutchApp() {
   const [demoFinished, setDemoFinished] = useState(false);
   const demoTimerRef = useRef(null);
   const demoActiveRef = useRef(false);
+  const [demoScoreUpdated, setDemoScoreUpdated] = useState(false);
 
   const demoMatch = useMemo(() => {
     if (!isDemoPortable) return null;
@@ -11614,8 +11615,6 @@ export default function ClutchApp() {
       _isDemo: true,
     };
   }, [isDemoPortable, demoActive, demoFinished, demoScoreUpdated]);
-
-  const [demoScoreUpdated, setDemoScoreUpdated] = useState(false);
 
   function startDemoCountdown() {
     if (demoActive || demoFinished) return;
