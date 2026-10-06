@@ -13118,8 +13118,8 @@ export default function ClutchApp() {
               T={T}
               lang={currentLang}
               upcoming={upcomingMatches}
-              live={demoMatch && !demoFinished ? [demoMatch, ...liveMatches] : liveMatches}
-              results={demoMatch && demoFinished ? [demoMatch, ...resultsMatches] : resultsMatches}
+              live={demoMatch ? [demoMatch, ...liveMatches] : liveMatches}
+              results={resultsMatches}
               teamLogoCache={teamLogoCache}
               loading={dataLoading}
               error={dataError}
