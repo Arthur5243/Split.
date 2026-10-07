@@ -5181,6 +5181,21 @@ const BRACKET_STAGES = [
   { key: "champions", labelKey: "bracketChampions", color: "#ff4655" },
 ];
 
+// Case de sélection du bracket : active = même style que le bracket CS2,
+// inactive = fond neutre, mais le titre garde toujours sa couleur.
+function bracketTileStyle(color, active) {
+  return {
+    background: active ? `linear-gradient(135deg, ${color}20 0%, ${color}08 50%, #0d0d0d 100%)` : "#0d0d0d",
+    border: `1px solid ${active ? color + "55" : color + "1f"}`,
+    borderRadius: 12,
+    cursor: active ? "pointer" : "default",
+    display: "flex", flexDirection: "column", alignItems: "center",
+    boxShadow: active ? `0 4px 24px ${color}30, inset 0 1px 0 ${color}18` : "none",
+    transition: "transform 0.15s",
+    position: "relative",
+  };
+}
+
 const BRACKET_PHASES = [
   { key: "play_ins", labelKey: "bracketPlayIns", color: "#888" },
   { key: "playoffs", labelKey: "bracketPlayoffs", color: "#C4F000" },
@@ -5438,7 +5453,36 @@ function ChampionsView({ T, accent, onViewMatch }) {
       }
       return null;
     };
+    // Vrais matchs de playoffs PandaScore ("Upper Bracket Quarterfinal 1: 100T
+    // vs G2"...) rangés par case du bracket ; prioritaires sur le calcul.
+    const pandaSlots = {};
+    const slotCounters = {};
+    const PO_SLOTS = [
+      ["gf", /grand/], ["uqf", /upper.*quarter/], ["usf", /upper.*semi/], ["uf", /upper.*final/],
+      ["lr1", /lower.*round\s*1/], ["lqf", /lower.*quarter/], ["lsf", /lower.*semi/], ["lf", /lower.*final/],
+    ];
+    for (const pm of champGroupsData?.playoffs || []) {
+      const label = (pm.name || "").split(":")[0].toLowerCase();
+      const hit = PO_SLOTS.find(([, re]) => re.test(label));
+      if (!hit) continue;
+      const kind = hit[0];
+      slotCounters[kind] = (slotCounters[kind] || 0) + 1;
+      const num = (label.match(/(?:quarter|semi)\s*-?\s*finals?\s*(\d)/) || [])[1] || String(slotCounters[kind]);
+      const id = kind === "lr1" ? (num === "1" ? "lr1a" : "lr1b") : ["gf", "uf", "lsf", "lf"].includes(kind) ? (kind === "lsf" ? "lsf1" : kind) : kind + num;
+      pandaSlots[id] = pm;
+    }
     const mk = (id, t1, t2) => {
+      const pm = pandaSlots[id];
+      if (pm && pm.team1?.name && pm.team1.name !== "TBD" && pm.team2?.name && pm.team2.name !== "TBD") {
+        const st = (pm.status || "").toLowerCase();
+        const s1 = pm.team1.score, s2 = pm.team2.score;
+        const m = { match_id: id, team1: { name: pm.team1.name, is_winner: false }, team2: { name: pm.team2.name, is_winner: false }, status: st === "finished" ? "finished" : st === "running" ? "live" : "upcoming" };
+        if (m.status !== "upcoming" && s1 != null && s2 != null) {
+          m.team1.score = s1; m.team2.score = s2;
+          if (m.status === "finished") { m.team1.is_winner = s1 > s2; m.team2.is_winner = s2 > s1; }
+        }
+        return m;
+      }
       const m = { match_id: id, team1: { name: t1, is_winner: false }, team2: { name: t2, is_winner: false }, status: "upcoming" };
       const h = findHit(t1, t2);
       if (h) {
@@ -5455,16 +5499,16 @@ function ChampionsView({ T, accent, onViewMatch }) {
     const win = (m) => m.status === "finished" ? (m.team1.is_winner ? m.team1.name : m.team2.name) : "TBD";
     const lose = (m) => m.status === "finished" ? (m.team1.is_winner ? m.team2.name : m.team1.name) : "TBD";
     const uqf = [
-      mk("uqf1", gTop.A?.[0] || "TBD", gTop.D?.[1] || "TBD"),
-      mk("uqf2", gTop.B?.[0] || "TBD", gTop.C?.[1] || "TBD"),
-      mk("uqf3", gTop.C?.[0] || "TBD", gTop.B?.[1] || "TBD"),
-      mk("uqf4", gTop.D?.[0] || "TBD", gTop.A?.[1] || "TBD"),
+      mk("uqf1", gTop.A?.[0] || "TBD", gTop.C?.[1] || "TBD"),
+      mk("uqf2", gTop.B?.[0] || "TBD", gTop.D?.[1] || "TBD"),
+      mk("uqf3", gTop.D?.[0] || "TBD", gTop.A?.[1] || "TBD"),
+      mk("uqf4", gTop.C?.[0] || "TBD", gTop.B?.[1] || "TBD"),
     ];
     const usf1 = mk("usf1", win(uqf[0]), win(uqf[1]));
     const usf2 = mk("usf2", win(uqf[2]), win(uqf[3]));
     const uf = mk("uf", win(usf1), win(usf2));
-    const lr1a = mk("lr1a", lose(uqf[0]), lose(uqf[3]));
-    const lr1b = mk("lr1b", lose(uqf[1]), lose(uqf[2]));
+    const lr1a = mk("lr1a", lose(uqf[0]), lose(uqf[1]));
+    const lr1b = mk("lr1b", lose(uqf[2]), lose(uqf[3]));
     const lqf1 = mk("lqf1", win(lr1a), lose(usf2));
     const lqf2 = mk("lqf2", win(lr1b), lose(usf1));
     const lsf = mk("lsf1", win(lqf1), win(lqf2));
@@ -5486,14 +5530,13 @@ function ChampionsView({ T, accent, onViewMatch }) {
         { name: "Grand Final", matches: [gf] },
       ],
     };
-  }, [HARDCODED_GROUPS, liveResults]);
+  }, [HARDCODED_GROUPS, liveResults, champGroupsData]);
 
   const [view, setView] = useState("menu");
   const [groupSel, setGroupSel] = useState(null);
 
   // Style gris uniforme (comme les autres modules Settings/Calendar)
   const modBg = "#232323";
-  const modBorder = "1px solid #2f2f2f";
   const rowBg = "#1e1e1e";
   const rowBorder = "1px solid #2c2c2c";
 
@@ -5509,11 +5552,11 @@ function ChampionsView({ T, accent, onViewMatch }) {
   if (view === "menu") {
     return (
       <div style={{ padding: "12px 0 120px" }}>
-        <button onClick={() => setView("groups")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", marginBottom: 10, textAlign: "left" }}>
+        <button onClick={() => setView("groups")} style={{ ...bracketTileStyle("#ff4655", true), width: "100%", alignItems: "flex-start", padding: "22px", marginBottom: 10, textAlign: "left" }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
           <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
         </button>
-        <button onClick={() => setView("playoffs")} style={{ width: "100%", background: modBg, border: modBorder, borderRadius: 14, padding: "22px", cursor: "pointer", textAlign: "left" }}>
+        <button onClick={() => setView("playoffs")} style={{ ...bracketTileStyle("#FFD700", true), width: "100%", alignItems: "flex-start", padding: "22px", textAlign: "left" }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
           <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
         </button>
@@ -6002,15 +6045,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           {BRACKET_STAGES.map((s) => {
             const avail = stageAvailable(s.key);
             return (
-              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{
-                background: avail ? `linear-gradient(135deg, ${s.color}0A 0%, #111 60%)` : "#0d0d0d",
-                border: avail ? `1px solid ${s.color}30` : `1px solid ${s.color}15`,
-                borderRadius: 12, padding: "36px 12px", cursor: avail ? "pointer" : "default",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-                boxShadow: avail ? `0 4px 20px ${s.color}10` : "none",
-                transition: "transform 0.15s",
-                opacity: avail ? 1 : 0.55,
-              }}>
+              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ ...bracketTileStyle(s.color, avail), padding: "36px 12px", gap: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
               </button>
             );
@@ -6118,14 +6153,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           {REGIONS.map((r) => {
             const avail = regionAvailable(r.key);
             return (
-              <button key={r.key} onClick={() => avail && selectRegion(r.key)} style={{
-                background: avail ? `linear-gradient(135deg, ${r.accent}0A 0%, #111 60%)` : "#111",
-                border: avail ? `1px solid ${r.accent}25` : "1px solid rgba(255,255,255,0.04)",
-                borderRadius: 12, padding: "30px 12px", cursor: avail ? "pointer" : "default",
-                opacity: avail ? 1 : 0.2,
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                boxShadow: avail ? `0 4px 16px ${r.accent}10` : "none",
-              }}>
+              <button key={r.key} onClick={() => avail && selectRegion(r.key)} style={{ ...bracketTileStyle(r.accent, avail), padding: "30px 12px", gap: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 900, color: r.accent, letterSpacing: "0.06em", textTransform: "uppercase" }}>{regionLabel(r.key, T)}</span>
               </button>
             );

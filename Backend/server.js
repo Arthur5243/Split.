@@ -1514,30 +1514,32 @@ app.get("/api/champions-groups", async (req, res) => {
       return res.json(champGroupsCache.data);
     }
 
-    let tournaments;
-    try {
-      tournaments = await pandaFetch("/valorant/series/" + champSerie.id + "/tournaments");
-    } catch {
-      tournaments = champSerie.tournaments || [];
+    // Tous les matchs de la série en un seul appel (paginé), regroupés par
+    // tournoi PandaScore ("Group A".."Group D", "Playoffs").
+    const allMatches = [];
+    for (let page = 1; page <= 5; page++) {
+      const pageData = await pandaFetch(
+        "/valorant/matches?filter[serie_id]=" + champSerie.id + "&sort=scheduled_at&per_page=100&page=" + page
+      );
+      if (!Array.isArray(pageData) || pageData.length === 0) break;
+      allMatches.push(...pageData);
+      if (pageData.length < 100) break;
+      await sleep(200);
+    }
+    const byTournament = new Map();
+    for (const m of allMatches) {
+      const tName = m.tournament?.name || "";
+      if (!byTournament.has(tName)) byTournament.set(tName, []);
+      byTournament.get(tName).push(m);
     }
 
     const groups = [];
     const playoffMatches = [];
 
-    for (let ti = 0; ti < tournaments.length; ti++) {
-      const t = tournaments[ti];
-      const tName = (t.name || "").toLowerCase();
-      if (ti > 0) await sleep(300);
-
-      let matches;
-      try {
-        matches = await pandaFetch("/valorant/tournaments/" + t.id + "/matches?per_page=100&sort=scheduled_at");
-      } catch {
-        continue;
-      }
-
+    for (const [rawName, matches] of byTournament) {
+      const tName = rawName.toLowerCase();
       const isGroup = tName.includes("group");
-      const groupLetter = (tName.match(/group\s*([a-d])/i) || [])[1]?.toUpperCase();
+      const groupLetter = (tName.match(/group\s*([a-d])\b/i) || [])[1]?.toUpperCase();
 
       if (isGroup && groupLetter) {
         const teams = new Map();
@@ -1568,11 +1570,11 @@ app.get("/api/champions-groups", async (req, res) => {
           }
 
           const roundName = (m.name || "").toLowerCase();
-          let phase = "opening1";
+          let phase = null;
           if (roundName.includes("winner")) phase = "winners";
           else if (roundName.includes("elimination") || roundName.includes("loser")) phase = "elimination";
           else if (roundName.includes("decider")) phase = "decider";
-          else if (roundName.includes("opening") && roundName.includes("2")) phase = "opening2";
+          else phase = groupMatches.some((gm) => gm.phase === "opening1") ? "opening2" : "opening1";
 
           groupMatches.push({
             phase,
