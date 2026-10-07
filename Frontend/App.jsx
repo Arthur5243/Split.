@@ -353,7 +353,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Fais au moins 1 prono par jour pour maintenir ta flamme !", streakDays: "jours", streakBest: "Record", streakEarned: "Flamme maintenue !",
     nexiumBox: "Nexium Box", nexiumOpen: "Ouvrir", nexiumRare: "Rare", nexiumEpic: "Épique", nexiumLegendary: "Légendaire", nexiumUltra: "Ultra", nexiumNew: "Nouveau !", nexiumOwned: "Possédé",
     cashprizeTitle: "Cashprize", cashprizeRules: "Top 1, 2 et 3 gagnent un cashprize !", cashprizeUnlock: "Disponible à partir de 1 000 installations", cashprizeInstalls: "installations", cashprizeWinners: "Gagnants",
-    predLimit: "Tout est joué !", predRemaining: "pronos dispo", predActive: "pronos actifs", predLimitPopup: "Tu as utilisé tes 5 pronos du jour. Reviens demain ou attends qu'un match se termine !",
+    predLimit: "5 pronos épuisés", predRemaining: "pronos dispo", predActive: "pronos actifs", predLimitPopup: "Tes 5 pronos sont épuisés : attends la fin d'un match déjà pronostiqué pour pouvoir reparier.",
     slideMatchDay: "Match du jour", slideCommunity: "ont parié sur", slideCountdown: "Compte à rebours",
     rewardsFree: "Récompenses", rewardsCash: "Cashprize",
     inventoryTitle: "Inventaire", inventoryEmpty: "Aucun objet pour le moment",
@@ -443,7 +443,7 @@ const STR = {
     streakTitle: "Streak", streakDesc: "Make at least 1 prediction per day to keep your flame!", streakDays: "days", streakBest: "Best", streakEarned: "Flame kept!",
     nexiumBox: "Nexium Box", nexiumOpen: "Open", nexiumRare: "Rare", nexiumEpic: "Epic", nexiumLegendary: "Legendary", nexiumUltra: "Ultra", nexiumNew: "New!", nexiumOwned: "Owned",
     cashprizeTitle: "Cash Prize", cashprizeRules: "Top 1, 2, and 3 win a cash prize!", cashprizeUnlock: "Available from 1,000 installs", cashprizeInstalls: "installs", cashprizeWinners: "Winners",
-    predLimit: "All played!", predRemaining: "left", predActive: "active predictions", predLimitPopup: "You've used all 5 predictions for today. Come back tomorrow or wait for a match to finish!",
+    predLimit: "5 predictions used", predRemaining: "left", predActive: "active predictions", predLimitPopup: "Your 5 predictions are used up: wait for one of your predicted matches to finish to bet again.",
     slideMatchDay: "Match of the day", slideCommunity: "bet on", slideCountdown: "Countdown",
     rewardsFree: "Rewards", rewardsCash: "Cash Prize",
     inventoryTitle: "Inventory", inventoryEmpty: "No items yet",
@@ -1352,7 +1352,7 @@ function transformMatch(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
   const t2 = opponents[1] && opponents[1].opponent;
-  const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
+  const beginRaw = m.scheduled_at || m.begin_at || m.original_scheduled_at;
   const d = beginRaw ? new Date(beginRaw) : null;
   const regionText = [m.serie?.full_name, m.serie?.name, m.league?.name].filter(Boolean).join(" ");
   const region = classifyRegion(regionText);
@@ -1466,7 +1466,7 @@ function transformMatchCS2(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
   const t2 = opponents[1] && opponents[1].opponent;
-  const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
+  const beginRaw = m.scheduled_at || m.begin_at || m.original_scheduled_at;
   const d = beginRaw ? new Date(beginRaw) : null;
   const results = m.results || [];
   const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
@@ -1523,7 +1523,7 @@ function transformMatchRL(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
   const t2 = opponents[1] && opponents[1].opponent;
-  const beginRaw = m.begin_at || m.scheduled_at || m.original_scheduled_at;
+  const beginRaw = m.scheduled_at || m.begin_at || m.original_scheduled_at;
   const d = beginRaw ? new Date(beginRaw) : null;
   const results = m.results || [];
   const score1 = t1 ? (results.find((r) => r.team_id === t1.id) || {}).score : undefined;
@@ -2181,9 +2181,26 @@ function computeMapErrors(games, seriesA, seriesB, team1Name, team2Name) {
   return errors;
 }
 
-function TeamLogo({ code, apiLogo, accent, tbd }) {
-  const src = LOGOS[code] || apiLogo || null;
-  const pct = code === "NRG" ? "98%" : code === "WC" ? "91%" : "70%";
+// Logos par NOM complet d'équipe, prioritaires sur LOGOS (par code) : un même
+// code peut désigner deux équipes (ex "TS" = Team Secret en Valo, Team
+// Spirit en CS2).
+const NAME_LOGOS = {
+  "team spirit": "/logos/tspirit.png",
+  "spirit": "/logos/tspirit.png",
+  "team secret": "/logos/ts.png",
+  "9z": "/logos/9z.png",
+  "9z team": "/logos/9z.png",
+  "legacy": "/logos/legacy.png",
+  "tyloo": "/logos/tyloo.png",
+  "shinden": "/logos/shinden.png",
+  "astralis": "/logos/astralis.png",
+  "nemiga": "/logos/nemiga.png",
+  "nemiga gaming": "/logos/nemiga.png",
+};
+
+function TeamLogo({ code, name, apiLogo, accent, tbd }) {
+  const src = NAME_LOGOS[(name || "").toLowerCase().trim()] || LOGOS[code] || apiLogo || null;
+  const pct = code === "NRG" ? "98%" : code === "WC" ? "91%" : code === "BB" ? "95%" : "70%";
   return (
     <div
       className="rounded-2xl flex items-center justify-center font-black shrink-0"
@@ -2578,7 +2595,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {regionsAboveLogo && showRegion1 && (
               <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team1RegionCode}</span>
             )}
-            <TeamLogo code={match.team1} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
+            <TeamLogo code={match.team1} name={match.team1Name} apiLogo={resolvedLogo1} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds1 != null ? match.odds1 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5 min-w-0">
@@ -2657,7 +2674,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {regionsAboveLogo && showRegion2 && (
               <span style={{ background: "#CCF71D", color: "#111", fontSize: "8px", fontWeight: 900, letterSpacing: "0.02em", borderRadius: 4, padding: "1px 4px", lineHeight: 1.3, border: "1px solid #b8e018" }}>{team2RegionCode}</span>
             )}
-            <TeamLogo code={match.team2} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
+            <TeamLogo code={match.team2} name={match.team2Name} apiLogo={resolvedLogo2} accent={accent} tbd={tbd} />
             {!hideOdds && <span style={{ color: hasBg ? "#ddd" : "#777", fontSize: "10px", fontWeight: 600, ...txtStW }}>{match.odds2 != null ? match.odds2 + "%" : "?"}</span>}
           </div>
           <span className="flex items-center gap-1.5 flex-row-reverse min-w-0">
@@ -2683,6 +2700,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
           {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
+          {/* Un champ désactivé avale le clic : cette couche capte le tap pour
+              expliquer pourquoi on ne peut plus parier (5 pronos en cours). */}
+          {betLocked && !lockedByTime && remainingPreds <= 0 && (
+            <div onClick={(e) => { e.stopPropagation(); onLimitReached && onLimitReached(); }} style={{ position: "absolute", inset: 0, zIndex: 3, cursor: "pointer" }} />
+          )}
         </div>
       )}
       {lockedByTime && !finished && !running && !tbd && (
@@ -6067,15 +6089,20 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     else onBack();
   };
 
+  // Stage / Stage 2 : vlr.gg ne renvoie plus rien pour ces étapes, on affiche
+  // les résultats définitifs du Stage 2 (VCT_STAGE2_HISTORY).
+  const isStage2Static = (st) => st === "stage" || st === "stage2";
+
   const stageAvailable = (key) => {
     if (key === "champions") return true;
-    if (key === "stage2") return true; // Force actif meme si aucun event dispo cote VLR
+    if (isStage2Static(key)) return true;
     if (!vlrEvents) return false;
     if (key === "masters") return !!vlrEvents.masters;
     return Object.keys(vlrEvents[key] || {}).length > 0;
   };
 
   const regionAvailable = (rKey) => {
+    if (isStage2Static(stage)) return !!VCT_STAGE2_HISTORY[rKey];
     if (!vlrEvents || !stage) return false;
     return vlrEvents[stage] && !!vlrEvents[stage][rKey];
   };
@@ -6092,6 +6119,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const selectRegion = async (rKey) => {
     setRegion(rKey);
+    if (isStage2Static(stage)) return;
     let ev;
     if (stage === "masters") ev = vlrEvents.masters;
     else ev = vlrEvents[stage] && vlrEvents[stage][rKey];
@@ -6113,6 +6141,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   }, [stage, region, vlrEvents]);
 
   const currentData = React.useMemo(() => {
+    if (isStage2Static(stage) && region && VCT_STAGE2_HISTORY[region]) {
+      const h = VCT_STAGE2_HISTORY[region];
+      return { stage2: h, play_ins: { bracket: { upper: h.playIn.upper, lower: h.playIn.lower } }, playoffs: { bracket: h.playoffs } };
+    }
     if (!stage || !region || !vlrEvents) return null;
     let ev;
     if (stage === "masters") ev = vlrEvents.masters;
@@ -6132,11 +6164,11 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const headerColor = stageInfo?.color || phaseInfo?.color || (region && (REGIONS.find(r => r.key === region) || {}).accent) || "#fff";
 
-  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
+  const pageStylePlain = { minHeight: "100%", backgroundColor: "#000", paddingBottom: 80 };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
-    background: "#0A0A0A",
+    background: "#000",
     borderBottom: "1px solid rgba(255,255,255,0.06)",
     position: "sticky", top: 0, zIndex: 20,
   };
@@ -6214,29 +6246,61 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     );
   }
 
+  // --- Blocs d'affichage du Stage 2 (play-in / playoffs / bilan), partagés
+  // entre l'étape Stage / Stage 2 et l'Historique ---
+  const sectionTitle = (text, color) => (
+    <div style={{ padding: "18px 16px 4px", display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ width: 3, height: 16, borderRadius: 2, background: color }} />
+      <span style={{ fontSize: 13, fontWeight: 900, color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{text}</span>
+    </div>
+  );
+  const teamChips = (label, teams, color) => teams.length > 0 && (
+    <div style={{ padding: "0 16px 6px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+      <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+      {teams.map((t) => (
+        <span key={t} style={{ fontSize: 11, fontWeight: 800, color, background: color + "15", border: `1px solid ${color}40`, borderRadius: 6, padding: "3px 8px" }}>{t}</span>
+      ))}
+    </div>
+  );
+  const s2Tree = (rounds, accentR, label, labelColor, type) => rounds.length > 0 && (
+    <BracketTree rounds={rounds} accent={accentR} label={label} labelColor={labelColor} bracketType={type} predictions={predictions} />
+  );
+  const stage2PlayIn = (h, accentR) => (
+    <>
+      <DragScroll>{s2Tree(h.playIn.upper, accentR, T.bracketUpper || "Upper Bracket", accentR)}</DragScroll>
+      {teamChips("Qualifiés", h.playIn.upperQualified, "#CCF71D")}
+      <DragScroll>{s2Tree(h.playIn.lower, accentR, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}</DragScroll>
+      {teamChips("Qualifiés", h.playIn.lowerQualified, "#CCF71D")}
+    </>
+  );
+  const stage2Playoffs = (h, accentR) => (
+    <>
+      <DragScroll>
+        {s2Tree(h.playoffs.upper, accentR, T.bracketUpper || "Upper Bracket", accentR)}
+        {s2Tree(h.playoffs.lower, accentR, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
+        {s2Tree(h.playoffs.grand_final, accentR, T.bracketGrandFinal || "Grand Final", "#FFD700")}
+      </DragScroll>
+      <div style={{ margin: "0 16px 32px", background: "#111", border: "1px solid #FFD70030", borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 900, color: "#FFD700" }}>Champion : {h.champion}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>Qualified Champions : {h.qualified.join(", ")}</div>
+        {h.points.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>Points</span>
+            {h.points.map((pt) => (
+              <span key={pt} style={{ fontSize: 11, fontWeight: 800, color: "#CCF71D", background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.25)", borderRadius: 6, padding: "3px 8px" }}>{pt}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   // --- Historique : uniquement le Stage 2 (résultats définitifs) ---
   if (showHistory) {
     const s2Color = "#FF6B35";
-    const sectionTitle = (text, color) => (
-      <div style={{ padding: "18px 16px 4px", display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 3, height: 16, borderRadius: 2, background: color }} />
-        <span style={{ fontSize: 13, fontWeight: 900, color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{text}</span>
-      </div>
-    );
-    const teamChips = (label, teams, color) => teams.length > 0 && (
-      <div style={{ padding: "0 16px 6px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
-        {teams.map((t) => (
-          <span key={t} style={{ fontSize: 11, fontWeight: 800, color, background: color + "15", border: `1px solid ${color}40`, borderRadius: 6, padding: "3px 8px" }}>{t}</span>
-        ))}
-      </div>
-    );
     if (historyRegion) {
       const h = VCT_STAGE2_HISTORY[historyRegion];
       const accentR = (REGIONS.find((r) => r.key === historyRegion) || {}).accent || s2Color;
-      const tree = (rounds, label, labelColor, type) => rounds.length > 0 && (
-        <BracketTree rounds={rounds} accent={accentR} label={label} labelColor={labelColor} bracketType={type} predictions={predictions} />
-      );
       return (
         <div style={pageStylePlain}>
           <div style={headerStyle}>
@@ -6244,32 +6308,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
             {titleSpan("Stage 2 · " + regionLabel(historyRegion, T), accentR)}
           </div>
           {sectionTitle("Play-In", accentR)}
-          <DragScroll>
-            {tree(h.playIn.upper, T.bracketUpper || "Upper Bracket", accentR)}
-          </DragScroll>
-          {teamChips("Qualifiés", h.playIn.upperQualified, "#CCF71D")}
-          <DragScroll>
-            {tree(h.playIn.lower, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
-          </DragScroll>
-          {teamChips("Qualifiés", h.playIn.lowerQualified, "#CCF71D")}
+          {stage2PlayIn(h, accentR)}
           {sectionTitle("Playoffs", "#FFD700")}
-          <DragScroll>
-            {tree(h.playoffs.upper, T.bracketUpper || "Upper Bracket", accentR)}
-            {tree(h.playoffs.lower, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
-            {tree(h.playoffs.grand_final, T.bracketGrandFinal || "Grand Final", "#FFD700")}
-          </DragScroll>
-          <div style={{ margin: "0 16px 32px", background: "#111", border: "1px solid #FFD70030", borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 900, color: "#FFD700" }}>Champion : {h.champion}</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>Qualified Champions : {h.qualified.join(", ")}</div>
-            {h.points.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>Points</span>
-                {h.points.map((pt) => (
-                  <span key={pt} style={{ fontSize: 11, fontWeight: 800, color: "#CCF71D", background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.25)", borderRadius: 6, padding: "3px 8px" }}>{pt}</span>
-                ))}
-              </div>
-            )}
-          </div>
+          {stage2Playoffs(h, accentR)}
         </div>
       );
     }
@@ -6429,6 +6470,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>;
     if (!currentData) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
+    if (currentData.stage2) {
+      return phase === "play_ins" ? stage2PlayIn(currentData.stage2, accent) : stage2Playoffs(currentData.stage2, accent);
+    }
+
     if (phase === "play_ins") {
       const bracket = currentData.play_ins?.bracket;
       const hasBracket = bracket && (bracket.upper?.length > 0 || bracket.lower?.length > 0);
@@ -6571,8 +6616,8 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   }
 
 
-  const pageStyle = { minHeight: "100vh", backgroundColor: "#0a0a0a", paddingBottom: 80 };
-  const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
+  const pageStyle = { minHeight: "100vh", backgroundColor: "#000", paddingBottom: 80 };
+  const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#000", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
   const backBtnStyle = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#999", cursor: "pointer", padding: 6, borderRadius: 50, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, flexShrink: 0 };
   const backIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>;
   const chevron = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
@@ -6880,11 +6925,11 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     </>;
   };
 
-  const pageStylePlain = { minHeight: "100%", backgroundColor: "#0a0a0a", paddingBottom: 80 };
+  const pageStylePlain = { minHeight: "100%", backgroundColor: "#000", paddingBottom: 80 };
   const headerStyle = {
     display: "flex", alignItems: "center", gap: 12,
     padding: "16px 16px 14px",
-    background: "#0A0A0A",
+    background: "#000",
     borderBottom: "1px solid rgba(255,255,255,0.06)",
     position: "sticky", top: 0, zIndex: 20,
   };
@@ -10101,8 +10146,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             ))}
           </div>
           {/* Bouton Discussion gros a droite quand slide = Communaute */}
-          {carouselSlide === 1 && (
-            <button onClick={() => setCommunityNavTab("discussion")} style={{ position: "relative", background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+          {/* Toujours rendu (caché sur Classement) : l'en-tête garde la même
+              hauteur sur les 2 slides, rien ne se décale au swipe. */}
+            <button onClick={() => setCommunityNavTab("discussion")} tabIndex={carouselSlide === 1 ? 0 : -1} aria-hidden={carouselSlide !== 1} style={{ position: "relative", background: "linear-gradient(135deg, rgba(204,247,29,0.15), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "7px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, visibility: carouselSlide === 1 ? "visible" : "hidden" }}>
               <MessageCircle size={14} color="#CCF71D" />
               <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em" }}>Discussion</span>
               {(() => {
@@ -10121,7 +10167,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 return null;
               })()}
             </button>
-          )}
         </div>
       </div>
 
@@ -10229,7 +10274,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const uPseudoColor = isMe ? "#fff" : "#ccc";
                   const rowBg = uBanner
                     ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
-                    : (isMe ? "#141414" : "transparent");
+                    : (isMe ? "#161616" : "#111");
                   return (
                     <button key={u.id} onClick={() => {
                       if (isMe) { setProfileView(true); return; }
@@ -10240,7 +10285,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                     }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={{
                       position: "relative", overflow: "hidden", textAlign: "left",
                       background: rowBg,
-                      border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #262626" : "none"),
+                      border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #2a2a2a" : "1px solid #1c1c1c"),
                     }}>
                       <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
                       <div className="flex flex-col items-center shrink-0" style={{ position: "relative", width: 42 }}>
