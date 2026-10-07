@@ -59,7 +59,7 @@ const NEWS_IMAGE = "/news-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.webp";
-const CLASSEMENT_BANNER = "/rewards-banner.png";
+const CLASSEMENT_BANNER = "/rewards-banner.png?v=2";
 const REWARDS_INITIAL_RANGE = 12;
 
 // Logos de catégorie (nav du bas + onglets à venir), dans l'ordre
@@ -2280,7 +2280,7 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
-function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached, demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished }) {
+function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
   // terminé (délai de leur côté sur les matchs "past"), alors que la même
@@ -2873,11 +2873,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <button onClick={() => { if (!expanded && !tbd) { setScoresRevealed(true); setLiveRevealed(true); } onToggleExpand(match.id); }} disabled={tbd} style={{ position: "absolute", left: "50%", top: "50%", transform: `translate(-50%, -50%) ${expanded ? "rotate(180deg)" : "rotate(0deg)"}`, background: "transparent", border: "none", cursor: "pointer", padding: "4px 8px", zIndex: 1, transition: "transform 0.25s ease" }}>
               <ChevronDown size={16} color={accent} />
             </button>
-            {demoMatchId && String(match.id) === demoMatchId && !demoActive && !demoFinished && (
-              <button onClick={(e) => { e.stopPropagation(); onStartDemo && onStartDemo(); }} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "#CCF71D", color: "#000", fontSize: 11, fontWeight: 900, border: "none", borderRadius: 8, padding: "5px 14px", cursor: "pointer", zIndex: 2, letterSpacing: "0.02em" }}>
-                Démarrer
-              </button>
-            )}
           </div>
 
           {expanded && !tbd && (
@@ -6904,7 +6899,15 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   );
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached, demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished }) {
+// Un match terminé sans score de série n'attend dans "à venir" que 48h après
+// son début ; passé ce délai il bascule dans "Terminé" avec ce qu'on a.
+const RESULT_GRACE_MS = 48 * 60 * 60 * 1000;
+function isWithinResultGrace(m) {
+  const t = m.day ? new Date(m.day + "T" + (m.time || "00:00") + ":00Z").getTime() : NaN;
+  return Number.isFinite(t) && Date.now() - t < RESULT_GRACE_MS;
+}
+
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
   if (showBracketPage) {
     return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
@@ -6927,8 +6930,8 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
   // passé laquelle on l'affiche quand même dans "Terminé" avec ce qu'on a,
   // plutôt que de le laisser coincé indéfiniment dans "à venir".
   const hasSeriesScore = (m) => m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0);
-  const resultsReady = results.filter((m) => hasSeriesScore(m));
-  const resultsPending = results.filter((m) => !hasSeriesScore(m));
+  const resultsReady = results.filter((m) => hasSeriesScore(m) || !isWithinResultGrace(m));
+  const resultsPending = results.filter((m) => !hasSeriesScore(m) && isWithinResultGrace(m));
 
   // dédoublonne par id : un match tout juste terminé peut, le temps d'un
   // poll, apparaître à la fois dans `live` (PandaScore n'a pas encore
@@ -6942,7 +6945,10 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
     return [...seen.values()];
   }
 
-  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...live, ...upcoming]);
+  const readyIds = new Set(resultsReady.map((m) => String(m.id)));
+  const liveSafe = live.filter((m) => !readyIds.has(String(m.id)));
+  const upcomingSafe = upcoming.filter((m) => !readyIds.has(String(m.id)));
+  const source = showFinished ? resultsReady : dedupeById([...resultsPending, ...liveSafe, ...upcomingSafe]);
 
   const combined = source
     .filter((m) => m.region && selectedRegions.includes(m.region))
@@ -7034,7 +7040,7 @@ function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleSt
                   {dayLabel(m.day, lang, T)}
                 </div>
               )}
-              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} onLimitReached={onLimitReached} {...(demoMatchId && String(m.id) === demoMatchId ? { demoMatchId, onStartDemo, demoCountdown, demoActive, demoFinished } : {})} />
+              <MatchCard match={m} accent={m._accent} pred={predictions[m.id]} onSeriesChange={onSeriesChange} onToggleExpand={toggleExpand} onScoreChange={changeScore} T={T} lang={lang} teamLogoCache={teamLogoCache} notifActive={isMatchNotifOn(m.id, m.region)} onToggleNotif={toggleMatchNotif} remainingPreds={remainingPreds} onLimitReached={onLimitReached} />
             </React.Fragment>
           );
         })}
@@ -7130,8 +7136,8 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   // pour ne jamais montrer un faux 0-0.
   const hasSeriesScore = (m) => m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0);
   const hasRealMapScore = (m) => Array.isArray(m.map_scores) && m.map_scores.length > 0;
-  const resultsReady = results.filter((m) => hasSeriesScore(m));
-  const resultsPending = results.filter((m) => !hasSeriesScore(m));
+  const resultsReady = results.filter((m) => hasSeriesScore(m) || !isWithinResultGrace(m));
+  const resultsPending = results.filter((m) => !hasSeriesScore(m) && isWithinResultGrace(m));
 
   function dedupeById(list) {
     const seen = new Map();
@@ -9141,6 +9147,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [lbPage, setLbPage] = useState(0);
   const [friendsList, setFriendsList] = useState([]);
   const carouselDragX = useRef(null);
+  const carouselDragY = useRef(null);
+  const carouselAxis = useRef(null);
   const [registeredCount, setRegisteredCount] = useState(0);
   useEffect(() => {
     fetch(API_BASE + "/api/auth/count").then(r => r.json()).then(d => { if (d.count != null) setRegisteredCount(d.count); }).catch(() => {});
@@ -9841,13 +9849,33 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     );
   }
 
-  function onCarouselDown(e) { carouselDragX.current = e.clientX ?? e.touches?.[0]?.clientX ?? null; }
-  function onCarouselUp(e) {
-    if (carouselDragX.current === null) return;
-    const endX = e.clientX ?? e.changedTouches?.[0]?.clientX ?? 0;
-    const dx = endX - carouselDragX.current;
-    if (Math.abs(dx) > 40) userSlide(dx < 0 ? Math.min(1, carouselSlide + 1) : Math.max(0, carouselSlide - 1));
+  // Le geste est verrouillé sur un axe dès les premiers pixels : un scroll
+  // vertical (même un peu en diagonale) ne doit jamais changer de slide.
+  function resetCarouselDrag() {
     carouselDragX.current = null;
+    carouselDragY.current = null;
+    carouselAxis.current = null;
+  }
+  function onCarouselDown(e) {
+    carouselDragX.current = e.clientX ?? null;
+    carouselDragY.current = e.clientY ?? null;
+    carouselAxis.current = null;
+  }
+  function onCarouselMove(e) {
+    if (carouselDragX.current == null || carouselDragY.current == null) return;
+    const dx = e.clientX - carouselDragX.current;
+    const dy = e.clientY - carouselDragY.current;
+    if (!carouselAxis.current && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      carouselAxis.current = Math.abs(dx) > Math.abs(dy) * 1.5 ? "x" : "y";
+    }
+    if (carouselAxis.current === "x" && Math.abs(dx) > 15) e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function onCarouselUp(e) {
+    if (carouselDragX.current == null || carouselAxis.current !== "x") { resetCarouselDrag(); return; }
+    const dx = e.clientX - carouselDragX.current;
+    const dy = e.clientY - carouselDragY.current;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) userSlide(dx < 0 ? Math.min(1, carouselSlide + 1) : Math.max(0, carouselSlide - 1));
+    resetCarouselDrag();
   }
 
   return (
@@ -9894,14 +9922,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       <div
         style={{ display: "flex", alignItems: "stretch", width: "200%", minHeight: "calc(100dvh - 180px)", transform: `translateX(-${carouselSlide * 50}%)`, transition: Date.now() < carouselAnimUntil.current ? "transform 0.35s ease" : "none", touchAction: "pan-y", userSelect: "none" }}
         onPointerDown={onCarouselDown}
-        onPointerMove={(e) => {
-          // Track du geste pour detection horizontal swipe explicite
-          if (carouselDragX.current == null) return;
-          const dx = (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - carouselDragX.current;
-          if (Math.abs(dx) > 15) e.currentTarget.setPointerCapture?.(e.pointerId);
-        }}
+        onPointerMove={onCarouselMove}
         onPointerUp={onCarouselUp}
-        onPointerCancel={onCarouselUp}
+        onPointerCancel={resetCarouselDrag}
       >
         {/* SLIDE 1: Classement */}
         <div style={{ width: "50%", flexShrink: 0, ...(carouselSlide !== 0 && settledSlide === carouselSlide ? { height: 0, overflow: "hidden" } : {}) }}>
@@ -9925,7 +9948,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "20% center", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center 30%", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
               <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
@@ -10308,7 +10331,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ width: "115%", height: "102%", objectFit: "cover", objectPosition: "0% center", marginLeft: "-2%", marginTop: "-1%" }} />
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 30%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -11370,6 +11393,7 @@ export default function ClutchApp() {
       // prédiction (scores saisis, odds...) est conservé tel quel.
       const reset = {};
       for (const [id, pred] of Object.entries(stored)) {
+        if (id.startsWith("demo-")) continue;
         reset[id] = { ...pred, expanded: false };
       }
       return reset;
@@ -11383,7 +11407,7 @@ export default function ClutchApp() {
   });
   const [settledMatchIds, setSettledMatchIds] = useState(() => {
     try {
-      return new Set(JSON.parse(localStorage.getItem("split_settled_matches") || "[]"));
+      return new Set(JSON.parse(localStorage.getItem("split_settled_matches") || "[]").filter((id) => !String(id).startsWith("demo-")));
     } catch (e) {
       return new Set();
     }
@@ -11553,143 +11577,6 @@ export default function ClutchApp() {
     }
   }, [isCaffioraDemo]);
 
-  const isDemoPortable = authUser?.email === "portable.coffee.maker.young@gmail.com";
-  const DEMO_MATCH_ID = "demo-tl-prx-2026";
-  const [demoActive, setDemoActive] = useState(false);
-  const [demoCountdown, setDemoCountdown] = useState(null);
-  const [demoFinished, setDemoFinished] = useState(false);
-  const demoTimerRef = useRef(null);
-  const demoActiveRef = useRef(false);
-  const [demoScoreUpdated, setDemoScoreUpdated] = useState(false);
-
-  const demoMatch = useMemo(() => {
-    if (!isDemoPortable) return null;
-    const today = new Date();
-    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-    return {
-      id: DEMO_MATCH_ID,
-      day,
-      time: "11:00",
-      beginAt: day + "T11:00:00Z",
-      league: "VCT",
-      phase: "Champions 2026",
-      tournamentName: "Champions 2026",
-      team1: "TL",
-      team2: "PR",
-      team1Name: "Liquid",
-      team2Name: "Paper Rex",
-      team1Logo: "https://cdn.pandascore.co/images/team/image/125977/team_liquid_valorant_2023_allmode.png",
-      team2Logo: "https://cdn.pandascore.co/images/team/image/128477/paper_rex_2022_allmode.png",
-      region: "PACIFIC",
-      status: demoFinished ? "finished" : "running",
-      score1: 1,
-      score2: demoScoreUpdated ? 2 : 1,
-      odds1: 33,
-      odds2: 67,
-      tier: "VCT",
-      map_scores: demoFinished ? [
-        { map: "Ascent", score1: 4, score2: 13 },
-        { map: "Haven", score1: 13, score2: 7 },
-        { map: "Lotus", score1: 10, score2: 13 },
-      ] : null,
-      live_map_scores: demoFinished ? null : [
-        { map: "Ascent", score1: 4, score2: 13 },
-        { map: "Haven", score1: 13, score2: 7 },
-        { map: "Lotus", score1: 10, score2: demoScoreUpdated ? 13 : 12 },
-      ],
-      number_of_games: 3,
-      _isDemo: true,
-    };
-  }, [isDemoPortable, demoActive, demoFinished, demoScoreUpdated]);
-
-  function startDemoCountdown() {
-    if (demoActive || demoFinished) return;
-    setDemoActive(true);
-    demoActiveRef.current = true;
-    setDemoCountdown(10);
-    let t = 10;
-    demoTimerRef.current = setInterval(() => {
-      t--;
-      setDemoCountdown(t);
-      if (t <= 0) {
-        clearInterval(demoTimerRef.current);
-        demoTimerRef.current = null;
-        setDemoScoreUpdated(true);
-        setTimeout(() => setDemoFinished(true), 10000);
-      }
-    }, 1000);
-  }
-
-  useEffect(() => {
-    return () => { if (demoTimerRef.current) clearInterval(demoTimerRef.current); };
-  }, []);
-
-  useEffect(() => {
-    if (!isDemoPortable) return;
-    setPredictions(prev => {
-      const next = { ...prev };
-      if (!next[DEMO_MATCH_ID]) {
-        next[DEMO_MATCH_ID] = {
-          seriesA: "1",
-          seriesB: "2",
-          expanded: false,
-          games: [
-            { a: "4", b: "13" },
-            { a: "13", b: "6" },
-            { a: "10", b: "13" },
-          ],
-        };
-      }
-      if (!next[DEMO_CS2_MATCH_ID]) {
-        next[DEMO_CS2_MATCH_ID] = {
-          seriesA: "2",
-          seriesB: "1",
-          expanded: false,
-          games: [
-            { a: "13", b: "7" },
-            { a: "11", b: "13" },
-            { a: "13", b: "6" },
-          ],
-        };
-      }
-      return next;
-    });
-  }, [isDemoPortable]);
-
-  const DEMO_CS2_MATCH_ID = "demo-9z-b8-2026";
-  const demoMatchCs2 = useMemo(() => {
-    if (!isDemoPortable) return null;
-    const today = new Date();
-    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-    return {
-      id: DEMO_CS2_MATCH_ID,
-      day,
-      time: "14:00",
-      beginAt: day + "T14:00:00Z",
-      league: "ESL",
-      phase: "Pro League Season 21",
-      tournamentName: "Pro League Season 21",
-      team1: "9Z",
-      team2: "B8",
-      team1Name: "9z",
-      team2Name: "B8",
-      team1Logo: null,
-      team2Logo: null,
-      team1Region: "AMERICAS",
-      team2Region: "EUROPE",
-      status: "running",
-      score1: 1,
-      score2: 1,
-      odds1: 45,
-      odds2: 55,
-      tier: "ESL",
-      map_scores: null,
-      live_map_scores: null,
-      number_of_games: 3,
-      _isDemo: true,
-    };
-  }, [isDemoPortable]);
-
   const [showIntroCards, setShowIntroCards] = useState(false);
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
@@ -11714,7 +11601,6 @@ export default function ClutchApp() {
   };
   const ACTIVE_THRESHOLD_MS = 30 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
-    if (demoActiveRef.current) return;
     if (showAuthRef.current) return;
     const now = Date.now();
     if (now - lastAdAtRef.current < getAdCooldown()) return;
@@ -11968,9 +11854,133 @@ export default function ClutchApp() {
     setNotifications(notifs);
   }, [liveMatches, cs2LiveMatches, rlLiveMatches, upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
 
+  // Synchro des pronos entre appareils d'un même compte (/api/sync). Chaque
+  // prono porte un horodatage de dernière modif (split_predictions_ts) : à la
+  // fusion, le plus récent gagne ; les matchs réglés s'additionnent. Les
+  // points étant recalculés depuis (pronos + matchs réglés), téléphone et PC
+  // retombent sur le même total.
+  const predTsRef = useRef((() => { try { return JSON.parse(localStorage.getItem("split_predictions_ts") || "{}"); } catch { return {}; } })());
+  const predContentRef = useRef(null);
+  const predictionsRef = useRef(predictions);
+  const settledRef = useRef(settledMatchIds);
+  const authUserIdRef = useRef(authUser?.id || null);
+  const syncReadyRef = useRef(false);
+  const syncPushTimerRef = useRef(null);
+  predictionsRef.current = predictions;
+  settledRef.current = settledMatchIds;
+  authUserIdRef.current = authUser?.id || null;
+
+  const predContentKey = (p) => {
+    if (!p) return "";
+    const { expanded, ...rest } = p;
+    return JSON.stringify(rest);
+  };
+  const snapshotPredContent = (preds) => Object.fromEntries(Object.entries(preds).map(([id, p]) => [id, predContentKey(p)]));
+  const syncToken = () => localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
+
+  function applyRemoteSync(data) {
+    if (!data || typeof data !== "object") return;
+    const remotePreds = data.predictions && typeof data.predictions === "object" ? data.predictions : {};
+    setPredictions((prev) => {
+      let next = null;
+      for (const [id, rp] of Object.entries(remotePreds)) {
+        if (!rp || id.startsWith("demo-")) continue;
+        const rts = Number(rp.ts) || 0;
+        if (prev[id] && rts <= (predTsRef.current[id] || 0)) continue;
+        const { ts, ...clean } = rp;
+        if (prev[id] && predContentKey(prev[id]) === predContentKey(clean)) continue;
+        next = next || { ...prev };
+        next[id] = { ...clean, expanded: (prev[id] && prev[id].expanded) || false };
+        predTsRef.current[id] = rts;
+      }
+      if (!next) return prev;
+      predContentRef.current = snapshotPredContent(next);
+      try { localStorage.setItem("split_predictions_ts", JSON.stringify(predTsRef.current)); } catch {}
+      return next;
+    });
+    const remoteSettled = Array.isArray(data.settled) ? data.settled.map(String).filter((id) => !id.startsWith("demo-")) : [];
+    setSettledMatchIds((prev) => {
+      const missing = remoteSettled.filter((id) => !prev.has(id));
+      if (missing.length === 0) return prev;
+      const next = new Set(prev);
+      missing.forEach((id) => next.add(id));
+      try { localStorage.setItem("split_settled_matches", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }
+
+  async function pushSync() {
+    const token = syncToken();
+    if (!authUserIdRef.current || !token || !syncReadyRef.current) return;
+    const preds = {};
+    for (const [id, p] of Object.entries(predictionsRef.current)) {
+      if (!p || id.startsWith("demo-")) continue;
+      const { expanded, ...rest } = p;
+      preds[id] = { ...rest, ts: predTsRef.current[id] || 0 };
+    }
+    try {
+      const r = await fetch(API_BASE + "/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ predictions: preds, settled: [...settledRef.current] }),
+      });
+      if (r.ok) applyRemoteSync(await r.json());
+    } catch {}
+  }
+
+  function schedulePush() {
+    if (syncPushTimerRef.current) clearTimeout(syncPushTimerRef.current);
+    syncPushTimerRef.current = setTimeout(() => { syncPushTimerRef.current = null; pushSync(); }, 1200);
+  }
+
+  async function pullSync() {
+    const token = syncToken();
+    if (!authUserIdRef.current || !token) return;
+    try {
+      const r = await fetch(API_BASE + "/api/sync", { headers: { Authorization: `Bearer ${token}` } });
+      if (!r.ok) return;
+      applyRemoteSync(await r.json());
+      syncReadyRef.current = true;
+      schedulePush();
+    } catch {}
+  }
+
   useEffect(() => {
     localStorage.setItem("split_predictions", JSON.stringify(predictions));
+    const prev = predContentRef.current;
+    const now = Date.now();
+    let changed = false;
+    for (const [id, p] of Object.entries(predictions)) {
+      if (prev && prev[id] !== predContentKey(p)) {
+        predTsRef.current[id] = now;
+        changed = true;
+      }
+    }
+    predContentRef.current = snapshotPredContent(predictions);
+    if (changed) {
+      try { localStorage.setItem("split_predictions_ts", JSON.stringify(predTsRef.current)); } catch {}
+      schedulePush();
+    }
   }, [predictions]);
+
+  useEffect(() => {
+    if (syncReadyRef.current) schedulePush();
+  }, [settledMatchIds]);
+
+  useEffect(() => {
+    syncReadyRef.current = false;
+    if (!authUser?.id) return;
+    pullSync();
+    const onVisible = () => { if (document.visibilityState === "visible") pullSync(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    const iv = setInterval(pullSync, 90 * 1000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      clearInterval(iv);
+    };
+  }, [authUser?.id]);
 
   let activePredCount = 0;
   for (const [id, p] of Object.entries(predictions)) {
@@ -13164,7 +13174,7 @@ export default function ClutchApp() {
               T={T}
               lang={currentLang}
               upcoming={upcomingMatches}
-              live={demoMatch ? [demoMatch, ...liveMatches] : liveMatches}
+              live={liveMatches}
               results={resultsMatches}
               teamLogoCache={teamLogoCache}
               loading={dataLoading}
@@ -13178,11 +13188,6 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
               onLimitReached={() => setShowLimitPopup(true)}
-              demoMatchId={isDemoPortable ? DEMO_MATCH_ID : null}
-              onStartDemo={startDemoCountdown}
-              demoCountdown={demoCountdown}
-              demoActive={demoActive}
-              demoFinished={demoFinished}
             />
           </div>
           <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
@@ -13198,7 +13203,7 @@ export default function ClutchApp() {
               T={T}
               lang={currentLang}
               upcoming={cs2UpcomingMatches}
-              live={demoMatchCs2 ? [demoMatchCs2, ...cs2LiveMatches] : cs2LiveMatches}
+              live={cs2LiveMatches}
               results={cs2ResultsMatches}
               teamLogoCache={cs2TeamLogoCache}
               loading={cs2DataLoading}

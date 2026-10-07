@@ -451,7 +451,64 @@ export function consumePseudoChange(userId) {
   }
 }
 
+// Pronostics + matchs réglés d'un compte, partagés entre tous ses appareils.
+// predictions : { matchId: { seriesA, seriesB, games, odds1, odds2, ts } }
+// settled : [matchId] (paris déjà réglés). Fusion : le prono le plus récent
+// (ts) gagne, les matchs réglés s'additionnent.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_sync (
+    user_id TEXT PRIMARY KEY,
+    predictions TEXT NOT NULL DEFAULT '{}',
+    settled TEXT NOT NULL DEFAULT '[]',
+    updated_at TEXT
+  )
+`);
+
+function isSyncableMatchId(id) {
+  return typeof id === "string" && id.length > 0 && id.length < 80 && !id.startsWith("demo-");
+}
+
+export function getUserSync(userId) {
+  const row = db.prepare(`SELECT predictions, settled, updated_at FROM user_sync WHERE user_id = ?`).get(userId);
+  if (!row) return { predictions: {}, settled: [] };
+  const user = db.prepare(`SELECT wipe_at FROM users WHERE id = ?`).get(userId);
+  if (user?.wipe_at && (!row.updated_at || user.wipe_at > row.updated_at)) {
+    db.prepare(`DELETE FROM user_sync WHERE user_id = ?`).run(userId);
+    return { predictions: {}, settled: [] };
+  }
+  let predictions = {}, settled = [];
+  try { predictions = JSON.parse(row.predictions) || {}; } catch {}
+  try { settled = JSON.parse(row.settled) || []; } catch {}
+  return { predictions, settled };
+}
+
+export function mergeUserSync(userId, incoming) {
+  const current = getUserSync(userId);
+  const predictions = { ...current.predictions };
+  const inPreds = incoming && typeof incoming.predictions === "object" && incoming.predictions ? incoming.predictions : {};
+  for (const [id, p] of Object.entries(inPreds)) {
+    if (!isSyncableMatchId(id) || !p || typeof p !== "object") continue;
+    const cur = predictions[id];
+    if (!cur || (Number(p.ts) || 0) > (Number(cur.ts) || 0)) {
+      const { expanded, ...clean } = p;
+      predictions[id] = clean;
+    }
+  }
+  const settledSet = new Set(current.settled.filter(isSyncableMatchId));
+  for (const id of Array.isArray(incoming?.settled) ? incoming.settled : []) {
+    if (isSyncableMatchId(String(id))) settledSet.add(String(id));
+  }
+  for (const id of Object.keys(predictions)) if (!isSyncableMatchId(id)) delete predictions[id];
+  const settled = [...settledSet];
+  db.prepare(`
+    INSERT INTO user_sync (user_id, predictions, settled, updated_at) VALUES (?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET predictions = excluded.predictions, settled = excluded.settled, updated_at = excluded.updated_at
+  `).run(userId, JSON.stringify(predictions), JSON.stringify(settled), new Date().toISOString());
+  return { predictions, settled };
+}
+
 export function deleteUser(userId) {
+  db.prepare(`DELETE FROM user_sync WHERE user_id = ?`).run(userId);
   db.prepare(`DELETE FROM follows WHERE follower_id = ? OR followed_id = ?`).run(userId, userId);
   db.prepare(`DELETE FROM profile_views WHERE viewer_id = ? OR viewed_id = ?`).run(userId, userId);
   db.prepare(`DELETE FROM referrals WHERE referrer_id = ? OR referred_id = ?`).run(userId, userId);

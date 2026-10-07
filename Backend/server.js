@@ -20,6 +20,7 @@ import {
   getMapScoresState,
   resetAbandonedMapScores,
   resetInconsistentMapScores,
+  purgeIncompleteFinishedMatches,
 } from "./match-history-store.js";
 import { startScraper, getScrapedScores, liveScrapedScores } from "./vlr-live-scraper.js";
 import { startHltvScraper } from "./hltv-live-scraper.js";
@@ -325,6 +326,12 @@ const STALE_LIVE_THRESHOLD_MS = 30 * 60 * 1000; // 30 min
 // rattrapent leur retard.
 const ABSOLUTE_HIDE_THRESHOLD_MS = 4 * 60 * 60 * 1000; // 4h
 
+function isCompleteValoMap(mp) {
+  const s1 = Number(mp?.score1), s2 = Number(mp?.score2);
+  if (!Number.isFinite(s1) || !Number.isFinite(s2)) return false;
+  return Math.max(s1, s2) >= 13 && Math.abs(s1 - s2) >= 2;
+}
+
 // Double vérification automatique : pour chaque match encore "running" chez
 // PandaScore depuis plus d'1h30, on va voir sur vlr.gg si la série est en
 // fait déjà décidée (2 maps gagnées par une équipe en Bo3). Si oui : (1) on
@@ -386,12 +393,16 @@ async function reconcileStaleLiveMatches(data) {
       return; // vlr.gg n'a rien -> peut-être vraiment encore en cours (ou masqué ci-dessus si trop vieux)
     }
 
+    // Seules les maps réellement terminées comptent (13+ avec 2 d'écart) :
+    // une map en cours (ex 7-6) ne doit jamais être comptée comme gagnée.
+    const completeMaps = mapScores.filter(isCompleteValoMap);
     let wins1 = 0;
     let wins2 = 0;
-    for (const mp of mapScores) {
+    for (const mp of completeMaps) {
       if (mp.score1 > mp.score2) wins1++;
       else if (mp.score2 > mp.score1) wins2++;
     }
+    mapScores = completeMaps;
     const winsNeeded = m.number_of_games >= 7 ? 4 : (m.number_of_games === 5) ? 3 : 2;
     if (wins1 < winsNeeded && wins2 < winsNeeded) {
       // vlr.gg aussi le montre encore ouvert -> cohérent avec "running" en soi,
@@ -2101,5 +2112,13 @@ app.listen(PORT, () => {
     }
   } catch (e) {
     console.error("[startup] échec du nettoyage des map_scores incohérents:", e.message);
+  }
+  try {
+    const purged = purgeIncompleteFinishedMatches();
+    if (purged > 0) {
+      console.log(`[startup] ${purged} match(s) Valorant enregistré(s) terminé(s) avec une map inachevée supprimé(s).`);
+    }
+  } catch (e) {
+    console.error("[startup] échec de la purge des matchs à map inachevée:", e.message);
   }
 });

@@ -24,9 +24,25 @@ import {
   setBetStats,
   pingUser,
   getOnlineStatus,
+  getUserSync,
+  mergeUserSync,
 } from "./social-store.js";
+import { authMiddleware } from "./auth-routes.js";
 
 const router = Router();
+
+router.get("/api/sync", authMiddleware, (req, res) => {
+  res.json(getUserSync(req.userId));
+});
+
+router.post("/api/sync", authMiddleware, (req, res) => {
+  try {
+    res.json(mergeUserSync(req.userId, req.body || {}));
+  } catch (e) {
+    console.error("[sync] merge error:", e.message);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 const BIO_BLOCKED_SERVER = ["pute","merde","connard","connasse","enculé","fdp","ntm","nique","salope","batard","bâtard","putain","pd","encule","tg","ftg","suce","bite","couille","chier","fuck","shit","dick","cock","pussy","bitch","nigga","nigger","whore","slut","cunt","porn","hentai","sexe","nude","nudes","onlyfans","branlette","branle","sodomie","viol","rape","penis","vagin","prostitut","escort","milf","anal","threesome","gangbang","chatte"];
 const BIO_LINK_SERVER = /https?:\/\/|www\.|\.com|\.fr|\.gg|\.tv|\.io|\.net|\.org|discord\.|twitch\.|twitter\.|instagram\.|tiktok\.|telegram\.|t\.me|bit\.ly|linktr\.ee|@[a-zA-Z]/i;

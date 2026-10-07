@@ -358,7 +358,34 @@ function resetInconsistentMapScores() {
   return count;
 }
 
+// Supprime les matchs enregistrés "terminés" alors qu'une de leurs maps
+// n'était pas finie (ex : 13-11 puis 7-6 enregistré en 2-0 par l'ancienne
+// réconciliation live). Le vrai résultat sera réinséré quand PandaScore
+// marquera le match terminé (INSERT OR IGNORE ne l'écraserait jamais sinon).
+function purgeIncompleteFinishedMatches() {
+  const rows = db
+    .prepare(`SELECT id, map_scores FROM matches WHERE map_scores IS NOT NULL AND map_scores != 'null'`)
+    .all();
+  const del = db.prepare(`DELETE FROM matches WHERE id = ?`);
+  let count = 0;
+  for (const row of rows) {
+    let maps;
+    try { maps = JSON.parse(row.map_scores); } catch { continue; }
+    if (!Array.isArray(maps) || maps.length === 0) continue;
+    const incomplete = maps.some((m) => {
+      const s1 = Number(m?.score1), s2 = Number(m?.score2);
+      return !(Math.max(s1, s2) >= 13 && Math.abs(s1 - s2) >= 2);
+    });
+    if (incomplete) {
+      del.run(row.id);
+      count++;
+    }
+  }
+  return count;
+}
+
 export {
+  purgeIncompleteFinishedMatches,
   storeFinishedMatches,
   getFullHistory,
   getFullHistoryFlat,
