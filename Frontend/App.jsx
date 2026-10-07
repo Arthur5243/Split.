@@ -978,6 +978,8 @@ function catLabel(key, T) {
 // L'URL du backend est définie via la variable d'environnement VITE_API_BASE
 // (à configurer dans Railway ou dans un fichier .env local, voir .env.example)
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+// Pubs coupées pour l'instant (interstitiel + scripts régie dans index.html).
+const ADS_ENABLED = false;
 
 let _h2cPromise = null;
 function loadHtml2Canvas() {
@@ -4866,7 +4868,10 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   const st = (match.status || "").toLowerCase();
   const isCompleted = st === "completed" || st === "finished";
   const isLive = st.includes("live") || st === "running";
-  const isTBD = (!match.team1?.name || match.team1.name === "TBD") && (!match.team2?.name || match.team2.name === "TBD");
+  const t1Unknown = !match.team1?.name || match.team1.name === "TBD";
+  const t2Unknown = !match.team2?.name || match.team2.name === "TBD";
+  const isTBD = t1Unknown && t2Unknown;
+  const isPending = t1Unknown || t2Unknown;
   const predTeam = prediction?.winner;
   return (
     <div onClick={isLive && onLiveClick ? () => onLiveClick() : undefined} style={{
@@ -4875,6 +4880,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
       border: isLive ? "1px solid #ff4655" : "none",
       boxShadow: isLive ? "0 0 16px rgba(255,70,85,0.3)" : "0 3px 12px rgba(0,0,0,0.5)",
       opacity: isTBD ? 0.4 : 1,
+      filter: isPending ? "brightness(0.55) grayscale(0.35)" : "none",
       cursor: isLive ? "pointer" : "default",
     }}>
       {[match.team1, match.team2].map((team, i) => {
@@ -4930,7 +4936,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType, padStart }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType, padStart, belowLast }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const pad = padStart || 0;
@@ -4968,7 +4974,10 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
   });
 
   const totalW = numCols * CARD_W + (numCols - 1) * COL_GAP;
-  const svgH = totalH + LABEL_H;
+  // Match affiché sous la dernière colonne (ex : match pour la 3e place sous la finale).
+  const lastYs = yPositions[rounds.length - 1];
+  const belowTop = belowLast?.match ? lastYs[lastYs.length - 1] + LABEL_H + CARD_H + 28 : 0;
+  const svgH = Math.max(totalH + LABEL_H, belowLast?.match ? belowTop + 18 + CARD_H : 0);
 
   const isLower = bracketType === "lower";
   const svgPaths = [];
@@ -5070,6 +5079,16 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             ))}
           </React.Fragment>
         ))}
+        {belowLast?.match && (
+          <>
+            <div style={{ position: "absolute", left: (rounds.length - 1 + pad) * (CARD_W + COL_GAP), top: belowTop, width: CARD_W, textAlign: "center", fontSize: 9, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em", whiteSpace: "nowrap" }}>
+              {belowLast.label}
+            </div>
+            <div style={{ position: "absolute", left: (rounds.length - 1 + pad) * (CARD_W + COL_GAP), top: belowTop + 18, width: CARD_W }}>
+              <BracketMatchCard match={belowLast.match} accent={accent} prediction={predictions && predictions[belowLast.match.match_id]} onLiveClick={onLiveClick} />
+            </div>
+          </>
+        )}
         {showQ && qualifiedIsLabel && (
           <>
             <div style={{
@@ -5181,6 +5200,249 @@ const BRACKET_STAGES = [
   { key: "champions", labelKey: "bracketChampions", color: "#ff4655" },
 ];
 
+// Historique VCT Stage 2 (résultats définitifs fournis, ne pas modifier).
+// Syntaxe : "PI_U <round>" / "PI_L <round>" (Play-In upper/lower),
+// "PO_U" / "PO_L" / "PO_GF" (Playoffs), "PI_UQ" / "PI_LQ" (qualifiés),
+// "CHAMP", "QUAL", "PTS" ; chaque autre ligne = "TEAM A 2-1 TEAM B".
+const VCT_STAGE2_HISTORY_RAW = {
+  AMERICAS: `
+PI_U Upper Bracket Round 1
+KRÜ Esports 2-1 BESTIA
+ENVY 2-0 M80
+FURIA 2-1 2Game Esports
+Cloud9 2-1 Fluxo W7M
+PI_U Upper Bracket Round 2 / Quarterfinals
+MIBR 2-0 KRÜ Esports
+Sentinels 0-2 ENVY
+G2 Esports 1-2 FURIA
+Evil Geniuses 2-1 Cloud9
+PI_U Upper Bracket Round 3 / Semifinals
+MIBR 2-1 ENVY
+FURIA 2-1 Evil Geniuses
+PI_UQ MIBR | FURIA
+PI_L Lower Bracket Round 1
+Cloud9 0-2 BESTIA
+G2 Esports 2-0 M80
+Sentinels 2-0 2Game Esports
+KRÜ Esports 2-0 Fluxo W7M
+PI_L Lower Bracket Round 2
+BESTIA 0-2 G2 Esports
+Sentinels 0-2 KRÜ Esports
+PI_L Lower Bracket Round 3
+ENVY 1-2 G2 Esports
+Evil Geniuses 2-1 KRÜ Esports
+PI_LQ G2 Esports | Evil Geniuses
+PO_U Upper Bracket Round 1
+LOUD 2-0 FURIA
+LEVIATÁN 2-0 MIBR
+PO_U Upper Bracket Round 2 / Semifinals
+NRG 2-1 LOUD
+100 Thieves 2-0 LEVIATÁN
+PO_U Upper Bracket Round 3 / Final
+NRG 0-2 100 Thieves
+PO_L Lower Bracket Round 1
+FURIA 1-2 G2 Esports
+MIBR 2-1 Evil Geniuses
+PO_L Lower Bracket Round 2
+LEVIATÁN 1-2 G2 Esports
+LOUD 2-0 MIBR
+PO_L Lower Bracket Round 3
+G2 Esports 0-2 LOUD
+PO_L Lower Bracket Final
+NRG 2-3 LOUD
+PO_GF Grand Final
+100 Thieves 3-2 LOUD
+CHAMP 100 Thieves
+QUAL 100 Thieves | LOUD
+PTS 100T +8 | LOUD +6 | NRG +5 | G2 +4`,
+  EMEA: `
+PI_U Upper Bracket Round 1
+GIANTX 2-1 Eintracht Frankfurt
+Natus Vincere 1-2 Joblife
+PCIFIC Esports 0-2 Fire Flux
+FNATIC 1-2 Enterprise Esports
+PI_U Upper Bracket Round 2 / Quarterfinals
+FUT Esports 2-0 GIANTX
+Eternal Fire 2-1 Joblife
+Team Heretics 1-2 Fire Flux
+Gentle Mates 0-2 Enterprise Esports
+PI_U Upper Bracket Round 3 / Semifinals
+FUT Esports 2-0 Eternal Fire
+Fire Flux 0-2 Enterprise Esports
+PI_UQ FUT Esports | Enterprise Esports
+PI_L Lower Bracket Round 1
+M8 0-2 Gentle Mates
+TH 2-1 NAVI
+Joblife 2-1 PCIFIC
+GIANTX 0-2 FNATIC
+PI_L Lower Bracket Round 2
+Gentle Mates 0-2 TH
+Joblife 2-0 FNATIC
+PI_L Lower Bracket Round 3
+Eternal Fire 0-2 Eintracht Frankfurt
+Fire Flux 2-0 Joblife
+PI_LQ Eintracht Frankfurt | Fire Flux
+PO_U Upper Bracket Round 1
+Team Liquid 0-2 FUT Esports
+Team Vitality 1-2 Enterprise Esports
+PO_U Upper Bracket Round 2 / Semifinals
+BBL Esports 1-2 FUT Esports
+Karmine Corp 2-1 Enterprise Esports
+PO_U Upper Bracket Round 3 / Final
+FUT Esports 0-2 Karmine Corp
+PO_L Lower Bracket Round 1
+Team Liquid 2-1 Eintracht Frankfurt
+Team Vitality 1-2 Fire Flux
+PO_L Lower Bracket Round 2
+Enterprise Esports 0-2 Team Liquid
+BBL Esports 0-2 Fire Flux
+PO_L Lower Bracket Round 3
+Team Liquid 2-0 Fire Flux
+PO_L Lower Bracket Final
+FUT Esports 0-3 Team Liquid
+PO_GF Grand Final
+Karmine Corp 3-1 Team Liquid
+CHAMP Karmine Corp
+QUAL Karmine Corp | Team Liquid
+PTS KC +8 | TL +6 | FUT +5 | Fire Flux +4`,
+  PACIFIC: `
+PI_U Upper Bracket Round 1
+KIWOOM DRX 2-0 ONSIDE GAMING
+Rex Regum Qeon 1-2 Sharper Esports
+FULL SENSE 2-1 QT DIG∞
+Team Secret 2-0 Xipto Esports
+PI_U Upper Bracket Round 2 / Quarterfinals
+ZETA DIVISION 1-2 KIWOOM DRX
+DetonatioN FocusMe 1-2 Sharper Esports
+T1 2-0 FULL SENSE
+Nongshim RedForce 2-0 Team Secret
+PI_U Upper Bracket Round 3 / Semifinals
+KIWOOM DRX 2-1 Sharper Esports
+T1 0-2 Nongshim RedForce
+PI_UQ KIWOOM DRX | Nongshim RedForce
+PI_L Lower Bracket Round 1
+Team Secret 0-2 ONSIDE GAMING
+FULL SENSE 2-1 Rex Regum Qeon
+DetonatioN FocusMe 2-1 QT DIG∞
+ZETA DIVISION 2-1 Xipto Esports
+PI_L Lower Bracket Round 2
+ONSIDE GAMING 2-0 FULL SENSE
+DetonatioN FocusMe 2-0 ZETA DIVISION
+PI_L Lower Bracket Round 3
+Sharper Esports 1-2 ONSIDE GAMING
+T1 2-0 DetonatioN FocusMe
+PI_LQ ONSIDE GAMING | T1
+PO_U Upper Bracket Round 1
+Paper Rex 0-2 Nongshim RedForce
+Global Esports 2-1 KIWOOM DRX
+PO_U Upper Bracket Round 2 / Semifinals
+Gen.G 1-2 Nongshim RedForce
+VARREL 0-2 Global Esports
+PO_U Upper Bracket Round 3 / Final
+Nongshim RedForce 2-1 Global Esports
+PO_L Lower Bracket Round 1
+Paper Rex 2-0 ONSIDE GAMING
+KIWOOM DRX 0-2 T1
+PO_L Lower Bracket Round 2
+VARREL 2-1 Paper Rex
+Gen.G 0-2 T1
+PO_L Lower Bracket Round 3
+VARREL 0-2 T1
+PO_L Lower Bracket Final
+Global Esports 3-1 T1
+PO_GF Grand Final
+Nongshim RedForce 2-3 Global Esports
+CHAMP Global Esports
+QUAL Global Esports | Nongshim RedForce
+PTS GE +8 | NS +6 | T1 +5 | VARREL +4`,
+  CN: `
+PI_U Upper Bracket Round 1
+Trace Esports 2-0 A Team
+Titan Esports Club 2-1 KeepBest Gaming
+PI_U Upper Bracket Round 2
+All Gamers 2-1 Trace Esports
+FunPlus Phoenix 1-2 JD Gaming
+EDward Gaming 1-2 Titan Esports Club
+Wolves Esports 1-2 Dragon Ranger Gaming
+PI_U Upper Bracket Round 3
+All Gamers 2-0 JD Gaming
+Titan Esports Club 2-1 Dragon Ranger Gaming
+PI_U Upper Final
+All Gamers 1-2 Titan Esports Club
+PI_UQ Titan Esports Club | All Gamers
+PI_L Lower Bracket Round 1
+A Team 1-2 Wolves Esports
+KeepBest Gaming 0-2 FunPlus Phoenix
+PI_L Lower Bracket Round 2
+EDward Gaming 2-1 Wolves Esports
+Trace Esports 2-0 FunPlus Phoenix
+PI_L Lower Bracket Round 3
+JD Gaming 2-0 EDward Gaming
+Dragon Ranger Gaming 1-2 Trace Esports
+PI_L Lower Final
+JD Gaming 0-2 Trace Esports
+PI_LQ Trace Esports | JD Gaming
+PO_U Upper Bracket Round 1
+NOVA Esports 0-2 JD Gaming
+TYLOO 2-0 Titan Esports Club
+Bilibili Gaming 2-1 Enterprise/Trace Esports
+Xi Lai Gaming 2-1 All Gamers
+PO_U Upper Bracket Round 2
+JD Gaming 2-1 TYLOO
+Bilibili Gaming 2-1 Xi Lai Gaming
+PO_U Upper Bracket Round 3
+JD Gaming 2-0 Bilibili Gaming
+PO_L Lower Bracket Round 1
+NOVA Esports 2-0 Titan Esports Club
+Trace Esports 1-2 All Gamers
+PO_L Lower Bracket Round 2
+TYLOO 2-0 All Gamers
+Xi Lai Gaming 1-2 NOVA Esports
+PO_L Lower Bracket Round 3
+NOVA Esports 0-2 TYLOO
+PO_L Lower Bracket Final
+Bilibili Gaming 0-3 TYLOO
+PO_GF Grand Final
+JD Gaming 1-3 TYLOO
+CHAMP TYLOO
+QUAL TYLOO | JD Gaming
+PTS TYLOO +8 | JDG +6 | BLG +5 | NOVA +4`,
+};
+
+function parseStage2History(region, raw) {
+  const out = { playIn: { upper: [], lower: [], upperQualified: [], lowerQualified: [] }, playoffs: { upper: [], lower: [], grand_final: [] }, champion: null, qualified: [], points: [] };
+  let cur = null;
+  let n = 0;
+  for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const [tag, ...restParts] = line.split(" ");
+    const rest = restParts.join(" ");
+    const list = () => rest.split("|").map((s) => s.trim()).filter(Boolean);
+    if (tag === "PI_U") { cur = { name: rest, matches: [] }; out.playIn.upper.push(cur); }
+    else if (tag === "PI_L") { cur = { name: rest, matches: [] }; out.playIn.lower.push(cur); }
+    else if (tag === "PO_U") { cur = { name: rest, matches: [] }; out.playoffs.upper.push(cur); }
+    else if (tag === "PO_L") { cur = { name: rest, matches: [] }; out.playoffs.lower.push(cur); }
+    else if (tag === "PO_GF") { cur = { name: rest, matches: [] }; out.playoffs.grand_final.push(cur); }
+    else if (tag === "PI_UQ") out.playIn.upperQualified = list();
+    else if (tag === "PI_LQ") out.playIn.lowerQualified = list();
+    else if (tag === "CHAMP") out.champion = rest;
+    else if (tag === "QUAL") out.qualified = list();
+    else if (tag === "PTS") out.points = list();
+    else {
+      const m = line.match(/^(.+?)\s+(\d+)\s*[-–]\s*(\d+)\s+(.+)$/);
+      if (!m || !cur) continue;
+      const s1 = +m[2], s2 = +m[3];
+      cur.matches.push({
+        match_id: `s2h-${region}-${n++}`, status: "finished",
+        team1: { name: m[1], score: s1, is_winner: s1 > s2 },
+        team2: { name: m[4], score: s2, is_winner: s2 > s1 },
+      });
+    }
+  }
+  return out;
+}
+
+const VCT_STAGE2_HISTORY = Object.fromEntries(Object.entries(VCT_STAGE2_HISTORY_RAW).map(([k, raw]) => [k, parseStage2History(k, raw)]));
+
 // Case de sélection du bracket : active = même style que le bracket CS2,
 // inactive = fond neutre, mais le titre garde toujours sa couleur.
 function bracketTileStyle(color, active) {
@@ -5191,6 +5453,7 @@ function bracketTileStyle(color, active) {
     cursor: active ? "pointer" : "default",
     display: "flex", flexDirection: "column", alignItems: "center",
     boxShadow: active ? `0 4px 24px ${color}30, inset 0 1px 0 ${color}18` : "none",
+    filter: active ? "none" : "brightness(0.5)",
     transition: "transform 0.15s",
     position: "relative",
   };
@@ -5766,8 +6029,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   const [bracketData, setBracketData] = useState(prefetchedBrackets || {});
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [historyData, setHistoryData] = useState(null);
-  const [historyEvent, setHistoryEvent] = useState(null);
+  const [historyRegion, setHistoryRegion] = useState(null);
   const [showAutre, setShowAutre] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
@@ -5859,31 +6121,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     return bracketData[ev.event_id + ":all"] || null;
   }, [stage, region, vlrEvents, bracketData]);
 
-  const openHistory = async () => {
-    setShowHistory(true);
-    if (historyData) return;
-    try {
-      const res = await fetch(API_BASE + "/api/vlr-history");
-      if (res.ok) setHistoryData(await res.json());
-    } catch (e) { /* silent */ }
-  };
-
-  const selectHistoryEvent = async (ev) => {
-    setHistoryEvent(ev);
-    const cacheKey = ev.event_id + ":all";
-    if (bracketData[cacheKey]) return;
-    setLoading(true);
-    try {
-      const res = await fetch(API_BASE + "/api/vlr-bracket/" + ev.event_id);
-      if (res.ok) {
-        const data = await res.json();
-        setBracketData((prev) => ({ ...prev, [cacheKey]: data }));
-      }
-    } catch (e) { /* silent */ }
-    finally { setLoading(false); }
-  };
-
-  const historyBracketData = historyEvent ? bracketData[historyEvent.event_id + ":all"] : null;
+  const openHistory = () => setShowHistory(true);
 
   const stageInfo = BRACKET_STAGES.find((s) => s.key === stage) || (stage === "stage2" ? { key: "stage2", labelKey: "bracketStage2", color: "#FF6B35" } : null);
   const phaseInfo = BRACKET_PHASES.find(p => p.key === phase);
@@ -5976,63 +6214,86 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     );
   }
 
-  // --- History views ---
+  // --- Historique : uniquement le Stage 2 (résultats définitifs) ---
   if (showHistory) {
-    if (historyEvent && historyBracketData) {
+    const s2Color = "#FF6B35";
+    const sectionTitle = (text, color) => (
+      <div style={{ padding: "18px 16px 4px", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 3, height: 16, borderRadius: 2, background: color }} />
+        <span style={{ fontSize: 13, fontWeight: 900, color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{text}</span>
+      </div>
+    );
+    const teamChips = (label, teams, color) => teams.length > 0 && (
+      <div style={{ padding: "0 16px 6px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
+        {teams.map((t) => (
+          <span key={t} style={{ fontSize: 11, fontWeight: 800, color, background: color + "15", border: `1px solid ${color}40`, borderRadius: 6, padding: "3px 8px" }}>{t}</span>
+        ))}
+      </div>
+    );
+    if (historyRegion) {
+      const h = VCT_STAGE2_HISTORY[historyRegion];
+      const accentR = (REGIONS.find((r) => r.key === historyRegion) || {}).accent || s2Color;
+      const tree = (rounds, label, labelColor, type) => rounds.length > 0 && (
+        <BracketTree rounds={rounds} accent={accentR} label={label} labelColor={labelColor} bracketType={type} predictions={predictions} />
+      );
       return (
         <div style={pageStylePlain}>
           <div style={headerStyle}>
-            <button onClick={() => setHistoryEvent(null)} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
-            {titleSpan(historyEvent.title)}
+            {backBtn(() => setHistoryRegion(null))}
+            {titleSpan("Stage 2 · " + regionLabel(historyRegion, T), accentR)}
           </div>
-          {loading && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
-          {renderBracketSection(historyBracketData.playoffs?.bracket, "#C4F000")}
+          {sectionTitle("Play-In", accentR)}
+          <DragScroll>
+            {tree(h.playIn.upper, T.bracketUpper || "Upper Bracket", accentR)}
+          </DragScroll>
+          {teamChips("Qualifiés", h.playIn.upperQualified, "#CCF71D")}
+          <DragScroll>
+            {tree(h.playIn.lower, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
+          </DragScroll>
+          {teamChips("Qualifiés", h.playIn.lowerQualified, "#CCF71D")}
+          {sectionTitle("Playoffs", "#FFD700")}
+          <DragScroll>
+            {tree(h.playoffs.upper, T.bracketUpper || "Upper Bracket", accentR)}
+            {tree(h.playoffs.lower, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
+            {tree(h.playoffs.grand_final, T.bracketGrandFinal || "Grand Final", "#FFD700")}
+          </DragScroll>
+          <div style={{ margin: "0 16px 32px", background: "#111", border: "1px solid #FFD70030", borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#FFD700" }}>Champion : {h.champion}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>Qualified Champions : {h.qualified.join(", ")}</div>
+            {h.points.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>Points</span>
+                {h.points.map((pt) => (
+                  <span key={pt} style={{ fontSize: 11, fontWeight: 800, color: "#CCF71D", background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.25)", borderRadius: 6, padding: "3px 8px" }}>{pt}</span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       );
     }
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>
-          <button onClick={() => { setShowHistory(false); setHistoryEvent(null); }} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", color: "#888", fontSize: 16, cursor: "pointer", padding: "4px 8px", borderRadius: 6, lineHeight: 1, display: "flex", alignItems: "center" }}>←</button>
+          {backBtn(() => setShowHistory(false))}
           {titleSpan(T.bracketHistory)}
         </div>
-        {!historyData && <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><span style={{ width: 24, height: 24, border: "2.5px solid #222", borderTopColor: "#666", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} /></div>}
-        {historyData && (
-          <div style={{ padding: "16px 16px 32px" }}>
-            {BRACKET_STAGES.map((s) => {
-              const events = historyData[s.key] || [];
-              if (events.length === 0) return null;
-              return (
-                <div key={s.key} style={{ marginBottom: 24 }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${s.color}12`, borderRadius: 5, border: `1px solid ${s.color}25` }}>
-                    <div style={{ width: 3, height: 12, borderRadius: 2, background: s.color }} />
-                    <span style={{ fontSize: 9, fontWeight: 800, color: s.color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {events.map((ev) => (
-                      <button key={ev.event_id} onClick={() => selectHistoryEvent(ev)} style={{
-                        background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8,
-                        padding: "12px 14px", cursor: "pointer", display: "flex", alignItems: "center",
-                        justifyContent: "space-between", width: "100%",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                      }}>
-                        <div style={{ textAlign: "left" }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: "#ccc" }}>{ev.title}</div>
-                          {ev.dates && <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{ev.dates}</div>}
-                        </div>
-                        <ChevronRight size={14} color="#444" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {sectionTitle(T.bracketStage2 || "Stage 2", s2Color)}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "8px 16px 32px" }}>
+          {["AMERICAS", "EMEA", "PACIFIC", "CN"].map((rk) => {
+            const r = REGIONS.find((x) => x.key === rk);
+            return (
+              <button key={rk} onClick={() => setHistoryRegion(rk)} style={{ ...bracketTileStyle(r.accent, true), padding: "26px 12px", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: r.accent, letterSpacing: "0.06em", textTransform: "uppercase" }}>{regionLabel(rk, T)}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#aaa" }}>{VCT_STAGE2_HISTORY[rk].champion}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   }
-
   // --- Step 1 : Choose stage ---
   if (!stage) {
     return (
@@ -6236,61 +6497,14 @@ const SWISS_RECORDS_BY_ROUND = {
 };
 const SWISS_RECORD_LABEL = { "2-0": "High", "1-1": "Mid", "0-2": "Low", "1-0": "High", "0-1": "Low", "2-1": "High", "1-2": "Low", "2-2": "Decider" };
 
-const MANUAL_EPL_SWISS = (() => {
-  const mm = (id, r, rec, t1, s1, t2, s2, st = "finished") => {
-    const done = st === "finished";
-    return { match_id: id, round: `Round ${r} ${rec}`, status: st, team1: { name: t1, score: s1, is_winner: done && s1 > s2 }, team2: { name: t2, score: s2, is_winner: done && s2 > s1 } };
-  };
-  return [
-    mm("epl-r1-1",1,"0-0","Falcons",2,"TYLOO",0),
-    mm("epl-r1-2",1,"0-0","Legacy",1,"paiN",2),
-    mm("epl-r1-3",1,"0-0","Spirit",2,"ShindeN",1),
-    mm("epl-r1-4",1,"0-0","Vitality",2,"1w",0),
-    mm("epl-r1-5",1,"0-0","MOUZ",2,"M80",0),
-    mm("epl-r1-6",1,"0-0","Aurora",2,"9z",0),
-    mm("epl-r1-7",1,"0-0","FURIA",2,"B8",0),
-    mm("epl-r1-8",1,"0-0","G2",0,"NAVI",2),
-    mm("epl-r2-1",2,"1-0","Spirit",2,"paiN",0),
-    mm("epl-r2-2",2,"1-0","Falcons",2,"Aurora",0),
-    mm("epl-r2-3",2,"1-0","MOUZ",2,"FURIA",0),
-    mm("epl-r2-4",2,"1-0","Vitality",2,"NAVI",1),
-    mm("epl-r2-5",2,"0-1","Legacy",2,"ShindeN",0),
-    mm("epl-r2-6",2,"0-1","9z",2,"TYLOO",0),
-    mm("epl-r2-7",2,"0-1","G2",1,"1w",2),
-    mm("epl-r2-8",2,"0-1","B8",2,"M80",0),
-    mm("epl-r3-1",3,"2-0","Spirit",0,"MOUZ",2),
-    mm("epl-r3-2",3,"2-0","Vitality",2,"Falcons",1),
-    mm("epl-r3-3",3,"1-1","paiN",1,"FURIA",2),
-    mm("epl-r3-4",3,"1-1","9z",0,"NAVI",2),
-    mm("epl-r3-5",3,"1-1","Legacy",0,"1w",2),
-    mm("epl-r3-6",3,"1-1","Aurora",2,"B8",0),
-    mm("epl-r3-7",3,"0-2","ShindeN",0,"G2",2),
-    mm("epl-r3-8",3,"0-2","M80",2,"TYLOO",1),
-    mm("epl-r4-1",4,"2-1","Spirit",0,"1w",2),
-    mm("epl-r4-2",4,"2-1","FURIA",0,"Aurora",2),
-    mm("epl-r4-3",4,"2-1","Falcons",0,"NAVI",2),
-    mm("epl-r4-4",4,"1-2","G2",2,"paiN",1),
-    mm("epl-r4-5",4,"1-2","9z",0,"B8",0,"running"),
-    mm("epl-r4-6",4,"1-2","Legacy",0,"M80",0,"not_started"),
-  ];
-})();
-
 function CS2SwissView({ serieData, onBack, T, accent }) {
   const [activeRound, setActiveRound] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
 
   const matches = [];
-  if (serieData?.phases) {
-    for (const p of serieData.phases) {
-      const gsMatches = p.group_stage?.matches || [];
-      for (const m of gsMatches) matches.push(m);
-    }
-  }
-  if (matches.length < 8) {
-    const existing = new Set(matches.map(m => m.match_id || m.id));
-    for (const m of MANUAL_EPL_SWISS) {
-      if (!existing.has(m.match_id)) matches.push(m);
-    }
+  for (const p of serieData?.phases || []) {
+    if (/playoff/i.test(p.name || "")) continue;
+    for (const m of p.group_stage?.matches || []) matches.push(m);
   }
 
   function parseRound(m) {
@@ -6320,8 +6534,6 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     if (m.team2) { const s = parseInt(m.team2.score, 10); return isNaN(s) ? null : s; }
     return m.results?.[1]?.score ?? null;
   };
-  const isWinner1 = (m) => m.team1?.is_winner || false;
-  const isWinner2 = (m) => m.team2?.is_winner || false;
   const mId = (m) => m.match_id || m.id;
 
   const roundMatches = {};
@@ -6331,90 +6543,33 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
     if (!teamRecords[name]) teamRecords[name] = { name, logo, wins: 0, losses: 0, rounds: [] };
   };
 
-  for (const m of matches) {
-    const r = parseRound(m);
-    if (r && r >= 1 && r <= 5) {
-      if (!roundMatches[r]) roundMatches[r] = [];
-      roundMatches[r].push(m);
-    }
-  }
-
-  const finished = matches
-    .filter((m) => { const s1 = getS1(m); const s2 = getS2(m); return s1 != null && s2 != null && (s1 !== 0 || s2 !== 0); })
-    .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  for (const m of finished) {
+  // Parcours chronologique : le bilan d'un match (2-1, 1-2...) est celui des
+  // équipes AVANT ce match, sinon un match de round 4 tombe dans aucune case.
+  const ordered = [...matches].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  for (const m of ordered) {
     const t1 = getT1(m); const t2 = getT2(m);
-    if (!t1.name || !t2.name || t1.name === "TBD" || t2.name === "TBD") continue;
-    initTR(t1.name, t1.image_url); initTR(t2.name, t2.image_url);
+    const known = t1.name && t2.name && t1.name !== "TBD" && t2.name !== "TBD";
+    if (known) { initTR(t1.name, t1.image_url); initTR(t2.name, t2.image_url); }
+    const tr1 = known ? teamRecords[t1.name] : null;
+    const tr2 = known ? teamRecords[t2.name] : null;
     let r = parseRound(m);
-    if (!r) {
-      r = Math.max(teamRecords[t1.name].wins + teamRecords[t1.name].losses, teamRecords[t2.name].wins + teamRecords[t2.name].losses) + 1;
-      if (r > 5) r = 5;
-      m._inferredRound = r;
-      m._inferredRecord = `${teamRecords[t1.name].wins}-${teamRecords[t1.name].losses}`;
-      if (!roundMatches[r]) roundMatches[r] = [];
-      if (!roundMatches[r].includes(m)) roundMatches[r].push(m);
+    if (!r && tr1) r = Math.min(5, Math.max(tr1.wins + tr1.losses, tr2.wins + tr2.losses) + 1);
+    if (!r || r < 1 || r > 5) continue;
+    m._inferredRound = r;
+    if (!parseRecord(m)) {
+      if (tr1) m._inferredRecord = `${tr1.wins}-${tr1.losses}`;
+      else if (r === 1) m._inferredRecord = "0-0";
     }
+    if (!roundMatches[r]) roundMatches[r] = [];
+    roundMatches[r].push(m);
+
     const s1 = getS1(m); const s2 = getS2(m);
-    if (s1 > s2) {
-      teamRecords[t1.name].wins++; teamRecords[t1.name].rounds.push({ round: r, result: "W", vs: t2.name });
-      teamRecords[t2.name].losses++; teamRecords[t2.name].rounds.push({ round: r, result: "L", vs: t1.name });
-    } else if (s2 > s1) {
-      teamRecords[t2.name].wins++; teamRecords[t2.name].rounds.push({ round: r, result: "W", vs: t1.name });
-      teamRecords[t1.name].losses++; teamRecords[t1.name].rounds.push({ round: r, result: "L", vs: t2.name });
-    }
+    if (!known || m.status !== "finished" || s1 == null || s2 == null || s1 === s2) continue;
+    const [w, l] = s1 > s2 ? [tr1, tr2] : [tr2, tr1];
+    w.wins++; w.rounds.push({ round: r, result: "W", vs: l.name });
+    l.losses++; l.rounds.push({ round: r, result: "L", vs: w.name });
   }
 
-  const qualified = Object.values(teamRecords).filter((t) => t.wins >= 3).sort((a, b) => a.losses - b.losses);
-  const eliminated = Object.values(teamRecords).filter((t) => t.losses >= 3).sort((a, b) => b.wins - a.wins);
-
-  const upcoming = matches.filter((m) => {
-    const r = parseRound(m);
-    if (r && r >= 1 && r <= 5) return false;
-    const s1 = getS1(m); const s2 = getS2(m);
-    return s1 == null || s2 == null || (s1 === 0 && s2 === 0);
-  });
-  for (const m of upcoming) {
-    const t1Name = getT1(m)?.name;
-    const t2Name = getT2(m)?.name;
-    if (!t1Name || !t2Name || t1Name === "TBD" || t2Name === "TBD") continue;
-    const tr1 = teamRecords[t1Name];
-    const tr2 = teamRecords[t2Name];
-    let w, l;
-    if (tr1 && tr2) {
-      w = tr1.wins; l = tr1.losses;
-    } else if (tr1) {
-      w = tr1.wins; l = tr1.losses;
-    } else if (tr2) {
-      w = tr2.wins; l = tr2.losses;
-    } else {
-      continue;
-    }
-    const ir = w + l + 1;
-    if (ir >= 1 && ir <= 5) {
-      m._inferredRound = ir;
-      m._inferredRecord = `${w}-${l}`;
-      if (!roundMatches[ir]) roundMatches[ir] = [];
-      roundMatches[ir].push(m);
-    }
-  }
-  for (const r of Object.keys(roundMatches)) {
-    roundMatches[r].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  }
-
-  for (const r of Object.keys(roundMatches)) {
-    for (const m of roundMatches[r]) {
-      if (!parseRecord(m)) {
-        const t1Name = getT1(m)?.name;
-        const t2Name = getT2(m)?.name;
-        const tr1 = t1Name ? teamRecords[t1Name] : null;
-        const tr2 = t2Name ? teamRecords[t2Name] : null;
-        const tr = tr1 || tr2;
-        if (tr) m._inferredRecord = `${tr.wins}-${tr.losses}`;
-        else if (parseInt(r) === 1) m._inferredRecord = "0-0";
-      }
-    }
-  }
 
   const pageStyle = { minHeight: "100vh", backgroundColor: "#0a0a0a", paddingBottom: 80 };
   const headerStyle = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 14px", background: "#0A0A0A", borderBottom: "1px solid rgba(255,255,255,0.06)", position: "sticky", top: 0, zIndex: 20 };
@@ -6585,6 +6740,27 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
   );
 }
 
+// Événement à afficher dans le bracket d'une compétition : l'événement
+// principal (pas une Challenger Cup / qualif / open) en cours, sinon le plus
+// récent déjà commencé, sinon le prochain. Ex ESL : la Pro League plutôt
+// qu'une "Oceania Cup" de la Challenger League.
+function pickBracketEvent(compKey, events) {
+  if (!Array.isArray(events) || events.length === 0) return null;
+  const now = Date.now();
+  const t = (s) => (s ? Date.parse(s) : NaN);
+  const isMinor = (e) => /challenger|qualifier|academy/i.test(`${e.league || ""} ${e.title || ""}`);
+  const ongoing = (e) => t(e.begin_at) <= now && (!Number.isFinite(t(e.end_at)) || now <= t(e.end_at) + 36 * 3600 * 1000);
+  const pick = (list) => {
+    if (list.length === 0) return null;
+    const live = list.filter((e) => e.status === "running" || ongoing(e));
+    if (live.length) return live.sort((a, b) => t(b.begin_at) - t(a.begin_at))[0];
+    const started = list.filter((e) => t(e.begin_at) <= now).sort((a, b) => t(b.begin_at) - t(a.begin_at));
+    if (started.length) return started[0];
+    return [...list].sort((a, b) => t(a.begin_at) - t(b.begin_at))[0];
+  };
+  return pick(events.filter((e) => !isMinor(e))) || pick(events);
+}
+
 function getCS2Phases(compKey, serieName) {
   const s = (serieName || "").toLowerCase();
   if (compKey === "major" || (compKey === "iem" && s.includes("major"))) {
@@ -6674,6 +6850,22 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
     if (!bracket) return null;
     const hasGF = bracket.grand_final?.length > 0;
     const has3rd = bracket.third_place?.length > 0;
+    // Élimination directe (quarts → demies → finale, sans lower bracket) :
+    // un seul arbre global, le match pour la 3e place affiché sous la finale.
+    const singleElim = !isGroupStage && !(bracket.lower?.length > 0) && hasGF
+      && !(bracket.upper || []).some((r) => /upper|lower/i.test(r.name || ""));
+    if (singleElim) {
+      const rounds = [
+        ...(bracket.upper || []).map((r) => ({ ...r, name: /quarter/i.test(r.name) ? "Quarts de finale" : /semi/i.test(r.name) ? "Demi-finales" : r.name })),
+        ...bracket.grand_final.map((r) => ({ ...r, name: "Finale" })),
+      ];
+      const third = has3rd ? bracket.third_place[0]?.matches?.[0] : null;
+      return (
+        <DragScroll>
+          <BracketTree rounds={rounds} accent={accentColor} label="Playoffs" labelColor={accentColor} isPlayoffs predictions={predictions} onLiveClick={onLiveClick} belowLast={third ? { label: "Match pour la 3e place", match: third } : null} />
+        </DragScroll>
+      );
+    }
     return <>
       <DragScroll>
         {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
@@ -6756,7 +6948,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         {!loading && fallbackPhases.map((p) => {
           const b = p.playoffs?.bracket;
           const hasBracket = b && (b.upper?.length > 0 || b.lower?.length > 0 || b.grand_final?.length > 0 || b.third_place?.length > 0);
-          const hasStandings = Object.keys(p.group_stage?.standings || {}).length > 0;
+          const hasStandings = phase !== "playoffs" && Object.keys(p.group_stage?.standings || {}).length > 0;
           if (!hasBracket && !hasStandings) return null;
           const showLabel = fallbackPhases.length > 1;
           return (
@@ -6784,7 +6976,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
   // --- Step 2: Choose phase (direct, pas de liste d'events) ---
   if (comp && !phase) {
     const events = cs2Events ? (cs2Events[comp] || []) : [];
-    const bestEvent = events.find((e) => e.status === "running") || events[0] || null;
+    const bestEvent = pickBracketEvent(comp, events);
     const serieName = bestEvent?.title || serie?.title || "";
     const phases = getCS2Phases(comp, serieName);
 
@@ -11619,6 +11811,7 @@ export default function ClutchApp() {
   };
   const ACTIVE_THRESHOLD_MS = 30 * 1000;
   const triggerAd = useCallback(async (reason = "manual") => {
+    if (!ADS_ENABLED) return;
     if (showAuthRef.current) return;
     const now = Date.now();
     if (now - lastAdAtRef.current < getAdCooldown()) return;
@@ -12575,10 +12768,10 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!cs2Events) return;
     const allSeries = [];
-    for (const bucket of Object.values(cs2Events)) {
+    for (const [compKey, bucket] of Object.entries(cs2Events)) {
       if (!Array.isArray(bucket)) continue;
-      const first = bucket.find(s => s.serie_id && (s.status === "running" || s.status === "upcoming" || s.status === "unknown"));
-      if (first) allSeries.push(first.serie_id);
+      const best = pickBracketEvent(compKey, bucket);
+      if (best?.serie_id) allSeries.push(best.serie_id);
     }
     if (allSeries.length === 0) return;
     async function prefetchCs2() {

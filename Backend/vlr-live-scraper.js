@@ -66,8 +66,12 @@ function persistScores() {
 }
 
 let consecutiveErrors = 0;
-const MAX_BACKOFF_MS = 10 * 60 * 1000;
-const BASE_INTERVAL_MS = 30_000;
+const MAX_BACKOFF_MS = 2 * 60 * 1000;
+const BASE_INTERVAL_MS = 15_000;
+const FINISHED_INTERVAL_MS = 2 * 60 * 1000;
+const FINISHED_RETRY_MS = 10 * 60 * 1000;
+const FINISHED_PER_RUN = 8;
+const finishedLastTry = new Map();
 
 function normalize(s) {
   return (s || "")
@@ -127,7 +131,7 @@ async function fetchHtml(url) {
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);
   }
-  consecutiveErrors = Math.max(0, consecutiveErrors - 1);
+  consecutiveErrors = 0;
   return res.text();
 }
 
@@ -200,7 +204,7 @@ async function scrapeMapScores(matchUrl) {
     const s1 = Number(score1) || 0;
     const s2 = Number(score2) || 0;
 
-    if (s1 < 5 && s2 < 5) return;
+    if (s1 === 0 && s2 === 0) return;
 
     const isComplete = (s1 >= 13 || s2 >= 13) && Math.abs(s1 - s2) >= 2;
 
@@ -234,21 +238,21 @@ async function findRecentlyFinished() {
     const key = normalize(teams[0]) + ":" + normalize(teams[1]);
     const existing = liveScrapedScores.get(key);
     if (existing?.persisted) return; // déjà persisté avec maps complètes, skip
+    if (Date.now() - (finishedLastTry.get(key) || 0) < FINISHED_RETRY_MS) return;
 
     const matchUrl = href.startsWith("http") ? href : `${VLR_BASE_URL}${href.startsWith("/") ? "" : "/"}${href}`;
     matches.push({ matchUrl, team1: teams[0], team2: teams[1], finished: true });
   });
 
-  return matches.slice(0, 25);
+  return matches.slice(0, FINISHED_PER_RUN);
 }
 
-async function runOnce() {
+// Boucle rapide (15s) : uniquement les matchs en direct, scrapés en parallèle,
+// pour que le score live ne prenne jamais de retard derrière le rattrapage
+// des matchs terminés (boucle séparée, plus lente).
+async function runLive() {
   const liveMatches = await findLiveMatches();
-  console.log(
-    `[vlr-scraper] ${liveMatches.length} match(s) live`
-  );
-
-  for (const match of liveMatches) {
+  await Promise.all(liveMatches.map(async (match) => {
     try {
       const maps = await scrapeMapScores(match.matchUrl);
 
@@ -289,8 +293,10 @@ async function runOnce() {
         err.message
       );
     }
-  }
+  }));
+}
 
+async function runFinished() {
   try {
     const finishedMatches = await findRecentlyFinished();
     if (finishedMatches.length > 0) {
@@ -298,10 +304,11 @@ async function runOnce() {
     }
     for (const match of finishedMatches) {
       try {
+        const key = normalize(match.team1) + ":" + normalize(match.team2);
+        finishedLastTry.set(key, Date.now());
         const maps = await scrapeMapScores(match.matchUrl);
         const completeMaps = maps.filter((m) => m.complete);
         if (completeMaps.length > 0) {
-          const key = normalize(match.team1) + ":" + normalize(match.team2);
           let wins1 = 0, wins2 = 0;
           for (const mp of completeMaps) { if (mp.score1 > mp.score2) wins1++; else wins2++; }
           const seriesDecided = wins1 >= 2 || wins2 >= 2;
@@ -347,25 +354,33 @@ function getNextInterval() {
 }
 
 function startScraper() {
-  console.log("[vlr-scraper] démarrage, poll ~30s (live + results, backoff si rate-limited)");
+  console.log("[vlr-scraper] démarrage : live toutes les 15s, matchs terminés toutes les 2 min");
 
-  async function loop() {
+  async function liveLoop() {
     try {
-      await runOnce();
+      await runLive();
     } catch (err) {
-      console.error("[vlr-scraper] erreur générale:", err.message);
+      console.error("[vlr-scraper] erreur live:", err.message);
       consecutiveErrors++;
     }
     const next = getNextInterval();
     if (next > BASE_INTERVAL_MS) {
-      console.log(
-        `[vlr-scraper] backoff: prochain poll dans ${Math.round(next / 1000)}s`
-      );
+      console.log(`[vlr-scraper] backoff: prochain poll live dans ${Math.round(next / 1000)}s`);
     }
-    setTimeout(loop, next);
+    setTimeout(liveLoop, next);
   }
 
-  setTimeout(loop, 5000);
+  async function finishedLoop() {
+    try {
+      await runFinished();
+    } catch (err) {
+      console.error("[vlr-scraper] erreur finished:", err.message);
+    }
+    setTimeout(finishedLoop, Math.max(FINISHED_INTERVAL_MS, getNextInterval()));
+  }
+
+  setTimeout(liveLoop, 5000);
+  setTimeout(finishedLoop, 20000);
 }
 
 export { startScraper, getScrapedScores, liveScrapedScores };
