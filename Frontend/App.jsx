@@ -5186,7 +5186,7 @@ const BRACKET_STAGES = [
 function bracketTileStyle(color, active) {
   return {
     background: active ? `linear-gradient(135deg, ${color}20 0%, ${color}08 50%, #0d0d0d 100%)` : "#0d0d0d",
-    border: `1px solid ${active ? color + "55" : color + "1f"}`,
+    border: `1px solid ${active ? color + "55" : "#161616"}`,
     borderRadius: 12,
     cursor: active ? "pointer" : "default",
     display: "flex", flexDirection: "column", alignItems: "center",
@@ -6872,15 +6872,8 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
         {CS2_BRACKET_COMPS.map((c) => {
           if (c.locked) {
             return (
-              <button key={c.key} disabled style={{
-                background: "#0a0a0a",
-                border: "1px solid #161616",
-                borderRadius: 12, padding: "32px 12px",
-                cursor: "default",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                opacity: 0.3,
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 900, color: "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+              <button key={c.key} disabled style={{ ...bracketTileStyle(c.color, false), padding: "32px 12px", gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               </button>
             );
           }
@@ -6890,18 +6883,8 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
           const hasAny = events.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{
-              background: hasAny ? `linear-gradient(135deg, ${c.color}20 0%, ${c.color}08 50%, #0d0d0d 100%)` : "#0a0a0a",
-              border: `1px solid ${hasAny ? c.color + "55" : "#161616"}`,
-              borderRadius: 12, padding: "32px 12px",
-              cursor: hasAny ? "pointer" : "default",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              boxShadow: hasAny ? `0 4px 24px ${c.color}30, inset 0 1px 0 ${c.color}18` : "none",
-              transition: "transform 0.15s",
-              position: "relative",
-              opacity: hasAny ? 1 : 0.3,
-            }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: hasAny ? c.color : "#444", letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
+            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{ ...bracketTileStyle(c.color, hasAny), padding: "32px 12px", gap: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
               )}
@@ -6925,6 +6908,13 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       </div>
     </div>
   );
+}
+
+function isEmptyPrediction(p) {
+  if (!p) return true;
+  const filled = (v) => v !== "" && v != null;
+  if (filled(p.seriesA) || filled(p.seriesB)) return false;
+  return !(Array.isArray(p.games) && p.games.some((g) => g && (filled(g.a) || filled(g.b))));
 }
 
 // Un match terminé sans score de série n'attend dans "à venir" que 48h après
@@ -11914,8 +11904,13 @@ export default function ClutchApp() {
       for (const [id, rp] of Object.entries(remotePreds)) {
         if (!rp || id.startsWith("demo-")) continue;
         const rts = Number(rp.ts) || 0;
-        if (prev[id] && rts <= (predTsRef.current[id] || 0)) continue;
+        const lts = predTsRef.current[id] || 0;
         const { ts, ...clean } = rp;
+        if (prev[id]) {
+          const emptyLocal = isEmptyPrediction(prev[id]), emptyRemote = isEmptyPrediction(clean);
+          if (emptyRemote && !emptyLocal) continue;
+          if (emptyRemote === emptyLocal && rts <= lts) continue;
+        }
         if (prev[id] && predContentKey(prev[id]) === predContentKey(clean)) continue;
         next = next || { ...prev };
         next[id] = { ...clean, expanded: (prev[id] && prev[id].expanded) || false };
@@ -11980,7 +11975,7 @@ export default function ClutchApp() {
     let changed = false;
     for (const [id, p] of Object.entries(predictions)) {
       if (prev && prev[id] !== predContentKey(p)) {
-        predTsRef.current[id] = now;
+        if (!isEmptyPrediction(p)) predTsRef.current[id] = now;
         changed = true;
       }
     }

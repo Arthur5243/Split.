@@ -464,6 +464,22 @@ db.exec(`
   )
 `);
 
+function isEmptyPrediction(p) {
+  if (!p) return true;
+  const filled = (v) => v !== "" && v != null;
+  if (filled(p.seriesA) || filled(p.seriesB)) return false;
+  return !(Array.isArray(p.games) && p.games.some((g) => g && (filled(g.a) || filled(g.b))));
+}
+
+// Un prono rempli l'emporte toujours sur une entrée vide (créée en ouvrant
+// simplement la carte d'un match) ; entre deux pronos remplis, le plus récent gagne.
+function isNewerPrediction(incoming, current) {
+  if (!current) return true;
+  const emptyIn = isEmptyPrediction(incoming), emptyCur = isEmptyPrediction(current);
+  if (emptyIn !== emptyCur) return emptyCur;
+  return (Number(incoming.ts) || 0) > (Number(current.ts) || 0);
+}
+
 function isSyncableMatchId(id) {
   return typeof id === "string" && id.length > 0 && id.length < 80 && !id.startsWith("demo-");
 }
@@ -488,8 +504,7 @@ export function mergeUserSync(userId, incoming) {
   const inPreds = incoming && typeof incoming.predictions === "object" && incoming.predictions ? incoming.predictions : {};
   for (const [id, p] of Object.entries(inPreds)) {
     if (!isSyncableMatchId(id) || !p || typeof p !== "object") continue;
-    const cur = predictions[id];
-    if (!cur || (Number(p.ts) || 0) > (Number(cur.ts) || 0)) {
+    if (isNewerPrediction(p, predictions[id])) {
       const { expanded, ...clean } = p;
       predictions[id] = clean;
     }
