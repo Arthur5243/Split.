@@ -36,6 +36,7 @@ import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
 import { captureCardHtml, warmupBrowser } from "./capture.js";
+import { startPointsWorker } from "./points-engine.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MATCHES_PATH = path.join(__dirname, "data", "matches.json");
@@ -2095,6 +2096,7 @@ app.listen(PORT, () => {
   // Bright Data) ou un plugin browserless-stealth.
   // startCitoScraper();
   startRlScraper();
+  startPointsWorker(PORT); // points des joueurs calculés côté serveur, 24h/24
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
   // définitif (backoff plafonné à 4h), ce reset ne sert que pour les anciens

@@ -12075,8 +12075,8 @@ export default function ClutchApp() {
   const predictionsRef = useRef(predictions);
   const settledRef = useRef(settledMatchIds);
   const authUserIdRef = useRef(authUser?.id || null);
-  const syncReadyRef = useRef(false);
   const syncPushTimerRef = useRef(null);
+  const serverPointsRef = useRef(false);
   predictionsRef.current = predictions;
   settledRef.current = settledMatchIds;
   authUserIdRef.current = authUser?.id || null;
@@ -12123,30 +12123,63 @@ export default function ClutchApp() {
       try { localStorage.setItem("split_settled_matches", JSON.stringify([...next])); } catch {}
       return next;
     });
+    if (Array.isArray(data.boosted) && data.boosted.length > 0) {
+      try {
+        const local = JSON.parse(localStorage.getItem("split_boosted_matches") || "[]");
+        const merged = [...new Set([...local, ...data.boosted.map(String)])];
+        if (merged.length !== local.length) localStorage.setItem("split_boosted_matches", JSON.stringify(merged));
+      } catch {}
+    }
+    // Points calculés par le serveur (24h/24, même app fermée) : ils font foi.
+    const sp = data.points;
+    if (sp && sp.computed) {
+      serverPointsRef.current = true;
+      const perGame = { valo: sp.valo || 0, cs2: sp.cs2 || 0, rl: sp.rl || 0 };
+      setUserPoints(sp.total || 0);
+      setPointsPerGame(perGame);
+      try {
+        localStorage.setItem("split_points_total", String(sp.total || 0));
+        localStorage.setItem("split_points_per_game", JSON.stringify(perGame));
+      } catch {}
+    }
   }
 
-  async function pushSync() {
+  // Envoie tous les pronos au serveur. `keepalive` : la requête part même si
+  // l'app est fermée / mise en arrière-plan juste après le prono.
+  async function pushSync(keepalive = false) {
     const token = syncToken();
-    if (!authUserIdRef.current || !token || !syncReadyRef.current) return;
+    if (!authUserIdRef.current || !token) return;
     const preds = {};
     for (const [id, p] of Object.entries(predictionsRef.current)) {
       if (!p || id.startsWith("demo-")) continue;
       const { expanded, ...rest } = p;
       preds[id] = { ...rest, ts: predTsRef.current[id] || 0 };
     }
+    let boosted = [];
+    try { boosted = JSON.parse(localStorage.getItem("split_boosted_matches") || "[]"); } catch {}
+    const body = JSON.stringify({ predictions: preds, settled: [...settledRef.current], boosted });
+    const send = (ka) => fetch(API_BASE + "/api/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body,
+      keepalive: ka,
+    });
     try {
-      const r = await fetch(API_BASE + "/api/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ predictions: preds, settled: [...settledRef.current] }),
-      });
+      const r = await send(keepalive && body.length < 60000).catch(() => send(false));
       if (r.ok) applyRemoteSync(await r.json());
     } catch {}
   }
 
   function schedulePush() {
     if (syncPushTimerRef.current) clearTimeout(syncPushTimerRef.current);
-    syncPushTimerRef.current = setTimeout(() => { syncPushTimerRef.current = null; pushSync(); }, 1200);
+    syncPushTimerRef.current = setTimeout(() => { syncPushTimerRef.current = null; pushSync(); }, 400);
+  }
+
+  function flushPush() {
+    if (!syncPushTimerRef.current) return;
+    clearTimeout(syncPushTimerRef.current);
+    syncPushTimerRef.current = null;
+    pushSync(true);
   }
 
   async function pullSync() {
@@ -12156,7 +12189,6 @@ export default function ClutchApp() {
       const r = await fetch(API_BASE + "/api/sync", { headers: { Authorization: `Bearer ${token}` } });
       if (!r.ok) return;
       applyRemoteSync(await r.json());
-      syncReadyRef.current = true;
       schedulePush();
     } catch {}
   }
@@ -12180,20 +12212,25 @@ export default function ClutchApp() {
   }, [predictions]);
 
   useEffect(() => {
-    if (syncReadyRef.current) schedulePush();
+    schedulePush();
   }, [settledMatchIds]);
 
   useEffect(() => {
-    syncReadyRef.current = false;
+    serverPointsRef.current = false;
     if (!authUser?.id) return;
     pullSync();
-    const onVisible = () => { if (document.visibilityState === "visible") pullSync(); };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") pullSync();
+      else flushPush();
+    };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
-    const iv = setInterval(pullSync, 90 * 1000);
+    window.addEventListener("pagehide", flushPush);
+    const iv = setInterval(pullSync, 60 * 1000);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pagehide", flushPush);
       clearInterval(iv);
     };
   }, [authUser?.id]);
@@ -13119,7 +13156,7 @@ export default function ClutchApp() {
       localStorage.setItem("split_settled_matches", JSON.stringify([...next]));
       return next;
     });
-    if (pointsToAdd > 0) {
+    if (pointsToAdd > 0 && !serverPointsRef.current) {
       let newTotal;
       setUserPoints((prev) => {
         newTotal = prev + pointsToAdd;
@@ -13136,6 +13173,8 @@ export default function ClutchApp() {
       } else {
         syncProfileToBackend(profile, newTotal);
       }
+    }
+    if (pointsToAdd > 0) {
       setQuestState(qs => {
         if (!qs) return qs;
         const updated = { ...qs, daily: qs.daily.map(q => {
@@ -13178,6 +13217,7 @@ export default function ClutchApp() {
   }, [cs2ResultsMatches]);
 
   useEffect(() => {
+    if (serverPointsRef.current) return;
     if (!resultsMatches.length && !cs2ResultsMatches.length) return;
     const perGame = { valo: 0, cs2: 0, rl: 0 };
     for (const id of settledMatchIds) {

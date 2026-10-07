@@ -26,18 +26,19 @@ import {
   getOnlineStatus,
   getUserSync,
   mergeUserSync,
+  getUserPoints,
 } from "./social-store.js";
 import { authMiddleware } from "./auth-routes.js";
 
 const router = Router();
 
 router.get("/api/sync", authMiddleware, (req, res) => {
-  res.json(getUserSync(req.userId));
+  res.json({ ...getUserSync(req.userId), points: getUserPoints(req.userId) });
 });
 
 router.post("/api/sync", authMiddleware, (req, res) => {
   try {
-    res.json(mergeUserSync(req.userId, req.body || {}));
+    res.json({ ...mergeUserSync(req.userId, req.body || {}), points: getUserPoints(req.userId) });
   } catch (e) {
     console.error("[sync] merge error:", e.message);
     res.status(500).json({ error: "Erreur serveur" });

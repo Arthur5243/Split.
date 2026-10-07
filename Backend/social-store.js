@@ -228,6 +228,8 @@ const setBetStatsStmt = db.prepare(`
   WHERE id = ?
 `);
 export function setBetStats(userId, correct, exact, total) {
+  const serverComputed = db.prepare(`SELECT 1 FROM user_match_points WHERE user_id = ? LIMIT 1`).get(userId);
+  if (serverComputed) return;
   setBetStatsStmt.run(correct | 0, exact | 0, total | 0, userId);
 }
 
@@ -463,6 +465,23 @@ db.exec(`
     updated_at TEXT
   )
 `);
+try { db.exec(`ALTER TABLE user_sync ADD COLUMN boosted TEXT NOT NULL DEFAULT '[]'`); } catch {}
+
+// Registre des points par joueur et par match terminé, calculé côté serveur
+// (points-engine.js) : la somme alimente users.points / points_<jeu> et les
+// stats de paris, même si le joueur n'ouvre jamais l'app.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS user_match_points (
+    user_id    TEXT NOT NULL,
+    match_id   TEXT NOT NULL,
+    game       TEXT NOT NULL,
+    points     INTEGER NOT NULL DEFAULT 0,
+    correct    INTEGER NOT NULL DEFAULT 0,
+    exact      INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT,
+    PRIMARY KEY (user_id, match_id)
+  )
+`);
 
 function isEmptyPrediction(p) {
   if (!p) return true;
@@ -485,17 +504,61 @@ function isSyncableMatchId(id) {
 }
 
 export function getUserSync(userId) {
-  const row = db.prepare(`SELECT predictions, settled, updated_at FROM user_sync WHERE user_id = ?`).get(userId);
-  if (!row) return { predictions: {}, settled: [] };
+  const row = db.prepare(`SELECT predictions, settled, boosted, updated_at FROM user_sync WHERE user_id = ?`).get(userId);
+  if (!row) return { predictions: {}, settled: [], boosted: [] };
   const user = db.prepare(`SELECT wipe_at FROM users WHERE id = ?`).get(userId);
   if (user?.wipe_at && (!row.updated_at || user.wipe_at > row.updated_at)) {
     db.prepare(`DELETE FROM user_sync WHERE user_id = ?`).run(userId);
-    return { predictions: {}, settled: [] };
+    db.prepare(`DELETE FROM user_match_points WHERE user_id = ?`).run(userId);
+    return { predictions: {}, settled: [], boosted: [] };
   }
-  let predictions = {}, settled = [];
+  let predictions = {}, settled = [], boosted = [];
   try { predictions = JSON.parse(row.predictions) || {}; } catch {}
   try { settled = JSON.parse(row.settled) || []; } catch {}
-  return { predictions, settled };
+  try { boosted = JSON.parse(row.boosted) || []; } catch {}
+  return { predictions, settled, boosted };
+}
+
+// Passe par getUserSync pour appliquer le reset admin (wipe_at) : un compte
+// réinitialisé ne doit jamais retrouver ses anciens points.
+export function listUserSyncRows() {
+  return db.prepare(`SELECT user_id FROM user_sync`).all()
+    .map((r) => ({ userId: r.user_id, ...getUserSync(r.user_id) }))
+    .filter((r) => Object.keys(r.predictions).length > 0);
+}
+
+// Enregistre les points des matchs terminés d'un joueur puis recalcule ses
+// totaux (users.points, points_<jeu>, stats de paris) à partir du registre.
+export function saveUserMatchPoints(userId, entries) {
+  const upsert = db.prepare(`
+    INSERT INTO user_match_points (user_id, match_id, game, points, correct, exact, updated_at)
+    VALUES (@userId, @matchId, @game, @points, @correct, @exact, @now)
+    ON CONFLICT(user_id, match_id) DO UPDATE SET
+      game = excluded.game, points = excluded.points, correct = excluded.correct,
+      exact = excluded.exact, updated_at = excluded.updated_at
+  `);
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    for (const e of entries) upsert.run({ userId, now, ...e, correct: e.correct ? 1 : 0, exact: e.exact ? 1 : 0 });
+    const rows = db.prepare(`
+      SELECT game, SUM(points) AS pts, COUNT(*) AS n, SUM(correct) AS c, SUM(exact) AS e
+      FROM user_match_points WHERE user_id = ? GROUP BY game
+    `).all(userId);
+    const by = Object.fromEntries(rows.map((r) => [r.game, r]));
+    const sum = (k) => rows.reduce((s, r) => s + (r[k] || 0), 0);
+    db.prepare(`
+      UPDATE users SET points = ?, points_valo = ?, points_cs2 = ?, points_rl = ?,
+        bets_total = ?, bets_correct = ?, bets_exact = ?
+      WHERE id = ?
+    `).run(sum("pts"), by.valo?.pts || 0, by.cs2?.pts || 0, by.rl?.pts || 0, sum("n"), sum("c"), sum("e"), userId);
+  })();
+}
+
+export function getUserPoints(userId) {
+  const u = db.prepare(`SELECT points, points_valo, points_cs2, points_rl FROM users WHERE id = ?`).get(userId);
+  const computed = db.prepare(`SELECT COUNT(*) AS n FROM user_match_points WHERE user_id = ?`).get(userId).n > 0;
+  if (!u) return null;
+  return { total: u.points || 0, valo: u.points_valo || 0, cs2: u.points_cs2 || 0, rl: u.points_rl || 0, computed };
 }
 
 export function mergeUserSync(userId, incoming) {
@@ -515,15 +578,22 @@ export function mergeUserSync(userId, incoming) {
   }
   for (const id of Object.keys(predictions)) if (!isSyncableMatchId(id)) delete predictions[id];
   const settled = [...settledSet];
+  const boostedSet = new Set(current.boosted.filter(isSyncableMatchId));
+  for (const id of Array.isArray(incoming?.boosted) ? incoming.boosted : []) {
+    if (isSyncableMatchId(String(id))) boostedSet.add(String(id));
+  }
+  const boosted = [...boostedSet];
   db.prepare(`
-    INSERT INTO user_sync (user_id, predictions, settled, updated_at) VALUES (?, ?, ?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET predictions = excluded.predictions, settled = excluded.settled, updated_at = excluded.updated_at
-  `).run(userId, JSON.stringify(predictions), JSON.stringify(settled), new Date().toISOString());
-  return { predictions, settled };
+    INSERT INTO user_sync (user_id, predictions, settled, boosted, updated_at) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET predictions = excluded.predictions, settled = excluded.settled,
+      boosted = excluded.boosted, updated_at = excluded.updated_at
+  `).run(userId, JSON.stringify(predictions), JSON.stringify(settled), JSON.stringify(boosted), new Date().toISOString());
+  return { predictions, settled, boosted };
 }
 
 export function deleteUser(userId) {
   db.prepare(`DELETE FROM user_sync WHERE user_id = ?`).run(userId);
+  db.prepare(`DELETE FROM user_match_points WHERE user_id = ?`).run(userId);
   db.prepare(`DELETE FROM follows WHERE follower_id = ? OR followed_id = ?`).run(userId, userId);
   db.prepare(`DELETE FROM profile_views WHERE viewer_id = ? OR viewed_id = ?`).run(userId, userId);
   db.prepare(`DELETE FROM referrals WHERE referrer_id = ? OR referred_id = ?`).run(userId, userId);
