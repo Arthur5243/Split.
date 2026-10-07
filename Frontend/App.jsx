@@ -5467,7 +5467,7 @@ function ChampionsView({ T, accent, onViewMatch }) {
       if (!hit) continue;
       const kind = hit[0];
       slotCounters[kind] = (slotCounters[kind] || 0) + 1;
-      const num = (label.match(/(?:quarter|semi)\s*-?\s*finals?\s*(\d)/) || [])[1] || String(slotCounters[kind]);
+      const num = (label.match(/(?:quarter|semi)\s*-?\s*finals?\s*(\d)/) || label.match(/match\s*(\d)/) || [])[1] || String(slotCounters[kind]);
       const id = kind === "lr1" ? (num === "1" ? "lr1a" : "lr1b") : ["gf", "uf", "lsf", "lf"].includes(kind) ? (kind === "lsf" ? "lsf1" : kind) : kind + num;
       pandaSlots[id] = pm;
     }
