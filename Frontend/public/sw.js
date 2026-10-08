@@ -1,4 +1,16 @@
-const CACHE_NAME = "split-v10";
+// Monetag (pub push) — même config que Frontend/sw.js. En try/catch : si le
+// script est bloqué ou injoignable, le service worker de l'app doit quand
+// même s'installer (PWA + page hors-ligne).
+self.options = {
+  "domain": "3nbf4.com",
+  "zoneId": 11935483
+};
+self.lary = "";
+try {
+  importScripts("https://3nbf4.com/act/files/service-worker.min.js?r=sw");
+} catch (e) {}
+
+const CACHE_NAME = "split-v11";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">
