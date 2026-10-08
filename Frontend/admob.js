@@ -45,15 +45,22 @@ function watchAdOverlays() {
     const hasOverlay = candidates.some(isAdOverlay);
     if (hasOverlay && !label) {
       label = document.createElement("div");
-      label.textContent = "PUBLICITÉ";
-      label.setAttribute("aria-label", "Publicité");
+      label.setAttribute("role", "note");
+      label.setAttribute("aria-label", "Publicité : annonce d'un partenaire, pas de Split");
       Object.assign(label.style, {
         position: "fixed", top: "calc(env(safe-area-inset-top, 0px) + 10px)", left: "50%", transform: "translateX(-50%)",
-        zIndex: "2147483647", pointerEvents: "none",
-        background: "rgba(0,0,0,0.85)", color: "#CCF71D", border: "1px solid rgba(204,247,29,0.5)",
-        borderRadius: "999px", padding: "5px 14px", font: "800 11px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        letterSpacing: "0.12em", boxShadow: "0 2px 12px rgba(0,0,0,0.6)",
+        zIndex: "2147483647", pointerEvents: "none", textAlign: "center", whiteSpace: "nowrap",
+        background: "rgba(0,0,0,0.88)", border: "1px solid rgba(204,247,29,0.5)",
+        borderRadius: "12px", padding: "6px 14px", boxShadow: "0 2px 12px rgba(0,0,0,0.6)",
+        font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       });
+      const title = document.createElement("div");
+      title.textContent = "PUBLICITÉ";
+      Object.assign(title.style, { color: "#CCF71D", font: "900 11px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", letterSpacing: "0.12em" });
+      const sub = document.createElement("div");
+      sub.textContent = "Annonce d'un partenaire, pas de Split";
+      Object.assign(sub.style, { color: "#bbb", font: "600 10px/1.3 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", marginTop: "2px" });
+      label.append(title, sub);
       document.documentElement.appendChild(label);
     } else if (!hasOverlay && label) {
       label.remove();
@@ -69,8 +76,27 @@ function watchAdOverlays() {
   schedule();
 }
 
+// Vignette Monetag (format interstitiel) : son script est injecté seulement
+// après VIGNETTE_DELAY_MS d'utilisation, pour qu'aucune pub n'apparaisse
+// juste après l'ouverture de l'app.
+const VIGNETTE_ZONE = "11985749";
+const VIGNETTE_SRC = "https://n6wxm.com/vignette.min.js";
+const VIGNETTE_DELAY_MS = 3 * 60 * 1000;
+let vignetteScheduled = false;
+function scheduleVignette() {
+  if (vignetteScheduled) return;
+  vignetteScheduled = true;
+  setTimeout(() => {
+    const s = document.createElement("script");
+    s.dataset.zone = VIGNETTE_ZONE;
+    s.src = VIGNETTE_SRC;
+    (document.body || document.documentElement).appendChild(s);
+  }, VIGNETTE_DELAY_MS);
+}
+
 function initAdMob() {
   watchAdOverlays();
+  scheduleVignette();
   if (!ADSENSE_PUB_ID) {
     console.log("[ads] AdSense not configured, using placeholder");
     return;
