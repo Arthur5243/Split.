@@ -5003,7 +5003,6 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
 
   const isLower = bracketType === "lower";
   const svgPaths = [];
-  const svgDashed = [];
   for (let ri = 1; ri < rounds.length; ri++) {
     const pCount = rounds[ri - 1].matches.length;
     const cCount = rounds[ri].matches.length;
@@ -5026,10 +5025,10 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
         const pY = yPositions[ri - 1][ci] + CARD_H / 2 + LABEL_H;
         const cY = yPositions[ri][ci] + CARD_H / 2 + LABEL_H;
         if (Math.abs(pY - cY) < 2) {
-          svgDashed.push(`M ${x1} ${pY} H ${x2}`);
+          svgPaths.push(`M ${x1} ${pY} H ${x2}`);
         } else {
           const dir = cY > pY ? 1 : -1;
-          svgDashed.push(`M ${x1} ${pY} H ${xMid - CR} Q ${xMid} ${pY} ${xMid} ${pY + dir * CR} V ${cY - dir * CR} Q ${xMid} ${cY} ${xMid + CR} ${cY} H ${x2}`);
+          svgPaths.push(`M ${x1} ${pY} H ${xMid - CR} Q ${xMid} ${pY} ${xMid} ${pY + dir * CR} V ${cY - dir * CR} Q ${xMid} ${cY} ${xMid + CR} ${cY} H ${x2}`);
         }
       }
     } else {
@@ -5083,7 +5082,6 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
       <div style={{ position: "relative", width: totalW, height: svgH, minWidth: totalW }}>
         <svg style={{ position: "absolute", inset: 0, width: totalW, height: svgH, pointerEvents: "none" }}>
           {svgPaths.map((d, i) => <path key={i} d={d} fill="none" stroke={accentDim} strokeWidth={1.5} />)}
-          {svgDashed.map((d, i) => <path key={"d" + i} d={d} fill="none" stroke={accentDim} strokeWidth={1} strokeDasharray="4 3" opacity={0.5} />)}
         </svg>
         {rounds.map((round, ri) => (
           <React.Fragment key={ri}>
@@ -5437,7 +5435,7 @@ function parseStage2History(region, raw) {
   let n = 0;
   for (const line of raw.split("\n").map((l) => l.trim()).filter(Boolean)) {
     const [tag, ...restParts] = line.split(" ");
-    const rest = restParts.join(" ");
+    const rest = restParts.join(" ").split(" / ")[0];
     const list = () => rest.split("|").map((s) => s.trim()).filter(Boolean);
     if (tag === "PI_U") { cur = { name: rest, matches: [] }; out.playIn.upper.push(cur); }
     else if (tag === "PI_L") { cur = { name: rest, matches: [] }; out.playIn.lower.push(cur); }
@@ -5932,6 +5930,68 @@ function ChampionsView({ T, accent, onViewMatch }) {
   return null;
 }
 
+// Classement de la région après le Stage 2 : points de saison (/api/vct-points,
+// avant Stage 2) + points du Stage 2. Les 2 finalistes sont qualifiés d'office
+// en tête, quels que soient leurs points ; puis les 2 meilleurs aux points.
+const STAGE2_ALIASES = { "100t": "100thieves", kc: "karminecorp", tl: "teamliquid", fut: "futesports", ge: "globalesports", ns: "nongshimredforce", jdg: "jdgaming", blg: "bilibiligaming", nova: "novaesports", g2: "g2esports" };
+const normTeam = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const sameTeam = (a, b) => {
+  const x = normTeam(a), y = normTeam(b);
+  return !!x && !!y && (x === y || x.startsWith(y) || y.startsWith(x));
+};
+
+function Stage2Standings({ regionKey, h, accent, T }) {
+  const [base, setBase] = useState(null);
+  useEffect(() => {
+    fetch(API_BASE + "/api/vct-points").then((r) => (r.ok ? r.json() : null)).then((d) => d && setBase(d[regionKey] || [])).catch(() => {});
+  }, [regionKey]);
+  if (!base) return null;
+
+  const rows = base.map((t) => ({ team: t.team, pts: t.pts }));
+  for (const entry of h.points) {
+    const m = entry.match(/^(.+?)\s*\+(\d+)$/);
+    if (!m) continue;
+    const token = normTeam(m[1]);
+    const target = STAGE2_ALIASES[token] || token;
+    const row = rows.find((r) => sameTeam(r.team, target));
+    if (row) row.pts += +m[2];
+    else rows.push({ team: m[1], pts: +m[2] });
+  }
+  const finalists = h.qualified.map((q) => rows.find((r) => sameTeam(r.team, q)) || { team: q, pts: 0 });
+  const rest = rows.filter((r) => !finalists.includes(r)).sort((a, b) => b.pts - a.pts);
+
+  const header = (label) => (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: `${accent}12`, borderRadius: 5, border: `1px solid ${accent}25` }}>
+      <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
+      <span style={{ fontSize: 9, fontWeight: 800, color: accent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
+    </div>
+  );
+  const row = (t, rank, qualified, last) => (
+    <div key={t.team} style={{ display: "grid", gridTemplateColumns: "28px 1fr 50px", padding: "8px 12px", borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.04)", background: qualified ? `${accent}08` : "transparent" }}>
+      <span style={{ fontSize: 10, fontWeight: 800, color: qualified ? accent : "#444", fontVariantNumeric: "tabular-nums" }}>{rank}</span>
+      <span style={{ fontSize: 11, fontWeight: qualified ? 700 : 500, color: qualified ? "#ddd" : "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
+        {qualified && <span style={{ width: 2, height: 10, borderRadius: 1, background: accent, flexShrink: 0 }} />}
+        {t.team}
+        {qualified && <span style={{ fontSize: 7, fontWeight: 800, color: accent, marginLeft: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.bracketQualified || "Qualifié"}</span>}
+      </span>
+      <span style={{ fontSize: 12, fontWeight: 800, color: qualified ? accent : "#555", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{t.pts}</span>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: "0 16px 32px" }}>
+      {header(T.bracketDirectQual || "Qualification directe")}
+      <div style={{ background: `${accent}08`, borderRadius: 8, overflow: "hidden", border: `1px solid ${accent}20`, marginBottom: 16 }}>
+        {finalists.map((t, i) => row(t, i + 1, true, i === finalists.length - 1))}
+      </div>
+      {header(T.bracketPoints || "Points")}
+      <div style={{ background: "#111", borderRadius: 8, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+        {rest.map((t, i) => row(t, i + finalists.length + 1, i < 2, i === rest.length - 1))}
+      </div>
+    </div>
+  );
+}
+
 function RegionStandings({ regionKey, accent, T }) {
   const [points, setPoints] = useState(null);
   const [expanded, setExpanded] = useState(false);
@@ -6254,47 +6314,34 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
       <span style={{ fontSize: 13, fontWeight: 900, color, letterSpacing: "0.08em", textTransform: "uppercase" }}>{text}</span>
     </div>
   );
-  const teamChips = (label, teams, color) => teams.length > 0 && (
-    <div style={{ padding: "0 16px 6px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
-      <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</span>
-      {teams.map((t) => (
-        <span key={t} style={{ fontSize: 11, fontWeight: 800, color, background: color + "15", border: `1px solid ${color}40`, borderRadius: 6, padding: "3px 8px" }}>{t}</span>
-      ))}
-    </div>
-  );
-  const s2Tree = (rounds, accentR, label, labelColor, type) => rounds.length > 0 && (
-    <BracketTree rounds={rounds} accent={accentR} label={label} labelColor={labelColor} bracketType={type} predictions={predictions} />
-  );
+  const s2Tree = (rounds, accentR, label, labelColor, type, qualified) => {
+    if (!rounds.length) return null;
+    // Qualifiés : trait vers l'équipe qualifiée de chaque dernier match ; si
+    // la dernière manche est une finale dont les 2 équipes sont qualifiées
+    // (ex Chine), la case affiche les deux.
+    const last = rounds[rounds.length - 1].matches;
+    const bothFinalists = qualified && last.length === 1 && qualified.length === 2;
+    return (
+      <BracketTree rounds={rounds} accent={accentR} label={label} labelColor={labelColor} bracketType={type} predictions={predictions}
+        qualifiedLabel={qualified ? T.bracketQualified : undefined} qualifiedIsLabel={bothFinalists} bothQualify={bothFinalists} />
+    );
+  };
   const stage2PlayIn = (h, accentR) => (
-    <>
-      <DragScroll>{s2Tree(h.playIn.upper, accentR, T.bracketUpper || "Upper Bracket", accentR)}</DragScroll>
-      {teamChips("Qualifiés", h.playIn.upperQualified, "#CCF71D")}
-      <DragScroll>{s2Tree(h.playIn.lower, accentR, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}</DragScroll>
-      {teamChips("Qualifiés", h.playIn.lowerQualified, "#CCF71D")}
-    </>
+    <DragScroll>
+      {s2Tree(h.playIn.upper, accentR, T.bracketUpper || "Upper Bracket", accentR, undefined, h.playIn.upperQualified)}
+      {s2Tree(h.playIn.lower, accentR, T.bracketLower || "Lower Bracket", "#ff4655", "lower", h.playIn.lowerQualified)}
+    </DragScroll>
   );
-  const stage2Playoffs = (h, accentR) => (
+  const stage2Playoffs = (h, accentR, regionKey) => (
     <>
       <DragScroll>
         {s2Tree(h.playoffs.upper, accentR, T.bracketUpper || "Upper Bracket", accentR)}
         {s2Tree(h.playoffs.lower, accentR, T.bracketLower || "Lower Bracket", "#ff4655", "lower")}
         {s2Tree(h.playoffs.grand_final, accentR, T.bracketGrandFinal || "Grand Final", "#FFD700")}
       </DragScroll>
-      <div style={{ margin: "0 16px 32px", background: "#111", border: "1px solid #FFD70030", borderRadius: 12, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ fontSize: 13, fontWeight: 900, color: "#FFD700" }}>Champion : {h.champion}</div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#ddd" }}>Qualified Champions : {h.qualified.join(", ")}</div>
-        {h.points.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", alignSelf: "center" }}>Points</span>
-            {h.points.map((pt) => (
-              <span key={pt} style={{ fontSize: 11, fontWeight: 800, color: "#CCF71D", background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.25)", borderRadius: 6, padding: "3px 8px" }}>{pt}</span>
-            ))}
-          </div>
-        )}
-      </div>
+      <Stage2Standings regionKey={regionKey} h={h} accent={accentR} T={T} />
     </>
   );
-
   // --- Historique : uniquement le Stage 2 (résultats définitifs) ---
   if (showHistory) {
     const s2Color = "#FF6B35";
@@ -6310,7 +6357,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           {sectionTitle("Play-In", accentR)}
           {stage2PlayIn(h, accentR)}
           {sectionTitle("Playoffs", "#FFD700")}
-          {stage2Playoffs(h, accentR)}
+          {stage2Playoffs(h, accentR, historyRegion)}
         </div>
       );
     }
@@ -6471,7 +6518,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     if (!currentData) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 13 }}>{T.bracketNoEvent}</div>;
 
     if (currentData.stage2) {
-      return phase === "play_ins" ? stage2PlayIn(currentData.stage2, accent) : stage2Playoffs(currentData.stage2, accent);
+      return phase === "play_ins" ? stage2PlayIn(currentData.stage2, accent) : stage2Playoffs(currentData.stage2, accent, region);
     }
 
     if (phase === "play_ins") {
