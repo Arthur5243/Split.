@@ -3171,39 +3171,40 @@ function loadStreak() {
   try { return JSON.parse(localStorage.getItem("split_streak")) || { current: 0, best: 0, lastBetDate: null }; } catch { return { current: 0, best: 0, lastBetDate: null }; }
 }
 function saveStreak(s) { localStorage.setItem("split_streak", JSON.stringify(s)); }
-function checkStreakExpiry() {
-  const s = loadStreak();
-  if (s.current === 0 || !s.lastBetDate) return { ...s, justExpired: false };
-  const today = todayStr();
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().slice(0, 10);
-  if (s.lastBetDate === today || s.lastBetDate === yStr) return { ...s, justExpired: false };
-  const expired = { current: 0, best: s.best, lastBetDate: s.lastBetDate };
-  saveStreak(expired);
-  return { ...expired, justExpired: true, lostStreak: s.current };
+function localDayStr(d = new Date()) { return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); }
+function shiftDay(day, delta) {
+  const [y, m, dd] = day.split("-").map(Number);
+  return localDayStr(new Date(y, m - 1, dd + delta));
+}
+// Streak = nombre de jours consécutifs (heure locale, jusqu'à aujourd'hui ou
+// hier) avec au moins un prono posé. Calculée depuis les pronos eux-mêmes
+// (synchronisés sur le compte, avec leur date de pose `placedAt`, sinon leur
+// horodatage de synchro) : identique sur tous les appareils et conservée
+// après une déconnexion. L'ancienne streak locale reste prise en compte.
+function computeStreak(predictions, tsMap) {
+  const stored = loadStreak();
+  const days = new Set();
+  for (const [id, p] of Object.entries(predictions || {})) {
+    if (!p || p.seriesA === "" || p.seriesB === "" || p.seriesA == null || p.seriesB == null) continue;
+    const at = p.placedAt || (tsMap && tsMap[id]);
+    if (at) days.add(localDayStr(new Date(at)));
+  }
+  if (stored.lastBetDate && stored.current > 0) {
+    for (let i = 0; i < stored.current; i++) days.add(shiftDay(stored.lastBetDate, -i));
+  }
+  const today = localDayStr();
+  const yesterday = shiftDay(today, -1);
+  const start = days.has(today) ? today : days.has(yesterday) ? yesterday : null;
+  let current = 0;
+  for (let d = start; d && days.has(d); d = shiftDay(d, -1)) current++;
+  const next = { current, best: Math.max(stored.best || 0, current), lastBetDate: start || stored.lastBetDate || null };
+  saveStreak(next);
+  return { ...next, lostStreak: stored.current > 0 && current === 0 ? stored.current : 0 };
 }
 function isStreakExpiring() {
   const s = loadStreak();
-  if (s.current === 0 || !s.lastBetDate) return false;
-  const today = todayStr();
-  if (s.lastBetDate === today) return false;
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().slice(0, 10);
-  return s.lastBetDate === yStr;
+  return s.current > 0 && s.lastBetDate === shiftDay(localDayStr(), -1);
 }
-function updateStreak() {
-  const s = loadStreak();
-  const today = todayStr();
-  if (s.lastBetDate === today) return { ...s, earned: false };
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = yesterday.toISOString().slice(0, 10);
-  const newCurrent = s.lastBetDate === yStr ? s.current + 1 : 1;
-  const newBest = Math.max(s.best, newCurrent);
-  const next = { current: newCurrent, best: newBest, lastBetDate: today };
-  saveStreak(next);
-  return { ...next, earned: true };
-}
-
 function loadXp() { try { return parseInt(localStorage.getItem("split_xp")) || 0; } catch { return 0; } }
 function saveXp(xp) { localStorage.setItem("split_xp", String(xp)); }
 function xpForTier(tier) {
@@ -11685,8 +11686,10 @@ export default function ClutchApp() {
     return () => clearInterval(iv);
   }, []);
   const [streak, setStreak] = useState(() => {
-    const checked = checkStreakExpiry();
-    return checked;
+    let tsMap = {};
+    try { tsMap = JSON.parse(localStorage.getItem("split_predictions_ts") || "{}"); } catch {}
+    const s = computeStreak(predictions, tsMap);
+    return { ...s, justExpired: s.lostStreak > 0 };
   });
   const [showQuestModal, setShowQuestModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
@@ -12241,6 +12244,12 @@ export default function ClutchApp() {
   useEffect(() => {
     schedulePush();
   }, [settledMatchIds]);
+
+  // Pronos reçus d'un autre appareil (ou modifiés) : la streak suit.
+  useEffect(() => {
+    const s = computeStreak(predictions, predTsRef.current);
+    setStreak((prev) => (prev.current === s.current && prev.best === s.best && prev.lastBetDate === s.lastBetDate ? prev : { ...prev, ...s, justExpired: false }));
+  }, [predictions]);
 
   useEffect(() => {
     serverPointsRef.current = false;
@@ -13095,9 +13104,11 @@ export default function ClutchApp() {
               activeCount++;
             }
             if (activeCount >= DAILY_BET_LIMIT) { setShowLimitPopup(true); return prev; }
-            const streakResult = updateStreak();
-            setStreak(streakResult);
-            if (streakResult.earned) setStreakPopup(streakResult);
+            next.placedAt = cur.placedAt || Date.now();
+            const betBefore = loadStreak().lastBetDate;
+            const streakResult = computeStreak({ ...prev, [matchId]: next }, predTsRef.current);
+            setStreak((s) => ({ ...s, ...streakResult, justExpired: false }));
+            if (betBefore !== localDayStr() && streakResult.lastBetDate === localDayStr()) setStreakPopup({ ...streakResult, earned: true });
             const isValo = upcomingMatches.some(m => String(m.id) === String(matchId)) || liveMatches.some(m => String(m.id) === String(matchId));
             const isCs2 = cs2UpcomingMatches.some(m => String(m.id) === String(matchId)) || cs2LiveMatches.some(m => String(m.id) === String(matchId));
             const isRl = rlUpcomingMatches.some(m => String(m.id) === String(matchId)) || rlLiveMatches.some(m => String(m.id) === String(matchId));
