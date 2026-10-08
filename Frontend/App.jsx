@@ -978,10 +978,8 @@ function catLabel(key, T) {
 // L'URL du backend est définie via la variable d'environnement VITE_API_BASE
 // (à configurer dans Railway ou dans un fichier .env local, voir .env.example)
 const API_BASE = import.meta.env.VITE_API_BASE || "";
-// Interstitiel in-app (Adsterra) : rythme normal géré par triggerAd.
-const ADS_ENABLED = true;
-// Compte de test : une seule pub 10 s après l'ouverture, puis rythme normal.
-const TEST_AD_EMAIL = "portable.coffee.maker.young@gmail.com";
+// Interstitiel in-app coupé (Adsterra retiré) ; la pub passe par Monetag.
+const ADS_ENABLED = false;
 
 let _h2cPromise = null;
 function loadHtml2Canvas() {
@@ -4717,10 +4715,11 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
     const merged = [...rawLeaderboard];
     const myIdx = merged.findIndex(u => u.id === profile.userId);
     const myPts = userPoints || 0;
+    const myBanner = localStorage.getItem("split_equipped_banner_color") || null;
     if (myIdx === -1) {
-      merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: myPts, points_valo: 0, points_cs2: 0, points_rl: 0, xp: userXp || 0, equipped_title: null, equipped_banner: null });
+      merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: myPts, points_valo: 0, points_cs2: 0, points_rl: 0, xp: userXp || 0, equipped_title: null, equipped_banner: myBanner });
     } else {
-      merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points || 0, myPts) };
+      merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points || 0, myPts), equipped_banner: myBanner || merged[myIdx].equipped_banner };
     }
     merged.sort((a, b) => (b.points || 0) - (a.points || 0));
     return merged;
@@ -10319,7 +10318,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
                   const uBadgeEmoji = isMe ? (localStorage.getItem("split_equipped_badge_emoji") || "") : (u.equipped_badge_emoji || "");
-                  const uBanner = isMe ? (localStorage.getItem("split_equipped_banner_color") || "") : (u.equipped_banner || "");
+                  const uBanner = (isMe && localStorage.getItem("split_equipped_banner_color")) || u.equipped_banner || "";
                   const uPseudoColor = isMe ? "#fff" : "#ccc";
                   const rowBg = uBanner
                     ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
@@ -11438,72 +11437,6 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
-function AdInterstitial({ onClose }) {
-  const [elapsed, setElapsed] = useState(0);
-  const [fading, setFading] = useState(false);
-  const adContainerRef = useRef(null);
-  const AUTO_CLOSE = 12;
-
-  useEffect(() => {
-    const iv = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(iv);
-  }, []);
-
-  useEffect(() => {
-    if (elapsed >= AUTO_CLOSE) { setFading(true); setTimeout(onClose, 400); }
-  }, [elapsed]);
-
-  // Charge le Native Banner Adsterra. Le script injecte le contenu dans
-  // la div avec id="container-<HASH>" — donc on cree cette div puis on
-  // append le script async au container.
-  const ADSTERRA_HASH = "a97bdbc5bb199f647fa1d54b8266c4f4";
-  const ADSTERRA_SRC = `https://pl31595702.profitableratecpmnetwork.com/${ADSTERRA_HASH}/invoke.js`;
-  useEffect(() => {
-    if (!adContainerRef.current) return;
-    adContainerRef.current.innerHTML = "";
-    // Div cible que Adsterra va peupler
-    const targetDiv = document.createElement("div");
-    targetDiv.id = "container-" + ADSTERRA_HASH;
-    targetDiv.style.width = "100%";
-    targetDiv.style.minHeight = "300px";
-    adContainerRef.current.appendChild(targetDiv);
-    // Script async qui injecte la pub dans le container par id
-    const s = document.createElement("script");
-    s.src = ADSTERRA_SRC;
-    s.async = true;
-    s.setAttribute("data-cfasync", "false");
-    adContainerRef.current.appendChild(s);
-    return () => {
-      try { adContainerRef.current && (adContainerRef.current.innerHTML = ""); } catch {}
-    };
-  }, []);
-
-  const secondsLeft = Math.max(0, AUTO_CLOSE - elapsed);
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 11000, background: "#000",
-      display: "flex", flexDirection: "column",
-      opacity: fading ? 0 : 1, transition: "opacity 0.4s ease",
-    }}>
-      {/* Header avec timer + skip */}
-      <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#0a0a0a", borderBottom: "1px solid #222" }}>
-        <span style={{ color: "#666", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Publicité · Adsterra</span>
-        <span style={{ color: "#888", fontSize: 12, fontWeight: 700, background: "#161616", padding: "6px 12px", borderRadius: 8, border: "1px solid #262626" }}>
-          {secondsLeft}s
-        </span>
-      </div>
-      {/* Zone Adsterra Native Banner — la div-container est cree via
-          useEffect ci-dessus. Le script injecte les pubs dedans. */}
-      <div ref={adContainerRef} style={{ flex: 1, width: "100%", background: "#000", overflow: "auto", padding: "16px" }} />
-      {/* Progress bar en bas */}
-      <div style={{ height: 3, background: "#151515" }}>
-        <div style={{ height: "100%", background: "#CCF71D", width: Math.min(100, (elapsed / AUTO_CLOSE) * 100) + "%", transition: "width 1s linear" }} />
-      </div>
-    </div>
-  );
-}
-
 function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -11926,19 +11859,6 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!showAd) adShownRef.current = false;
   }, [showAd]);
-  // Clé sans préfixe "split_" : survit à la déconnexion (resetClientState),
-  // le test ne se rejoue donc jamais après une reconnexion.
-  useEffect(() => {
-    if (!ADS_ENABLED || authUser?.email !== TEST_AD_EMAIL) return;
-    try { if (localStorage.getItem("splitTestAdDone")) return; } catch { return; }
-    const t = setTimeout(() => {
-      try { localStorage.setItem("splitTestAdDone", "1"); } catch {}
-      adShownRef.current = true;
-      lastAdAtRef.current = Date.now();
-      setShowAd(true);
-    }, 10000);
-    return () => clearTimeout(t);
-  }, [authUser?.email]);
   // Listener global: reset lastInteraction a chaque action user. Permet de
   // detecter AFK. Debounce leger pour pas tasser trop d'updates.
   useEffect(() => {
@@ -13822,7 +13742,6 @@ export default function ClutchApp() {
             </div>
           </div>
         )}
-        {showAd && <AdInterstitial onClose={() => setShowAd(false)} />}
       </div>
 
       <style>{`
