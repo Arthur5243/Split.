@@ -978,8 +978,10 @@ function catLabel(key, T) {
 // L'URL du backend est définie via la variable d'environnement VITE_API_BASE
 // (à configurer dans Railway ou dans un fichier .env local, voir .env.example)
 const API_BASE = import.meta.env.VITE_API_BASE || "";
-// Pubs coupées pour l'instant (interstitiel + scripts régie dans index.html).
-const ADS_ENABLED = false;
+// Interstitiel in-app (Adsterra) : rythme normal géré par triggerAd.
+const ADS_ENABLED = true;
+// Compte de test : une seule pub 10 s après l'ouverture, puis rythme normal.
+const TEST_AD_EMAIL = "portable.coffee.maker.young@gmail.com";
 
 let _h2cPromise = null;
 function loadHtml2Canvas() {
@@ -11924,6 +11926,19 @@ export default function ClutchApp() {
   useEffect(() => {
     if (!showAd) adShownRef.current = false;
   }, [showAd]);
+  // Clé sans préfixe "split_" : survit à la déconnexion (resetClientState),
+  // le test ne se rejoue donc jamais après une reconnexion.
+  useEffect(() => {
+    if (!ADS_ENABLED || authUser?.email !== TEST_AD_EMAIL) return;
+    try { if (localStorage.getItem("splitTestAdDone")) return; } catch { return; }
+    const t = setTimeout(() => {
+      try { localStorage.setItem("splitTestAdDone", "1"); } catch {}
+      adShownRef.current = true;
+      lastAdAtRef.current = Date.now();
+      setShowAd(true);
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [authUser?.email]);
   // Listener global: reset lastInteraction a chaque action user. Permet de
   // detecter AFK. Debounce leger pour pas tasser trop d'updates.
   useEffect(() => {
