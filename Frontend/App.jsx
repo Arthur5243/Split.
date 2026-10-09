@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID } from "./admob.js";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
@@ -3207,28 +3208,22 @@ function isStreakExpiring() {
 }
 function loadXp() { try { return parseInt(localStorage.getItem("split_xp")) || 0; } catch { return 0; } }
 function saveXp(xp) { localStorage.setItem("split_xp", String(xp)); }
-function xpForTier(tier) {
+// Paliers de récompenses débloqués avec les POINTS gagnés en pronostiquant :
+// le 1er palier coûte 50 pts, puis le coût augmente
+// de 10 pts tous les 5 paliers (5×50, 5×60, 5×70...).
+function ptsForTier(tier) {
   if (tier <= 1) return 0;
-  if (tier <= 15) return 400;
-  if (tier <= 45) return 600;
-  if (tier <= 80) return 800;
-  return 1000;
+  return 50 + 10 * Math.floor((tier - 2) / 5);
 }
-function getTierFromXp(totalXp) {
-  let remaining = totalXp;
+function getTierFromPoints(totalPts) {
+  let remaining = Math.max(0, totalPts || 0);
   for (let t = 2; t <= 100; t++) {
-    const cost = xpForTier(t);
+    const cost = ptsForTier(t);
     if (remaining < cost) return { tier: t - 1, xpInTier: remaining, xpNeeded: cost };
     remaining -= cost;
   }
   return { tier: 100, xpInTier: 0, xpNeeded: 0 };
-}
-function totalXpForTier(tier) {
-  let total = 0;
-  for (let t = 2; t <= tier; t++) total += xpForTier(t);
-  return total;
-}
-function getTierReward(tier) {
+}function getTierReward(tier) {
   return { milestone: tier % 5 === 0 };
 }
 
@@ -3359,8 +3354,8 @@ const ACHIEVEMENT_BADGES = [
   { id: "streak5", emoji: "\u{1F4A5}", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
 ];
 
-function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
-  const tierInfo = getTierFromXp(userXp || 0);
+function RewardsModal({ onClose, T, userPoints, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
+  const tierInfo = getTierFromPoints(userPoints || 0);
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
@@ -3828,7 +3823,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
       </div>
 
       <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 130 }}>
-        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)" }} />
         <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
@@ -3839,7 +3834,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
             <div style={{ flex: 1, height: 6, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #a8d90a)", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
             </div>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpInTier}/{tierInfo.xpNeeded || "MAX"}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded} pts` : "MAX"}</span>
           </div>
         </div>
       </div>
@@ -4026,7 +4021,7 @@ function RewardsModal({ onClose, T, userXp, predictions, upcomingMatches, liveMa
                 <div style={{
                   display: "flex", alignItems: "center", gap: 10, borderRadius: 16, padding: "8px 12px",
                   position: "relative", overflow: "hidden",
-                  background: `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${previewItem.bannerImage}) center/cover no-repeat`,
+                  background: `linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.38) 100%), url(${previewItem.bannerImage}) center/cover no-repeat`,
                   border: "1px solid rgba(255,255,255,0.18)",
                 }}>
                   <span style={{ color: "#CCF71D", fontSize: 14, fontWeight: 900, width: 20, textAlign: "center", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}>1</span>
@@ -4388,13 +4383,14 @@ function getStreakColor(s) {
 }
 
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png" },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png" },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png" },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png" },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png" },
-  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", maxCount: 50 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png" },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png" },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png" },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png" },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png" },
+  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", maxCount: 50 },
 ];
+RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
 function getUserRank(points, allUsersPoints, forceMax) {
   if (forceMax) {
@@ -4746,7 +4742,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 100 }}>
         {/* Card 1: Palier / Tier — fond doré étiré */}
         {(() => {
-          const ti = getTierFromXp(userXp || 0);
+          const ti = getTierFromPoints(userPoints || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
           const goldHex = "#EAB308";
           const goldRgb = "234,179,8";
@@ -4831,7 +4827,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
                 borderBottom: i < 2 ? "1px solid #2a2a2a" : "none",
                 position: "relative", overflow: "hidden",
                 background: user && user.equipped_banner
-                  ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${user.equipped_banner}) center/cover no-repeat`
+                  ? `linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.38) 100%), url(${user.equipped_banner}) center/cover no-repeat`
                   : "transparent",
                 cursor: user ? "pointer" : "default",
               }}
@@ -7969,6 +7965,127 @@ function resizeImage(file, maxSize, cb) {
   reader.readAsDataURL(file);
 }
 
+// Recadrage de la photo de profil : on déplace l'image au doigt et on peut
+// zoomer (jamais dézoomer en dessous du cadre rempli), puis on exporte le carré.
+const CROP_VIEW = 260;
+const CROP_OUT = 192;
+const CROP_MAX_ZOOM = 4;
+function AvatarCropModal({ file, onCancel, onDone }) {
+  const [img, setImg] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const pointers = useRef(new Map());
+  const gesture = useRef(null);
+
+  useEffect(() => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const im = new Image();
+      im.onload = () => setImg(im);
+      im.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }, [file]);
+
+  const baseScale = img ? Math.max(CROP_VIEW / img.width, CROP_VIEW / img.height) : 1;
+  const scale = baseScale * zoom;
+
+  function clampPos(p, z) {
+    if (!img) return p;
+    const s = baseScale * z;
+    const mx = Math.max(0, (img.width * s - CROP_VIEW) / 2);
+    const my = Math.max(0, (img.height * s - CROP_VIEW) / 2);
+    return { x: Math.min(mx, Math.max(-mx, p.x)), y: Math.min(my, Math.max(-my, p.y)) };
+  }
+
+  function applyZoom(z) {
+    const nz = Math.min(CROP_MAX_ZOOM, Math.max(1, z));
+    setZoom(nz);
+    setPos(p => clampPos({ x: p.x * nz / zoom, y: p.y * nz / zoom }, nz));
+  }
+
+  function startGesture() {
+    const pts = [...pointers.current.values()];
+    if (pts.length >= 2) {
+      gesture.current = { type: "pinch", dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1, zoom, pos };
+    } else if (pts.length === 1) {
+      gesture.current = { type: "pan", x: pts[0].x, y: pts[0].y, pos };
+    } else {
+      gesture.current = null;
+    }
+  }
+
+  function onDown(e) {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    startGesture();
+  }
+  function onMove(e) {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const g = gesture.current;
+    if (!g) return;
+    const pts = [...pointers.current.values()];
+    if (g.type === "pinch" && pts.length >= 2) {
+      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const nz = Math.min(CROP_MAX_ZOOM, Math.max(1, g.zoom * d / g.dist));
+      setZoom(nz);
+      setPos(clampPos({ x: g.pos.x * nz / g.zoom, y: g.pos.y * nz / g.zoom }, nz));
+    } else if (g.type === "pan") {
+      setPos(clampPos({ x: g.pos.x + pts[0].x - g.x, y: g.pos.y + pts[0].y - g.y }, zoom));
+    }
+  }
+  function onUp(e) {
+    pointers.current.delete(e.pointerId);
+    startGesture();
+  }
+
+  function confirm() {
+    if (!img) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = CROP_OUT;
+    canvas.height = CROP_OUT;
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    const size = CROP_VIEW / scale;
+    const sx = (img.width * scale / 2 - CROP_VIEW / 2 - pos.x) / scale;
+    const sy = (img.height * scale / 2 - CROP_VIEW / 2 - pos.y) / scale;
+    ctx.drawImage(img, sx, sy, size, size, 0, 0, CROP_OUT, CROP_OUT);
+    onDone(canvas.toDataURL("image/jpeg", 0.9));
+  }
+
+  return createPortal(
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: 16 }}>
+      <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>Recadrer la photo</p>
+      <p style={{ color: "#888", fontSize: 12, marginTop: -10 }}>Déplace l'image et zoome pour la centrer</p>
+      <div
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onWheel={(e) => applyZoom(zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1))}
+        style={{ position: "relative", width: CROP_VIEW, height: CROP_VIEW, overflow: "hidden", borderRadius: 16, background: "#111", touchAction: "none", cursor: "grab", userSelect: "none" }}
+      >
+        {img && (
+          <img src={img.src} alt="" draggable={false} style={{
+            position: "absolute", left: "50%", top: "50%", maxWidth: "none",
+            width: img.width * scale, height: img.height * scale,
+            transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))`, pointerEvents: "none",
+          }} />
+        )}
+        <div style={{ position: "absolute", inset: 0, borderRadius: "50%", boxShadow: "0 0 0 999px rgba(0,0,0,0.55)", border: "2px solid #CCF71D", pointerEvents: "none" }} />
+      </div>
+      <input type="range" min={1} max={CROP_MAX_ZOOM} step={0.01} value={zoom} onChange={(e) => applyZoom(Number(e.target.value))} style={{ width: CROP_VIEW, accentColor: "#CCF71D" }} />
+      <div style={{ display: "flex", gap: 10, width: CROP_VIEW }}>
+        <button onClick={onCancel} style={{ flex: 1, padding: "11px 0", borderRadius: 12, background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Annuler</button>
+        <button onClick={confirm} disabled={!img} style={{ flex: 1, padding: "11px 0", borderRadius: 12, background: "#CCF71D", border: "none", color: "#000", fontSize: 13, fontWeight: 900, cursor: "pointer", opacity: img ? 1 : 0.5 }}>Valider</button>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -8030,6 +8147,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   const [favRl, setFavRl] = useState(profile?.favTeams?.rl || "");
   const [bioError, setBioError] = useState(false);
   const fileRef = useRef(null);
+  const [cropFile, setCropFile] = useState(null);
   const totalSteps = 4;
 
   const bioOk = bio.trim() === "" || validateBio(bio);
@@ -8043,7 +8161,8 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    resizeImage(file, 128, (dataUrl) => setAvatar(dataUrl));
+    e.target.value = "";
+    setCropFile(file);
   }
 
   function handleSave() {
@@ -8097,6 +8216,7 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
                   {avatar ? <img src={avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={30} color="#555" />}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: "none" }} />
+                {cropFile && <AvatarCropModal file={cropFile} onCancel={() => setCropFile(null)} onDone={(dataUrl) => { setAvatar(dataUrl); setCropFile(null); }} />}
                 <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>{T.profileAvatar}</p>
                 {pseudoLocked && pseudo && <p style={{ color: "#ccc", fontSize: 13, fontWeight: 700, marginTop: 12 }}>{pseudo}</p>}
               </div>
@@ -9737,6 +9857,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [editFavCs2, setEditFavCs2] = useState("");
   const [editFavRl, setEditFavRl] = useState("");
   const editFileRef = useRef(null);
+  const [editCropFile, setEditCropFile] = useState(null);
 
   function startEdit() {
     setEditBio(profile?.bio || "");
@@ -9760,7 +9881,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   function handleEditFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    resizeImage(file, 128, (dataUrl) => setEditAvatar(dataUrl));
+    e.target.value = "";
+    setEditCropFile(file);
   }
 
   if (profileView && profile) {
@@ -9773,6 +9895,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     return (
       <div className="px-4 pt-6 pb-6">
         <input ref={editFileRef} type="file" accept="image/*" onChange={handleEditFile} style={{ display: "none" }} />
+        {editCropFile && <AvatarCropModal file={editCropFile} onCancel={() => setEditCropFile(null)} onDone={(dataUrl) => { setEditAvatar(dataUrl); setEditCropFile(null); }} />}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <button onClick={() => { setProfileView(false); setEditMode(false); if (profileOpenedFrom === "community") setCarouselSlide(1); }} className="rounded-full p-1.5" style={{ background: "#181818" }}>
@@ -9856,7 +9979,6 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {editMode ? (
           <div className="mb-3" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ color: "#888", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{T.profileFavLabel || "Équipes préférées"}</p>
             <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={valoLogoCache || teamLogoCache} />
             <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
             <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
@@ -10185,7 +10307,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   return (
     <div style={{ minHeight: "100%" }}>
       {/* Sticky Classement / Communauté header + bouton Discussion a droite */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#000", paddingBottom: 2 }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#000", paddingBottom: 2, transform: "translateZ(0)", willChange: "transform" }}>
         <div className="flex items-center justify-between pt-2 pb-0 px-4">
           <div className="flex items-center gap-4">
             {[{ i: 0, label: T.classementTitle || "Classement" }, { i: 1, label: T.communityTitle || "Communauté" }].map(({ i, label }) => (
@@ -10252,7 +10374,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center 30%", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
               <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
@@ -10322,7 +10444,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                   const uBanner = (isMe && localStorage.getItem("split_equipped_banner_color")) || u.equipped_banner || "";
                   const uPseudoColor = isMe ? "#fff" : "#ccc";
                   const rowBg = uBanner
-                    ? `linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.7) 100%), url(${uBanner}) center/cover no-repeat`
+                    ? `linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.38) 100%), url(${uBanner}) center/cover no-repeat`
                     : (isMe ? "#161616" : "#111");
                   return (
                     <button key={u.id} onClick={() => {
@@ -10635,7 +10757,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 30%" }} />
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
@@ -13451,7 +13573,7 @@ export default function ClutchApp() {
         <TopHeader isLight={isLight} onOpenLang={() => setShowLangMenu(true)} currentLang={currentLang} onOpenSettings={() => setShowSettings((p) => !p)} onRefresh={handleRefresh} />
 
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
-        <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%" }}>
+        <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", overscrollBehaviorY: "none" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
             <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} />
           </div>
@@ -13568,7 +13690,7 @@ export default function ClutchApp() {
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userPoints={userPoints} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
           </div>
         )}
 
