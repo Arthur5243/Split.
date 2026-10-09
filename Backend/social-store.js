@@ -605,23 +605,20 @@ export function deleteUser(userId) {
 
 try { db.exec(`ALTER TABLE users ADD COLUMN reset_token TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN reset_token_expires TEXT`); } catch {}
+try { db.exec(`UPDATE users SET reset_token = NULL, reset_token_expires = NULL WHERE reset_token IS NOT NULL`); } catch {}
 
-export function setResetToken(email, token, expiresAt) {
-  db.prepare(`UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE email = ?`)
-    .run(token, expiresAt, email);
+// Les mots de passe sont gérés par Supabase Auth : un compte lié garde
+// seulement son supabase_id, plus aucun hash ici.
+try { db.exec(`ALTER TABLE users ADD COLUMN supabase_id TEXT`); } catch {}
+try { db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_supabase_id ON users(supabase_id)`); } catch {}
+
+export function getUserBySupabaseId(supabaseId) {
+  return db.prepare(`SELECT * FROM users WHERE supabase_id = ?`).get(supabaseId);
 }
 
-export function getUserByResetToken(token) {
-  return db.prepare(`SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > datetime('now')`).get(token);
-}
-
-export function clearResetToken(userId) {
-  db.prepare(`UPDATE users SET reset_token = NULL, reset_token_expires = NULL WHERE id = ?`).run(userId);
-}
-
-export function updatePassword(userId, passwordHash) {
-  db.prepare(`UPDATE users SET password_hash = ?, updated_at = datetime('now') WHERE id = ?`)
-    .run(passwordHash, userId);
+export function linkSupabaseUser(userId, supabaseId, email) {
+  db.prepare(`UPDATE users SET supabase_id = ?, email = COALESCE(?, email), password_hash = NULL, updated_at = datetime('now') WHERE id = ?`)
+    .run(supabaseId, email || null, userId);
 }
 
 export function cleanupOldAccounts(keepPseudos = []) {

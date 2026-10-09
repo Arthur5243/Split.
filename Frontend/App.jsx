@@ -11053,10 +11053,8 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                     try {
                       const email = (() => { try { return JSON.parse(localStorage.getItem("split_auth_user"))?.email; } catch { return null; } })();
                       if (!email) { setForgotMsg("Email introuvable"); setForgotLoading(false); return; }
-                      const r = await fetch(API_BASE + "/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
-                      const d = await r.json();
-                      if (r.ok) setForgotMsg("Lien de réinitialisation envoyé !");
-                      else setForgotMsg(d.error || "Erreur");
+                      const r = await supabaseAuth("recover", { body: { email, redirect_to: window.location.origin } });
+                      setForgotMsg(r.ok ? "Lien envoyé par email !" : (r.status === 429 ? "Trop de demandes, réessaie plus tard" : "Erreur, réessaie"));
                     } catch { setForgotMsg("Erreur réseau"); }
                     setForgotLoading(false);
                   }} style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 600, background: "none", border: "none", padding: 0 }}>
@@ -11560,6 +11558,92 @@ function LandingPage({ onEnter, onInstall, canInstall }) {
   );
 }
 
+// Comptes email/mot de passe : stockés chez Supabase Auth (le backend Split ne
+// garde plus de mot de passe). On appelle l'API REST de Supabase directement
+// puis on échange la session contre le token Split (/api/auth/supabase).
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://raonwislmntafqjfdgcg.supabase.co";
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_5x2JNoyFn15iX8ZL_8MilQ_Dmq5Prmj";
+
+async function supabaseAuth(path, { method = "POST", body, accessToken } = {}) {
+  const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
+  if (accessToken) headers.Authorization = "Bearer " + accessToken;
+  try {
+    const r = await fetch(SUPABASE_URL + "/auth/v1/" + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, status: r.status, data };
+  } catch {
+    return { ok: false, status: 0, data: {} };
+  }
+}
+
+async function exchangeSupabaseSession(accessToken, { pseudo, splitToken } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (splitToken) headers.Authorization = "Bearer " + splitToken;
+  const r = await fetch(API_BASE + "/api/auth/supabase", { method: "POST", headers, body: JSON.stringify({ access_token: accessToken, pseudo: pseudo || undefined }) });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, data };
+}
+
+// Compte encore sur l'ancien système : on crée son compte Supabase avec le
+// même mot de passe ; le backend efface l'ancien hash au 1er échange réussi.
+function migrateLegacyAccount(email, password, pseudo, splitToken) {
+  supabaseAuth("signup", { body: { email, password, data: { pseudo } } }).then(async (s) => {
+    let token = s.ok ? s.data.access_token : null;
+    if (!token && s.data?.error_code === "user_already_exists") {
+      const t = await supabaseAuth("token?grant_type=password", { body: { email, password } });
+      token = t.ok ? t.data.access_token : null;
+    }
+    if (token) await exchangeSupabaseSession(token, { splitToken });
+  }).catch(() => {});
+}
+
+// Lien "mot de passe oublié" reçu par email : Supabase renvoie vers l'app avec
+// #access_token=...&type=recovery. On demande le nouveau mot de passe ici.
+function readRecoveryToken() {
+  try {
+    const h = new URLSearchParams(window.location.hash.slice(1));
+    return h.get("type") === "recovery" ? h.get("access_token") : null;
+  } catch { return null; }
+}
+
+function PasswordRecoveryScreen({ accessToken, onDone }) {
+  const [pw, setPw] = useState("");
+  const [msg, setMsg] = useState("");
+  const [done, setDone] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const submit = async () => {
+    if (pw.length < 6) { setMsg("6 caractères minimum"); return; }
+    setLoading(true);
+    const r = await supabaseAuth("user", { method: "PUT", body: { password: pw }, accessToken });
+    setLoading(false);
+    if (!r.ok) { setMsg(r.status === 401 ? "Lien expiré : redemande un email depuis l'app" : (r.data?.msg || "Erreur, réessaie")); return; }
+    exchangeSupabaseSession(accessToken).catch(() => {});
+    setDone(true);
+    try { history.replaceState(null, "", window.location.pathname + window.location.search); } catch {}
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: "min(360px, 90%)", textAlign: "center" }}>
+        <img src={SPLIT_LOGO} alt="Split" style={{ width: 60, height: 60, objectFit: "contain", margin: "0 auto 20px", display: "block" }} />
+        {done ? (
+          <>
+            <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginBottom: 8 }}>Mot de passe changé ✅</h2>
+            <p style={{ color: "#888", fontSize: 13, marginBottom: 20 }}>Retourne dans l'app Split et connecte-toi avec ton nouveau mot de passe.</p>
+            <button onClick={onDone} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 900, cursor: "pointer" }}>OK</button>
+          </>
+        ) : (
+          <>
+            <h2 style={{ color: "#fff", fontSize: 18, fontWeight: 900, marginBottom: 16 }}>Nouveau mot de passe</h2>
+            {msg && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12 }}>{msg}</div>}
+            <input value={pw} onChange={e => { setPw(e.target.value); setMsg(""); }} type="password" autoComplete="new-password" placeholder="Nouveau mot de passe" style={{ width: "100%", background: "#111", border: "1px solid #333", borderRadius: 12, padding: "14px 16px", color: "#fff", fontSize: 14, marginBottom: 16, outline: "none", boxSizing: "border-box" }} />
+            <button onClick={submit} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 900, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>{loading ? "..." : "Valider"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -11570,6 +11654,8 @@ function AuthScreen({ onAuth }) {
   const [showPw, setShowPw] = useState(false);
   const [googlePseudo, setGooglePseudo] = useState("");
   const [googleCred, setGoogleCred] = useState(null);
+  const [pendingSupabase, setPendingSupabase] = useState(null);
+  const [info, setInfo] = useState("");
   const T = STR.fr;
 
   const API = import.meta.env.VITE_API_BASE || "";
@@ -11580,17 +11666,70 @@ function AuthScreen({ onAuth }) {
     if (!email || !password) { setError("Email et mot de passe requis"); return; }
     if (mode === "register" && password.length < 6) { setError("6 caractères minimum"); return; }
     setLoading(true);
+    setInfo("");
+    const mail = email.trim().toLowerCase();
     try {
-      const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
-      const body = mode === "register" ? { email, password, pseudo } : { email, password };
-      const res = await fetch(API + endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Erreur"); setLoading(false); return; }
-      localStorage.setItem("split_token", data.token);
-      localStorage.setItem("split_auth_user", JSON.stringify(data.user));
-      onAuth(data.user);
+      if (mode === "register") {
+        const s = await supabaseAuth("signup", { body: { email: mail, password, data: { pseudo } } });
+        if (s.ok && s.data.access_token) {
+          await finishSupabase(s.data.access_token, pseudo);
+        } else if ((s.ok && Array.isArray(s.data.identities) && s.data.identities.length === 0) || s.data?.error_code === "user_already_exists") {
+          const t = await supabaseAuth("token?grant_type=password", { body: { email: mail, password } });
+          if (t.ok) await finishSupabase(t.data.access_token, pseudo);
+          else setError("Email déjà utilisé : connecte-toi");
+        } else if (s.ok) {
+          setInfo("Compte créé ! Clique sur le lien reçu par email pour le confirmer, puis connecte-toi.");
+          setMode("login");
+        } else {
+          setError(s.data?.error_code === "weak_password" ? "Mot de passe trop faible (6 caractères min)" : (s.data?.msg || "Erreur, réessaie"));
+        }
+        setLoading(false);
+        return;
+      }
+
+      const t = await supabaseAuth("token?grant_type=password", { body: { email: mail, password } });
+      if (t.ok) { await finishSupabase(t.data.access_token); setLoading(false); return; }
+
+      const res = await fetch(API + "/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: mail, password }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(t.data?.error_code === "email_not_confirmed" ? "Confirme ton email (lien reçu par mail) puis reconnecte-toi" : "Email ou mot de passe incorrect");
+        setLoading(false);
+        return;
+      }
+      if (t.data?.error_code !== "email_not_confirmed") migrateLegacyAccount(mail, password, data.user?.pseudo, data.token);
+      acceptSession(data.token, data.user);
     } catch (e) { setError("Erreur réseau — vérifie ta connexion"); console.error("[auth]", e); }
     setLoading(false);
+  };
+
+  const acceptSession = (token, user) => {
+    localStorage.setItem("split_token", token);
+    localStorage.setItem("split_auth_user", JSON.stringify(user));
+    onAuth(user);
+  };
+
+  const finishSupabase = async (accessToken, wantedPseudo) => {
+    const r = await exchangeSupabaseSession(accessToken, { pseudo: wantedPseudo });
+    if (r.ok) { acceptSession(r.data.token, r.data.user); return; }
+    if (r.data?.needsPseudo) { setPendingSupabase(accessToken); setError(r.data.error || ""); return; }
+    setError(r.data?.error || "Erreur, réessaie");
+  };
+
+  const submitSupabasePseudo = async () => {
+    if (!googlePseudo || googlePseudo.length < 2) { setError("Pseudo requis (2 caractères min)"); return; }
+    setLoading(true);
+    setError("");
+    await finishSupabase(pendingSupabase, googlePseudo);
+    setLoading(false);
+  };
+
+  const sendReset = async () => {
+    const mail = email.trim().toLowerCase();
+    if (!mail) { setError("Entre ton email ci-dessus"); return; }
+    setError("");
+    await supabaseAuth("recover", { body: { email: mail, redirect_to: window.location.origin } });
+    setInfo("Si un compte existe pour cet email, tu vas recevoir un lien pour changer ton mot de passe.");
   };
 
   const handleGoogle = async (credential) => {
@@ -11642,7 +11781,7 @@ function AuthScreen({ onAuth }) {
     if (googleBtnRef.current) googleBtnRef.current.querySelector("[role=button]")?.click();
   };
 
-  if (googleCred) {
+  if (googleCred || pendingSupabase) {
     return (
       <div style={{ position: "fixed", inset: 0, background: "#000", zIndex: 10000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: "min(360px, 90%)" }}>
@@ -11651,7 +11790,7 @@ function AuthScreen({ onAuth }) {
           <p style={{ color: "#666", fontSize: 12, textAlign: "center", marginBottom: 24 }}>{T.visibleToPlayers}</p>
           {error && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12, textAlign: "center" }}>{error}</div>}
           <input value={googlePseudo} onChange={e => { setGooglePseudo(e.target.value); setError(""); }} placeholder="Pseudo" style={{ width: "100%", background: "#111", border: "1px solid #333", borderRadius: 12, padding: "14px 16px", color: "#fff", fontSize: 14, marginBottom: 16, outline: "none", boxSizing: "border-box" }} />
-          <button onClick={submitGooglePseudo} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
+          <button onClick={pendingSupabase ? submitSupabasePseudo : submitGooglePseudo} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
             {loading ? "..." : T.confirm}
           </button>
         </div>
@@ -11677,6 +11816,7 @@ function AuthScreen({ onAuth }) {
         </div>
 
         {error && <div style={{ background: "#331111", border: "1px solid #662222", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#ff6b6b", fontSize: 12, textAlign: "center" }}>{error}</div>}
+        {info && <div style={{ background: "rgba(204,247,29,0.08)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, color: "#CCF71D", fontSize: 12, textAlign: "center" }}>{info}</div>}
 
         {mode === "register" && (
           <div style={{ position: "relative", marginBottom: 12 }}>
@@ -11701,6 +11841,9 @@ function AuthScreen({ onAuth }) {
         <button onClick={handleSubmit} disabled={loading} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 12, padding: "14px", fontSize: 15, fontWeight: 900, cursor: "pointer", marginBottom: 16, opacity: loading ? 0.6 : 1 }}>
           {loading ? "..." : mode === "login" ? T.authSignIn : T.authCreateAccount}
         </button>
+        {mode === "login" && (
+          <button onClick={sendReset} style={{ display: "block", margin: "-6px auto 16px", background: "none", border: "none", color: "#CCF71D", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Mot de passe oublié ?</button>
+        )}
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <div style={{ flex: 1, height: 1, background: "#222" }} />
@@ -11722,6 +11865,7 @@ function AuthScreen({ onAuth }) {
 }
 
 export default function ClutchApp() {
+  const [recoveryToken, setRecoveryToken] = useState(readRecoveryToken);
   const [activeTab, setActiveTab] = useState("home");
   // Toutes les régions sélectionnées par défaut au chargement (même logique
   // que CS2 ci-dessous) — pas de raison de partir filtré sur EMEA seul.
@@ -13443,6 +13587,7 @@ export default function ClutchApp() {
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>
+      {recoveryToken && <PasswordRecoveryScreen accessToken={recoveryToken} onDone={() => setRecoveryToken(null)} />}
       {showAuth && (
         <AuthScreen onAuth={(user) => {
           if (user) {

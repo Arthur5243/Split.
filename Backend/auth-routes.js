@@ -1,12 +1,54 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, setResetToken, getUserByResetToken, clearResetToken, updatePassword, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange, linkGoogleToUser } from "./social-store.js";
-import crypto from "crypto";
+import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange, linkGoogleToUser, getUserBySupabaseId, linkSupabaseUser } from "./social-store.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "split-secret-change-me";
 const TOKEN_EXPIRY = "30d";
+
+// Supabase Auth garde les emails/mots de passe. La clé publishable est
+// publique par nature (elle est aussi dans le front).
+const SUPABASE_URL = (process.env.SUPABASE_URL || "https://raonwislmntafqjfdgcg.supabase.co").replace(/\/+$/, "");
+const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || "sb_publishable_5x2JNoyFn15iX8ZL_8MilQ_Dmq5Prmj";
+
+async function getSupabaseUser(accessToken) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${accessToken}` } });
+  if (!r.ok) return null;
+  return r.json();
+}
+
+async function checkSupabasePassword(email, password) {
+  const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return r.ok;
+}
+
+// Un email "confirmé" chez Supabase ne prouve la possession de la boîte mail
+// que si Supabase exige la confirmation (mailer_autoconfirm = false).
+let supabaseSettings = { at: 0, autoconfirm: true };
+async function supabaseRequiresEmailConfirm() {
+  if (Date.now() - supabaseSettings.at > 10 * 60 * 1000) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } });
+      if (r.ok) supabaseSettings = { at: Date.now(), autoconfirm: (await r.json()).mailer_autoconfirm !== false };
+    } catch {}
+  }
+  return !supabaseSettings.autoconfirm;
+}
+
+function bearerUserId(req) {
+  const h = req.headers.authorization;
+  if (!h || !h.startsWith("Bearer ")) return null;
+  return verifyToken(h.slice(7))?.sub || null;
+}
+
+function publicUser(u, email) {
+  return { id: u.id, pseudo: u.pseudo, email: email ?? u.email, provider: u.provider };
+}
 
 function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRY });
@@ -29,40 +71,15 @@ export function authMiddleware(req, res, next) {
   next();
 }
 
-router.post("/api/auth/register", async (req, res) => {
-  try {
-    const { email, password, pseudo } = req.body;
-    if (!email || !password || !pseudo) return res.status(400).json({ error: "Email, mot de passe et pseudo requis" });
-    if (password.length < 6) return res.status(400).json({ error: "Mot de passe trop court (6 caractères min)" });
-    if (pseudo.length < 2 || pseudo.length > 20) return res.status(400).json({ error: "Pseudo entre 2 et 20 caractères" });
-
-    const existing = getUserByEmail(email.toLowerCase());
-    if (existing) {
-      if (existing.password_hash) {
-        const match = await bcrypt.compare(password, existing.password_hash);
-        if (match) {
-          const token = signToken(existing.id);
-          return res.json({ token, user: { id: existing.id, pseudo: existing.pseudo, email: existing.email } });
-        }
-      }
-      return res.status(409).json({ error: "Email déjà utilisé" });
-    }
-
-    const existingPseudo = getUserByPseudo(pseudo);
-    if (existingPseudo) return res.status(409).json({ error: "Ce pseudo est déjà pris" });
-
-    const id = generateUserId();
-    const hash = await bcrypt.hash(password, 10);
-    createAuthUser({ id, email: email.toLowerCase(), passwordHash: hash, pseudo, provider: "local" });
-
-    const token = signToken(id);
-    res.json({ token, user: { id, pseudo, email: email.toLowerCase() } });
-  } catch (e) {
-    console.error("[auth] register error:", e.message);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
+// Inscription email/mot de passe : faite côté app via Supabase Auth, puis
+// échangée ici contre le token Split (/api/auth/supabase).
+router.post("/api/auth/register", (_req, res) => {
+  res.status(410).json({ error: "Mets à jour l'app (recharge la page) pour t'inscrire" });
 });
 
+// Ancien login (hash bcrypt local) : sert uniquement aux comptes pas encore
+// passés sur Supabase. L'app crée alors le compte Supabase avec le même mot
+// de passe ; le hash local est effacé dès la 1re connexion via Supabase.
 router.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,9 +92,46 @@ router.post("/api/auth/login", async (req, res) => {
     if (!match) return res.status(401).json({ error: "Identifiants invalides" });
 
     const token = signToken(user.id);
-    res.json({ token, user: { id: user.id, pseudo: user.pseudo, email: user.email } });
+    res.json({ token, user: publicUser(user), legacy: true });
   } catch (e) {
     console.error("[auth] login error:", e.message);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
+// Échange un access token Supabase contre le token Split. Retrouve le compte
+// par supabase_id puis par email (comptes existants), sinon le crée.
+router.post("/api/auth/supabase", async (req, res) => {
+  try {
+    const { access_token, pseudo } = req.body || {};
+    if (!access_token) return res.status(400).json({ error: "Token manquant" });
+    const sUser = await getSupabaseUser(access_token);
+    if (!sUser || !sUser.id) return res.status(401).json({ error: "Session invalide, reconnecte-toi" });
+    const email = sUser.email ? sUser.email.toLowerCase() : null;
+
+    const linked = getUserBySupabaseId(sUser.id);
+    if (linked) return res.json({ token: signToken(linked.id), user: publicUser(linked, email) });
+
+    const byEmail = email ? getUserByEmail(email) : null;
+    if (byEmail) {
+      const proven = bearerUserId(req) === byEmail.id || (!!sUser.email_confirmed_at && await supabaseRequiresEmailConfirm());
+      if (!proven || (byEmail.supabase_id && byEmail.supabase_id !== sUser.id)) {
+        return res.status(409).json({ error: "Cet email a déjà un compte Split : connecte-toi avec ton ancien mot de passe ou avec Google" });
+      }
+      linkSupabaseUser(byEmail.id, sUser.id, email);
+      return res.json({ token: signToken(byEmail.id), user: publicUser(byEmail, email) });
+    }
+
+    const wanted = (pseudo || sUser.user_metadata?.pseudo || "").trim();
+    if (wanted.length < 2 || wanted.length > 20) return res.status(400).json({ error: "Choisis un pseudo (2 à 20 caractères)", needsPseudo: true });
+    if (getUserByPseudo(wanted)) return res.status(409).json({ error: "Ce pseudo est déjà pris", needsPseudo: true });
+
+    const id = generateUserId();
+    createAuthUser({ id, email, passwordHash: null, pseudo: wanted, provider: "local" });
+    linkSupabaseUser(id, sUser.id, email);
+    res.json({ token: signToken(id), user: { id, pseudo: wanted, email, provider: "local" } });
+  } catch (e) {
+    console.error("[auth] supabase exchange error:", e.message);
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
@@ -90,6 +144,9 @@ router.post("/api/auth/google", async (req, res) => {
     const gRes = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + credential);
     if (!gRes.ok) return res.status(401).json({ error: "Token Google invalide" });
     const gData = await gRes.json();
+    const allowedAud = [process.env.GOOGLE_CLIENT_ID, "623522920430-hsuokum2g502peet9q65vdm561indi1t.apps.googleusercontent.com"].filter(Boolean);
+    if (!allowedAud.includes(gData.aud)) return res.status(401).json({ error: "Token Google invalide" });
+    if (gData.email_verified === false || gData.email_verified === "false") return res.status(401).json({ error: "Email Google non vérifié" });
     const email = gData.email;
     if (!email) return res.status(401).json({ error: "Pas d'email dans le token Google" });
 
@@ -164,6 +221,10 @@ router.delete("/api/auth/account", authMiddleware, async (req, res) => {
       if (!password) return res.status(400).json({ error: "Mot de passe requis pour confirmer" });
       const match = await bcrypt.compare(password, user.password_hash);
       if (!match) return res.status(401).json({ error: "Mot de passe incorrect" });
+    } else if (user.supabase_id && user.email && user.provider !== "google") {
+      const { password } = req.body;
+      if (!password) return res.status(400).json({ error: "Mot de passe requis pour confirmer" });
+      if (!(await checkSupabasePassword(user.email, password))) return res.status(401).json({ error: "Mot de passe incorrect" });
     }
     deleteUser(req.userId);
     res.json({ ok: true });
@@ -173,42 +234,7 @@ router.delete("/api/auth/account", authMiddleware, async (req, res) => {
   }
 });
 
-router.post("/api/auth/forgot-password", (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email requis" });
-    const user = getUserByEmail(email.toLowerCase());
-    if (!user) return res.json({ ok: true });
-    if (user.provider === "google") return res.status(400).json({ error: "Ce compte utilise Google. Connecte-toi avec Google." });
-    const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 3600000).toISOString();
-    setResetToken(email.toLowerCase(), token, expires);
-    const resetUrl = (process.env.FRONTEND_URL || "https://app.splitapp.fr") + "?reset=" + token;
-    console.log(`[auth] Password reset for ${email}: ${resetUrl}`);
-    res.json({ ok: true, resetUrl });
-  } catch (e) {
-    console.error("[auth] forgot-password error:", e.message);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
-
-router.post("/api/auth/reset-password", async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    if (!token || !password) return res.status(400).json({ error: "Token et mot de passe requis" });
-    if (password.length < 6) return res.status(400).json({ error: "Mot de passe trop court (6 caractères min)" });
-    const user = getUserByResetToken(token);
-    if (!user) return res.status(400).json({ error: "Lien expiré ou invalide" });
-    const hash = await bcrypt.hash(password, 10);
-    updatePassword(user.id, hash);
-    clearResetToken(user.id);
-    const jwt = signToken(user.id);
-    res.json({ ok: true, token: jwt, user: { id: user.id, pseudo: user.pseudo, email: user.email } });
-  } catch (e) {
-    console.error("[auth] reset-password error:", e.message);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
-});
+// Mot de passe oublié : géré par Supabase Auth (email envoyé par Supabase).
 
 router.get("/api/auth/count", (_req, res) => {
   res.json({ count: getUserCount() });
