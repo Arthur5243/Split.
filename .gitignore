@@ -4,3 +4,6 @@ dist/
 .DS_Store
 desktop.ini
 *.exe
+data-backup/
+*.db
+*.db.gz
