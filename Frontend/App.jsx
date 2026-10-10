@@ -2446,7 +2446,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const winsNeeded = bo >= 7 ? 4 : bo === 5 ? 3 : 2;
   const validBo = bo >= 7 ? [[4,0],[4,1],[4,2],[4,3],[3,4],[2,4],[1,4],[0,4]] : bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
   const hasCompleteBet = seriesA !== "" && seriesB !== "" && validBo.some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
-  const LOCK_HOURS = 6;
+  // Verrouillage à 1h du début du match (demande utilisateur : avant on
+  // bloquait à 6h, trop restrictif).
+  const LOCK_HOURS = 1;
   const lockedByTime = (() => {
     if (running || finished) return true;
     if (!match.beginAt) return false;
@@ -3209,15 +3211,26 @@ const QUEST_DAILY_POOL = [
 ];
 function generateMatchQuests(upcoming, game) {
   if (!upcoming || !upcoming.length) return [];
-  return upcoming.slice(0, 10).map(m => ({
-    id: `bet_match_${m.id}`,
-    title: `Parie sur ${m.opponents?.[0]?.name || m.team1 || "?"} vs ${m.opponents?.[1]?.name || m.team2 || "?"}`,
-    target: 1,
-    kit: "pronostic",
-    xp: 75,
-    matchId: String(m.id),
-    game,
-  }));
+  const isReal = (name) => {
+    const n = (name || "").trim().toLowerCase();
+    return n && n !== "tbd" && n !== "tba" && n !== "?" && n !== "to be determined";
+  };
+  return upcoming
+    .filter(m => {
+      const t1 = m.opponents?.[0]?.name || m.team1 || m.team1Name;
+      const t2 = m.opponents?.[1]?.name || m.team2 || m.team2Name;
+      return isReal(t1) && isReal(t2);
+    })
+    .slice(0, 10)
+    .map(m => ({
+      id: `bet_match_${m.id}`,
+      title: `Parie sur ${m.opponents?.[0]?.name || m.team1 || m.team1Name} vs ${m.opponents?.[1]?.name || m.team2 || m.team2Name}`,
+      target: 1,
+      kit: "pronostic",
+      xp: 75,
+      matchId: String(m.id),
+      game,
+    }));
 }
 const QUEST_WEEKLY_POOL = [
   { id: "weekly_5_wins", titleKey: "questWeekly5Wins", target: 5, kit: "weekly", xp: 400 },
@@ -3385,14 +3398,30 @@ function isStreakExpiring() {
   const s = loadStreak();
   return s.current > 0 && s.lastBetDate === shiftDay(localDayStr(), -1);
 }
-function loadXp() { try { return parseInt(localStorage.getItem("split_xp")) || 0; } catch { return 0; } }
+function loadXp() {
+  try {
+    let xp = parseInt(localStorage.getItem("split_xp")) || 0;
+    // Migration unique vers le palier à base d'XP (déc 2026) : on crédite 10 XP
+    // par point classement déjà gagné pour que les paliers restent à ~même
+    // niveau après le changement de formule.
+    if (!localStorage.getItem("split_xp_migrated_v1")) {
+      const pts = parseInt(localStorage.getItem("split_points_total") || "0") || 0;
+      xp = Math.max(xp, pts * 10);
+      localStorage.setItem("split_xp", String(xp));
+      localStorage.setItem("split_xp_migrated_v1", "1");
+    }
+    return xp;
+  } catch { return 0; }
+}
 function saveXp(xp) { localStorage.setItem("split_xp", String(xp)); }
-// Paliers de récompenses débloqués avec les POINTS gagnés en pronostiquant :
-// le 1er palier coûte 50 pts, puis le coût augmente
-// de 10 pts tous les 5 paliers (5×50, 5×60, 5×70...).
+// Paliers débloqués avec de l'XP (pas des points de classement) :
+// - 10 XP par point gagné sur un prono (3 pts série exacte = 30 XP)
+// - XP des quêtes réclamées (75 à 700 XP selon la quête)
+// 1er palier = 300 XP, puis +30 XP tous les 5 paliers (10 pronos exacts
+// ou ~4 quêtes quotidiennes par palier). L'XP n'affecte pas le classement.
 function ptsForTier(tier) {
   if (tier <= 1) return 0;
-  return 50 + 10 * Math.floor((tier - 2) / 5);
+  return 300 + 30 * Math.floor((tier - 2) / 5);
 }
 function getTierFromPoints(totalPts) {
   let remaining = Math.max(0, totalPts || 0);
@@ -3534,7 +3563,7 @@ const ACHIEVEMENT_BADGES = [
 ];
 
 function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
-  const tierInfo = getTierFromPoints((userPoints || 0) + questBonusForTier(userXp));
+  const tierInfo = getTierFromPoints(userXp || 0);
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
@@ -4013,8 +4042,11 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             <div style={{ flex: 1, height: 6, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
               <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #a8d90a)", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
             </div>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded} pts` : "MAX"}</span>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded} XP` : "MAX"}</span>
           </div>
+          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 600, marginTop: 6, letterSpacing: 0.3 }}>
+            L'XP sert aux paliers de récompenses, elle n'affecte pas ton classement.
+          </p>
         </div>
       </div>
 
@@ -4951,7 +4983,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 100 }}>
         {/* Card 1: Palier / Tier — fond doré étiré */}
         {(() => {
-          const ti = getTierFromPoints((userPoints || 0) + questBonusForTier(userXp));
+          const ti = getTierFromPoints(userXp || 0);
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
           const goldHex = "#EAB308";
           const goldRgb = "234,179,8";
@@ -13805,6 +13837,14 @@ export default function ClutchApp() {
       } else {
         syncProfileToBackend(profile, newTotal);
       }
+    }
+    // Les paliers avancent uniquement avec de l'XP (pas de points classement).
+    // Chaque point gagné vaut 10 XP de palier (3 pts série exacte = 30 XP,
+    // 1 pt bon vainqueur = 10 XP, 2 pts bonus map = 20 XP). Les XP affichés
+    // ne touchent pas au classement.
+    if (pointsToAdd > 0) {
+      const xpBonus = pointsToAdd * 10;
+      setUserXp((prev) => { const next = (prev || 0) + xpBonus; saveXp(next); return next; });
     }
     if (pointsToAdd > 0) {
       setQuestState(qs => {
