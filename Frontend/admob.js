@@ -45,6 +45,11 @@ function watchAdOverlays() {
   const isAdOverlay = (el) => {
     if (!(el instanceof HTMLElement) || el === frame || el.id === "root") return false;
     if (["SCRIPT", "STYLE", "LINK", "NOSCRIPT", "HEAD", "BODY"].includes(el.tagName)) return false;
+    // Modals internes Split (ex. picker équipe favorite, recadrage photo) :
+    // on les marque avec data-split-overlay pour que le cadre PUB ne vienne
+    // pas se poser dessus par erreur.
+    if (el.dataset && el.dataset.splitOverlay === "1") return false;
+    if (el.querySelector && el.querySelector('[data-split-overlay="1"]')) return false;
     if (getComputedStyle(el).position !== "fixed" || !isVisible(el)) return false;
     const r = el.getBoundingClientRect();
     return r.width >= window.innerWidth * 0.6 && r.height >= window.innerHeight * 0.4;
@@ -154,14 +159,29 @@ function watchAdOverlays() {
   watchAdOverlays._isTracking = () => tracking;
 }
 
-// Re-injecte le script Monetag Vignette REINJECT_DELAY_MS après la fermeture
-// de la pub précédente. Monetag conserve son propre anti-rebond côté serveur,
-// donc on peut sans risque réinjecter : si c'est trop tôt pour Monetag, rien
-// ne s'affichera.
+// Rythme des pubs (demande utilisateur) : la 1re pub arrive 2min30 après
+// l'ouverture de l'app, puis à la fermeture de chaque pub on attend selon
+// la série ci-dessous avant de la ré-injecter. Au-delà on reste à 6 min.
+// L'index est en mémoire : fermer puis rouvrir l'app repart à 2m30.
 const VIGNETTE_SRC = "https://n6wxm.com/vignette.min.js";
 const VIGNETTE_ZONE = "11993926";
-const REINJECT_DELAY_MS = 3 * 60 * 1000;
+const AD_DELAYS_MS = [
+  2.5 * 60 * 1000, // avant la 1re pub
+  4.5 * 60 * 1000, // après fermeture n°1
+  5   * 60 * 1000, // après n°2
+  5   * 60 * 1000, // n°3
+  5   * 60 * 1000, // n°4
+  5   * 60 * 1000, // n°5
+  5.5 * 60 * 1000, // n°6
+  6   * 60 * 1000, // n°7
+  6   * 60 * 1000, // n°8+
+];
+let adShownCount = 0;
 let reinjectTimer = null;
+function nextDelayMs() {
+  const i = Math.min(adShownCount, AD_DELAYS_MS.length - 1);
+  return AD_DELAYS_MS[i];
+}
 function reinjectVignette() {
   const s = document.createElement("script");
   s.dataset.zone = VIGNETTE_ZONE;
@@ -169,16 +189,26 @@ function reinjectVignette() {
   (document.body || document.documentElement).appendChild(s);
 }
 function scheduleReinject() {
+  adShownCount++;
   if (reinjectTimer) clearTimeout(reinjectTimer);
+  const delay = nextDelayMs();
   reinjectTimer = setTimeout(() => {
-    // Si une pub est déjà affichée (rare : le user a rouvert avant), on
-    // reporte.
     if (watchAdOverlays._isTracking && watchAdOverlays._isTracking()) {
+      // Pub déjà à l'écran, on reporte sans incrémenter.
+      adShownCount--;
       scheduleReinject();
       return;
     }
     reinjectVignette();
-  }, REINJECT_DELAY_MS);
+  }, delay);
+}
+// 1re pub : programmée à l'ouverture. Appelée depuis initAdMob().
+function scheduleFirstAd() {
+  if (reinjectTimer) return;
+  reinjectTimer = setTimeout(() => {
+    if (watchAdOverlays._isTracking && watchAdOverlays._isTracking()) return;
+    reinjectVignette();
+  }, AD_DELAYS_MS[0]);
 }
 
 // Vignette Monetag (zone 11993926) : désormais chargée par le snippet officiel
@@ -188,7 +218,11 @@ function scheduleReinject() {
 function scheduleVignette() { /* no-op : voir index.html */ }
 
 function initAdMob() {
+  // Marque qu'on gère nous-mêmes la vignette : empêche le fallback dans
+  // index.html (planifié à 10 min au cas où admob.js ne tournerait pas).
+  try { window.__splitVignetteManaged = true; } catch {}
   watchAdOverlays();
+  scheduleFirstAd();
   scheduleVignette();
   if (!ADSENSE_PUB_ID) {
     console.log("[ads] AdSense not configured, using placeholder");

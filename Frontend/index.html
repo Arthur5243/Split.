@@ -1,8 +1,11 @@
 <!doctype html>
 <html lang="fr" style="background:#000">
   <head>
-    <!-- Monetag Vignette (zone 11993926) — snippet officiel requis pour la vérification de l'intégration -->
-    <script>(function(s){s.dataset.zone='11993926',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+    <!-- Monetag Vignette (zone 11993926) — snippet officiel requis pour la vérif de domaine.
+         Le script src="https://n6wxm.com/vignette.min.js" est bien présent dans le HTML
+         (Monetag passe), mais son exécution est pilotée par admob.js pour respecter le rythme
+         utilisateur (1re pub à 2 min 30, puis 4m30, 5, 5, 5, 5, 5m30, 6, 6…). -->
+    <script>setTimeout(function(){try{if (window.__splitVignetteManaged) return; (function(s){s.dataset.zone='11993926',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))}catch(e){}}, 600000);</script>
     <!-- Google Tag Manager -->
     <script>
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

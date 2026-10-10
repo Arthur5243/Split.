@@ -3403,6 +3403,31 @@ function isStreakExpiring() {
   const s = loadStreak();
   return s.current > 0 && s.lastBetDate === shiftDay(localDayStr(), -1);
 }
+// Envoie 3 notifications via le service worker si la permission est accordée.
+// Appelée uniquement pour le compte de test "portable" (vérification que les
+// notifs arrivent bien sur le téléphone, pas en popup dans l'app).
+async function spamTestPushNotifs() {
+  try {
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission === "default") {
+      const p = await Notification.requestPermission();
+      if (p !== "granted") return;
+    }
+    if (Notification.permission !== "granted") return;
+    const reg = navigator.serviceWorker ? await navigator.serviceWorker.ready.catch(() => null) : null;
+    const show = (title, body, tag) => {
+      const opts = { body, tag, icon: "/split-logo.png", badge: "/split-logo.png", silent: false, requireInteraction: false };
+      if (reg) reg.showNotification(title, opts); else new Notification(title, opts);
+    };
+    const msgs = [
+      ["🔔 Split", "Test notif #1 — tu reçois bien les push sur ton tel ?"],
+      ["🏆 Nouveau match", "VIT vs G2 commence bientôt. Pose ton prono."],
+      ["🔥 Streak dispo", "Pronostique aujourd'hui pour continuer ta série !"],
+    ];
+    msgs.forEach(([t, b], i) => setTimeout(() => show(t, b, "split-test-" + i), i * 1200));
+  } catch (e) { /* silent */ }
+}
+
 function loadXp() {
   try {
     let xp = parseInt(localStorage.getItem("split_xp")) || 0;
@@ -8234,7 +8259,7 @@ function AvatarCropModal({ file, onCancel, onDone }) {
   }
 
   return createPortal(
-    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: 16 }}>
+    <div data-split-overlay="1" style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: 16 }}>
       <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>Recadrer la photo</p>
       <p style={{ color: "#888", fontSize: 12, marginTop: -10 }}>Déplace l'image et zoome pour la centrer</p>
       <div
@@ -8344,7 +8369,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
       </button>
 
       {open && createPortal(
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 10002, display: "flex", flexDirection: "column", padding: 14 }} onClick={close}>
+        <div data-split-overlay="1" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 10002, display: "flex", flexDirection: "column", padding: 14 }} onClick={close}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: "#0a0a0a", border: "1px solid #222", borderRadius: 20, display: "flex", flexDirection: "column", maxHeight: "92vh", width: "100%", maxWidth: 460, margin: "auto", overflow: "hidden" }}>
             <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ color: "#fff", fontSize: 14, fontWeight: 900, flex: 1 }}>{label}</span>
@@ -11195,7 +11220,7 @@ function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevS
   );
 }
 
-function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, T, profile, onLogout, onDeleteAccount, onChangePseudo }) {
+function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, cs2Teams, rlTeams, teamLogoCache, cs2LogoCache, rlLogoCache, onUpdateProfile, T, profile, onLogout, onDeleteAccount, onChangePseudo }) {
   const allTeams = teams || [];
   const [activeSection, setActiveSection] = useState(null);
   const [showPwd, setShowPwd] = useState(false);
@@ -11419,10 +11444,11 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                   })}
                 </div>
                 <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsFavTeam}</p>
-                <select value={favoriteTeam} onChange={(e) => setFavoriteTeam(e.target.value)} className="w-full rounded-xl" style={{ background: "#222", color: "#fff", fontSize: "13px", padding: "10px 12px", border: "1px solid #2a2a2a" }}>
-                  <option value="">{T.settingsFavTeamNone}</option>
-                  {allTeams.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <div className="flex flex-col gap-2">
+                  <TeamSearchSelect value={profile?.favTeams?.valo || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ valo: v === "__none__" ? "" : v })} teams={teams} label="Valorant" T={T} teamLogoCache={teamLogoCache} />
+                  <TeamSearchSelect value={profile?.favTeams?.cs2 || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ cs2: v === "__none__" ? "" : v })} teams={cs2Teams || []} label="CS2" T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
+                  <TeamSearchSelect value={profile?.favTeams?.rl || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ rl: v === "__none__" ? "" : v })} teams={rlTeams || []} label="Rocket League" T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
+                </div>
               </div>
             )}
           </div>
@@ -13934,6 +13960,12 @@ export default function ClutchApp() {
             setShowAuth(false);
             lastAdAtRef.current = Date.now();
             if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
+            // Compte test "portable" : spam de notifs push (sur le téléphone,
+            // pas dans l'app) à chaque connexion, pour vérifier la perm et le
+            // SW.
+            if (user.email && user.email.toLowerCase().startsWith("portable.coffee")) {
+              spamTestPushNotifs();
+            }
           }
         }} />
       )}
