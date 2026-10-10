@@ -28,6 +28,9 @@ import {
   mergeUserSync,
   getUserPoints,
   getUserHistory,
+  getOracleLastUse,
+  markOracleUse,
+  getCommunityPredictionSplit,
 } from "./social-store.js";
 import { authMiddleware } from "./auth-routes.js";
 
@@ -127,6 +130,45 @@ router.post("/api/social/unfollow", (req, res) => {
 router.get("/api/social/history/:userId", (req, res) => {
   const limit = Math.min(100, Math.max(10, parseInt(req.query.limit, 10) || 50));
   res.json(getUserHistory(req.params.userId, limit));
+});
+
+// Pouvoir Oracle : réservé aux titulaires du titre "Oracle" (palier 100).
+// Renvoie la répartition des pronos de la communauté sur un match + consomme
+// 1 utilisation (quota 1 par 7 jours glissants). Si le user n'a pas le titre
+// ou dépasse le quota → 403.
+const ORACLE_COOLDOWN_MS = 7 * 24 * 3600 * 1000;
+router.post("/api/social/oracle/:matchId", authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const u = getUser(userId);
+  if (!u) return res.status(404).json({ error: "user not found" });
+  if ((u.equipped_title || "").toLowerCase() !== "oracle") {
+    return res.status(403).json({ error: "Titre Oracle requis (palier 100)" });
+  }
+  const last = getOracleLastUse(userId);
+  if (last) {
+    const elapsed = Date.now() - new Date(last).getTime();
+    if (elapsed < ORACLE_COOLDOWN_MS) {
+      return res.status(429).json({ error: "Oracle déjà utilisé cette semaine", nextAvailableMs: ORACLE_COOLDOWN_MS - elapsed });
+    }
+  }
+  const split = getCommunityPredictionSplit(req.params.matchId);
+  markOracleUse(userId);
+  res.json({ ...split, usedAt: new Date().toISOString(), nextAvailableMs: ORACLE_COOLDOWN_MS });
+});
+
+// Statut Oracle sans consommer : savoir si le bouton doit être grisé.
+router.get("/api/social/oracle-status", authMiddleware, (req, res) => {
+  const u = getUser(req.userId);
+  const hasTitle = !!(u && (u.equipped_title || "").toLowerCase() === "oracle");
+  const last = getOracleLastUse(req.userId);
+  const elapsed = last ? Date.now() - new Date(last).getTime() : Infinity;
+  const available = elapsed >= ORACLE_COOLDOWN_MS;
+  res.json({
+    hasTitle,
+    available,
+    nextAvailableMs: available ? 0 : (ORACLE_COOLDOWN_MS - elapsed),
+    lastUsedAt: last || null,
+  });
 });
 
 router.get("/api/social/following/:userId", (req, res) => {

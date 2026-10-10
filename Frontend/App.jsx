@@ -2472,6 +2472,135 @@ const GameScoreInput = React.forwardRef(function GameScoreInput({ value, onChang
   );
 });
 
+// Bouton Oracle : visible uniquement si l'utilisateur a équipé le titre
+// "Oracle" (palier 100). Clic → GET répartition pronos communauté sur ce
+// match. 1 usage par 7 jours (serveur). Reste visible mais grisé pendant le
+// cooldown avec le compte à rebours.
+function OracleButton({ matchId, team1, team2, teamLogoCache }) {
+  const hasTitle = (() => { try { return (localStorage.getItem("split_equipped_title") || "").toLowerCase() === "oracle"; } catch { return false; } })();
+  const [cooldownMs, setCooldownMs] = useState(() => {
+    try {
+      const v = parseInt(localStorage.getItem("split_oracle_cooldown_until") || "0", 10);
+      return v > Date.now() ? v - Date.now() : 0;
+    } catch { return 0; }
+  });
+  const [popup, setPopup] = useState(null);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (cooldownMs <= 0) return;
+    const t = setTimeout(() => setCooldownMs((c) => Math.max(0, c - 1000)), 1000);
+    return () => clearTimeout(t);
+  }, [cooldownMs]);
+  if (!hasTitle) return null;
+  const disabled = cooldownMs > 0;
+  const fmtCountdown = () => {
+    const total = Math.ceil(cooldownMs / 1000);
+    const d = Math.floor(total / 86400), h = Math.floor((total % 86400) / 3600), m = Math.floor((total % 3600) / 60);
+    if (d > 0) return `${d}j ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
+  const onClick = async (e) => {
+    e.stopPropagation();
+    if (loading || disabled) return;
+    const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token");
+    if (!token) return;
+    setLoading(true);
+    try {
+      const r = await fetch(API_BASE + "/api/social/oracle/" + encodeURIComponent(matchId), { method: "POST", headers: { Authorization: "Bearer " + token } });
+      const d = await r.json().catch(() => ({}));
+      if (r.status === 429) {
+        const next = d.nextAvailableMs || 7 * 24 * 3600 * 1000;
+        try { localStorage.setItem("split_oracle_cooldown_until", String(Date.now() + next)); } catch {}
+        setCooldownMs(next);
+        setPopup({ err: "Déjà utilisé cette semaine. Reviens dans " + Math.ceil(next / 3600000) + "h." });
+      } else if (!r.ok) {
+        setPopup({ err: d.error || "Erreur, réessaie plus tard." });
+      } else {
+        const next = d.nextAvailableMs || 7 * 24 * 3600 * 1000;
+        try { localStorage.setItem("split_oracle_cooldown_until", String(Date.now() + next)); } catch {}
+        setCooldownMs(next);
+        setPopup(d);
+      }
+    } catch {
+      setPopup({ err: "Erreur réseau." });
+    }
+    setLoading(false);
+  };
+  const findLogo = (name) => {
+    if (!teamLogoCache || !name) return null;
+    const k = Object.keys(teamLogoCache).find((x) => x.toLowerCase() === String(name).toLowerCase());
+    return k ? teamLogoCache[k] : null;
+  };
+  const total = popup?.total || 0;
+  const p1 = total > 0 ? Math.round(((popup?.team1 || 0) / total) * 100) : 0;
+  const p2 = total > 0 ? 100 - p1 : 0;
+  const logo1 = findLogo(team1);
+  const logo2 = findLogo(team2);
+  return (
+    <>
+      <button
+        onClick={onClick}
+        disabled={loading}
+        style={{
+          position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+          background: disabled ? "rgba(167,139,250,0.08)" : "linear-gradient(135deg, rgba(167,139,250,0.95), rgba(236,72,153,0.95))",
+          color: disabled ? "#8a8a8a" : "#fff",
+          border: disabled ? "1px solid rgba(167,139,250,0.2)" : "1px solid rgba(255,255,255,0.3)",
+          borderRadius: 10, padding: "6px 10px", cursor: disabled ? "not-allowed" : "pointer",
+          fontSize: 10, fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase",
+          display: "flex", alignItems: "center", gap: 5,
+          boxShadow: disabled ? "none" : "0 0 10px rgba(167,139,250,0.35)",
+          opacity: loading ? 0.6 : 1,
+        }}
+      >
+        <span style={{ fontSize: 13 }}>🔮</span>
+        <span>{disabled ? fmtCountdown() : "Oracle"}</span>
+      </button>
+      {popup && createPortal(
+        <div data-split-overlay="1" onClick={() => setPopup(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 10050, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(360px, 92%)", background: "#0e0e14", border: "1px solid #2a2340", borderRadius: 18, padding: 18, boxShadow: "0 10px 40px rgba(167,139,250,0.3)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <span style={{ fontSize: 22 }}>🔮</span>
+              <h3 style={{ color: "#c084fc", fontSize: 15, fontWeight: 900, margin: 0, letterSpacing: "0.04em" }}>Vision Oracle</h3>
+            </div>
+            {popup.err ? (
+              <p style={{ color: "#f87171", fontSize: 12, marginBottom: 14 }}>{popup.err}</p>
+            ) : (
+              <>
+                <p style={{ color: "#888", fontSize: 11, marginBottom: 14 }}>
+                  La communauté a parié {total > 0 ? `(${total} prono${total > 1 ? "s" : ""})` : ""} :
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {logo1 ? <img src={logo1} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <div style={{ width: 24, height: 24 }} />}
+                    <span style={{ color: "#fff", fontSize: 12, fontWeight: 800, flexShrink: 0, width: 54, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{team1}</span>
+                    <div style={{ flex: 1, height: 10, borderRadius: 5, background: "#1a1a1a", overflow: "hidden" }}>
+                      <div style={{ width: p1 + "%", height: "100%", background: "linear-gradient(90deg, #c084fc, #a78bfa)", borderRadius: 5 }} />
+                    </div>
+                    <span style={{ color: "#c084fc", fontSize: 13, fontWeight: 900, minWidth: 36, textAlign: "right" }}>{p1}%</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {logo2 ? <img src={logo2} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <div style={{ width: 24, height: 24 }} />}
+                    <span style={{ color: "#fff", fontSize: 12, fontWeight: 800, flexShrink: 0, width: 54, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{team2}</span>
+                    <div style={{ flex: 1, height: 10, borderRadius: 5, background: "#1a1a1a", overflow: "hidden" }}>
+                      <div style={{ width: p2 + "%", height: "100%", background: "linear-gradient(90deg, #ec4899, #f472b6)", borderRadius: 5 }} />
+                    </div>
+                    <span style={{ color: "#f472b6", fontSize: 13, fontWeight: 900, minWidth: 36, textAlign: "right" }}>{p2}%</span>
+                  </div>
+                </div>
+                <p style={{ color: "#555", fontSize: 10, marginTop: 14, textAlign: "center" }}>Prochaine utilisation disponible dans {fmtCountdown()}.</p>
+              </>
+            )}
+            <button onClick={() => setPopup(null)} style={{ marginTop: 14, width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#aaa", fontSize: 12, fontWeight: 800, padding: "9px 0", cursor: "pointer" }}>Fermer</button>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
 function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScoreChange, T, lang, teamLogoCache, streamUrl, replayUrl: replayUrlProp, useRegionStreamFallback = true, hideOdds = false, team1RegionColor, team2RegionColor, team1RegionCode, team2RegionCode, notifActive, onToggleNotif, remainingPreds = 5, onLimitReached }) {
   const tbd = isTbd(match);
   // PandaScore renvoie parfois image_url: null pour un match tout juste
@@ -2880,6 +3009,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             <SeriesScoreInput ref={seriesBRef} value={seriesB} onChange={(v) => onSeriesChange(match.id, "seriesB", v)} accent={accent} disabled={betLocked} onAdvance={() => seriesARef.current && seriesARef.current.focus()} otherValue={seriesA} maxDigit={winsNeeded} />
           </div>
           {isBoosted && <span style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#f59e0b", fontWeight: 900, fontSize: 13, background: "#2a1f0a", border: "1.5px solid #f59e0b", borderRadius: 8, padding: "4px 9px", letterSpacing: 0.3, lineHeight: 1 }}>x2</span>}
+          <OracleButton matchId={match.id} team1={match.team1} team2={match.team2} teamLogoCache={teamLogoCache} />
           {/* Un champ désactivé avale le clic : cette couche capte le tap pour
               expliquer pourquoi on ne peut plus parier (5 pronos en cours). */}
           {betLocked && !lockedByTime && remainingPreds <= 0 && (
@@ -3491,13 +3621,21 @@ function loadXp() {
 }
 function saveXp(xp) { localStorage.setItem("split_xp", String(xp)); }
 // Paliers débloqués avec de l'XP (pas des points de classement) :
-// - 10 XP par point gagné sur un prono (3 pts série exacte = 30 XP)
-// - XP des quêtes réclamées (75 à 700 XP selon la quête)
-// 1er palier = 300 XP, puis +30 XP tous les 5 paliers (10 pronos exacts
-// ou ~4 quêtes quotidiennes par palier). L'XP n'affecte pas le classement.
+// - 10 XP par point gagné sur un prono
+// - XP des quêtes réclamées
+// Barème par tranches : premiers paliers rapides, puis coût qui monte
+// progressivement, et un gros final à 1000 XP pour le palier 100.
 function ptsForTier(tier) {
   if (tier <= 1) return 0;
-  return 300 + 30 * Math.floor((tier - 2) / 5);
+  if (tier <= 5) return 100;
+  if (tier <= 15) return 150;
+  if (tier <= 30) return 200;
+  if (tier <= 45) return 250;
+  if (tier <= 60) return 300;
+  if (tier <= 75) return 350;
+  if (tier <= 90) return 400;
+  if (tier <= 99) return 450;
+  return 1000;
 }
 function getTierFromPoints(totalPts) {
   let remaining = Math.max(0, totalPts || 0);
@@ -3817,7 +3955,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     97: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     98: { emoji: "💎", name: "Coffre Légendaire", desc: "Loot ultime exclusif" },
     99: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "legendaire" },
-    100: { emoji: "👑", name: "The First One", desc: "Le titre ultime. Tu es une légende.", type: "title", rarity: "legendaire" },
+    100: { emoji: "🔮", name: "Oracle", desc: "Titre ultime : débloque le pouvoir Oracle (voir la répartition des pronos de la communauté sur un match avant son début, 1 fois par semaine).", type: "title", rarity: "legendaire", power: "oracle" },
   };
   const defaultChest = { emoji: "📦", name: "Coffre Standard", desc: "Récompense de progression" };
   function getChest(tier) { return TIER_REWARDS[tier] || defaultChest; }
@@ -10882,7 +11020,21 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-1.5" style={{ position: "relative" }}>
                         {uBadge && <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
-                        {uTitle && <span className="truncate" style={{ fontSize: 10, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 8px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
+                        {uTitle && (() => {
+                          const isOracle = (uTitle || "").toLowerCase() === "oracle";
+                          return (
+                            <span className="truncate" style={{
+                              fontSize: 10, fontWeight: 800, color: "#fff",
+                              padding: "3px 10px", borderRadius: 6, flexShrink: 0, letterSpacing: 0.6,
+                              background: isOracle
+                                ? `linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3)), url(/oracle-title-bg.png) center/cover no-repeat`
+                                : (uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)"),
+                              border: isOracle ? "1px solid rgba(192,132,252,0.6)" : (uBanner ? "1px solid rgba(168,85,247,0.3)" : "none"),
+                              textShadow: isOracle ? "0 1px 3px rgba(0,0,0,0.8)" : "none",
+                              boxShadow: isOracle ? "0 0 10px rgba(192,132,252,0.35)" : "none",
+                            }}>{isOracle ? "🔮 " : ""}{uTitle}</span>
+                          );
+                        })()}
                       </div>
                       {!isUnranked && rankLogo.logo ? (
                         uBanner ? (

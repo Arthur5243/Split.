@@ -533,6 +533,37 @@ export function listUserSyncRows() {
 // du plus récent au plus ancien, enrichis avec sa prédiction (seriesA/B) tirée
 // de user_sync.predictions. Team names + scores laissés au client qui a déjà
 // chargé les listes de résultats finis.
+// Table pour tracker la dernière utilisation du pouvoir Oracle (1x/semaine).
+try { db.exec(`CREATE TABLE IF NOT EXISTS oracle_uses ( user_id TEXT PRIMARY KEY, last_used_at TEXT NOT NULL )`); } catch {}
+
+export function getOracleLastUse(userId) {
+  const r = db.prepare(`SELECT last_used_at FROM oracle_uses WHERE user_id = ?`).get(userId);
+  return r ? r.last_used_at : null;
+}
+
+export function markOracleUse(userId) {
+  db.prepare(`INSERT INTO oracle_uses (user_id, last_used_at) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET last_used_at = excluded.last_used_at`).run(userId, new Date().toISOString());
+}
+
+// Agrège les pronos de tous les users sur un matchId donné. Renvoie
+// { team1: count, team2: count, total } pour calculer les % côté route.
+export function getCommunityPredictionSplit(matchId) {
+  const rows = db.prepare(`SELECT predictions FROM user_sync WHERE predictions LIKE ?`).all(`%${matchId}%`);
+  let team1 = 0, team2 = 0;
+  for (const row of rows) {
+    try {
+      const preds = JSON.parse(row.predictions || "{}");
+      const p = preds[matchId];
+      if (!p || p.seriesA === "" || p.seriesB === "" || p.seriesA == null || p.seriesB == null) continue;
+      const a = parseInt(p.seriesA, 10);
+      const b = parseInt(p.seriesB, 10);
+      if (a > b) team1++;
+      else if (b > a) team2++;
+    } catch {}
+  }
+  return { team1, team2, total: team1 + team2 };
+}
+
 export function grantPseudoChangeCredit(emailLike) {
   const r = db.prepare(`
     UPDATE users
