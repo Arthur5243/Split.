@@ -2447,13 +2447,18 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const validBo = bo >= 7 ? [[4,0],[4,1],[4,2],[4,3],[3,4],[2,4],[1,4],[0,4]] : bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
   const hasCompleteBet = seriesA !== "" && seriesB !== "" && validBo.some(([x,y]) => parseInt(seriesA) === x && parseInt(seriesB) === y);
   // Verrouillage à 1h du début du match (demande utilisateur : avant on
-  // bloquait à 6h, trop restrictif).
+  // bloquait à 6h, trop restrictif). On ignore `running` tant que l'heure de
+  // début réelle est > 1h dans le futur : PandaScore/VLR marquent parfois
+  // "running" trop tôt (planification d'un match annoncé), ce qui bloquait
+  // des matchs à 3h d'intervalle.
   const LOCK_HOURS = 1;
   const lockedByTime = (() => {
-    if (running || finished) return true;
-    if (!match.beginAt) return false;
-    const t = new Date(match.beginAt).getTime();
-    return !isNaN(t) && Date.now() >= t - LOCK_HOURS * 3600000;
+    if (finished) return true;
+    const t = match.beginAt ? new Date(match.beginAt).getTime() : NaN;
+    const minutesUntilStart = isNaN(t) ? Infinity : (t - Date.now()) / 60000;
+    if (running && minutesUntilStart <= LOCK_HOURS * 60) return true;
+    if (isNaN(t)) return running;
+    return Date.now() >= t - LOCK_HOURS * 3600000;
   })();
   const betLocked = lockedByTime || (remainingPreds <= 0 && !hasCompleteBet);
 
@@ -6351,7 +6356,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyRegion, setHistoryRegion] = useState(null);
-  const [showAutre, setShowAutre] = useState(false);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
@@ -6394,6 +6398,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
 
   const stageAvailable = (key) => {
     if (key === "champions") return true;
+    // Stage (= Stage 2 des régions) : désactivé dans le menu principal. Les
+    // résultats restent accessibles dans l'Historique → "Stage 2 2026".
+    if (key === "stage") return false;
     if (isStage2Static(key)) return true;
     if (!vlrEvents) return false;
     if (key === "masters") return !!vlrEvents.masters;
@@ -6494,57 +6501,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     </>;
   };
 
-  // --- Autre competitions view ---
-  if (showAutre) {
-    const autreComps = [
-      { name: "VCT Challengers", desc: "Ligues régionales Tier 2", color: "#4FC3F7", regions: ["EMEA", "Pacific", "Americas", "CN"], url: "https://liquipedia.net/valorant/VCT/2026/Challengers" },
-      { name: "Game Changers", desc: "Circuit compétitif féminin", color: "#E040FB", regions: ["EMEA", "Pacific", "Americas"], url: "https://liquipedia.net/valorant/VCT/2026/Game_Changers" },
-      { name: "VCT Ascension", desc: "Promotion vers la ligue internationale", color: "#FFB74D", regions: ["EMEA", "Pacific", "Americas"], url: "https://liquipedia.net/valorant/VCT/2026/Ascension" },
-    ];
-    return (
-      <div style={pageStylePlain}>
-        <div style={headerStyle}>
-          {backBtn(() => setShowAutre(false))}
-          {titleSpan("Autres compétitions", "#C4F000")}
-        </div>
-        <div style={{ padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
-          <button onClick={() => { setShowAutre(false); setStage("stage2"); }} style={{ background: "linear-gradient(135deg, #FF6B3510 0%, #111 60%)", border: "1px solid #FF6B3530", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 4, background: "#FF6B35" }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{T.bracketStage2 || "Stage 2"}</span>
-              </div>
-              <ChevronRight size={14} color="#555" />
-            </div>
-            <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>Play-ins · Playoffs · Ligues régionales</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {["EMEA", "Pacific", "Americas", "CN"].map((r) => (
-                <span key={r} style={{ fontSize: 10, fontWeight: 700, color: "#FF6B35", background: "#FF6B3515", border: "1px solid #FF6B3530", borderRadius: 6, padding: "3px 8px" }}>{r}</span>
-              ))}
-            </div>
-          </button>
-          {autreComps.map((c) => (
-            <button key={c.name} onClick={() => window.open(c.url, "_blank")} style={{ background: "#111", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: "pointer", textAlign: "left", width: "100%" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: c.color }} />
-                  <span style={{ fontSize: 14, fontWeight: 800, color: "#fff" }}>{c.name}</span>
-                </div>
-                <ChevronRight size={14} color="#555" />
-              </div>
-              <p style={{ fontSize: 11, color: "#888", marginBottom: 10 }}>{c.desc}</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {c.regions.map((r) => (
-                  <span key={r} style={{ fontSize: 10, fontWeight: 700, color: c.color, background: c.color + "15", border: `1px solid ${c.color}30`, borderRadius: 6, padding: "3px 8px" }}>{r}</span>
-                ))}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   // --- Blocs d'affichage du Stage 2 (play-in / playoffs / bilan), partagés
   // entre l'étape Stage / Stage 2 et l'Historique ---
   const sectionTitle = (text, color) => (
@@ -6606,17 +6562,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           {backBtn(() => setShowHistory(false))}
           {titleSpan(T.bracketHistory)}
         </div>
-        {sectionTitle(T.bracketStage2 || "Stage 2", s2Color)}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "8px 16px 32px" }}>
-          {["AMERICAS", "EMEA", "PACIFIC", "CN"].map((rk) => {
-            const r = REGIONS.find((x) => x.key === rk);
-            return (
-              <button key={rk} onClick={() => setHistoryRegion(rk)} style={{ ...bracketTileStyle(r.accent, true), padding: "26px 12px", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 900, color: r.accent, letterSpacing: "0.06em", textTransform: "uppercase" }}>{regionLabel(rk, T)}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#aaa" }}>{VCT_STAGE2_HISTORY[rk].champion}</span>
-              </button>
-            );
-          })}
+        <div style={{ padding: "20px 16px" }}>
+          <button onClick={() => { setShowHistory(false); setStage("stage2"); }} style={{ ...bracketTileStyle(s2Color, true), padding: "36px 12px", gap: 8, width: "100%" }}>
+            <span style={{ fontSize: 14, fontWeight: 900, color: s2Color, letterSpacing: "0.06em", textTransform: "uppercase" }}>Stage 2 · 2026</span>
+          </button>
         </div>
       </div>
     );
@@ -6640,18 +6589,6 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
           })}
         </div>
         <div style={{ padding: "0 16px 12px" }}>
-          <button onClick={() => setShowAutre(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#1e1e1e", border: "1px solid #333", cursor: "pointer" }}>
-            <div className="flex items-center gap-3">
-              <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
-                <Trophy size={15} color="#888" />
-              </span>
-              <div style={{ textAlign: "left" }}>
-                <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>Autre</span>
-                <span className="block" style={{ color: "#666", fontSize: "10px" }}>Stage 2 · Challengers · Game Changers · Ascension</span>
-              </div>
-            </div>
-            <ChevronRight size={16} color="#555" />
-          </button>
         </div>
         <div style={{ padding: "4px 16px 20px" }}>
           <button onClick={openHistory} style={{
@@ -9934,12 +9871,16 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
       fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
         if (d.following !== undefined) setSocialStats(d);
       }).catch(() => {});
-      fetch(API_BASE + "/api/social/following/" + profile.userId).then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setFriendsList(d);
-      }).catch(() => {});
-      fetch(API_BASE + "/api/social/followers/" + profile.userId).then(r => r.json()).then(d => {
-        if (Array.isArray(d)) setFollowersList(d);
-      }).catch(() => {});
+      // Friends + followers chargés ensemble : on les push dans un batch une
+      // fois les deux revenus pour que les avatars à droite du mien
+      // apparaissent en même temps (plus de "chargement par vagues").
+      Promise.all([
+        fetch(API_BASE + "/api/social/following/" + profile.userId).then(r => r.json()).catch(() => []),
+        fetch(API_BASE + "/api/social/followers/" + profile.userId).then(r => r.json()).catch(() => []),
+      ]).then(([fol, folw]) => {
+        if (Array.isArray(fol)) setFriendsList(fol);
+        if (Array.isArray(folw)) setFollowersList(folw);
+      });
       initDmCrypto();
       loadDmConversations();
     }
