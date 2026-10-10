@@ -12926,24 +12926,37 @@ export default function ClutchApp() {
     // depuis un bouton settings protege si besoin.
   }, []);
 
+  // À chaque login (changement d'authUser.id), on tire le profil depuis le
+  // backend et on écrase le cache local pour pseudo/avatar/bio/favTeams/color.
+  // Un même mail = un même compte = mêmes infos sur tous les appareils, même
+  // si un ancien cache traîne en local.
   useEffect(() => {
-    if (profile || !authUser?.id) return;
+    if (!authUser?.id) return;
     fetch(API_BASE + "/api/social/me/" + authUser.id)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => {
         if (!d || !d.pseudo) return;
-        const restored = {
-          userId: d.id, pseudo: d.pseudo, avatar: d.avatar || null,
-          bio: d.bio || "", favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
+        const fresh = {
+          userId: d.id,
+          pseudo: d.pseudo,
+          avatar: d.avatar || null,
+          bio: d.bio || "",
+          favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
           pseudoColor: d.pseudo_color || null,
         };
-        setProfile(restored);
-        localStorage.setItem("split_profile", JSON.stringify(restored));
-        if (d.xp && d.xp > 0) { setUserXp(d.xp); saveXp(d.xp); }
+        // Backend prioritaire sur le cache local pour tout ce qui est identité
+        // du compte, qu'un cache obsolète existe ou pas. On garde les éventuels
+        // champs locaux non renvoyés par /api/social/me.
+        setProfile(prev => {
+          const merged = { ...(prev || {}), ...fresh };
+          try { localStorage.setItem("split_profile", JSON.stringify(merged)); } catch {}
+          return merged;
+        });
+        if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
         if (d.points && d.points > 0) { setUserPoints(d.points); localStorage.setItem("split_points", String(d.points)); }
       })
       .catch(() => {});
-  }, [authUser]);
+  }, [authUser?.id]);
 
   const [scoreCats, setScoreCats] = useState(["tout"]);
 
