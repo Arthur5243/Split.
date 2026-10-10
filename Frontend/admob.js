@@ -135,7 +135,7 @@ function watchAdOverlays() {
 // Vignette Monetag (format interstitiel) : son script est injecté seulement
 // après VIGNETTE_DELAY_MS d'utilisation, pour qu'aucune pub n'apparaisse
 // juste après l'ouverture de l'app.
-const VIGNETTE_ZONE = "11985749";
+const VIGNETTE_ZONE = "11993926";
 const VIGNETTE_SRC = "https://n6wxm.com/vignette.min.js";
 const VIGNETTE_DELAY_MS = 3 * 60 * 1000;
 let vignetteScheduled = false;
