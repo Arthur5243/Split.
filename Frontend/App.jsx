@@ -91,22 +91,22 @@ const PRELOAD_ASSETS = [
   "/bg-profile-1.png",
   "/bg-profile-2.png",
   "/bg-profile-3.png",
-  "/bronze-back.png",
+  "/bronze-back-fit.png",
   "/bronze.png",
-  "/champion-back.png",
+  "/champion-back-fit.png",
   "/champion-sm.png",
   "/champion.png",
-  "/doree-back.png",
+  "/doree-back-fit.png",
   "/global-elite-sm.png",
   "/global-elite.png",
-  "/gris-back.png",
+  "/gris-back-fit.png",
   "/home-card-1.png",
   "/home-card-2.png",
   "/home-card-3.png",
-  "/immortal-back.png",
+  "/immortal-back-fit.png",
   "/immortal-sm.png",
   "/immortal.png",
-  "/infinite-back.png",
+  "/infinite-back-fit.png",
   "/infinite-sm.png",
   "/infinite.png",
   "/match-bg-1.png",
@@ -4956,12 +4956,12 @@ function getStreakColor(s) {
 // (haut/bas/gauche/droite) dépasse de ~7,5% du cadre. Les bords transparents
 // des PNG sortent du cadre, le focal point (perso/glow) reste au milieu.
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png",     bgCrop: { size: "100% 115%", position: "center 100%" } },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png",   bgCrop: { size: "100% 115%", position: "center 100%" } },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png", bgCrop: { size: "100% 115%", position: "center 100%" } },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png", bgCrop: { size: "100% 115%", position: "center 100%" } },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png",    bgCrop: { size: "100% 115%", position: "center 100%" } },
-  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", bgCrop: { size: "100% 115%", position: "center 100%" }, maxCount: 50 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back-fit.png",     bgCrop: { size: "cover", position: "center center" } },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back-fit.png",   bgCrop: { size: "cover", position: "center center" } },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back-fit.png",    bgCrop: { size: "cover", position: "center center" } },
+  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back-fit.png", bgCrop: { size: "cover", position: "center center" }, maxCount: 50 },
 ];
 RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
@@ -5335,7 +5335,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           return (
             <button onClick={onOpenRewards} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
-              backgroundImage: "url(/doree-back.png)", backgroundSize: "calc(100% + 16px) calc(100% + 18px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
+              backgroundImage: "url(/doree-back-fit.png)", backgroundSize: "calc(100% + 16px) calc(100% + 18px)", backgroundPosition: "center center", backgroundRepeat: "no-repeat",
               border: `1px solid rgba(${goldRgb},0.5)`,
               boxShadow: `0 0 16px rgba(${goldRgb},0.25)`,
               cursor: "pointer", padding: "10px 8px 8px", display: "flex", flexDirection: "column",
@@ -5364,7 +5364,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
             <button onClick={onOpenStreakInfo} style={{
               position: "relative", overflow: "hidden", borderRadius: 14,
               // Fond uni gris/noir simple (pas d'image), immortal-back gardé pour l'état actif
-              backgroundImage: active ? "url(/immortal-back.png)" : "none",
+              backgroundImage: active ? "url(/immortal-back-fit.png)" : "none",
               backgroundColor: active ? "transparent" : "#242424",
               backgroundSize: active ? "calc(100% + 12px) calc(100% + 14px)" : undefined,
               backgroundPosition: active ? "center center" : undefined,
@@ -14523,7 +14523,7 @@ export default function ClutchApp() {
             <img src={REWARDS_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             {/* Preload cartes match backgrounds (home-card-1/2/3, doree/gris/immortal-back) */}
-            {["/home-card-1.png","/home-card-2.png","/home-card-3.png","/doree-back.png","/gris-back.png","/immortal-back.png","/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png"].map((src) => (
+            {["/home-card-1.png","/home-card-2.png","/home-card-3.png","/doree-back-fit.png","/gris-back-fit.png","/immortal-back-fit.png","/banner-1.png","/banner-2.png","/banner-3.png","/banner-4.png","/banner-5.png"].map((src) => (
               <img key={src} src={src} alt="" loading="eager" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
             ))}
             {/* Split logo: attend le décodage complet avant de l'afficher (opacity 0 → 1 via onLoad).
