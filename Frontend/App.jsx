@@ -257,63 +257,79 @@ function vlrTeamLogo(name) {
 // qu'on accepte à la recherche (ex: "m8", "mates" → Gentle Mates). Vitality
 // est volontairement UNE seule entrée (toutes jeux confondus, PandaScore
 // renvoie exactement la même équipe pour Valo/CS2/RL).
+// Une seule entrée par équipe, tous jeux confondus (Vitality unique, Falcons
+// unique, paiN unique, etc.). `logo` prend d'abord l'asset local s'il existe,
+// sinon null → le picker tombe sur le logo venu de l'API PandaScore via le
+// cache fusionné (`mergedLogoCache` injecté par le picker).
 const TEAM_META = [
-  { long: "Team Vitality",         short: "Vitality",     logo: "/logos/vit.png",     aliases: ["vit", "team vitality"] },
-  { long: "Team Liquid",           short: "Liquid",       logo: "/logos/tl.png",      aliases: ["tl", "liquid"] },
-  { long: "G2 Esports",            short: "G2",           logo: "/logos/g2.png",      aliases: ["g2"] },
-  { long: "Karmine Corp",          short: "KC",           logo: "/logos/kc.png",      aliases: ["kcorp", "karmine"] },
-  { long: "Gentle Mates",          short: "M8",           logo: "/logos/m8.webp",     aliases: ["m8", "mates", "gentle"] },
-  { long: "Paper Rex",             short: "PRX",          logo: "/logos/pr.png",      aliases: ["prx", "paperrex"] },
-  { long: "Team Heretics",         short: "TH",           logo: "/logos/th.png",      aliases: ["heretics"] },
-  { long: "Team Spirit",           short: "Spirit",       logo: "/logos/tspirit.png", aliases: ["ts", "tsp", "spirit"] },
-  { long: "Team Secret",           short: "TSE",          logo: "/logos/ts.png",      aliases: ["secret"] },
-  { long: "FaZe Clan",             short: "FaZe",         logo: "/logos/forz.webp",   aliases: ["faze"] },
-  { long: "FURIA Esports",         short: "FURIA",        logo: "/logos/fort.webp",   aliases: ["furia"] },
-  { long: "MOUZ",                  short: "MOUZ",         logo: null,                 aliases: ["mousesports"] },
-  { long: "NAVI (Natus Vincere)",  short: "NAVI",         logo: "/logos/envy.png",    aliases: ["navi", "natus", "nv"] },
-  { long: "Astralis",              short: "Astralis",     logo: "/logos/astralis.png",aliases: ["ast"] },
-  { long: "ENCE",                  short: "ENCE",         logo: "/logos/ence.webp",   aliases: [] },
-  { long: "Complexity Gaming",     short: "Complexity",   logo: null,                 aliases: ["col"] },
-  { long: "9z Team",               short: "9z",           logo: "/logos/9z.png",      aliases: ["9z team"] },
-  { long: "The MongolZ",           short: "MongolZ",      logo: null,                 aliases: ["mongolz", "themongolz"] },
-  { long: "paiN Gaming",           short: "paiN",         logo: "/logos/pain.png",    aliases: ["pain"] },
-  { long: "Imperial Esports",      short: "Imperial",     logo: null,                 aliases: ["imp"] },
-  { long: "Lynn Vision Gaming",    short: "Lynn Vision",  logo: null,                 aliases: ["lv", "lynn"] },
-  { long: "Wildcard Gaming",       short: "Wildcard",     logo: "/logos/wc.png",      aliases: ["wc"] },
-  { long: "Team Falcons",          short: "Falcons",      logo: null,                 aliases: ["falcons"] },
-  { long: "B8 Esports",            short: "B8",           logo: "/logos/b8.png",      aliases: ["b8"] },
-  { long: "BetBoom Team",          short: "BetBoom",      logo: null,                 aliases: ["bb"] },
-  { long: "NRG Esports",           short: "NRG",          logo: "/logos/nrg.png",     aliases: ["nrg"] },
-  { long: "100 Thieves",           short: "100T",         logo: null,                 aliases: ["100t", "thieves"] },
-  { long: "Sentinels",             short: "SEN",          logo: null,                 aliases: ["sen"] },
-  { long: "Cloud9",                short: "C9",           logo: null,                 aliases: ["c9"] },
-  { long: "LOUD",                  short: "LOUD",         logo: null,                 aliases: [] },
-  { long: "DRX",                   short: "DRX",          logo: "/logos/drx.png",     aliases: ["kiwoom"] },
-  { long: "T1",                    short: "T1",           logo: null,                 aliases: ["t one"] },
-  { long: "Gen.G",                 short: "GenG",         logo: null,                 aliases: ["geng"] },
-  { long: "ZETA DIVISION",         short: "ZETA",         logo: "/logos/zeta.png",    aliases: ["zeta"] },
-  { long: "DetonatioN FocusMe",    short: "DFM",          logo: null,                 aliases: ["dfm"] },
-  { long: "EDward Gaming",         short: "EDG",          logo: null,                 aliases: ["edg"] },
-  { long: "FunPlus Phoenix",       short: "FPX",          logo: null,                 aliases: ["fpx"] },
-  { long: "Bilibili Gaming",       short: "BLG",          logo: null,                 aliases: ["blg"] },
-  { long: "Trace Esports",         short: "Trace",        logo: null,                 aliases: ["trc"] },
-  { long: "TYLOO",                 short: "TYLOO",        logo: "/logos/tyloo.png",   aliases: [] },
-  { long: "Nemiga Gaming",         short: "Nemiga",       logo: "/logos/nemiga.png",  aliases: [] },
-  { long: "Shinden Gaming",        short: "Shinden",      logo: "/logos/shinden.png", aliases: [] },
-  { long: "Legacy",                short: "Legacy",       logo: "/logos/legacy.png",  aliases: ["lgcy"] },
-  { long: "BBL Esports",           short: "BBL",          logo: "/logos/bbl.png",     aliases: ["bbl"] },
-  { long: "BIG",                   short: "BIG",          logo: "/logos/big.png",     aliases: [] },
-  { long: "HOTU",                  short: "HOTU",         logo: "/logos/hotu.png",    aliases: [] },
-  { long: "FUT Esports",           short: "FUT",          logo: "/logos/fut.png",     aliases: ["fut"] },
-  { long: "paiN Gaming (RL)",      short: "paiN RL",      logo: "/logos/pain.png",    aliases: ["pain rl"] },
-  { long: "Spacestation Gaming",   short: "SSG",          logo: null,                 aliases: ["ssg", "spacestation"] },
-  { long: "Shopify Rebellion",     short: "Shopify",      logo: null,                 aliases: ["sr", "rebellion"] },
-  { long: "Team Falcons (RL)",     short: "Falcons RL",   logo: null,                 aliases: ["falcons rl"] },
-  { long: "Team BDS",              short: "BDS",          logo: null,                 aliases: ["bds"] },
-  { long: "Moist Esports",         short: "Moist",        logo: null,                 aliases: ["moist"] },
-  { long: "Oxygen Esports",        short: "Oxygen",       logo: null,                 aliases: ["oxg"] },
-  { long: "Ninjas in Pyjamas",     short: "NIP",          logo: "/logos/nip.png",     aliases: ["nip", "ninjas"] },
-  { long: "TSM",                   short: "TSM",          logo: "/logos/tsm.png",     aliases: ["team solomid"] },
+  // Tier 1 — Valo / CS2 / RL mélangés
+  { long: "100 Thieves",           short: "100T",       logo: null,                 aliases: ["100t", "thieves", "hundred thieves"] },
+  { long: "9z Team",               short: "9z",         logo: "/logos/9z.png",      aliases: ["9z"] },
+  { long: "Astralis",              short: "Astralis",   logo: "/logos/astralis.png",aliases: ["ast"] },
+  { long: "B8 Esports",            short: "B8",         logo: "/logos/b8.png",      aliases: ["b8"] },
+  { long: "BBL Esports",           short: "BBL",        logo: "/logos/bbl.png",     aliases: ["bbl"] },
+  { long: "BetBoom Team",          short: "BetBoom",    logo: null,                 aliases: ["bb", "betboom"] },
+  { long: "BIG",                   short: "BIG",        logo: "/logos/big.png",     aliases: ["berlin international gaming"] },
+  { long: "Bilibili Gaming",       short: "BLG",        logo: null,                 aliases: ["blg"] },
+  { long: "Bleed Esports",         short: "Bleed",      logo: "/logos/bst.png",     aliases: ["bst", "bleed"] },
+  { long: "Cloud9",                short: "C9",         logo: null,                 aliases: ["c9", "cloud 9"] },
+  { long: "Complexity Gaming",     short: "COL",        logo: null,                 aliases: ["col", "complexity"] },
+  { long: "DetonatioN FocusMe",    short: "DFM",        logo: null,                 aliases: ["dfm"] },
+  { long: "DRX",                   short: "DRX",        logo: "/logos/drx.png",     aliases: ["kiwoom", "kiwoom drx"] },
+  { long: "EDward Gaming",         short: "EDG",        logo: null,                 aliases: ["edg", "edward"] },
+  { long: "ENCE",                  short: "ENCE",       logo: "/logos/ence.webp",   aliases: ["ence esports"] },
+  { long: "Eintracht Frankfurt",   short: "SGE",        logo: "/logos/fort.webp",   aliases: ["sge", "frankfurt"] },
+  { long: "Evil Geniuses",         short: "EG",         logo: "/logos/eg.png",      aliases: ["eg", "evil"] },
+  { long: "FaZe Clan",             short: "FaZe",       logo: "/logos/forz.webp",   aliases: ["faze"] },
+  { long: "Flyquest",              short: "Flyquest",   logo: null,                 aliases: ["fly"] },
+  { long: "FunPlus Phoenix",       short: "FPX",        logo: null,                 aliases: ["fpx"] },
+  { long: "FURIA Esports",         short: "FURIA",      logo: null,                 aliases: ["furia"] },
+  { long: "FUT Esports",           short: "FUT",        logo: "/logos/fut.png",     aliases: ["fut"] },
+  { long: "G2 Esports",            short: "G2",         logo: "/logos/g2.png",      aliases: ["g2"] },
+  { long: "Gen.G Esports",         short: "GenG",       logo: null,                 aliases: ["geng", "gen g"] },
+  { long: "Gentle Mates",          short: "M8",         logo: "/logos/m8.webp",     aliases: ["m8", "mates", "gentle"] },
+  { long: "HEROIC",                short: "HEROIC",     logo: null,                 aliases: ["heroic"] },
+  { long: "HOTU",                  short: "HOTU",       logo: "/logos/hotu.png",    aliases: ["heart of the universe"] },
+  { long: "Imperial Esports",      short: "Imperial",   logo: null,                 aliases: ["imp"] },
+  { long: "JDG Esports",           short: "JDG",        logo: null,                 aliases: ["jdg", "jd gaming"] },
+  { long: "Karmine Corp",          short: "KC",         logo: "/logos/kc.png",      aliases: ["kcorp", "karmine"] },
+  { long: "Legacy",                short: "Legacy",     logo: "/logos/legacy.png",  aliases: ["lgcy"] },
+  { long: "LOUD",                  short: "LOUD",       logo: null,                 aliases: ["loud br"] },
+  { long: "Lynn Vision Gaming",    short: "Lynn Vision",logo: null,                 aliases: ["lv", "lynn"] },
+  { long: "MIBR",                  short: "MIBR",       logo: "/logos/mibr.png",    aliases: ["made in brazil"] },
+  { long: "Moist Esports",         short: "Moist",      logo: null,                 aliases: ["moist"] },
+  { long: "MOUZ",                  short: "MOUZ",       logo: null,                 aliases: ["mousesports", "mouz"] },
+  { long: "NAVI (Natus Vincere)",  short: "NAVI",       logo: "/logos/envy.png",    aliases: ["navi", "natus vincere", "nv"] },
+  { long: "Nemiga Gaming",         short: "Nemiga",     logo: "/logos/nemiga.png",  aliases: ["nemiga"] },
+  { long: "Ninjas in Pyjamas",     short: "NIP",        logo: "/logos/nip.png",     aliases: ["nip", "ninjas", "nip estar"] },
+  { long: "NRG Esports",           short: "NRG",        logo: "/logos/nrg.png",     aliases: ["nrg"] },
+  { long: "ONIC Esports",          short: "ONIC",       logo: "/logos/ong.png",     aliases: ["onic"] },
+  { long: "Oxygen Esports",        short: "Oxygen",     logo: null,                 aliases: ["oxg"] },
+  { long: "paiN Gaming",           short: "paiN",       logo: "/logos/pain.png",    aliases: ["pain", "pain rl"] },
+  { long: "Paper Rex",             short: "PRX",        logo: "/logos/pr.png",      aliases: ["prx", "paperrex"] },
+  { long: "Rare Atom",             short: "RA",         logo: null,                 aliases: ["ra"] },
+  { long: "Rebels Gaming",         short: "Rebels",     logo: null,                 aliases: ["rebels"] },
+  { long: "Sentinels",             short: "SEN",        logo: null,                 aliases: ["sen"] },
+  { long: "Shinden Gaming",        short: "Shinden",    logo: "/logos/shinden.png", aliases: ["shinden"] },
+  { long: "Shopify Rebellion",     short: "SR",         logo: "/logos/sr.png",      aliases: ["sr", "rebellion", "shopify"] },
+  { long: "Spacestation Gaming",   short: "SSG",        logo: null,                 aliases: ["ssg", "spacestation"] },
+  { long: "T1",                    short: "T1",         logo: null,                 aliases: ["t one"] },
+  { long: "Talon Esports",         short: "Talon",      logo: "/logos/ts.png",      aliases: ["talon"] },
+  { long: "Team BDS",              short: "BDS",        logo: null,                 aliases: ["bds"] },
+  { long: "Team Falcons",          short: "Falcons",    logo: null,                 aliases: ["falcons", "falcons rl"] },
+  { long: "Team Heretics",         short: "TH",         logo: "/logos/th.png",      aliases: ["heretics"] },
+  { long: "Team Liquid",           short: "Liquid",     logo: "/logos/tl.png",      aliases: ["tl", "liquid"] },
+  { long: "Team Secret",           short: "TSE",        logo: "/logos/ts.png",      aliases: ["secret"] },
+  { long: "Team Spirit",           short: "Spirit",     logo: "/logos/tspirit.png", aliases: ["ts", "tsp", "spirit"] },
+  { long: "Team Vitality",         short: "VIT",        logo: "/logos/vit.png",     aliases: ["vit", "vitality"] },
+  { long: "The MongolZ",           short: "MongolZ",    logo: null,                 aliases: ["mongolz", "themongolz"] },
+  { long: "Trace Esports",         short: "Trace",      logo: null,                 aliases: ["trc"] },
+  { long: "TSM",                   short: "TSM",        logo: "/logos/tsm.png",     aliases: ["team solomid"] },
+  { long: "TYLOO",                 short: "TYLOO",      logo: "/logos/tyloo.png",   aliases: ["tyloo"] },
+  { long: "W7M Esports",           short: "W7M",        logo: "/logos/w7m.png",     aliases: ["w7m", "fluxo w7m"] },
+  { long: "Wildcard Gaming",       short: "Wildcard",   logo: "/logos/wc.png",      aliases: ["wc"] },
+  { long: "Xerxia Esports",        short: "XE",         logo: "/logos/xe.png",      aliases: ["xe", "xerxia", "xip"] },
+  { long: "ZETA DIVISION",         short: "ZETA",       logo: "/logos/zeta.png",    aliases: ["zeta"] },
 ];
 
 // Distance de Levenshtein pour la tolérance aux fautes de frappe.
@@ -8547,9 +8563,9 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
                 <textarea value={bio} onChange={handleBioChange} maxLength={80} rows={2} placeholder="..." style={{ background: "#111", border: bioError ? "1px solid #e74c3c" : "1px solid #222", color: "#fff", fontSize: 13, borderRadius: 12, padding: "10px 14px", width: "100%", outline: "none", resize: "none", marginTop: 6, boxSizing: "border-box" }} />
                 {bioError && <p style={{ color: "#e74c3c", fontSize: 10, marginTop: 4 }}>{T.bioError || "Pas de liens, insultes ou contenu inapproprié."}</p>}
               </div>
-              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} teamLogoCache={valoLogoCache || teamLogoCache} />
-              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
-              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
+              <TeamSearchSelect value={favValo} onChange={setFavValo} teams={valoTeams} label={T.profileFavValo} T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}), ...(valoLogoCache || {}) }} />
+              <TeamSearchSelect value={favCs2} onChange={setFavCs2} teams={cs2Teams} label={T.profileFavCs2} T={T} teamLogoCache={{ ...teamLogoCache, ...(valoLogoCache || {}), ...(rlLogoCache || {}), ...(cs2LogoCache || {}) }} />
+              <TeamSearchSelect value={favRl} onChange={setFavRl} teams={rlTeams} label={T.profileFavRl} T={T} teamLogoCache={{ ...teamLogoCache, ...(valoLogoCache || {}), ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
             </div>
           )}
 
@@ -10293,9 +10309,9 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {editMode ? (
           <div className="mb-3" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={valoLogoCache || teamLogoCache} />
-            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
-            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
+            <TeamSearchSelect value={editFavValo} onChange={setEditFavValo} teams={valoTeams || []} label={T.profileFavValo || "Valorant"} T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}), ...(valoLogoCache || {}) }} />
+            <TeamSearchSelect value={editFavCs2} onChange={setEditFavCs2} teams={cs2Teams || []} label={T.profileFavCs2 || "CS2"} T={T} teamLogoCache={{ ...teamLogoCache, ...(valoLogoCache || {}), ...(rlLogoCache || {}), ...(cs2LogoCache || {}) }} />
+            <TeamSearchSelect value={editFavRl} onChange={setEditFavRl} teams={rlTeams || []} label={T.profileFavRl || "Rocket League"} T={T} teamLogoCache={{ ...teamLogoCache, ...(valoLogoCache || {}), ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
           </div>
         ) : (displayFavValo || displayFavCs2 || displayFavRl) && (
           <div className="mb-3">
@@ -11475,9 +11491,9 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                 </div>
                 <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{T.settingsFavTeam}</p>
                 <div className="flex flex-col gap-2">
-                  <TeamSearchSelect value={profile?.favTeams?.valo || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ valo: v === "__none__" ? "" : v })} teams={teams} label="Valorant" T={T} teamLogoCache={teamLogoCache} />
-                  <TeamSearchSelect value={profile?.favTeams?.cs2 || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ cs2: v === "__none__" ? "" : v })} teams={cs2Teams || []} label="CS2" T={T} teamLogoCache={cs2LogoCache || teamLogoCache} />
-                  <TeamSearchSelect value={profile?.favTeams?.rl || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ rl: v === "__none__" ? "" : v })} teams={rlTeams || []} label="Rocket League" T={T} teamLogoCache={rlLogoCache || teamLogoCache} />
+                  <TeamSearchSelect value={profile?.favTeams?.valo || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ valo: v === "__none__" ? "" : v })} teams={teams} label="Valorant" T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
+                  <TeamSearchSelect value={profile?.favTeams?.cs2 || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ cs2: v === "__none__" ? "" : v })} teams={cs2Teams || []} label="CS2" T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
+                  <TeamSearchSelect value={profile?.favTeams?.rl || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ rl: v === "__none__" ? "" : v })} teams={rlTeams || []} label="Rocket League" T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
                 </div>
               </div>
             )}
