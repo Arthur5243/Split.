@@ -5005,10 +5005,11 @@ function RankBadgeCompact({ points, onClick }) {
       // Unranked: image dépasse ~10px sur chaque côté (H+V), centrée.
       // Réduit le dépassement pour éviter que le sujet paraisse décalé à gauche.
       backgroundImage: `url(${bgImg})`,
-      backgroundSize: isUnranked
-        ? "calc(100% + 20px) calc(100% + 60px)"
-        : rank.name === "Override" ? "calc(100% + 20px) calc(100% + 70px)" : "calc(100% + 14px) calc(100% + 55px)",
-      backgroundPosition: isUnranked ? "center center" : (rank.name === "Override" ? "center bottom" : "center 85%"),
+      // Spec : on étire l'image pour qu'elle couvre pile le cadre, pas de
+      // bord vide, pas de crop. L'image des rangs est pensée pour fonctionner
+      // en légèrement déformée (gradient radial + éclats aux coins).
+      backgroundSize: "100% 100%",
+      backgroundPosition: "center center",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
