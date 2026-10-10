@@ -2650,6 +2650,28 @@ function OracleButton({ matchId, team1, team2, teamLogoCache }) {
   });
   const [popup, setPopup] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Au mount, on sync avec le backend : si l'Oracle a été consommé sur un
+  // autre appareil, on récupère le cooldown restant pour afficher le compteur
+  // sans attendre un clic qui échouerait.
+  useEffect(() => {
+    if (!hasTitle) return;
+    const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token");
+    if (!token) return;
+    fetch(API_BASE + "/api/social/oracle-status", { headers: { Authorization: "Bearer " + token } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        if (!d.available && d.nextAvailableMs > 0) {
+          const until = Date.now() + d.nextAvailableMs;
+          try { localStorage.setItem("split_oracle_cooldown_until", String(until)); } catch {}
+          setCooldownMs(d.nextAvailableMs);
+        } else if (d.available) {
+          try { localStorage.removeItem("split_oracle_cooldown_until"); } catch {}
+          setCooldownMs(0);
+        }
+      })
+      .catch(() => {});
+  }, [hasTitle]);
   useEffect(() => {
     if (cooldownMs <= 0) return;
     const t = setTimeout(() => setCooldownMs((c) => Math.max(0, c - 1000)), 1000);
