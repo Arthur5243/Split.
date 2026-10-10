@@ -11403,29 +11403,6 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                     </div>
                   </div>
                 )}
-                {/* Resync + ID : utile quand pseudo/avatar diffèrent entre PC et mobile. */}
-                <div className="mt-4 pt-3" style={{ borderTop: "1px solid #262626" }}>
-                  <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Multi-appareils</p>
-                  <div className="flex items-center gap-2 rounded-xl px-3 py-2 mb-2" style={{ background: "#1e1e1e", border: "1px solid #222" }}>
-                    <span style={{ color: "#555", fontSize: 10, fontWeight: 700, textTransform: "uppercase" }}>ID</span>
-                    <span style={{ color: "#888", fontSize: 11, fontFamily: "monospace", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile?.userId || "—"}</span>
-                  </div>
-                  <p style={{ color: "#777", fontSize: 10.5, lineHeight: 1.4, marginBottom: 6 }}>
-                    Ton pseudo ou ta pp n'est pas la bonne ? Clique ci-dessous pour forcer la synchro depuis le serveur. <b>Astuce :</b> d'abord re-sauvegarde ton profil sur l'appareil qui a les bonnes infos.
-                  </p>
-                  <button onClick={async () => {
-                    try {
-                      const r = await fetch(API_BASE + "/api/social/me/" + (profile?.userId || ""));
-                      const d = await r.json();
-                      if (!d || !d.pseudo) return;
-                      const fresh = { userId: d.id, pseudo: d.pseudo, avatar: d.avatar || null, bio: d.bio || "", favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null }, pseudoColor: d.pseudo_color || null };
-                      localStorage.setItem("split_profile", JSON.stringify(fresh));
-                      window.location.reload();
-                    } catch {}
-                  }} style={{ width: "100%", background: "rgba(204,247,29,0.08)", color: "#CCF71D", fontSize: 12, fontWeight: 800, padding: "10px", borderRadius: 10, border: "1px solid rgba(204,247,29,0.3)", cursor: "pointer" }}>
-                    🔄 Resynchroniser depuis le serveur
-                  </button>
-                </div>
                 <div className="mt-4 pt-3" style={{ borderTop: "1px solid #262626" }}>
                   {!deleteConfirm ? (
                     <button onClick={() => setDeleteConfirm(true)} style={{ color: "#ff4655", fontSize: 13, fontWeight: 700, background: "none", border: "none" }}>Supprimer mon compte</button>
@@ -12923,8 +12900,16 @@ export default function ClutchApp() {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
 
-  function syncProfileToBackend(p, pts, ppg, xp) {
+  // Garde-fou multi-appareils : tant que le pull depuis /api/social/me n'a pas
+  // fini (profileHydratedRef.current = false), on bloque tout push automatique
+  // (points recomputés, settlement, favTeams préchargés…) qui pourrait écraser
+  // le pseudo/avatar du backend avec un vieux cache local. Seules les actions
+  // explicites utilisateur (changement pseudo via API dédiée, édit profil
+  // confirmé) poussent via `force: true`.
+  const profileHydratedRef = useRef(false);
+  function syncProfileToBackend(p, pts, ppg, xp, { force = false } = {}) {
     if (!p?.userId) return;
+    if (!force && !profileHydratedRef.current) return;
     const equippedTitle = localStorage.getItem("split_equipped_title") || "";
     const equippedBanner = localStorage.getItem("split_equipped_banner_color") || "";
     const equippedBadge = localStorage.getItem("split_equipped_badge") || "";
@@ -12983,6 +12968,7 @@ export default function ClutchApp() {
         if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
         if (d.points && d.points > 0) { setUserPoints(d.points); localStorage.setItem("split_points", String(d.points)); }
       })
+      .finally(() => { profileHydratedRef.current = true; })
       .catch(() => {});
   }, [authUser?.id]);
 
@@ -14230,7 +14216,7 @@ export default function ClutchApp() {
               onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp, { force: true }); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
