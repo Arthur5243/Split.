@@ -47,6 +47,23 @@ function normalizeMatch(raw, game) {
   return { id: prefix + raw.id, status: raw.status, score1, score2, map_scores: maps };
 }
 
+// Barème — strictement identique à Frontend/App.jsx (POINTS_SERIES_EXACT etc.).
+const POINTS_SERIES_EXACT = 150;
+const POINTS_RIGHT_WINNER_RATIO = 0.5;
+const POINTS_MAP_EXACT = 50;
+const POINTS_MAP_1AWAY = 35;
+const POINTS_MAP_2AWAY = 15;
+function oddsCoef(probability) {
+  const p = Math.min(95, Math.max(5, probability != null ? probability : 50));
+  return 1 + (50 - p) / 100;
+}
+function mapBonusBase(diff) {
+  if (diff === 0) return POINTS_MAP_EXACT;
+  if (diff === 1) return POINTS_MAP_1AWAY;
+  if (diff === 2) return POINTS_MAP_2AWAY;
+  return 0;
+}
+
 export function getMatchPointsBreakdown(match, pred) {
   const none = { score: 0, bonus: 0, total: 0, correct: false, exact: false };
   if (!pred || pred.seriesA === "" || pred.seriesB === "" || pred.seriesA == null || pred.seriesB == null) return none;
@@ -55,13 +72,14 @@ export function getMatchPointsBreakdown(match, pred) {
   const predB = parseInt(pred.seriesB, 10);
   if (Number.isNaN(predA) || Number.isNaN(predB)) return none;
   const predictedAWins = predA > predB;
-  if (predictedAWins !== match.score1 > match.score2) return none;
+  if (predictedAWins !== (match.score1 > match.score2)) return none;
 
   const raw = predictedAWins ? pred.odds1 : pred.odds2;
-  const probability = Math.min(95, Math.max(5, raw != null ? raw : 50));
-  const exactScorePoints = Math.round((100 / probability - 1) * 100);
+  const coef = oddsCoef(raw);
   const exact = predA === match.score1 && predB === match.score2;
-  const score = exact ? exactScorePoints : Math.round(exactScorePoints * 0.3);
+  const score = exact
+    ? Math.round(POINTS_SERIES_EXACT * coef)
+    : Math.round(POINTS_SERIES_EXACT * coef * POINTS_RIGHT_WINNER_RATIO);
 
   let bonus = 0;
   const games = pred.games || [];
@@ -69,10 +87,11 @@ export function getMatchPointsBreakdown(match, pred) {
     match.map_scores.forEach((mp, i) => {
       const g = games[i];
       if (!g || g.a === "" || g.b === "" || g.a == null || g.b == null) return;
-      const dA = Math.abs(parseInt(g.a, 10) - mp.score1);
-      const dB = Math.abs(parseInt(g.b, 10) - mp.score2);
-      if (dA === 0 && dB === 0) bonus += 30;
-      else if (dA <= 1 && dB <= 1) bonus += 15;
+      const gA = parseInt(g.a, 10);
+      const gB = parseInt(g.b, 10);
+      if ((gA > gB) !== (mp.score1 > mp.score2)) return; // mauvais vainqueur de map
+      const diff = Math.max(Math.abs(gA - mp.score1), Math.abs(gB - mp.score2));
+      bonus += Math.round(mapBonusBase(diff) * coef);
     });
   }
   return { score, bonus, total: score + bonus, correct: true, exact };

@@ -2203,45 +2203,72 @@ function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
 //   - Score de map à 1 point près sur les deux scores (ex: pronostic 13-9,
 //     réel 13-10 ou 12-9) : +15 pts PAR map.
 //   - Sinon : 0 pt pour cette map.
+// Barème des points — tout en haut pour être facile à retoucher.
+// Formule : coef = 1 + (50 - proba%) / 100, borné entre 0,55 (95%) et 1,45 (5%).
+// Score série exact → round(POINTS_SERIES_EXACT × coef)        (ex 50% → 150)
+// Bon vainqueur seul → round(POINTS_SERIES_EXACT × coef × 0,5) (ex 50% → 75)
+// Bonus par map (si le bon vainqueur de la map est trouvé) :
+//   écart 0 round → POINTS_MAP_EXACT (×coef)
+//   écart 1       → POINTS_MAP_1AWAY (×coef)
+//   écart 2       → POINTS_MAP_2AWAY (×coef)
+//   écart ≥3      → 0
+// Match boosté → total × 2 (dans calcMatchPoints).
+const POINTS_SERIES_EXACT = 150;
+const POINTS_RIGHT_WINNER_RATIO = 0.5;
+const POINTS_MAP_EXACT = 50;
+const POINTS_MAP_1AWAY = 35;
+const POINTS_MAP_2AWAY = 15;
+function oddsCoef(probability) {
+  const p = Math.min(95, Math.max(5, probability != null ? probability : 50));
+  return 1 + (50 - p) / 100;
+}
+function mapBonusBase(diff) {
+  if (diff === 0) return POINTS_MAP_EXACT;
+  if (diff === 1) return POINTS_MAP_1AWAY;
+  if (diff === 2) return POINTS_MAP_2AWAY;
+  return 0;
+}
+
 function getMatchPointsBreakdown(match, pred) {
-  if (!pred || pred.seriesA === "" || pred.seriesB === "") return { score: 0, bonus: 0, total: 0 };
-  if (match.score1 == null || match.score2 == null) return { score: 0, bonus: 0, total: 0 };
+  const empty = { score: 0, bonus: 0, total: 0, exact: false, correct: false, maps: [] };
+  if (!pred || pred.seriesA === "" || pred.seriesB === "") return empty;
+  if (match.score1 == null || match.score2 == null) return empty;
 
   const predA = parseInt(pred.seriesA, 10);
   const predB = parseInt(pred.seriesB, 10);
   const predictedAWins = predA > predB;
   const actualAWins = match.score1 > match.score2;
-  if (predictedAWins !== actualAWins) return { score: 0, bonus: 0, total: 0 }; // mauvaise équipe -> 0 pt, peu importe le reste
+  if (predictedAWins !== actualAWins) return empty; // mauvais vainqueur → 0
 
-  // Probabilité (cote en %) de l'équipe pronostiquée, figée au moment du pari.
-  // Garde-fou 5-95% pour éviter une division par une valeur extrême/absente.
   const rawProbability = predictedAWins ? pred.odds1 : pred.odds2;
-  const probability = Math.min(95, Math.max(5, rawProbability != null ? rawProbability : 50));
-  const exactScorePoints = Math.round((100 / probability - 1) * 100);
-
-  const exactSeriesScore = predA === match.score1 && predB === match.score2;
-  const score = exactSeriesScore ? exactScorePoints : Math.round(exactScorePoints * 0.3);
+  const coef = oddsCoef(rawProbability);
+  const exactSeries = predA === match.score1 && predB === match.score2;
+  const score = exactSeries
+    ? Math.round(POINTS_SERIES_EXACT * coef)
+    : Math.round(POINTS_SERIES_EXACT * coef * POINTS_RIGHT_WINNER_RATIO);
 
   const actualMaps = match.map_scores;
   const games = pred.games || [];
+  const mapsDetail = [];
   let bonus = 0;
   if (Array.isArray(actualMaps) && actualMaps.length > 0) {
     for (let i = 0; i < actualMaps.length; i++) {
       const g = games[i];
-      if (!g || g.a === "" || g.b === "") continue; // map non pronostiquée -> pas de bonus possible
+      const real = actualMaps[i];
+      if (!g || g.a === "" || g.b === "") { mapsDetail.push({ pred: null, real, pts: 0 }); continue; }
       const gA = parseInt(g.a, 10);
       const gB = parseInt(g.b, 10);
-      const diffA = Math.abs(gA - actualMaps[i].score1);
-      const diffB = Math.abs(gB - actualMaps[i].score2);
-      if (diffA === 0 && diffB === 0) {
-        bonus += 30; // score de map exact
-      } else if (diffA <= 1 && diffB <= 1) {
-        bonus += 15; // à 1 point près sur les deux scores
-      }
+      const predMapAWins = gA > gB;
+      const realMapAWins = real.score1 > real.score2;
+      if (predMapAWins !== realMapAWins) { mapsDetail.push({ pred: { a: gA, b: gB }, real, pts: 0 }); continue; }
+      const diff = Math.max(Math.abs(gA - real.score1), Math.abs(gB - real.score2));
+      const pts = Math.round(mapBonusBase(diff) * coef);
+      bonus += pts;
+      mapsDetail.push({ pred: { a: gA, b: gB }, real, pts });
     }
   }
 
-  return { score, bonus, total: score + bonus };
+  return { score, bonus, total: score + bonus, exact: exactSeries, correct: true, maps: mapsDetail };
 }
 
 function calcMatchPoints(match, pred) {
@@ -2910,8 +2937,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                     ? match.map_scores
                     : null;
                   if (!mapsList) return <p style={{ color: "#555", fontSize: "11px", textAlign: "center" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>;
+                  const mapsPts = (pointsBreakdown && pointsBreakdown.maps) || [];
                   return mapsList.map((g, i) => {
                     const gamePred = (pred && pred.games && pred.games[i]) || null;
+                    const mp = mapsPts[i];
+                    const mapPts = mp && mp.pts > 0 ? mp.pts : 0;
                     return (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
@@ -2925,9 +2955,16 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           )}
                         </div>
                         <div className="flex flex-col items-end" style={{ position: "relative" }}>
-                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                            {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                              {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                            </span>
+                            {mapPts > 0 && (
+                              <span style={{ color: "#CCF71D", fontSize: "10px", fontWeight: 900, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 6, padding: "1px 6px" }}>
+                                +{mapPts}
+                              </span>
+                            )}
+                          </div>
                           {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
                             <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
                               {T.yourBet} : {gamePred.a}-{gamePred.b}
