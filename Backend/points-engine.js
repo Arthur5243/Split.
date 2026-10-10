@@ -50,9 +50,9 @@ function normalizeMatch(raw, game) {
 // Barème — strictement identique à Frontend/App.jsx (POINTS_SERIES_EXACT etc.).
 const POINTS_SERIES_EXACT = 150;
 const POINTS_RIGHT_WINNER_RATIO = 0.5;
-const POINTS_MAP_EXACT = 50;
-const POINTS_MAP_1AWAY = 35;
-const POINTS_MAP_2AWAY = 15;
+const POINTS_MAP_EXACT = 35;
+const POINTS_MAP_1AWAY = 25;
+const POINTS_MAP_2AWAY = 10;
 function oddsCoef(probability) {
   const p = Math.min(95, Math.max(5, probability != null ? probability : 50));
   return 1 + (50 - p) / 100;

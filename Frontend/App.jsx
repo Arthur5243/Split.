@@ -2215,9 +2215,11 @@ function computeMatchOdds(match, finishedMatches, tierWeightFn = tierWeight) {
 // Match boosté → total × 2 (dans calcMatchPoints).
 const POINTS_SERIES_EXACT = 150;
 const POINTS_RIGHT_WINNER_RATIO = 0.5;
-const POINTS_MAP_EXACT = 50;
-const POINTS_MAP_1AWAY = 35;
-const POINTS_MAP_2AWAY = 15;
+// Bonus par map : baissés d'environ 30% par rapport au 1er jet (50/35/15)
+// pour que l'XP des maps ne dépasse pas celui du score série.
+const POINTS_MAP_EXACT = 35;
+const POINTS_MAP_1AWAY = 25;
+const POINTS_MAP_2AWAY = 10;
 function oddsCoef(probability) {
   const p = Math.min(95, Math.max(5, probability != null ? probability : 50));
   return 1 + (50 - p) / 100;
@@ -2940,8 +2942,6 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   const mapsPts = (pointsBreakdown && pointsBreakdown.maps) || [];
                   return mapsList.map((g, i) => {
                     const gamePred = (pred && pred.games && pred.games[i]) || null;
-                    const mp = mapsPts[i];
-                    const mapPts = mp && mp.pts > 0 ? mp.pts : 0;
                     return (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
@@ -2955,16 +2955,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                           )}
                         </div>
                         <div className="flex flex-col items-end" style={{ position: "relative" }}>
-                          <div className="flex items-center gap-2">
-                            <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
-                              {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
-                            </span>
-                            {mapPts > 0 && (
-                              <span style={{ color: "#CCF71D", fontSize: "10px", fontWeight: 900, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 6, padding: "1px 6px" }}>
-                                +{mapPts}
-                              </span>
-                            )}
-                          </div>
+                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 800 }}>
+                            {g.score1 != null ? g.score1 : 0} - {g.score2 != null ? g.score2 : 0}
+                          </span>
                           {gamePred && gamePred.a !== "" && gamePred.b !== "" && (
                             <span style={{ color: "#666", fontSize: "9px", fontWeight: 700, marginTop: "1px" }}>
                               {T.yourBet} : {gamePred.a}-{gamePred.b}
