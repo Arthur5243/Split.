@@ -4389,7 +4389,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       </div>
 
       <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 130 }}>
-        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill" }} />
+        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 70%" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)" }} />
         <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
@@ -11085,7 +11085,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "100% 100%", backgroundPosition: "center center", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center 70%", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
               <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
@@ -11483,7 +11483,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }} />
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 70%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
