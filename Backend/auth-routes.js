@@ -289,4 +289,21 @@ try {
   console.log("[grant-boot] portable skip:", e.message);
 }
 
+// One-shot : passe le compte test "portable" au palier 100 + équipe Oracle
+// (pour tester le pouvoir Oracle sans grinder 29 000 XP).
+try {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const dataDir = process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : "/data";
+  const marker = path.join(dataDir, ".oracle_unlock_portable_v1");
+  if (!fs.existsSync(marker)) {
+    const { unlockMaxTierOracle } = await import("./social-store.js");
+    const n = unlockMaxTierOracle("portable.coffee%");
+    try { fs.writeFileSync(marker, new Date().toISOString()); } catch {}
+    console.log(`[oracle-boot] portable.coffee*: ${n} compte(s) débloqué(s) au palier 100 avec titre Oracle (one-shot)`);
+  }
+} catch (e) {
+  console.log("[oracle-boot] portable skip:", e.message);
+}
+
 export default router;

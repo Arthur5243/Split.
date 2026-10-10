@@ -564,6 +564,17 @@ export function getCommunityPredictionSplit(matchId) {
   return { team1, team2, total: team1 + team2 };
 }
 
+// Un-shot : hisse un compte au palier max + équipe Oracle (tests du pouvoir).
+// XP cible = somme de ptsForTier(2..100) selon le barème côté frontend.
+export function unlockMaxTierOracle(emailLike) {
+  const r = db.prepare(`
+    UPDATE users
+    SET xp = MAX(xp, 29450), equipped_title = 'Oracle', updated_at = datetime('now')
+    WHERE LOWER(email) LIKE ?
+  `).run((emailLike || "").toLowerCase());
+  return r.changes;
+}
+
 export function grantPseudoChangeCredit(emailLike) {
   const r = db.prepare(`
     UPDATE users
