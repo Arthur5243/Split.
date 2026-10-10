@@ -13157,28 +13157,32 @@ export default function ClutchApp() {
   // depuis un clic Historique / Bracket. Reset dès que la carte a été vue.
   const [focusMatchId, setFocusMatchId] = useState(null);
   // Après un clic Historique/Bracket qui pointe sur un match terminé précis,
-  // on scrolle la carte dans la vue dès qu'elle est rendue. On retente plusieurs
-  // fois : la liste des finis peut mettre un instant à s'afficher.
+  // on scrolle la carte dans la vue dès qu'elle est rendue dans un onglet
+  // réellement visible. On retente jusqu'à 60 fois (9s) : la liste des finis
+  // peut mettre un instant à charger depuis l'API.
   useEffect(() => {
     if (!focusMatchId) return;
     let tries = 0;
     const int = setInterval(() => {
       tries++;
-      const el = document.querySelector(`[data-match-id="${focusMatchId}"]`);
-      if (el) {
+      // Garde seulement les éléments effectivement affichés (offsetParent !== null),
+      // sinon on scrollerait vers une carte cachée dans un onglet display:none.
+      const els = Array.from(document.querySelectorAll(`[data-match-id="${focusMatchId}"]`));
+      const el = els.find((e) => e.offsetParent !== null) || els[0];
+      if (el && el.offsetParent !== null) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.style.transition = "box-shadow 0.3s ease";
         el.style.boxShadow = "0 0 0 2px #CCF71D, 0 0 18px rgba(204,247,29,0.4)";
-        setTimeout(() => { el.style.boxShadow = ""; }, 2200);
+        setTimeout(() => { el.style.boxShadow = ""; }, 2500);
         clearInterval(int);
         setFocusMatchId(null);
-      } else if (tries > 20) {
+      } else if (tries > 60) {
         clearInterval(int);
         setFocusMatchId(null);
       }
     }, 150);
     return () => clearInterval(int);
-  }, [focusMatchId, activeTab]);
+  }, [focusMatchId, activeTab, valoStatus, cs2Status, rlStatus]);
 
   // Prefetch leaderboard depuis localStorage en initial state (survit aux reloads,
   // pas de frame de chargement visible) + refresh backend en background.
