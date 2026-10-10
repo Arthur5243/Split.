@@ -60,29 +60,30 @@ function watchAdOverlays() {
     return candidates.find(isAdOverlay) || null;
   };
 
-  // On encadre directement le calque pub lui-même (bounding box), pas un
-  // élément interne : Monetag Vignette est quasi plein écran, donc l'inner
-  // "popup" détecté par heuristique était systématiquement bien plus petit
-  // que l'affiche réelle → cadre trop petit. On prend aussi le plus grand
-  // iframe/div enfant si significativement différent (cas où Monetag met un
-  // backdrop + une pop-up centrée).
+  // Trouve la vraie pop-up à l'intérieur du calque. Si l'overlay est
+  // ~plein écran (backdrop assombri + popup centrée), on cherche la plus
+  // PETITE pop-up visible qui dépasse une taille minimale et qui n'occupe
+  // pas la majorité de l'écran : c'est le cas des petites vignettes centrées
+  // (ex: 320x280 au milieu) → cadre collé à l'affiche, pas au backdrop.
   const findAdBox = (overlay) => {
     const vw = window.innerWidth, vh = window.innerHeight;
     const overlayRect = overlay.getBoundingClientRect();
-    // Si l'overlay est presque plein écran, cherche une pop-up centrée dedans
-    // (iframe ou div) nettement plus petite que le viewport pour entourer
-    // uniquement l'affiche, pas tout le fond assombri.
-    if (overlayRect.width >= vw * 0.9 && overlayRect.height >= vh * 0.9) {
-      let best = null, bestArea = 0;
-      for (const el of overlay.querySelectorAll("iframe, div, section, article")) {
+    const nearFullScreen = overlayRect.width >= vw * 0.85 && overlayRect.height >= vh * 0.85;
+    if (nearFullScreen) {
+      const candidates = [];
+      for (const el of overlay.querySelectorAll("iframe, div, section, article, img")) {
         if (!isVisible(el)) continue;
         const r = el.getBoundingClientRect();
-        if (r.width < 240 || r.height < 160) continue;
-        if (r.width >= vw * 0.95 || r.height >= vh * 0.95) continue;
-        const area = r.width * r.height;
-        if (area > bestArea) { best = r; bestArea = area; }
+        if (r.width < 160 || r.height < 120) continue;      // trop petit : ignore
+        if (r.width >= vw * 0.9 || r.height >= vh * 0.9) continue; // backdrop : ignore
+        candidates.push(r);
       }
-      if (best) return best;
+      if (candidates.length > 0) {
+        // Préférer la pop-up la PLUS PETITE qui reste au-dessus du minimum :
+        // c'est quasi toujours la "boîte" de pub réelle, pas un wrapper élargi.
+        candidates.sort((a, b) => (a.width * a.height) - (b.width * b.height));
+        return candidates[0];
+      }
     }
     return overlayRect;
   };
