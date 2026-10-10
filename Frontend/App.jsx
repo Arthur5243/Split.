@@ -2758,25 +2758,26 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesBRef = useRef(null);
   const gameRefs = useRef({});
   const cardRef = useRef(null);
-  // Fige la hauteur de fond au 1er render ET après chaque retour à l'état
-  // collapsed, pour éviter que le background image s'étire au 1er clic Map
-  // Score (bug: la card semblait "bouger" car frozenBgH était encore null →
-  // fallback "100%" → BG suivait l'expansion soudaine).
+  // Fige la hauteur de fond une bonne fois : au 1er render en état collapsed,
+  // on mesure la hauteur réelle et on la fixe. Elle ne change JAMAIS ensuite,
+  // même quand le user ouvre les Map Scores (expand). Résultat : le background
+  // du match ne bouge plus d'un pixel pendant l'ouverture/fermeture. On
+  // mémorise aussi la hauteur dans un ref pour les transitions.
   const [frozenBgH, setFrozenBgH] = useState(null);
+  const frozenRef = useRef(null);
   useLayoutEffect(() => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || frozenRef.current != null) return;
     if (!expanded) {
       const h = cardRef.current.offsetHeight;
-      if (h > 0 && h !== frozenBgH) setFrozenBgH(h);
-    } else if (frozenBgH == null) {
-      // Cas edge: expanded au 1er render sans mesure préalable → estime la
-      // hauteur collapsed depuis la première section (header) pour éviter
-      // que le BG bouge au moment de l'expand initial.
-      const first = cardRef.current.querySelector(":scope > div");
-      const h = first ? first.offsetHeight : cardRef.current.offsetHeight;
-      if (h > 0) setFrozenBgH(h);
+      if (h > 0) { frozenRef.current = h; setFrozenBgH(h); }
+    } else {
+      // Expand dès le 1er render : estime la hauteur collapsed via la section
+      // header (1er enfant visible non-expanded).
+      const header = cardRef.current.querySelector(":scope > div");
+      const h = header ? header.offsetHeight : cardRef.current.offsetHeight;
+      if (h > 0) { frozenRef.current = h; setFrozenBgH(h); }
     }
-  }, [expanded, frozenBgH]);
+  }, [expanded]);
 
   // Suit quels champs de score par map ont été "quittés" (blur) par
   // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
@@ -5005,9 +5006,9 @@ function RankBadgeCompact({ points, onClick }) {
       // Réduit le dépassement pour éviter que le sujet paraisse décalé à gauche.
       backgroundImage: `url(${bgImg})`,
       backgroundSize: isUnranked
-        ? "calc(100% + 20px) calc(100% + 40px)"
-        : rank.name === "Override" ? "calc(100% + 20px) calc(100% + 50px)" : "calc(100% + 14px) calc(100% + 20px)",
-      backgroundPosition: isUnranked ? "center center" : (rank.name === "Override" ? "center bottom" : "center 70%"),
+        ? "calc(100% + 20px) calc(100% + 60px)"
+        : rank.name === "Override" ? "calc(100% + 20px) calc(100% + 70px)" : "calc(100% + 14px) calc(100% + 55px)",
+      backgroundPosition: isUnranked ? "center center" : (rank.name === "Override" ? "center bottom" : "center 85%"),
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
@@ -13291,10 +13292,13 @@ export default function ClutchApp() {
     const equippedBanner = localStorage.getItem("split_equipped_banner_color") || "";
     const equippedBadge = localStorage.getItem("split_equipped_badge") || "";
     const equippedBadgeEmoji = localStorage.getItem("split_equipped_badge_emoji") || "";
+    const equippedMatchBg = localStorage.getItem("split_equipped_match_bg") || "";
+    const inventory = localStorage.getItem("split_inventory") || "[]";
+    const claimedTiers = localStorage.getItem("split_claimed_tiers") || "[]";
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers }),
     }).catch(() => {});
   }
   useEffect(() => {
@@ -13334,6 +13338,18 @@ export default function ClutchApp() {
           favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
           pseudoColor: d.pseudo_color || null,
         };
+        // Cosmétiques : écrase le cache local avec ce que le serveur a. Même
+        // politique que pour pseudo/avatar : backend prioritaire pour une
+        // version unique du compte sur tous les appareils.
+        try {
+          if (d.equipped_title != null) localStorage.setItem("split_equipped_title", d.equipped_title || "");
+          if (d.equipped_banner != null) localStorage.setItem("split_equipped_banner_color", d.equipped_banner || "");
+          if (d.equipped_badge != null) localStorage.setItem("split_equipped_badge", d.equipped_badge || "");
+          if (d.equipped_badge_emoji != null) localStorage.setItem("split_equipped_badge_emoji", d.equipped_badge_emoji || "");
+          if (d.equipped_match_bg) localStorage.setItem("split_equipped_match_bg", d.equipped_match_bg);
+          if (d.inventory) { try { JSON.parse(d.inventory); localStorage.setItem("split_inventory", d.inventory); } catch {} }
+          if (d.claimed_tiers) { try { JSON.parse(d.claimed_tiers); localStorage.setItem("split_claimed_tiers", d.claimed_tiers); } catch {} }
+        } catch {}
         // Backend prioritaire sur le cache local pour tout ce qui est identité
         // du compte, qu'un cache obsolète existe ou pas. On garde les éventuels
         // champs locaux non renvoyés par /api/social/me.

@@ -66,6 +66,16 @@ try { db.exec(`ALTER TABLE users ADD COLUMN bets_exact INTEGER DEFAULT 0`); } ca
 try { db.exec(`ALTER TABLE users ADD COLUMN bets_total INTEGER DEFAULT 0`); } catch {}
 // Presence: last activity (ping) timestamp. Mis a jour via /api/social/ping.
 try { db.exec(`ALTER TABLE users ADD COLUMN last_seen_at TEXT`); } catch {}
+// Cosmétiques synchronisés multi-appareils (JSON compact):
+// - inventory : [{ id, type, ... }] items débloqués
+// - claimed_tiers : [1,2,3,…] paliers déjà réclamés
+// - equipped_badge, equipped_badge_emoji : badge en cours
+// - equipped_match_bg : fond de carte de match équipé (JSON)
+try { db.exec(`ALTER TABLE users ADD COLUMN inventory TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN claimed_tiers TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge_emoji TEXT`); } catch {}
+try { db.exec(`ALTER TABLE users ADD COLUMN equipped_match_bg TEXT`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
@@ -93,8 +103,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, profile_ready, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, 0, 0, 0, 0, 0, @pseudo_color, @equipped_title, @equipped_banner, 1, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, equipped_badge, equipped_badge_emoji, equipped_match_bg, inventory, claimed_tiers, profile_ready, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, 0, 0, 0, 0, 0, @pseudo_color, @equipped_title, @equipped_banner, @equipped_badge, @equipped_badge_emoji, @equipped_match_bg, @inventory, @claimed_tiers, 1, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -106,6 +116,11 @@ const stmts = {
       pseudo_color = COALESCE(@pseudo_color, users.pseudo_color),
       equipped_title = COALESCE(@equipped_title, users.equipped_title),
       equipped_banner = COALESCE(@equipped_banner, users.equipped_banner),
+      equipped_badge = COALESCE(@equipped_badge, users.equipped_badge),
+      equipped_badge_emoji = COALESCE(@equipped_badge_emoji, users.equipped_badge_emoji),
+      equipped_match_bg = COALESCE(@equipped_match_bg, users.equipped_match_bg),
+      inventory = COALESCE(@inventory, users.inventory),
+      claimed_tiers = COALESCE(@claimed_tiers, users.claimed_tiers),
       profile_ready = 1,
       updated_at = datetime('now')
     /* NOTE: points/xp/points_valo/cs2/rl JAMAIS mis a jour ici. Ces valeurs
@@ -144,7 +159,7 @@ const stmts = {
   setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };
 
-export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner }) {
+export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers }) {
   stmts.upsertUser.run({
     id,
     pseudo: pseudo || "Joueur",
@@ -162,6 +177,11 @@ export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPe
     pseudo_color: pseudoColor || null,
     equipped_title: equippedTitle || null,
     equipped_banner: equippedBanner || null,
+    equipped_badge: equippedBadge || null,
+    equipped_badge_emoji: equippedBadgeEmoji || null,
+    equipped_match_bg: equippedMatchBg != null ? String(equippedMatchBg) : null,
+    inventory: inventory != null ? (typeof inventory === "string" ? inventory : JSON.stringify(inventory)) : null,
+    claimed_tiers: claimedTiers != null ? (typeof claimedTiers === "string" ? claimedTiers : JSON.stringify(claimedTiers)) : null,
   });
 }
 

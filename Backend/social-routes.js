@@ -60,10 +60,10 @@ function validateBioServer(text) {
 }
 
 router.post("/api/social/register", (req, res) => {
-  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner } = req.body;
+  const { id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers } = req.body;
   if (!id || !pseudo) return res.status(400).json({ error: "id and pseudo required" });
   const cleanBio = bio && !validateBioServer(bio) ? "" : bio;
-  upsertUser({ id, pseudo, avatar, bio: cleanBio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner });
+  upsertUser({ id, pseudo, avatar, bio: cleanBio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers });
   res.json({ ok: true });
 });
 
