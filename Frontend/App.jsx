@@ -2829,26 +2829,40 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const seriesBRef = useRef(null);
   const gameRefs = useRef({});
   const cardRef = useRef(null);
-  // Fige la hauteur de fond une bonne fois : au 1er render en état collapsed,
-  // on mesure la hauteur réelle et on la fixe. Elle ne change JAMAIS ensuite,
-  // même quand le user ouvre les Map Scores (expand). Résultat : le background
-  // du match ne bouge plus d'un pixel pendant l'ouverture/fermeture. On
-  // mémorise aussi la hauteur dans un ref pour les transitions.
-  const [frozenBgH, setFrozenBgH] = useState(null);
+  // Spec : hauteur de fond figée une bonne fois, JAMAIS remesurée.
+  // - Au mount, on tente la mesure sur plusieurs frames (jusqu'à 10) pour
+  //   attraper le vrai offsetHeight de la carte collapsée. Si l'un d'eux
+  //   donne > 0, on fige et on ignore tout changement futur (notamment lors
+  //   d'un expand ultérieur).
+  // - Fallback immédiat à 140px pour que le background ait une hauteur
+  //   réaliste au premier affichage, avant que la mesure ait pu réussir.
+  //   Résultat : le fond ne saute plus au premier clic Map Score.
+  const [frozenBgH, setFrozenBgH] = useState(140);
   const frozenRef = useRef(null);
   useLayoutEffect(() => {
-    if (!cardRef.current || frozenRef.current != null) return;
-    if (!expanded) {
-      const h = cardRef.current.offsetHeight;
-      if (h > 0) { frozenRef.current = h; setFrozenBgH(h); }
-    } else {
-      // Expand dès le 1er render : estime la hauteur collapsed via la section
-      // header (1er enfant visible non-expanded).
-      const header = cardRef.current.querySelector(":scope > div");
-      const h = header ? header.offsetHeight : cardRef.current.offsetHeight;
-      if (h > 0) { frozenRef.current = h; setFrozenBgH(h); }
-    }
-  }, [expanded]);
+    if (frozenRef.current != null) return;
+    let tries = 0;
+    let raf = 0;
+    const tick = () => {
+      if (frozenRef.current != null) return;
+      const el = cardRef.current;
+      if (el) {
+        // Mesure la hauteur de la section collapsée (header + score + etc.)
+        // Si on est expanded, on prend la hauteur du 1er enfant (header seul).
+        const h = expanded
+          ? (el.querySelector(":scope > div")?.offsetHeight || 0)
+          : el.offsetHeight;
+        if (h > 0) {
+          frozenRef.current = h;
+          setFrozenBgH(h);
+          return;
+        }
+      }
+      if (tries++ < 10) raf = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, []);
 
   // Suit quels champs de score par map ont été "quittés" (blur) par
   // l'utilisateur après une saisie, pour n'afficher l'erreur qu'une fois la
