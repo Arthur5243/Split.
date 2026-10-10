@@ -252,6 +252,133 @@ function vlrTeamLogo(name) {
   return VLR_LOGOS[(name || "").toLowerCase()] || null;
 }
 
+// Méta pour le sélecteur d'équipe favorite : long = nom complet affiché dans la
+// popup info, short = nom raccourci sous le logo, alias = autres orthographes
+// qu'on accepte à la recherche (ex: "m8", "mates" → Gentle Mates). Vitality
+// est volontairement UNE seule entrée (toutes jeux confondus, PandaScore
+// renvoie exactement la même équipe pour Valo/CS2/RL).
+const TEAM_META = [
+  { long: "Team Vitality",         short: "Vitality",     logo: "/logos/vit.png",     aliases: ["vit", "team vitality"] },
+  { long: "Team Liquid",           short: "Liquid",       logo: "/logos/tl.png",      aliases: ["tl", "liquid"] },
+  { long: "G2 Esports",            short: "G2",           logo: "/logos/g2.png",      aliases: ["g2"] },
+  { long: "Karmine Corp",          short: "KC",           logo: "/logos/kc.png",      aliases: ["kcorp", "karmine"] },
+  { long: "Gentle Mates",          short: "M8",           logo: "/logos/m8.webp",     aliases: ["m8", "mates", "gentle"] },
+  { long: "Paper Rex",             short: "PRX",          logo: "/logos/pr.png",      aliases: ["prx", "paperrex"] },
+  { long: "Team Heretics",         short: "TH",           logo: "/logos/th.png",      aliases: ["heretics"] },
+  { long: "Team Spirit",           short: "Spirit",       logo: "/logos/tspirit.png", aliases: ["ts", "tsp", "spirit"] },
+  { long: "Team Secret",           short: "TSE",          logo: "/logos/ts.png",      aliases: ["secret"] },
+  { long: "FaZe Clan",             short: "FaZe",         logo: "/logos/forz.webp",   aliases: ["faze"] },
+  { long: "FURIA Esports",         short: "FURIA",        logo: "/logos/fort.webp",   aliases: ["furia"] },
+  { long: "MOUZ",                  short: "MOUZ",         logo: null,                 aliases: ["mousesports"] },
+  { long: "NAVI (Natus Vincere)",  short: "NAVI",         logo: "/logos/envy.png",    aliases: ["navi", "natus", "nv"] },
+  { long: "Astralis",              short: "Astralis",     logo: "/logos/astralis.png",aliases: ["ast"] },
+  { long: "ENCE",                  short: "ENCE",         logo: "/logos/ence.webp",   aliases: [] },
+  { long: "Complexity Gaming",     short: "Complexity",   logo: null,                 aliases: ["col"] },
+  { long: "9z Team",               short: "9z",           logo: "/logos/9z.png",      aliases: ["9z team"] },
+  { long: "The MongolZ",           short: "MongolZ",      logo: null,                 aliases: ["mongolz", "themongolz"] },
+  { long: "paiN Gaming",           short: "paiN",         logo: "/logos/pain.png",    aliases: ["pain"] },
+  { long: "Imperial Esports",      short: "Imperial",     logo: null,                 aliases: ["imp"] },
+  { long: "Lynn Vision Gaming",    short: "Lynn Vision",  logo: null,                 aliases: ["lv", "lynn"] },
+  { long: "Wildcard Gaming",       short: "Wildcard",     logo: "/logos/wc.png",      aliases: ["wc"] },
+  { long: "Team Falcons",          short: "Falcons",      logo: null,                 aliases: ["falcons"] },
+  { long: "B8 Esports",            short: "B8",           logo: "/logos/b8.png",      aliases: ["b8"] },
+  { long: "BetBoom Team",          short: "BetBoom",      logo: null,                 aliases: ["bb"] },
+  { long: "NRG Esports",           short: "NRG",          logo: "/logos/nrg.png",     aliases: ["nrg"] },
+  { long: "100 Thieves",           short: "100T",         logo: null,                 aliases: ["100t", "thieves"] },
+  { long: "Sentinels",             short: "SEN",          logo: null,                 aliases: ["sen"] },
+  { long: "Cloud9",                short: "C9",           logo: null,                 aliases: ["c9"] },
+  { long: "LOUD",                  short: "LOUD",         logo: null,                 aliases: [] },
+  { long: "DRX",                   short: "DRX",          logo: "/logos/drx.png",     aliases: ["kiwoom"] },
+  { long: "T1",                    short: "T1",           logo: null,                 aliases: ["t one"] },
+  { long: "Gen.G",                 short: "GenG",         logo: null,                 aliases: ["geng"] },
+  { long: "ZETA DIVISION",         short: "ZETA",         logo: "/logos/zeta.png",    aliases: ["zeta"] },
+  { long: "DetonatioN FocusMe",    short: "DFM",          logo: null,                 aliases: ["dfm"] },
+  { long: "EDward Gaming",         short: "EDG",          logo: null,                 aliases: ["edg"] },
+  { long: "FunPlus Phoenix",       short: "FPX",          logo: null,                 aliases: ["fpx"] },
+  { long: "Bilibili Gaming",       short: "BLG",          logo: null,                 aliases: ["blg"] },
+  { long: "Trace Esports",         short: "Trace",        logo: null,                 aliases: ["trc"] },
+  { long: "TYLOO",                 short: "TYLOO",        logo: "/logos/tyloo.png",   aliases: [] },
+  { long: "Nemiga Gaming",         short: "Nemiga",       logo: "/logos/nemiga.png",  aliases: [] },
+  { long: "Shinden Gaming",        short: "Shinden",      logo: "/logos/shinden.png", aliases: [] },
+  { long: "Legacy",                short: "Legacy",       logo: "/logos/legacy.png",  aliases: ["lgcy"] },
+  { long: "BBL Esports",           short: "BBL",          logo: "/logos/bbl.png",     aliases: ["bbl"] },
+  { long: "BIG",                   short: "BIG",          logo: "/logos/big.png",     aliases: [] },
+  { long: "HOTU",                  short: "HOTU",         logo: "/logos/hotu.png",    aliases: [] },
+  { long: "FUT Esports",           short: "FUT",          logo: "/logos/fut.png",     aliases: ["fut"] },
+  { long: "paiN Gaming (RL)",      short: "paiN RL",      logo: "/logos/pain.png",    aliases: ["pain rl"] },
+  { long: "Spacestation Gaming",   short: "SSG",          logo: null,                 aliases: ["ssg", "spacestation"] },
+  { long: "Shopify Rebellion",     short: "Shopify",      logo: null,                 aliases: ["sr", "rebellion"] },
+  { long: "Team Falcons (RL)",     short: "Falcons RL",   logo: null,                 aliases: ["falcons rl"] },
+  { long: "Team BDS",              short: "BDS",          logo: null,                 aliases: ["bds"] },
+  { long: "Moist Esports",         short: "Moist",        logo: null,                 aliases: ["moist"] },
+  { long: "Oxygen Esports",        short: "Oxygen",       logo: null,                 aliases: ["oxg"] },
+  { long: "Ninjas in Pyjamas",     short: "NIP",          logo: "/logos/nip.png",     aliases: ["nip", "ninjas"] },
+  { long: "TSM",                   short: "TSM",          logo: "/logos/tsm.png",     aliases: ["team solomid"] },
+];
+
+// Distance de Levenshtein pour la tolérance aux fautes de frappe.
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a) return b.length; if (!b) return a.length;
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) => i);
+  for (let j = 1; j <= n; j++) {
+    let prev = dp[0]; dp[0] = j;
+    for (let i = 1; i <= m; i++) {
+      const tmp = dp[i];
+      dp[i] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[i], dp[i - 1]);
+      prev = tmp;
+    }
+  }
+  return dp[m];
+}
+
+function teamMeta(name) {
+  if (!name) return null;
+  const key = String(name).toLowerCase().trim();
+  const direct = TEAM_META.find(t => t.long.toLowerCase() === key || t.short.toLowerCase() === key || t.aliases.some(a => a === key));
+  if (direct) return direct;
+  // Match partiel : "team vitality" vs "vitality"
+  const partial = TEAM_META.find(t => key.includes(t.short.toLowerCase()) || t.long.toLowerCase().includes(key));
+  return partial || { long: name, short: name, logo: null, aliases: [] };
+}
+
+// Fusionne la liste de noms venue des matchs avec la liste TEAM_META : on
+// garde une seule entrée par équipe (Vitality unifiée) et on complète avec les
+// équipes vues dans les matchs qui n'ont pas de méta.
+function teamsForPicker(names) {
+  const seen = new Set();
+  const out = [];
+  for (const t of TEAM_META) {
+    const k = t.long.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(t);
+  }
+  for (const n of names || []) {
+    const meta = teamMeta(n);
+    const k = (meta.long || n).toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({ ...meta, long: meta.long || n, short: meta.short || n });
+  }
+  return out.sort((a, b) => a.long.localeCompare(b.long));
+}
+
+// Suggestion fuzzy quand la recherche ne matche rien :
+// renvoie les 6 équipes dont le nom long ou court est le plus proche.
+function fuzzySuggest(teams, query) {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  const scored = teams.map(t => {
+    const cands = [t.long, t.short, ...(t.aliases || [])].map(s => s.toLowerCase());
+    let best = Infinity;
+    for (const c of cands) best = Math.min(best, levenshtein(q, c));
+    return { t, d: best };
+  }).sort((a, b) => a.d - b.d).slice(0, 6);
+  return scored.map(s => s.t);
+}
+
 // Langues disponibles dans le sélecteur
 const LANGS = [
   { code: "fr", flag: "🇫🇷", label: "Français" },
@@ -4443,8 +4570,10 @@ function RankBadgeCompact({ points, onClick }) {
       // Unranked: image dépasse ~10px sur chaque côté (H+V), centrée.
       // Réduit le dépassement pour éviter que le sujet paraisse décalé à gauche.
       backgroundImage: `url(${bgImg})`,
-      backgroundSize: isUnranked ? "calc(100% + 20px) calc(100% + 40px)" : "calc(100% + 14px) calc(100% + 20px)",
-      backgroundPosition: isUnranked ? "center center" : "center 70%",
+      backgroundSize: isUnranked
+        ? "calc(100% + 20px) calc(100% + 40px)"
+        : rank.name === "Override" ? "calc(100% + 20px) calc(100% + 50px)" : "calc(100% + 14px) calc(100% + 20px)",
+      backgroundPosition: isUnranked ? "center center" : (rank.name === "Override" ? "center bottom" : "center 70%"),
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
@@ -4716,7 +4845,10 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
     if (myIdx === -1) {
       merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: myPts, points_valo: 0, points_cs2: 0, points_rl: 0, xp: userXp || 0, equipped_title: null, equipped_banner: myBanner });
     } else {
-      merged[myIdx] = { ...merged[myIdx], points: Math.max(merged[myIdx].points || 0, myPts), equipped_banner: myBanner || merged[myIdx].equipped_banner };
+      // Local toujours prioritaire sur serveur pour pseudo/avatar/bannière :
+      // sinon le top 3 Accueil garde l'ancien pseudo tant que le leaderboard
+      // backend n'a pas rafraîchi.
+      merged[myIdx] = { ...merged[myIdx], pseudo: profile.pseudo || merged[myIdx].pseudo, avatar: profile.avatar || merged[myIdx].avatar, points: Math.max(merged[myIdx].points || 0, myPts), equipped_banner: myBanner || merged[myIdx].equipped_banner };
     }
     merged.sort((a, b) => (b.points || 0) - (a.points || 0));
     return merged;
@@ -8086,51 +8218,128 @@ function AvatarCropModal({ file, onCancel, onDone }) {
   );
 }
 
+// Sélecteur d'équipe favorite : ouvre un modal plein écran avec une grille 3
+// colonnes (logo + nom raccourci + bouton info). Recherche tolérante aux
+// fautes (si rien ne correspond on propose les équipes les plus proches). Le
+// cache API alimente les logos manquants ; les équipes du dict TEAM_META sont
+// toujours là même si elles n'ont pas joué de match visible récemment.
 function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setSearch(""); } };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-  const filtered = search ? teams.filter((t) => t.toLowerCase().includes(search.toLowerCase())) : teams;
-  const SANS_EQUIPE = T.noTeam || "Sans équipe";
-  const getLogo = (name) => {
+  const [infoFor, setInfoFor] = useState(null);
+  const SANS_EQUIPE = T?.noTeam || "Sans équipe";
+
+  const resolveLogo = (meta) => {
+    if (meta.logo) return meta.logo;
     if (!teamLogoCache) return null;
-    const key = Object.keys(teamLogoCache).find(k => k.toLowerCase() === name.toLowerCase());
-    return key ? teamLogoCache[key] : null;
+    const cands = [meta.long, meta.short, ...(meta.aliases || [])];
+    for (const name of cands) {
+      const key = Object.keys(teamLogoCache).find(k => k.toLowerCase() === String(name).toLowerCase());
+      if (key && teamLogoCache[key]) return teamLogoCache[key];
+    }
+    return null;
   };
+
+  const allTeams = React.useMemo(() => teamsForPicker(teams), [teams]);
+  const q = search.trim().toLowerCase();
+  const matched = q
+    ? allTeams.filter(t => [t.long, t.short, ...(t.aliases || [])].some(s => String(s).toLowerCase().includes(q)))
+    : allTeams;
+  const suggestions = (q && matched.length === 0) ? fuzzySuggest(allTeams, q) : [];
+
+  const currentMeta = value && value !== "__none__" ? teamMeta(value) : null;
+  const currentLogo = currentMeta ? resolveLogo(currentMeta) : null;
+
+  const close = () => { setOpen(false); setSearch(""); setInfoFor(null); };
+
+  const Grid = ({ list }) => (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+      {list.map((t) => {
+        const logo = resolveLogo(t);
+        const selected = value === t.long;
+        return (
+          <div key={t.long} style={{ position: "relative" }}>
+            <button
+              onClick={() => { onChange(t.long); close(); }}
+              style={{
+                width: "100%", background: selected ? "rgba(204,247,29,0.08)" : "#111",
+                border: `1px solid ${selected ? "#CCF71D" : "#1f1f1f"}`,
+                borderRadius: 12, padding: "12px 6px 10px", display: "flex", flexDirection: "column",
+                alignItems: "center", gap: 6, cursor: "pointer", color: "#fff", minHeight: 92
+              }}
+            >
+              <div style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {logo
+                  ? <img src={logo} alt="" style={{ maxWidth: 44, maxHeight: 44, objectFit: "contain" }} />
+                  : <div style={{ width: 36, height: 36, borderRadius: 10, background: "#1f1f1f", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 10, fontWeight: 800 }}>{t.short.slice(0, 3).toUpperCase()}</div>}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: selected ? "#CCF71D" : "#ddd", textAlign: "center", lineHeight: 1.15, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", maxWidth: "100%" }}>{t.short}</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setInfoFor(t); }}
+              aria-label={"Info " + t.long}
+              style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: "50%", border: "1px solid #333", background: "rgba(0,0,0,0.6)", color: "#CCF71D", fontSize: 11, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+            >i</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div ref={ref}>
+    <div>
       <label style={{ color: "#888", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      <button onClick={() => setOpen(!open)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value && value !== "__none__" ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
-        <span className="truncate flex items-center gap-2">{value === "__none__" ? SANS_EQUIPE : value || "—"}</span>
+      <button onClick={() => setOpen(true)} className="mt-1 w-full flex items-center justify-between" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a", color: value && value !== "__none__" ? "#fff" : "#666", fontSize: "13px", borderRadius: "12px", padding: "10px 14px" }}>
+        <span className="truncate flex items-center gap-2">
+          {currentLogo && <img src={currentLogo} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
+          {value === "__none__" ? SANS_EQUIPE : (currentMeta?.short || value || "—")}
+        </span>
         <ChevronDown size={14} color="#666" />
       </button>
-      {open && (
-        <div className="mt-1 rounded-xl overflow-hidden" style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #2a2a2a" }}>
-            <Search size={14} color="#666" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." autoFocus style={{ background: "transparent", border: "none", color: "#fff", fontSize: "12px", outline: "none", flex: 1 }} />
+
+      {open && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 10002, display: "flex", flexDirection: "column", padding: 14 }} onClick={close}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#0a0a0a", border: "1px solid #222", borderRadius: 20, display: "flex", flexDirection: "column", maxHeight: "92vh", width: "100%", maxWidth: 460, margin: "auto", overflow: "hidden" }}>
+            <div style={{ padding: "14px 16px 10px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ color: "#fff", fontSize: 14, fontWeight: 900, flex: 1 }}>{label}</span>
+              <button onClick={close} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "6px 8px", cursor: "pointer" }}><X size={14} color="#aaa" /></button>
+            </div>
+            <div style={{ padding: "10px 14px 6px" }}>
+              <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "#111", border: "1px solid #1f1f1f" }}>
+                <Search size={14} color="#666" />
+                <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Chercher une équipe (ex: m8, gentle mates)" style={{ background: "transparent", border: "none", color: "#fff", fontSize: 12, outline: "none", flex: 1 }} />
+                {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 14 }}>×</button>}
+              </div>
+            </div>
+            <div className="no-scrollbar" style={{ padding: 14, overflowY: "auto", flex: 1 }}>
+              <button
+                onClick={() => { onChange("__none__"); close(); }}
+                style={{ width: "100%", background: value === "__none__" ? "rgba(204,247,29,0.08)" : "#111", border: `1px solid ${value === "__none__" ? "#CCF71D" : "#1f1f1f"}`, borderRadius: 12, padding: "10px 14px", color: value === "__none__" ? "#CCF71D" : "#888", fontSize: 12, fontWeight: 800, textAlign: "left", cursor: "pointer", marginBottom: 10 }}
+              >{SANS_EQUIPE}</button>
+              {matched.length > 0 ? <Grid list={matched} /> : (
+                <>
+                  <p style={{ color: "#888", fontSize: 11.5, marginBottom: 8 }}>
+                    Aucune équipe trouvée pour « {search} ». Tu voulais peut-être :
+                  </p>
+                  <Grid list={suggestions} />
+                </>
+              )}
+            </div>
           </div>
-          <div className="dark-scroll" style={{ maxHeight: "200px", overflowY: "auto" }}>
-            <button onClick={() => { onChange("__none__"); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2.5 flex items-center gap-2" style={{ color: value === "__none__" ? "#CCF71D" : "#888", fontSize: "12px", background: value === "__none__" ? "#222" : "transparent" }}>
-              {SANS_EQUIPE}
-            </button>
-            {filtered.map((t) => {
-              const logo = getLogo(t);
-              return (
-                <button key={t} onClick={() => { onChange(t); setOpen(false); setSearch(""); }} className="w-full text-left px-3 py-2 flex items-center gap-2.5" style={{ color: t === value ? "#CCF71D" : "#ccc", fontSize: "12px", background: t === value ? "#222" : "transparent" }}>
-                  {logo ? <img src={logo} alt="" style={{ width: 20, height: 20, objectFit: "contain", borderRadius: 4, flexShrink: 0 }} /> : <div style={{ width: 20, height: 20, borderRadius: 4, background: "#333", flexShrink: 0 }} />}
-                  <span className="truncate">{t}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+
+          {infoFor && (
+            <div onClick={(e) => { e.stopPropagation(); setInfoFor(null); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ background: "#111", border: "1px solid #2a2a2a", borderRadius: 16, padding: 20, width: "min(320px, 90%)", textAlign: "center" }}>
+                {resolveLogo(infoFor) && <img src={resolveLogo(infoFor)} alt="" style={{ width: 56, height: 56, objectFit: "contain", margin: "0 auto 12px" }} />}
+                <p style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Nom complet</p>
+                <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 14 }}>{infoFor.long}</p>
+                <p style={{ color: "#888", fontSize: 12 }}>Nom court : <span style={{ color: "#ddd", fontWeight: 700 }}>{infoFor.short}</span></p>
+                <button onClick={() => setInfoFor(null)} style={{ marginTop: 16, width: "100%", background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, color: "#CCF71D", fontSize: 12, fontWeight: 800, padding: "9px 0", cursor: "pointer" }}>Fermer</button>
+              </div>
+            </div>
+          )}
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -10422,7 +10631,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 if (myIdx === -1) {
                   merged.push({ id: profile.userId, pseudo: profile.pseudo, avatar: profile.avatar, points: score, points_valo: pointsPerGame.valo || 0, points_cs2: pointsPerGame.cs2 || 0, points_rl: pointsPerGame.rl || 0, displayPts: score });
                 } else if (myIdx >= 0) {
-                  merged[myIdx] = { ...merged[myIdx], displayPts: Math.max(merged[myIdx].displayPts, score) };
+                  merged[myIdx] = { ...merged[myIdx], pseudo: profile.pseudo || merged[myIdx].pseudo, avatar: profile.avatar || merged[myIdx].avatar, displayPts: Math.max(merged[myIdx].displayPts, score) };
                 }
                 merged.sort((a, b) => b.displayPts - a.displayPts);
                 const filtered = merged;
@@ -10436,7 +10645,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 function renderRow(u, i) {
                   const isMe = u.id === profile.userId;
                   const rankLogo = getUserRank(u.points);
-                  const logoSize = rankLogo.name === "Immortal" ? 28 : 22;
+                  const logoSize = rankLogo.name === "Immortal" ? 31 : 24;
                   const isUnranked = rankLogo.name === "Unranked";
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
@@ -10453,25 +10662,26 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         setSpectatorUser({ ...u, ...d });
                         setSpectatorStats(d);
                       }).catch(() => { setSpectatorUser(u); });
-                    }} className="flex items-center gap-2.5 rounded-2xl px-3 py-2" style={{
+                    }} className="flex items-center gap-3 rounded-2xl" style={{
                       position: "relative", overflow: "hidden", textAlign: "left",
+                      padding: "9px 14px",
                       background: rowBg,
                       border: uBanner ? "1px solid rgba(255,255,255,0.18)" : (isMe ? "1px solid #2a2a2a" : "1px solid #1c1c1c"),
                     }}>
-                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "14px", width: 20, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
-                      <div className="flex flex-col items-center shrink-0" style={{ position: "relative", width: 42 }}>
-                        <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 32, height: 32, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
-                          {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={14} color="#555" />}
+                      <span className="font-black shrink-0" style={{ color: i < 3 ? "#CCF71D" : uBanner ? "#eee" : "#888", fontSize: "15px", width: 22, textAlign: "center", position: "relative", textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{i + 1}</span>
+                      <div className="flex flex-col items-center shrink-0" style={{ position: "relative", width: 46 }}>
+                        <div className="rounded-full overflow-hidden flex items-center justify-center" style={{ width: 36, height: 36, background: "#1e1e1e", border: isMe ? "2px solid #CCF71D" : uBanner ? "2px solid rgba(255,255,255,0.25)" : "1px solid #2a2a2a" }}>
+                          {u.avatar ? <img src={u.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <User size={16} color="#555" />}
                         </div>
-                        <span className="font-bold truncate" style={{ fontSize: "9px", color: isMe ? "#CCF71D" : uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 42, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}</span>
+                        <span className="font-bold truncate" style={{ fontSize: "10px", color: isMe ? "#CCF71D" : uPseudoColor, textShadow: uBanner ? "0 1px 4px rgba(0,0,0,0.8)" : "none", maxWidth: 46, textAlign: "center", marginTop: 2, lineHeight: 1.1 }}>{u.pseudo}</span>
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-1.5" style={{ position: "relative" }}>
-                        {uBadge && <span style={{ fontSize: 12, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
-                        {uTitle && <span className="truncate" style={{ fontSize: 9, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 7px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
+                        {uBadge && <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1 }} title={uBadge}>{uBadgeEmoji || "🏅"}</span>}
+                        {uTitle && <span className="truncate" style={{ fontSize: 10, fontWeight: 800, color: "#c084fc", background: uBanner ? "rgba(0,0,0,0.65)" : "rgba(168,85,247,0.12)", padding: "2px 8px", borderRadius: 4, flexShrink: 0, letterSpacing: 0.5, border: uBanner ? "1px solid rgba(168,85,247,0.3)" : "none", textShadow: "none" }}>{uTitle}</span>}
                       </div>
                       {!isUnranked && rankLogo.logo ? (
                         uBanner ? (
-                          <div style={{ width: logoSize + 10, height: logoSize + 10, borderRadius: 8, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: "1px solid rgba(255,255,255,0.1)" }}>
+                          <div style={{ width: logoSize + 11, height: logoSize + 11, borderRadius: 9, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", border: "1px solid rgba(255,255,255,0.1)" }}>
                             <img src={rankLogo.logo} alt={rankLogo.name} style={{ width: logoSize, height: logoSize, objectFit: "contain" }} />
                           </div>
                         ) : (
@@ -10479,8 +10689,8 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                         )
                       ) : null}
                       <div className="text-right shrink-0" style={{ position: "relative" }}>
-                        <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "15px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
-                        <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "10px", fontWeight: 600, marginLeft: 2 }}>pts</span>
+                        <span style={{ color: isMe ? "#CCF71D" : "#ddd", fontSize: "17px", fontWeight: 900, textShadow: uBanner ? "0 2px 6px rgba(0,0,0,0.9)" : "none" }}>{u.displayPts}</span>
+                        <span style={{ color: uBanner ? "#bbb" : "#888", fontSize: "11px", fontWeight: 600, marginLeft: 2 }}>pts</span>
                       </div>
                     </button>
                   );
@@ -12329,8 +12539,8 @@ export default function ClutchApp() {
     } catch {}
     return null;
   });
-  useEffect(() => {
-    fetch((import.meta.env.VITE_API_BASE || "") + "/api/social/leaderboard").then(r => r.json()).then(d => {
+  const refreshLeaderboard = useCallback(() => {
+    return fetch((import.meta.env.VITE_API_BASE || "") + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) {
         setPrefetchedLeaderboard(d);
         // Cache pour prochain boot avec timestamp: evite d'afficher un classement
@@ -12339,6 +12549,7 @@ export default function ClutchApp() {
       }
     }).catch(() => {});
   }, []);
+  useEffect(() => { refreshLeaderboard(); }, [refreshLeaderboard]);
 
   useEffect(() => {
     const notifs = [];
@@ -13945,9 +14156,17 @@ export default function ClutchApp() {
               setProfile(p => {
                 const updated = { ...p, pseudo: newPseudo };
                 localStorage.setItem("split_profile", JSON.stringify(updated));
-                const authUser = JSON.parse(localStorage.getItem("split_auth_user") || "{}");
-                authUser.pseudo = newPseudo;
-                localStorage.setItem("split_auth_user", JSON.stringify(authUser));
+                try {
+                  const authUser = JSON.parse(localStorage.getItem("split_auth_user") || "{}");
+                  authUser.pseudo = newPseudo;
+                  localStorage.setItem("split_auth_user", JSON.stringify(authUser));
+                } catch {}
+                // Pousse le nouveau pseudo au backend social (upsertUser) pour
+                // qu'il apparaisse dans le leaderboard et sur toutes les cartes.
+                syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
+                // Rafraîchit le leaderboard pour que le top3 Accueil et la
+                // page Classement n'affichent plus l'ancien pseudo.
+                refreshLeaderboard && refreshLeaderboard();
                 return updated;
               });
             }}
