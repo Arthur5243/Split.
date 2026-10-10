@@ -3158,10 +3158,24 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       setScoresRevealed(true); setLiveRevealed(true);
                       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                       try {
+                        const shareUrl = `https://app.splitapp.fr/?m=${encodeURIComponent(String(match.id))}`;
+                        const t1 = match.team1Name || match.team1 || "";
+                        const t2 = match.team2Name || match.team2 || "";
+                        const scoreLine = (match.score1 != null && match.score2 != null) ? `${t1} ${match.score1}-${match.score2} ${t2}` : `${t1} vs ${t2}`;
+                        const mapLines = (match.map_scores || []).map((m, i) => `Map ${i + 1} : ${m.score1}-${m.score2}`).join("\n");
+                        const text = `${scoreLine}${mapLines ? "\n" + mapLines : ""}\n\nSuis les matchs sur Split :`;
                         const blob = await captureCardAsBlob(cardRef.current);
                         const file = new File([blob], "split-match.png", { type: "image/png" });
-                        if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); }
-                        else { window.open(URL.createObjectURL(blob), "_blank"); }
+                        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                          // Image + texte + URL : WhatsApp/Telegram prennent text+url (preview),
+                          // Instagram Stories prend l'image. L'utilisateur garde le choix.
+                          try { await navigator.share({ files: [file], title: "Split", text, url: shareUrl }); }
+                          catch { try { await navigator.share({ title: "Split", text, url: shareUrl }); } catch {} }
+                        } else if (navigator.share) {
+                          await navigator.share({ title: "Split", text, url: shareUrl });
+                        } else {
+                          try { await navigator.clipboard.writeText(`${text}\n${shareUrl}`); } catch {}
+                        }
                       } catch {}
                     }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Share2 size={14} color="#aaa" /> <span style={{ color: "#aaa" }}>Partager</span>
@@ -3179,12 +3193,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   marginLeft: "auto",
                   background: "#CCF71D",
                   color: "#0d0d0d",
-                  fontSize: "17px",
+                  fontSize: "15px",
                   fontWeight: 900,
                   fontStyle: "italic",
                   letterSpacing: "0.01em",
-                  padding: "4px 14px",
-                  borderRadius: "8px",
+                  padding: "3px 12px",
+                  borderRadius: "7px",
                   boxShadow: "0 0 0 1px rgba(204,247,29,0.35)",
                 }}
               >
@@ -3309,10 +3323,24 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                       setScoresRevealed(true); setLiveRevealed(true);
                       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
                       try {
+                        const shareUrl = `https://app.splitapp.fr/?m=${encodeURIComponent(String(match.id))}`;
+                        const t1 = match.team1Name || match.team1 || "";
+                        const t2 = match.team2Name || match.team2 || "";
+                        const scoreLine = (match.score1 != null && match.score2 != null) ? `${t1} ${match.score1}-${match.score2} ${t2}` : `${t1} vs ${t2}`;
+                        const mapLines = (match.map_scores || []).map((m, i) => `Map ${i + 1} : ${m.score1}-${m.score2}`).join("\n");
+                        const text = `${scoreLine}${mapLines ? "\n" + mapLines : ""}\n\nSuis les matchs sur Split :`;
                         const blob = await captureCardAsBlob(cardRef.current);
                         const file = new File([blob], "split-match.png", { type: "image/png" });
-                        if (navigator.share && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], title: "Split" }); }
-                        else { window.open(URL.createObjectURL(blob), "_blank"); }
+                        if (navigator.share && navigator.canShare?.({ files: [file] })) {
+                          // Image + texte + URL : WhatsApp/Telegram prennent text+url (preview),
+                          // Instagram Stories prend l'image. L'utilisateur garde le choix.
+                          try { await navigator.share({ files: [file], title: "Split", text, url: shareUrl }); }
+                          catch { try { await navigator.share({ title: "Split", text, url: shareUrl }); } catch {} }
+                        } else if (navigator.share) {
+                          await navigator.share({ title: "Split", text, url: shareUrl });
+                        } else {
+                          try { await navigator.clipboard.writeText(`${text}\n${shareUrl}`); } catch {}
+                        }
                       } catch {}
                     }} className="flex items-center gap-2 w-full" style={{ color: "#fff", fontSize: 12, fontWeight: 700, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
                       <Share2 size={14} color="#aaa" /> <span style={{ color: "#aaa" }}>Partager</span>

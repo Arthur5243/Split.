@@ -74,15 +74,28 @@ function watchAdOverlays() {
       for (const el of overlay.querySelectorAll("iframe, div, section, article, img")) {
         if (!isVisible(el)) continue;
         const r = el.getBoundingClientRect();
-        if (r.width < 160 || r.height < 120) continue;      // trop petit : ignore
-        if (r.width >= vw * 0.9 || r.height >= vh * 0.9) continue; // backdrop : ignore
+        if (r.width < 160 || r.height < 120) continue;
+        if (r.width >= vw * 0.9 || r.height >= vh * 0.9) continue;
         candidates.push(r);
       }
       if (candidates.length > 0) {
-        // Préférer la pop-up la PLUS PETITE qui reste au-dessus du minimum :
-        // c'est quasi toujours la "boîte" de pub réelle, pas un wrapper élargi.
         candidates.sort((a, b) => (a.width * a.height) - (b.width * b.height));
         return candidates[0];
+      }
+    }
+    // Fallback : rectangle centré, taille limitée côté desktop à la zone de
+    // l'app Split (#root) pour éviter d'afficher un cadre PUB géant autour
+    // d'une pop-up alors que l'app est centrée dans une colonne étroite.
+    const root = document.getElementById("root");
+    const rootRect = root ? root.getBoundingClientRect() : null;
+    if (rootRect && rootRect.width > 100 && rootRect.height > 100) {
+      // On garde la bbox de la pub, mais clampée à l'intérieur de #root.
+      const left = Math.max(overlayRect.left, rootRect.left);
+      const top = Math.max(overlayRect.top, rootRect.top);
+      const right = Math.min(overlayRect.right, rootRect.right);
+      const bottom = Math.min(overlayRect.bottom, rootRect.bottom);
+      if (right - left > 100 && bottom - top > 100) {
+        return { left, top, width: right - left, height: bottom - top };
       }
     }
     return overlayRect;
