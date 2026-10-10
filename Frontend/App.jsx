@@ -13109,10 +13109,19 @@ export default function ClutchApp() {
       const byId = new Map(saved.daily.map(q => [q.id, q]));
       fresh.daily = fresh.daily.map(q => byId.has(q.id) ? { ...q, progress: byId.get(q.id).progress, completed: byId.get(q.id).completed, claimed: byId.get(q.id).claimed } : q);
       if (saved.weekly && fresh.weekly && saved.weekly.id === fresh.weekly.id) fresh.weekly = { ...fresh.weekly, progress: saved.weekly.progress, completed: saved.weekly.completed, claimed: saved.weekly.claimed };
-      saveQuests(fresh);
     }
-    setQuestState(fresh);
-  }, [upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
+    // Backfill immédiat : une nouvelle quête match ne doit pas naître à 0 si
+    // le pari est déjà posé (ex : la quête MOUZ vs TS apparaît après que tu
+    // l'as déjà pronostiqué).
+    const lookups = {
+      valoIds: [...upcomingMatches, ...liveMatches].map(m => String(m.id)),
+      cs2Ids: [...cs2UpcomingMatches, ...cs2LiveMatches].map(m => String(m.id)),
+      rlIds: [...rlUpcomingMatches, ...rlLiveMatches].map(m => String(m.id)),
+    };
+    const filled = recomputeDailyQuests(fresh, predictions, settledMatchIds, lookups);
+    saveQuests(filled);
+    setQuestState(filled);
+  }, [upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, predictions, settledMatchIds]);
 
   // Backfill périodique : recalcule la progression à partir des pronos en
   // cours. Garantit qu'une quête s'active même quand on parie sans ouvrir le
