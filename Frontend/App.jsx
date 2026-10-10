@@ -13903,18 +13903,20 @@ export default function ClutchApp() {
 
   useEffect(() => {
     if (serverPointsRef.current) return;
-    if (!resultsMatches.length && !cs2ResultsMatches.length) return;
+    if (!resultsMatches.length && !cs2ResultsMatches.length && !rlResultsMatches.length) return;
     const perGame = { valo: 0, cs2: 0, rl: 0 };
     for (const id of settledMatchIds) {
       const pred = predictions[id];
       if (!pred || pred.seriesA === "" || pred.seriesB === "") continue;
       const vm = resultsMatches.find((m) => String(m.id) === id);
       const cm = cs2ResultsMatches.find((m) => String(m.id) === id);
-      const match = vm || cm;
+      const rm = rlResultsMatches.find((m) => String(m.id) === id);
+      const match = vm || cm || rm;
       if (!match || match.status !== "finished" || match.score1 == null || match.score2 == null) continue;
       const pts = calcMatchPoints(match, pred);
       if (vm) perGame.valo += pts;
       else if (cm) perGame.cs2 += pts;
+      else if (rm) perGame.rl += pts;
     }
     setPointsPerGame(perGame);
     localStorage.setItem("split_points_per_game", JSON.stringify(perGame));
@@ -13922,7 +13924,7 @@ export default function ClutchApp() {
     setUserPoints(recomputedTotal);
     localStorage.setItem("split_points_total", String(recomputedTotal));
     syncProfileToBackend(profile, recomputedTotal, perGame);
-  }, [resultsMatches, cs2ResultsMatches, settledMatchIds]);
+  }, [resultsMatches, cs2ResultsMatches, rlResultsMatches, settledMatchIds]);
 
   function toggleExpand(matchId) {
     setPredictions((prev) => ({
