@@ -13156,21 +13156,31 @@ export default function ClutchApp() {
   // Match sur lequel on doit scroller quand on arrive dans l'onglet Terminé
   // depuis un clic Historique / Bracket. Reset dès que la carte a été vue.
   const [focusMatchId, setFocusMatchId] = useState(null);
-  // Après un clic Historique/Bracket qui pointe sur un match terminé précis,
-  // on scrolle la carte dans la vue dès qu'elle est rendue dans un onglet
-  // réellement visible. On retente jusqu'à 60 fois (9s) : la liste des finis
-  // peut mettre un instant à charger depuis l'API.
+  // Spec scroll match depuis historique :
+  // 1. Attendre la carte avec data-match-id visible (offsetParent !== null)
+  //    dans un onglet actif.
+  // 2. Calculer sa position relative au scrollRef (container principal) et
+  //    appeler scrollRef.scrollTo({top, behavior:'smooth'}) directement —
+  //    plus fiable que scrollIntoView qui peut cibler un mauvais ancêtre.
+  // 3. Flasher la carte en lime pendant 2,5s. 60 tentatives sur 9s.
   useEffect(() => {
     if (!focusMatchId) return;
     let tries = 0;
+    const scrollToCard = (el) => {
+      const container = scrollRef.current;
+      if (!container) { el.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+      const elRect = el.getBoundingClientRect();
+      const contRect = container.getBoundingClientRect();
+      const current = container.scrollTop;
+      const target = current + (elRect.top - contRect.top) - (contRect.height / 2) + (elRect.height / 2);
+      container.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+    };
     const int = setInterval(() => {
       tries++;
-      // Garde seulement les éléments effectivement affichés (offsetParent !== null),
-      // sinon on scrollerait vers une carte cachée dans un onglet display:none.
       const els = Array.from(document.querySelectorAll(`[data-match-id="${focusMatchId}"]`));
-      const el = els.find((e) => e.offsetParent !== null) || els[0];
-      if (el && el.offsetParent !== null) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const el = els.find((e) => e.offsetParent !== null);
+      if (el) {
+        scrollToCard(el);
         el.style.transition = "box-shadow 0.3s ease";
         el.style.boxShadow = "0 0 0 2px #CCF71D, 0 0 18px rgba(204,247,29,0.4)";
         setTimeout(() => { el.style.boxShadow = ""; }, 2500);
