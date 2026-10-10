@@ -4956,12 +4956,12 @@ function getStreakColor(s) {
 // (haut/bas/gauche/droite) dépasse de ~7,5% du cadre. Les bords transparents
 // des PNG sortent du cadre, le focal point (perso/glow) reste au milieu.
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png",     bgCrop: { size: "115% 115%", position: "center 100%" } },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png",   bgCrop: { size: "115% 115%", position: "center 100%" } },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png", bgCrop: { size: "115% 115%", position: "center 100%" } },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png", bgCrop: { size: "115% 115%", position: "center 100%" } },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png",    bgCrop: { size: "115% 115%", position: "center 100%" } },
-  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", bgCrop: { size: "115% 115%", position: "center 100%" }, maxCount: 50 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png",     bgCrop: { size: "100% 115%", position: "center 100%" } },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png",   bgCrop: { size: "100% 115%", position: "center 100%" } },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png", bgCrop: { size: "100% 115%", position: "center 100%" } },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png", bgCrop: { size: "100% 115%", position: "center 100%" } },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png",    bgCrop: { size: "100% 115%", position: "center 100%" } },
+  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", bgCrop: { size: "100% 115%", position: "center 100%" }, maxCount: 50 },
 ];
 RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
