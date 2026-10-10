@@ -4951,16 +4951,17 @@ function getStreakColor(s) {
 // l'image apparaît en bande fine centrée verticalement avec du vide top/bas.
 // `bgCrop.size`/`position` sont réglés par rang pour centrer le focal point
 // (perso + glow central) sans que les angles vides du PNG dépassent.
-// Fit : `cover` garantit que l'image remplit tout le cadre sans vide ni
-// déformation. `backgroundPosition` est tuné par rang (via `bgCrop.position`)
-// pour cadrer sur le focal point. Pas de `size` custom nécessaire.
+// Fit "rectangle légèrement plus grand que la case, bien centré" :
+// l'image est étirée à 115% × 115% et positionnée au centre → chaque côté
+// (haut/bas/gauche/droite) dépasse de ~7,5% du cadre. Les bords transparents
+// des PNG sortent du cadre, le focal point (perso/glow) reste au milieu.
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png",     bgCrop: { position: "center 50%" } },
-  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png",   bgCrop: { position: "55% 100%" } },
-  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png", bgCrop: { position: "55% 100%" } },
-  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png", bgCrop: { position: "55% 100%" } },
-  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png",    bgCrop: { position: "55% 100%" } },
-  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", bgCrop: { position: "55% 100%" }, maxCount: 50 },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back.png",     bgCrop: { size: "115% 115%", position: "center center" } },
+  { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back.png",   bgCrop: { size: "115% 115%", position: "center center" } },
+  { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back.png", bgCrop: { size: "115% 115%", position: "center center" } },
+  { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back.png", bgCrop: { size: "115% 115%", position: "center center" } },
+  { name: "Global Elite",  minPts: 3000, color: "#EAB308", logo: "/global-elite-sm.png", bg: "rgba(234,179,8,0.32)",   border: "rgba(234,179,8,0.3)",   maxPct: 0.15, bgImage: "/doree-back.png",    bgCrop: { size: "115% 115%", position: "center center" } },
+  { name: "#Infinite",     minPts: 5000, color: "#38BDF8", logo: "/infinite-sm.png",     bg: "rgba(56,189,248,0.32)",  border: "rgba(56,189,248,0.3)",  maxPct: 0.05, bgImage: "/infinite-back.png", bgCrop: { size: "115% 115%", position: "center center" }, maxCount: 50 },
 ];
 RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
@@ -5021,8 +5022,8 @@ function RankBadgeCompact({ points, onClick }) {
       // préservant l'aspect, puis on recadre horizontalement selon position.
       // backgroundColor teintée en secours si une marge dépasse.
       backgroundColor: isUnranked ? "#1c1c1c" : `rgba(${rgb},0.35)`,
-      backgroundSize: rank.bgCrop?.size || "cover",
-      backgroundPosition: rank.bgCrop?.position || "55% 100%",
+      backgroundSize: rank.bgCrop?.size || "115% 115%",
+      backgroundPosition: rank.bgCrop?.position || "center center",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
