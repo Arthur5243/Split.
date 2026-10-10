@@ -12914,32 +12914,21 @@ export default function ClutchApp() {
   }
   useEffect(() => {
     if (!profile) return;
-    if (!profile.userId) {
-      // Priorité auth.id : évite de créer un compte social dupliqué quand l'user est
-      // déjà authentifié (email/pwd ou Google). Fallback UUID uniquement pour le mode
-      // "sans compte" (démo/testing).
-      const uid = authUser?.id || crypto.randomUUID();
-      const updated = { ...profile, userId: uid };
-      setProfile(updated);
-      localStorage.setItem("split_profile", JSON.stringify(updated));
-      syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
-    } else if (authUser?.id && profile.userId !== authUser.id) {
-      // Cas migration : profile.userId (localStorage) diverge de auth.id.
-      // Ex: user avait un profile local créé AVANT d'avoir un compte auth.
-      // On force la fusion : le vrai compte est celui de auth.id.
+    // Ne JAMAIS pousser le cache local au backend au mount : si l'appareil A
+    // garde un vieux pseudo/avatar en cache, ça écrasait les bonnes données
+    // posées depuis l'appareil B. Ici on se contente de garantir que
+    // profile.userId = authUser.id ; le vrai pull-from-backend se fait dans
+    // l'effet suivant (sur authUser?.id).
+    if (!profile.userId && authUser?.id) {
       const updated = { ...profile, userId: authUser.id };
       setProfile(updated);
-      localStorage.setItem("split_profile", JSON.stringify(updated));
-      syncProfileToBackend(updated, userPoints, pointsPerGame, userXp);
-    } else {
-      syncProfileToBackend(profile, userPoints, pointsPerGame, userXp);
-      fetch(API_BASE + "/api/social/me/" + profile.userId).then(r => r.json()).then(d => {
-        if (d.xp && d.xp > userXp) { setUserXp(d.xp); saveXp(d.xp); }
-      }).catch(() => {});
+      try { localStorage.setItem("split_profile", JSON.stringify(updated)); } catch {}
+    } else if (authUser?.id && profile.userId !== authUser.id) {
+      // Migration : on force l'id auth comme id compte (évite les doublons).
+      const updated = { ...profile, userId: authUser.id };
+      setProfile(updated);
+      try { localStorage.setItem("split_profile", JSON.stringify(updated)); } catch {}
     }
-    // Auto-boost admin retire: donnait 50000 xp + tous tiers + inventaire
-    // complet au premier boot pour pseudos ggez/sayzox. Reactive uniquement
-    // depuis un bouton settings protege si besoin.
   }, []);
 
   // À chaque login (changement d'authUser.id), on tire le profil depuis le
