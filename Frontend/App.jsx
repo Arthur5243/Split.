@@ -3254,6 +3254,58 @@ function loadQuests() {
 }
 function saveQuests(q) { localStorage.setItem("split_quests", JSON.stringify(q)); }
 
+// Recalcule la progression des quêtes à partir des pronos EN COURS. Sert :
+// - au backfill au boot (ou après un sync d'un autre appareil) : les quêtes
+//   qui dépendent du nombre de pronos retrouvent leur progression même si
+//   l'utilisateur n'a jamais ouvert le menu Quêtes ;
+// - après chaque nouveau pronostic, en complément de l'incrément direct, pour
+//   couvrir les quêtes qu'on aurait oublié d'incrémenter.
+function recomputeDailyQuests(state, predictions, settled, matchLookups) {
+  if (!state || !Array.isArray(state.daily)) return state;
+  const valoIds = new Set(matchLookups?.valoIds || []);
+  const cs2Ids = new Set(matchLookups?.cs2Ids || []);
+  const rlIds = new Set(matchLookups?.rlIds || []);
+  const settledSet = settled instanceof Set ? settled : new Set(settled || []);
+  const activeBets = [];
+  const gamesHit = new Set();
+  for (const [id, p] of Object.entries(predictions || {})) {
+    if (!p || p.seriesA === "" || p.seriesB === "") continue;
+    activeBets.push({ id, p });
+    if (valoIds.has(id)) gamesHit.add("valo");
+    if (cs2Ids.has(id)) gamesHit.add("cs2");
+    if (rlIds.has(id)) gamesHit.add("rl");
+  }
+  // settled pronostics (déjà réglés) comptent aussi pour les totaux cumulés
+  // du jour, sinon un prono réglé en matinée disparaît du compteur.
+  const totalBets = activeBets.length + Array.from(settledSet).filter(id => predictions && predictions[id] && predictions[id].seriesA !== "" && predictions[id].seriesB !== "").length;
+  const map = (q) => {
+    if (q.claimed) return q;
+    const set = (progress) => {
+      const p = Math.min(progress, q.target);
+      return { ...q, progress: p, completed: q.completed || p >= q.target };
+    };
+    if (q.id === "bet_today") return set(Math.max(q.progress, Math.min(1, activeBets.length + totalBets)));
+    if (q.id === "bet_3_matches" || q.id === "bet_4_matches" || q.id === "bet_5_matches") return set(Math.max(q.progress, totalBets));
+    if (q.id === "use_all_slots") return set(Math.max(q.progress, activeBets.length));
+    if (q.id === "bet_2_games" || q.id === "bet_both_games" || q.id === "bet_all_3_games") return set(Math.max(q.progress, gamesHit.size));
+    if (q.id === "bet_cs2") return set(Math.max(q.progress, gamesHit.has("cs2") ? 1 : 0));
+    if (q.id === "bet_valo") return set(Math.max(q.progress, gamesHit.has("valo") ? 1 : 0));
+    if (q.id === "bet_rl") return set(Math.max(q.progress, gamesHit.has("rl") ? 1 : 0));
+    if (q.matchId) {
+      const bet = predictions && predictions[q.matchId];
+      if (bet && bet.seriesA !== "" && bet.seriesB !== "") return set(Math.max(q.progress, 1));
+    }
+    return q;
+  };
+  return { ...state, daily: state.daily.map(map) };
+}
+
+// Les quêtes donnent un bonus de palier (sans toucher au classement) : chaque
+// XP vaut 1/5 point de palier. Un prono exact (3 pts) = 3 pts de palier, une
+// quête à 75 XP = 15 pts de palier. Les points du classement restent intacts.
+const QUEST_XP_TO_TIER_RATIO = 5;
+function questBonusForTier(xp) { return Math.floor((xp || 0) / QUEST_XP_TO_TIER_RATIO); }
+
 function assignDailyQuests(completedOneTimeIds, upcomingMatches) {
   const state = loadQuests();
   const slot = halfDaySlot();
@@ -3481,8 +3533,8 @@ const ACHIEVEMENT_BADGES = [
   { id: "streak5", emoji: "\u{1F4A5}", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
 ];
 
-function RewardsModal({ onClose, T, userPoints, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
-  const tierInfo = getTierFromPoints(userPoints || 0);
+function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
+  const tierInfo = getTierFromPoints((userPoints || 0) + questBonusForTier(userXp));
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
   const currentRef = useRef(null);
@@ -4447,6 +4499,27 @@ function XpPopup({ xp, onClose, T }) {
   );
 }
 
+// Toast en haut de l'écran quand une quête vient d'être terminée. Autoferme
+// après ~3,5s ou au clic. S'affiche aussi quand on utilise l'app sans avoir
+// ouvert le menu Quêtes.
+function QuestCompletedPopup({ quest, T, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
+  const title = quest?.titleKey ? (T[quest.titleKey] || quest.title || "Quête") : (quest?.title || "Quête");
+  const xp = quest?.xp || 0;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", top: "calc(env(safe-area-inset-top, 0px) + 14px)", left: "50%", transform: "translateX(-50%)", zIndex: 9992, background: "linear-gradient(135deg, rgba(204,247,29,0.95), rgba(156,195,0,0.95))", borderRadius: 16, padding: "11px 18px 11px 14px", display: "flex", alignItems: "center", gap: 12, boxShadow: "0 10px 30px rgba(204,247,29,0.35), 0 2px 10px rgba(0,0,0,0.5)", cursor: "pointer", maxWidth: "min(360px, 92vw)", animation: "streakSlide 0.35s ease-out" }}>
+      <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(0,0,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <ListChecks size={18} color="#111" />
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <p style={{ color: "#111", fontSize: 10, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1 }}>Quête terminée</p>
+        <p style={{ color: "#111", fontSize: 13, fontWeight: 800, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</p>
+        {xp > 0 && <p style={{ color: "rgba(17,17,17,0.75)", fontSize: 11, fontWeight: 700, marginTop: 2 }}>Clique pour réclamer tes {xp} XP</p>}
+      </div>
+    </div>
+  );
+}
+
 function StreakExpiredPopup({ lostStreak, onClose, T }) {
   useEffect(() => { const t = setTimeout(onClose, 7000); return () => clearTimeout(t); }, [onClose]);
   return (
@@ -4865,7 +4938,11 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         </div>
         <button onClick={onOpenQuests} style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, rgba(204,247,29,0.1), rgba(204,247,29,0.05))", border: "1px solid rgba(204,247,29,0.2)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", position: "relative" }}>
           <ListChecks size={14} color="#CCF71D" />
-          {quests?.daily?.some(q => q.completed && !q.claimed) && <span style={{ position: "absolute", top: -1, right: -1, width: 8, height: 8, borderRadius: "50%", background: "#4CAF50", border: "2px solid #000" }} />}
+          {(() => {
+            const n = (quests?.daily || []).filter(q => q.completed && !q.claimed).length + (quests?.weekly && quests.weekly.completed && !quests.weekly.claimed ? 1 : 0);
+            if (!n) return null;
+            return <span style={{ position: "absolute", top: -4, right: -4, minWidth: 15, height: 15, borderRadius: 8, background: "#CCF71D", color: "#000", fontSize: 9, fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px", border: "2px solid #000", boxShadow: "0 0 8px rgba(204,247,29,0.6)", animation: "flameGlow 1.6s ease-in-out infinite" }}>{n > 9 ? "9+" : n}</span>;
+          })()}
         </button>
       </div>
       <NewsCarousel T={T} splashDone={splashDone} />
@@ -4874,7 +4951,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24, height: 100 }}>
         {/* Card 1: Palier / Tier — fond doré étiré */}
         {(() => {
-          const ti = getTierFromPoints(userPoints || 0);
+          const ti = getTierFromPoints((userPoints || 0) + questBonusForTier(userXp));
           const pct = ti.xpNeeded > 0 ? Math.max(10, Math.min(100, (ti.xpInTier / ti.xpNeeded) * 100)) : 100;
           const goldHex = "#EAB308";
           const goldRgb = "234,179,8";
@@ -12172,6 +12249,8 @@ export default function ClutchApp() {
   const [streakPopup, setStreakPopup] = useState(null);
   const [userXp, setUserXp] = useState(() => loadXp());
   const [xpPopup, setXpPopup] = useState(null);
+  const [questPopupQueue, setQuestPopupQueue] = useState([]);
+  const questCompletedIdsRef = useRef(new Set());
   const [streakExpiredNotif, setStreakExpiredNotif] = useState(null);
   const [showStreakInfo, setShowStreakInfo] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -12989,11 +13068,49 @@ export default function ClutchApp() {
     const slot = halfDaySlot();
     if (saved && saved.lastAssigned === slot && saved.daily.some(q => q.matchId)) return;
     if (saved && saved.lastAssigned === slot) {
-      localStorage.removeItem("split_quests");
+      // Garde la progression des quêtes de même id entre régénérations
+      // (sinon un prono fait AVANT que les quêtes "match" apparaissent est
+      // perdu). On repart du state existant et on ajoute la quête match.
     }
     const fresh = assignDailyQuests(new Set(), { valo: upcomingMatches, cs2: cs2UpcomingMatches, rl: rlUpcomingMatches });
+    if (saved && saved.lastAssigned === slot) {
+      const byId = new Map(saved.daily.map(q => [q.id, q]));
+      fresh.daily = fresh.daily.map(q => byId.has(q.id) ? { ...q, progress: byId.get(q.id).progress, completed: byId.get(q.id).completed, claimed: byId.get(q.id).claimed } : q);
+      if (saved.weekly && fresh.weekly && saved.weekly.id === fresh.weekly.id) fresh.weekly = { ...fresh.weekly, progress: saved.weekly.progress, completed: saved.weekly.completed, claimed: saved.weekly.claimed };
+      saveQuests(fresh);
+    }
     setQuestState(fresh);
   }, [upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
+
+  // Backfill périodique : recalcule la progression à partir des pronos en
+  // cours. Garantit qu'une quête s'active même quand on parie sans ouvrir le
+  // menu Quêtes, ou qu'un prono synchronisé depuis un autre appareil est
+  // compté. Ignore si l'utilisateur a déjà réclamé la quête.
+  useEffect(() => {
+    const lookups = {
+      valoIds: [...upcomingMatches, ...liveMatches].map(m => String(m.id)),
+      cs2Ids: [...cs2UpcomingMatches, ...cs2LiveMatches].map(m => String(m.id)),
+      rlIds: [...rlUpcomingMatches, ...rlLiveMatches].map(m => String(m.id)),
+    };
+    setQuestState(prev => {
+      if (!prev) return prev;
+      const next = recomputeDailyQuests(prev, predictions, settledMatchIds, lookups);
+      if (JSON.stringify(next.daily) === JSON.stringify(prev.daily)) return prev;
+      saveQuests(next);
+      return next;
+    });
+  }, [predictions, settledMatchIds, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches]);
+
+  // Détecte les nouvelles quêtes terminées et pousse un toast en haut.
+  useEffect(() => {
+    if (!questState?.daily) return;
+    const seen = questCompletedIdsRef.current;
+    const newlyDone = [];
+    for (const q of questState.daily) if (q.completed && !q.claimed && !seen.has(q.id)) { newlyDone.push(q); seen.add(q.id); }
+    if (questState.weekly && questState.weekly.completed && !questState.weekly.claimed && !seen.has(questState.weekly.id)) { newlyDone.push(questState.weekly); seen.add(questState.weekly.id); }
+    if (newlyDone.length === 0) return;
+    setQuestPopupQueue(qu => [...qu, ...newlyDone]);
+  }, [questState]);
 
   const [vlrEvents, setVlrEvents] = useState({});
   const [showBracketPage, setShowBracketPage] = useState(false);
@@ -14046,7 +14163,7 @@ export default function ClutchApp() {
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userPoints={userPoints} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userPoints={userPoints} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
           </div>
         )}
 
@@ -14208,6 +14325,13 @@ export default function ClutchApp() {
         )}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
         {xpPopup && <XpPopup xp={xpPopup} onClose={() => setXpPopup(null)} T={T} />}
+        {questPopupQueue.length > 0 && (
+          <QuestCompletedPopup
+            quest={questPopupQueue[0]}
+            T={T}
+            onClose={() => { setQuestPopupQueue(q => q.slice(1)); setShowQuestModal(true); }}
+          />
+        )}
         {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
         {showStreakInfo && (
           <div style={{ position: "fixed", inset: 0, zIndex: 95, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)" }} onClick={() => setShowStreakInfo(false)}>
