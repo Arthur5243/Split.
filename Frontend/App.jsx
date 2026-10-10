@@ -2645,7 +2645,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const txtStW = hasBg ? { textShadow: bgSh } : {};
 
   return (
-    <div ref={cardRef} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#181818", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #2a2a2a", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "0 2px 8px rgba(0,0,0,0.4)" }}>
+    <div ref={cardRef} data-match-id={String(match.id)} className="rounded-2xl overflow-hidden mb-3" style={{ background: "#181818", border: isBoosted ? "1px solid rgba(245,158,11,0.4)" : running ? "1px solid rgba(255,59,59,0.35)" : "1px solid #2a2a2a", position: "relative", boxShadow: running ? "0 0 12px rgba(255,59,59,0.15)" : "0 2px 8px rgba(0,0,0,0.4)" }}>
       {hasBg && <img src={hasBg} alt="" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: frozenBgH ? frozenBgH + "px" : "100%", objectFit: "cover", objectPosition: "center top", opacity: 0.72, pointerEvents: "none" }} />}
       <div style={{ position: "relative" }}>
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
@@ -9869,7 +9869,7 @@ function MessagesScreen({ onClose, T, profile, dmTarget }) {
   );
 }
 
-function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom, communityResetKey }) {
+function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame, profile, onOpenProfile, onEditProfile, onSaveProfile, profileView, setProfileView, profileStats, onViewMatch, finishedMatchesIndex, showFriendModal, setShowFriendModal, setShowMessages, setDmTarget, appCreatePost, setAppCreatePost, appPostPrefill, setAppPostPrefill, appPostMatchCard, setAppPostMatchCard, isCaffioraDemo, valoTeams, cs2Teams, rlTeams, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, prefetchedLeaderboard, carouselSlide, setCarouselSlide, communityNavTab, setCommunityNavTab, profileOpenedFrom, communityResetKey }) {
   const findLogo = (cache, name) => {
     if (!cache || !name) return null;
     const k = Object.keys(cache).find(x => x.toLowerCase() === name.toLowerCase());
@@ -9880,6 +9880,57 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
     if (game === "cs2") return findLogo(cs2LogoCache, name) || findLogo(teamLogoCache, name);
     if (game === "rl") return findLogo(rlLogoCache, name) || findLogo(teamLogoCache, name);
     return findLogo(valoLogoCache, name) || findLogo(teamLogoCache, name);
+  };
+  // Carte d'historique universelle : réutilisée côté profil perso (data riche)
+  // ET côté profil spectateur (data réduite venant de /api/social/history,
+  // enrichie côté client via les listes de résultats finis chargées).
+  const GAME_BADGES = {
+    valo: { label: "Valorant", color: "#ff4655", bg: "rgba(255,70,85,0.14)", border: "rgba(255,70,85,0.3)" },
+    cs2:  { label: "CS2",      color: "#f0a500", bg: "rgba(240,165,0,0.14)", border: "rgba(240,165,0,0.3)" },
+    rl:   { label: "RL",       color: "#3B82F6", bg: "rgba(59,130,246,0.14)", border: "rgba(59,130,246,0.3)" },
+  };
+  const renderHistoryCard = (h, i) => {
+    const g = GAME_BADGES[h.game] || GAME_BADGES.valo;
+    const t1 = h.team1 || "—";
+    const t2 = h.team2 || "—";
+    const logo1 = getGameLogo(h.game, t1);
+    const logo2 = getGameLogo(h.game, t2);
+    const pts = h.pts || 0;
+    const ptsColor = pts >= 100 ? "#CCF71D" : pts > 0 ? "#9ac018" : "#555";
+    const resultBadge = h.actualSeries
+      ? <span style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "0.02em" }}>{h.actualSeries}</span>
+      : null;
+    const predLine = h.predSeries
+      ? <p style={{ fontSize: 10.5, color: h.correct ? "#7ec850" : "#c14a4a", marginTop: 2, fontWeight: 600 }}>Ton pari {h.predSeries} {h.correct ? "✓" : "✗"}</p>
+      : null;
+    return (
+      <button
+        key={h.id || i}
+        onClick={() => onViewMatch && onViewMatch(h.id, h.game)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10, padding: "11px 12px",
+          background: "linear-gradient(135deg, #141414 0%, #0e0e0e 100%)",
+          border: "1px solid #202020", borderRadius: 14,
+          cursor: "pointer", width: "100%", textAlign: "left",
+        }}
+      >
+        <span style={{ background: g.bg, border: `1px solid ${g.border}`, color: g.color, fontSize: 9, fontWeight: 900, letterSpacing: "0.08em", padding: "3px 7px", borderRadius: 6, textTransform: "uppercase", flexShrink: 0 }}>{g.label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+            {logo1 ? <img src={logo1} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <span style={{ color: "#555", fontSize: 9, fontWeight: 800 }}>{t1.slice(0, 2).toUpperCase()}</span>}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
+            <p style={{ color: "#ddd", fontSize: 11.5, fontWeight: 700, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1} <span style={{ color: "#555", fontWeight: 500 }}>vs</span> {t2}</p>
+            {predLine}
+          </div>
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+            {logo2 ? <img src={logo2} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <span style={{ color: "#555", fontSize: 9, fontWeight: 800 }}>{t2.slice(0, 2).toUpperCase()}</span>}
+          </div>
+        </div>
+        {resultBadge && <div style={{ marginLeft: 6, textAlign: "right" }}>{resultBadge}</div>}
+        <span style={{ color: ptsColor, fontSize: 13, fontWeight: 900, minWidth: 40, textAlign: "right" }}>{pts > 0 ? "+" + pts : "0"}</span>
+      </button>
+    );
   };
   const score = getScoreForCats(scoreCats, pointsPerGame, userPoints);
   const [showRewards, setShowRewards] = useState(false);
@@ -9916,6 +9967,15 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const communityEndRef = useRef(null);
   const [spectatorUser, setSpectatorUser] = useState(null);
   const [spectatorStats, setSpectatorStats] = useState(null);
+  const [spectatorHistory, setSpectatorHistory] = useState(null);
+  useEffect(() => {
+    if (!spectatorUser?.id) { setSpectatorHistory(null); return; }
+    setSpectatorHistory(null);
+    fetch(API_BASE + "/api/social/history/" + spectatorUser.id + "?limit=50")
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { if (Array.isArray(d)) setSpectatorHistory(d); })
+      .catch(() => setSpectatorHistory([]));
+  }, [spectatorUser?.id]);
   const [friendModalTab, setFriendModalTab] = useState("search");
   const [specMenu, setSpecMenu] = useState(false);
   const [specInfoPopup, setSpecInfoPopup] = useState(false);
@@ -10376,26 +10436,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           );
         })()}
 
-        <p className="font-bold text-white mb-3" style={{ fontSize: "14px" }}>{T.profileHistory}</p>
-        <div className="flex flex-col gap-2">
-          {history.length === 0 && <p style={{ color: "#555", fontSize: "12px" }}>—</p>}
-          {history.map((h) => (
-            <div key={h.id} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "#1e1e1e", border: "1px solid #2c2c2c" }}>
-              <span className="rounded px-2 py-0.5 font-bold shrink-0" style={{ fontSize: "10px", textTransform: "uppercase", background: h.game === "valo" ? "#1a1a2e" : "#1e1e1a", color: h.game === "valo" ? "#ff4655" : "#f0a500", border: "1px solid " + (h.game === "valo" ? "#2a2a3e" : "#2e2e2a") }}>
-                {h.game === "valo" ? "Valo" : "Cs2"}
-              </span>
-              <span className="font-bold shrink-0" style={{ color: h.pts > 0 ? "#CCF71D" : "#555", fontSize: "13px", minWidth: "40px" }}>{h.pts > 0 ? "+" + h.pts : "0"}</span>
-              <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ color: "#ccc", fontSize: "12px", fontWeight: 600 }}>{h.team1} vs {h.team2}</p>
-                {h.predSeries && h.actualSeries && (
-                  <p style={{ fontSize: "10px", color: h.correct ? "#7ec850" : "#c14a4a", marginTop: 2 }}>
-                    Ton pari : {h.predSeries} · Résultat : {h.actualSeries} {h.correct ? "✓" : "✗"}
-                  </p>
-                )}
-              </div>
-              <button onClick={() => onViewMatch(h.id, h.game)} style={{ color: "#CCF71D", fontSize: "11px", fontWeight: 700 }}>{T.profileVoir}</button>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <p className="font-bold text-white" style={{ fontSize: "14px" }}>{T.profileHistory || "Historique"}</p>
+          <span style={{ color: "#555", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{history.length} {history.length > 1 ? "matchs" : "match"}</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {history.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "16px 0" }}>Pas encore de match pronostiqué.</p>}
+          {history.map((h, i) => renderHistoryCard(h, i))}
         </div>
 
         {showFriendModal && <FriendModal onClose={() => { setShowFriendModal(false); setFriendModalTab("search"); }} T={T} profile={profile} userPoints={userPoints} initialTab={friendModalTab} initialFollowing={friendsList} initialFollowers={followersList} />}
@@ -10551,6 +10598,34 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
           </div>
         )}
+
+        {/* Historique public : visible pour tout visiteur du profil */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-bold text-white" style={{ fontSize: "14px" }}>Historique</p>
+            {Array.isArray(spectatorHistory) && spectatorHistory.length > 0 && (
+              <span style={{ color: "#555", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{spectatorHistory.length} {spectatorHistory.length > 1 ? "matchs" : "match"}</span>
+            )}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {spectatorHistory == null && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "16px 0" }}>Chargement…</p>}
+            {Array.isArray(spectatorHistory) && spectatorHistory.length === 0 && <p style={{ color: "#555", fontSize: "12px", textAlign: "center", padding: "16px 0" }}>Aucun match pronostiqué pour l'instant.</p>}
+            {Array.isArray(spectatorHistory) && spectatorHistory.map((h, i) => {
+              const idx = (finishedMatchesIndex || {})[String(h.matchId)];
+              const enriched = {
+                id: h.matchId,
+                game: h.game,
+                pts: h.points,
+                correct: h.correct,
+                team1: idx?.team1 || "—",
+                team2: idx?.team2 || "—",
+                predSeries: h.pred ? `${h.pred.a}-${h.pred.b}` : null,
+                actualSeries: idx?.score1 != null && idx?.score2 != null ? `${idx.score1}-${idx.score2}` : null,
+              };
+              return renderHistoryCard(enriched, i);
+            })}
+          </div>
+        </div>
 
         {specInfoPopup && (
           <>
@@ -12647,6 +12722,32 @@ export default function ClutchApp() {
   const [rlUpcomingMatches, setRlUpcomingMatches] = useState([]);
   const [rlLiveMatches, setRlLiveMatches] = useState([]);
   const [rlResultsMatches, setRlResultsMatches] = useState([]);
+  // Match sur lequel on doit scroller quand on arrive dans l'onglet Terminé
+  // depuis un clic Historique / Bracket. Reset dès que la carte a été vue.
+  const [focusMatchId, setFocusMatchId] = useState(null);
+  // Après un clic Historique/Bracket qui pointe sur un match terminé précis,
+  // on scrolle la carte dans la vue dès qu'elle est rendue. On retente plusieurs
+  // fois : la liste des finis peut mettre un instant à s'afficher.
+  useEffect(() => {
+    if (!focusMatchId) return;
+    let tries = 0;
+    const int = setInterval(() => {
+      tries++;
+      const el = document.querySelector(`[data-match-id="${focusMatchId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.style.transition = "box-shadow 0.3s ease";
+        el.style.boxShadow = "0 0 0 2px #CCF71D, 0 0 18px rgba(204,247,29,0.4)";
+        setTimeout(() => { el.style.boxShadow = ""; }, 2200);
+        clearInterval(int);
+        setFocusMatchId(null);
+      } else if (tries > 20) {
+        clearInterval(int);
+        setFocusMatchId(null);
+      }
+    }, 150);
+    return () => clearInterval(int);
+  }, [focusMatchId, activeTab]);
 
   // Prefetch leaderboard depuis localStorage en initial state (survit aux reloads,
   // pas de frame de chargement visible) + refresh backend en background.
@@ -13552,6 +13653,20 @@ export default function ClutchApp() {
     return set.sort();
   }, [rlUpcomingMatches, rlLiveMatches, rlResultsMatches]);
 
+  // Index { matchId → { team1, team2, score1, score2, game } } réutilisé par
+  // l'historique public du profil spectateur pour résoudre les noms d'équipe
+  // des pronos venus du backend (qui ne stocke que l'id du match).
+  const finishedMatchesIndex = React.useMemo(() => {
+    const out = {};
+    const push = (list, game) => list.forEach((m) => {
+      out[String(m.id)] = { team1: m.team1Name || m.team1, team2: m.team2Name || m.team2, score1: m.score1, score2: m.score2, game };
+    });
+    push(resultsMatches, "valo");
+    push(cs2ResultsMatches, "cs2");
+    push(rlResultsMatches, "rl");
+    return out;
+  }, [resultsMatches, cs2ResultsMatches, rlResultsMatches]);
+
   const profileStats = React.useMemo(() => {
     let exact = 0, bon = 0, parie = 0;
     const history = [];
@@ -14216,7 +14331,7 @@ export default function ClutchApp() {
               onLimitReached={() => setShowLimitPopup(true)}
             />
           </div>
-          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp, { force: true }); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); const tab = game === "valo" ? "valorant" : "csgo"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else setCs2Status(["finished"]); }} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
+          {activeTab === "classement" && <ClassementTab T={T} scoreCats={scoreCats} toggleScoreCat={toggleScoreCat} userPoints={userPoints} pointsPerGame={pointsPerGame} profile={profile} onOpenProfile={() => { setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setShowProfile(true); }} onEditProfile={() => setShowProfile(true)} onSaveProfile={(p) => { const saved = { ...p, userId: authUser?.id || p.userId || profile?.userId || crypto.randomUUID() }; setProfile(saved); localStorage.setItem("split_profile", JSON.stringify(saved)); syncProfileToBackend(saved, userPoints, pointsPerGame, userXp, { force: true }); }} profileView={profileView} setProfileView={(v) => { if (v) setProfileOpenedFrom(carouselSlide === 1 ? "community" : "classement"); setProfileView(v); }} profileStats={profileStats} onViewMatch={(id, game) => { setProfileView(false); setSpectatorUser(null); setSpectatorStats(null); const tab = game === "valo" ? "valorant" : game === "cs2" ? "csgo" : "rl"; setActiveTab(tab); if (tab === "valorant") setValoStatus(["finished"]); else if (tab === "csgo") setCs2Status(["finished"]); else setRlStatus(["finished"]); setFocusMatchId(String(id)); }} finishedMatchesIndex={finishedMatchesIndex} showFriendModal={showFriendModal} setShowFriendModal={setShowFriendModal} setShowMessages={setShowMessages} setDmTarget={setDmTarget} appCreatePost={appCreatePost} setAppCreatePost={setAppCreatePost} appPostPrefill={appPostPrefill} setAppPostPrefill={setAppPostPrefill} appPostMatchCard={appPostMatchCard} setAppPostMatchCard={setAppPostMatchCard} isCaffioraDemo={isCaffioraDemo} valoTeams={allTeams} cs2Teams={cs2AllTeams} rlTeams={rlAllTeams} teamLogoCache={{ ...teamLogoCache, ...cs2TeamLogoCache, ...rlTeamLogoCache }} valoLogoCache={teamLogoCache} cs2LogoCache={cs2TeamLogoCache} rlLogoCache={rlTeamLogoCache} prefetchedLeaderboard={prefetchedLeaderboard} carouselSlide={carouselSlide} setCarouselSlide={setCarouselSlide} communityNavTab={communityNavTab} setCommunityNavTab={setCommunityNavTab} profileOpenedFrom={profileOpenedFrom} communityResetKey={communityResetKey} />}
         </div>
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>

@@ -529,6 +529,38 @@ export function listUserSyncRows() {
 
 // Enregistre les points des matchs terminés d'un joueur puis recalcule ses
 // totaux (users.points, points_<jeu>, stats de paris) à partir du registre.
+// Historique public : 50 derniers matchs pronostiqués d'un utilisateur, triés
+// du plus récent au plus ancien, enrichis avec sa prédiction (seriesA/B) tirée
+// de user_sync.predictions. Team names + scores laissés au client qui a déjà
+// chargé les listes de résultats finis.
+export function getUserHistory(userId, limit = 50) {
+  const rows = db.prepare(`
+    SELECT match_id, game, points, correct, exact, updated_at
+    FROM user_match_points
+    WHERE user_id = ?
+    ORDER BY updated_at DESC
+    LIMIT ?
+  `).all(userId, limit);
+  let preds = {};
+  try {
+    const sync = db.prepare(`SELECT predictions FROM user_sync WHERE user_id = ?`).get(userId);
+    if (sync?.predictions) preds = JSON.parse(sync.predictions);
+  } catch {}
+  return rows.map((r) => {
+    const p = preds[r.match_id] || {};
+    return {
+      matchId: r.match_id,
+      game: r.game,
+      points: r.points,
+      correct: !!r.correct,
+      exact: !!r.exact,
+      updatedAt: r.updated_at,
+      pred: (p.seriesA !== "" && p.seriesA != null && p.seriesB !== "" && p.seriesB != null)
+        ? { a: parseInt(p.seriesA, 10), b: parseInt(p.seriesB, 10) } : null,
+    };
+  });
+}
+
 export function saveUserMatchPoints(userId, entries) {
   const upsert = db.prepare(`
     INSERT INTO user_match_points (user_id, match_id, game, points, correct, exact, updated_at)

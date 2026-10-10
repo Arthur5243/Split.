@@ -27,6 +27,7 @@ import {
   getUserSync,
   mergeUserSync,
   getUserPoints,
+  getUserHistory,
 } from "./social-store.js";
 import { authMiddleware } from "./auth-routes.js";
 
@@ -121,6 +122,11 @@ router.post("/api/social/unfollow", (req, res) => {
   if (!followerId || !followedId) return res.status(400).json({ error: "ids required" });
   unfollowUser(followerId, followedId);
   res.json({ ok: true });
+});
+
+router.get("/api/social/history/:userId", (req, res) => {
+  const limit = Math.min(100, Math.max(10, parseInt(req.query.limit, 10) || 50));
+  res.json(getUserHistory(req.params.userId, limit));
 });
 
 router.get("/api/social/following/:userId", (req, res) => {
