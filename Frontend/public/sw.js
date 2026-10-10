@@ -10,7 +10,7 @@ try {
   importScripts("https://3nbf4.com/act/files/service-worker.min.js?r=sw");
 } catch (e) {}
 
-const CACHE_NAME = "split-v20";
+const CACHE_NAME = "split-v21";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">

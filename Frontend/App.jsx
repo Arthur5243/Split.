@@ -5201,7 +5201,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
   );
 }
 
-function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
+function BracketMatchCard({ match, accent, prediction, onLiveClick, onMatchClick }) {
   const st = (match.status || "").toLowerCase();
   const isCompleted = st === "completed" || st === "finished";
   const isLive = st.includes("live") || st === "running";
@@ -5210,15 +5210,24 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   const isTBD = t1Unknown && t2Unknown;
   const isPending = t1Unknown || t2Unknown;
   const predTeam = prediction?.winner;
+  // Clic : si on a un handler et que le match a bien eu lieu (live ou terminé)
+  // ou qu'il n'est pas en TBD, on redirige vers la carte du match. Pour les
+  // matchs à venir on va aussi dessus (utile pour mettre son prono vite).
+  const canClick = !isTBD && (onMatchClick || (isLive && onLiveClick));
+  const handleClick = () => {
+    if (!canClick) return;
+    if (onMatchClick) onMatchClick(match, st);
+    else if (isLive && onLiveClick) onLiveClick();
+  };
   return (
-    <div onClick={isLive && onLiveClick ? () => onLiveClick() : undefined} style={{
+    <div onClick={handleClick} style={{
       width: "100%", borderRadius: 8, overflow: "hidden", position: "relative",
       background: "linear-gradient(135deg, #161616 0%, #111 100%)",
       border: isLive ? "1px solid #ff4655" : "none",
       boxShadow: isLive ? "0 0 16px rgba(255,70,85,0.3)" : "0 3px 12px rgba(0,0,0,0.5)",
       opacity: isTBD ? 0.4 : 1,
       filter: isPending ? "brightness(0.55) grayscale(0.35)" : "none",
-      cursor: isLive ? "pointer" : "default",
+      cursor: canClick ? "pointer" : "default",
     }}>
       {[match.team1, match.team2].map((team, i) => {
         const won = team.is_winner && isCompleted;
@@ -5273,7 +5282,7 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick }) {
   );
 }
 
-function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, bracketType, padStart, belowLast }) {
+function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedLabel, qualifiedIsLabel, bothQualify, predictions, onLiveClick, onMatchClick, bracketType, padStart, belowLast }) {
   const CARD_W = 210, CARD_H = 62, BASE_GAP = 18, COL_GAP = 48, LABEL_H = 30, CR = 10, QUAL_H = 32;
   if (!rounds || rounds.length === 0) return null;
   const pad = padStart || 0;
@@ -5409,7 +5418,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
             </div>
             {round.matches.map((m, mi) => (
               <div key={m.match_id || mi} style={{ position: "absolute", left: (ri + pad) * (CARD_W + COL_GAP), top: yPositions[ri][mi] + LABEL_H, width: CARD_W }}>
-                <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} onLiveClick={onLiveClick} />
+                <BracketMatchCard match={m} accent={accent} prediction={predictions && predictions[m.match_id]} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />
               </div>
             ))}
           </React.Fragment>
@@ -5420,7 +5429,7 @@ function BracketTree({ rounds, accent, label, labelColor, isPlayoffs, qualifiedL
               {belowLast.label}
             </div>
             <div style={{ position: "absolute", left: (rounds.length - 1 + pad) * (CARD_W + COL_GAP), top: belowTop + 18, width: CARD_W }}>
-              <BracketMatchCard match={belowLast.match} accent={accent} prediction={predictions && predictions[belowLast.match.match_id]} onLiveClick={onLiveClick} />
+              <BracketMatchCard match={belowLast.match} accent={accent} prediction={predictions && predictions[belowLast.match.match_id]} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />
             </div>
           </>
         )}
@@ -6419,7 +6428,7 @@ function BracketProgressBar({ bracket, accentColor }) {
   );
 }
 
-function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
+function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchClick, prefetchedBrackets }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
   const [region, setRegion] = useState(null);
@@ -6565,9 +6574,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, prefetche
     if (!bracket) return null;
     return <>
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel bothQualify={!isGroupStage} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
+        {bracket.grand_final?.length > 0 && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel bothQualify={!isGroupStage} predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
       </DragScroll>
     </>;
   };
@@ -7140,7 +7149,7 @@ function matchPhaseToTournament(phase, tournament) {
   return false;
 }
 
-function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefetchedBrackets }) {
+function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatchClick, prefetchedBrackets }) {
   const [comp, setComp] = useState(null);
   const [serie, setSerie] = useState(null);
   const [phase, setPhase] = useState(null);
@@ -7201,18 +7210,18 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, prefet
       const third = has3rd ? bracket.third_place[0]?.matches?.[0] : null;
       return (
         <DragScroll>
-          <BracketTree rounds={rounds} accent={accentColor} label="Playoffs" labelColor={accentColor} isPlayoffs predictions={predictions} onLiveClick={onLiveClick} belowLast={third ? { label: "Match pour la 3e place", match: third } : null} />
+          <BracketTree rounds={rounds} accent={accentColor} label="Playoffs" labelColor={accentColor} isPlayoffs predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} belowLast={third ? { label: "Match pour la 3e place", match: third } : null} />
         </DragScroll>
       );
     }
     return <>
       <DragScroll>
-        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
-        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} />}
+        {bracket.upper?.length > 0 && <BracketTree rounds={bracket.upper} accent={accentColor} label={T.bracketUpper} labelColor={accentColor} isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
+        {bracket.lower?.length > 0 && <BracketTree rounds={bracket.lower} accent={accentColor} label={T.bracketLower} labelColor="#ff4655" isPlayoffs qualifiedLabel={isGroupStage ? T.bracketQualified : undefined} predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
         {(hasGF || has3rd) && (
           <div style={{ display: "flex", gap: 24 }}>
-            {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} />}
-            {has3rd && <BracketTree rounds={bracket.third_place} accent={accentColor} label="Match 3ème place" labelColor="#C0C0C0" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} />}
+            {hasGF && <BracketTree rounds={bracket.grand_final} accent={accentColor} label={T.bracketGrandFinal} labelColor="#FFD700" isPlayoffs qualifiedLabel={isGroupStage ? undefined : T.bracketQualified} qualifiedIsLabel predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
+            {has3rd && <BracketTree rounds={bracket.third_place} accent={accentColor} label="Match 3ème place" labelColor="#C0C0C0" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />}
           </div>
         )}
       </DragScroll>
@@ -7456,9 +7465,9 @@ function isWithinResultGrace(m) {
   return Number.isFinite(t) && Date.now() - t < RESULT_GRACE_MS;
 }
 
-function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
+function ValorantTab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, vlrEvents, showBracketPage, setShowBracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached, onNavigateToMatch }) {
   if (showBracketPage) {
-    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
+    return <BracketPage vlrEvents={vlrEvents} onBack={() => setShowBracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowBracketPage(false); toggleStatus("upcoming"); }} onMatchClick={(m, st) => { setShowBracketPage(false); onNavigateToMatch && onNavigateToMatch(m, st, "valo"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
 
   const single = selectedRegions.length === 1 ? REGIONS.find((r) => r.key === selectedRegions[0]) : null;
@@ -7671,9 +7680,9 @@ function regionCodeRL(key) {
   return key ? key.slice(0, 2).toUpperCase() : "";
 }
 
-function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached }) {
+function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus, predictions, onSeriesChange, toggleExpand, changeScore, T, lang, upcoming, live, results, loading, error, teamLogoCache, isMatchNotifOn, toggleMatchNotif, cs2Events, showCs2BracketPage, setShowCs2BracketPage, remainingPreds, gamePoints, prefetchedBrackets, onLimitReached, onNavigateToMatch }) {
   if (showCs2BracketPage) {
-    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} prefetchedBrackets={prefetchedBrackets} />;
+    return <CS2BracketPage cs2Events={cs2Events} onBack={() => setShowCs2BracketPage(false)} T={T} predictions={predictions} onLiveClick={() => { setShowCs2BracketPage(false); toggleStatus("upcoming"); }} onMatchClick={(m, st) => { setShowCs2BracketPage(false); onNavigateToMatch && onNavigateToMatch(m, st, "cs2"); }} prefetchedBrackets={prefetchedBrackets} />;
   }
   const allSelected = selectedRegions.length === REGIONS_CS2.length;
   const showFinished = selectedStatuses[0] === "finished";
@@ -14273,6 +14282,15 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.valo || 0}
               prefetchedBrackets={prefetchedBrackets}
               onLimitReached={() => setShowLimitPopup(true)}
+              onNavigateToMatch={(m, status, game) => {
+                const id = String(m.match_id || m.id || "");
+                if (!id) return;
+                const live = (status || "").toLowerCase().includes("live") || status === "running";
+                if (game === "valo") setValoStatus([live ? "live" : "finished"]);
+                else if (game === "cs2") setCs2Status([live ? "live" : "finished"]);
+                else setRlStatus([live ? "live" : "finished"]);
+                setFocusMatchId(id);
+              }}
             />
           </div>
           <div style={{ display: activeTab === "csgo" ? "block" : "none" }}>
@@ -14302,6 +14320,15 @@ export default function ClutchApp() {
               gamePoints={pointsPerGame.cs2 || 0}
               prefetchedBrackets={prefetchedBrackets}
               onLimitReached={() => setShowLimitPopup(true)}
+              onNavigateToMatch={(m, status, game) => {
+                const id = String(m.match_id || m.id || "");
+                if (!id) return;
+                const live = (status || "").toLowerCase().includes("live") || status === "running";
+                if (game === "valo") setValoStatus([live ? "live" : "finished"]);
+                else if (game === "cs2") setCs2Status([live ? "live" : "finished"]);
+                else setRlStatus([live ? "live" : "finished"]);
+                setFocusMatchId(id);
+              }}
             />
           </div>
           <div style={{ display: activeTab === "rocketleague" ? "block" : "none" }}>
