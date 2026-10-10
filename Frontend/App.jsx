@@ -5010,8 +5010,8 @@ function RankBadgeCompact({ points, onClick }) {
       // couleur du rang en dessous, comme ça même si une marge transparente
       // dépasse, c'est teinté au lieu d'être noir vide.
       backgroundColor: isUnranked ? "#1c1c1c" : `rgba(${rgb},0.35)`,
-      backgroundSize: "130% 130%",
-      backgroundPosition: "center center",
+      backgroundSize: "118% 118%",
+      backgroundPosition: "60% 60%",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
