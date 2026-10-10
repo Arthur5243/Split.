@@ -464,6 +464,55 @@ function levenshtein(a, b) {
   return dp[m];
 }
 
+// Résolveur universel de logo d'équipe. Chain of fallbacks :
+// 1. localStorage cache (jamais ré-interrogé si trouvé < 7j)
+// 2. TEAM_META local (si .logo défini)
+// 3. Interroge /api/team-logo (PandaScore server-side), cache le résultat
+// Utilisé partout : historique, picker équipe fav, carte spectateur, etc.
+const _logoMemCache = {};
+function readLogoLocalCache(name) {
+  try {
+    const raw = localStorage.getItem("split_logo_cache_" + name.toLowerCase());
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.at && Date.now() - parsed.at < 7 * 24 * 3600 * 1000) return parsed.url || null;
+  } catch {}
+  return null;
+}
+function writeLogoLocalCache(name, url) {
+  try { localStorage.setItem("split_logo_cache_" + name.toLowerCase(), JSON.stringify({ at: Date.now(), url: url || "" })); } catch {}
+}
+async function fetchTeamLogo(name) {
+  if (!name) return null;
+  const key = name.toLowerCase();
+  if (_logoMemCache[key] !== undefined) return _logoMemCache[key];
+  const local = readLogoLocalCache(name);
+  if (local !== null) { _logoMemCache[key] = local || null; return _logoMemCache[key]; }
+  try {
+    const r = await fetch(API_BASE + "/api/team-logo?name=" + encodeURIComponent(name));
+    const d = await r.json().catch(() => ({}));
+    const url = d && d.logo ? d.logo : null;
+    _logoMemCache[key] = url;
+    writeLogoLocalCache(name, url);
+    return url;
+  } catch {
+    _logoMemCache[key] = null;
+    return null;
+  }
+}
+// Hook React : rend un logo résolu en live. Retourne l'URL ou null.
+function useTeamLogo(name, fallback) {
+  const [url, setUrl] = React.useState(fallback || readLogoLocalCache(name || ""));
+  React.useEffect(() => {
+    if (!name) return;
+    if (fallback) { setUrl(fallback); return; }
+    const k = name.toLowerCase();
+    if (_logoMemCache[k] !== undefined) { setUrl(_logoMemCache[k]); return; }
+    fetchTeamLogo(name).then((u) => setUrl(u));
+  }, [name, fallback]);
+  return url;
+}
+
 function teamMeta(name) {
   if (!name) return null;
   const key = String(name).toLowerCase().trim();
@@ -10210,6 +10259,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   // Carte historique uniforme : logo jeu | équipe1 (logo+court) | score centre
   // (en gros) | équipe2 (logo+court) | pts à droite. Aligné pile sur chaque
   // ligne, clic → redirige vers la carte du match terminé.
+  const HistoryTeamLogo = ({ meta, name }) => {
+    const resolved = useTeamLogo(name, meta.logo);
+    const url = resolved || meta.logo;
+    return url
+      ? <img src={url} alt="" style={{ maxWidth: 22, maxHeight: 22, objectFit: "contain" }} />
+      : <div style={{ width: 18, height: 18, borderRadius: 4, background: "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 8, fontWeight: 800 }}>{(meta.short || name || "?").slice(0, 2).toUpperCase()}</div>;
+  };
   const renderHistoryCard = (h, i) => {
     const g = GAME_ICONS[h.game] || GAME_ICONS.valo;
     const m1 = resolveTeam(h.team1);
@@ -10235,7 +10291,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, justifyContent: "flex-end" }}>
           <span style={{ color: "#ddd", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m1.short}</span>
           <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {m1.logo ? <img src={m1.logo} alt="" style={{ maxWidth: 22, maxHeight: 22, objectFit: "contain" }} /> : <div style={{ width: 18, height: 18, borderRadius: 4, background: "#1c1c1c" }} />}
+            <HistoryTeamLogo meta={m1} name={h.team1} />
           </div>
         </div>
         {/* Score au centre : résultat réel en gros, prono dessous */}
@@ -10248,7 +10304,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
         {/* Équipe 2 : logo + nom court */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
           <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {m2.logo ? <img src={m2.logo} alt="" style={{ maxWidth: 22, maxHeight: 22, objectFit: "contain" }} /> : <div style={{ width: 18, height: 18, borderRadius: 4, background: "#1c1c1c" }} />}
+            <HistoryTeamLogo meta={m2} name={h.team2} />
           </div>
           <span style={{ color: "#ddd", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m2.short}</span>
         </div>

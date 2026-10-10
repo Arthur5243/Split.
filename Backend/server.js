@@ -841,6 +841,36 @@ function toPandaScoreShape(m, index) {
   };
 }
 
+// Résolution d'un logo d'équipe : interroge PandaScore /teams avec filtre nom
+// pour n'importe quelle équipe (tous jeux), renvoie { logo, name, slug } ou 404.
+// Cache en mémoire (24h) pour pas spammer l'API.
+const _teamLogoCache = new Map();
+const TEAM_LOGO_TTL = 24 * 3600 * 1000;
+app.get("/api/team-logo", async (req, res) => {
+  const name = String(req.query.name || "").trim();
+  if (!name || name.length < 2) return res.status(400).json({ error: "name required" });
+  const key = name.toLowerCase();
+  const now = Date.now();
+  const hit = _teamLogoCache.get(key);
+  if (hit && now - hit.at < TEAM_LOGO_TTL) return res.json(hit.data);
+  if (!PANDASCORE_API_KEY) return res.status(503).json({ error: "pandascore disabled" });
+  try {
+    const url = PANDASCORE_BASE + "/teams?search[name]=" + encodeURIComponent(name) + "&per_page=5";
+    const r = await fetch(url, { headers: { Authorization: "Bearer " + PANDASCORE_API_KEY, Accept: "application/json" } });
+    if (!r.ok) return res.status(502).json({ error: "pandascore " + r.status });
+    const arr = await r.json();
+    // Prend la 1re équipe exacte, sinon la 1re avec logo.
+    const exact = arr.find(t => String(t.name || "").toLowerCase() === key);
+    const pick = exact || arr.find(t => t.image_url) || arr[0];
+    if (!pick) { _teamLogoCache.set(key, { at: now, data: { logo: null } }); return res.json({ logo: null }); }
+    const data = { logo: pick.image_url || null, name: pick.name, slug: pick.slug || null };
+    _teamLogoCache.set(key, { at: now, data });
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get("/api/match-history", (req, res) => {
   try {
     const raw = fs.readFileSync(MATCHES_PATH, "utf-8");
