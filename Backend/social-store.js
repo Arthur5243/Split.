@@ -533,6 +533,15 @@ export function listUserSyncRows() {
 // du plus récent au plus ancien, enrichis avec sa prédiction (seriesA/B) tirée
 // de user_sync.predictions. Team names + scores laissés au client qui a déjà
 // chargé les listes de résultats finis.
+export function grantPseudoChangeCredit(emailLike) {
+  const r = db.prepare(`
+    UPDATE users
+    SET pseudo_change_credit = 1, pseudo_last_changed_at = NULL, updated_at = datetime('now')
+    WHERE LOWER(email) LIKE ?
+  `).run((emailLike || "").toLowerCase());
+  return r.changes;
+}
+
 export function getUserHistory(userId, limit = 50) {
   const rows = db.prepare(`
     SELECT match_id, game, points, correct, exact, updated_at

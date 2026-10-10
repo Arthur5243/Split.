@@ -271,4 +271,22 @@ try {
   console.log("[merge-boot] arthur.cambin skip:", e.message);
 }
 
+// Grant one-shot : donne 1 crédit de changement de pseudo au compte test
+// "portable" après qu'un bug lui a bouffé son crédit. Guard par un fichier
+// marker sur le volume Railway pour ne tourner qu'une fois.
+try {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const dataDir = process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : "/data";
+  const marker = path.join(dataDir, ".pseudo_credit_portable_v1");
+  if (!fs.existsSync(marker)) {
+    const { grantPseudoChangeCredit } = await import("./social-store.js");
+    const n = grantPseudoChangeCredit("portable.coffee%");
+    try { fs.writeFileSync(marker, new Date().toISOString()); } catch {}
+    console.log(`[grant-boot] portable.coffee*: ${n} compte(s) ont retrouvé un crédit pseudo (one-shot)`);
+  }
+} catch (e) {
+  console.log("[grant-boot] portable skip:", e.message);
+}
+
 export default router;
