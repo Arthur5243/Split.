@@ -65,40 +65,68 @@ function watchAdOverlays() {
   // PETITE pop-up visible qui dépasse une taille minimale et qui n'occupe
   // pas la majorité de l'écran : c'est le cas des petites vignettes centrées
   // (ex: 320x280 au milieu) → cadre collé à l'affiche, pas au backdrop.
+  // Collecte TOUS les descendants d'un élément y compris à travers les
+  // shadow roots. Monetag enveloppe souvent la pop-up dans un shadowRoot que
+  // querySelectorAll normal ne traverse pas.
+  const collectDeep = (root) => {
+    const out = [];
+    const walk = (node) => {
+      if (!node) return;
+      if (node.shadowRoot) walk(node.shadowRoot);
+      const kids = node.children || [];
+      for (let i = 0; i < kids.length; i++) {
+        out.push(kids[i]);
+        walk(kids[i]);
+      }
+    };
+    walk(root);
+    return out;
+  };
+
   const findAdBox = (overlay) => {
     const vw = window.innerWidth, vh = window.innerHeight;
     const overlayRect = overlay.getBoundingClientRect();
     const nearFullScreen = overlayRect.width >= vw * 0.85 && overlayRect.height >= vh * 0.85;
     if (nearFullScreen) {
+      // On cherche à l'intérieur (y compris shadow roots) la plus petite
+      // boîte raisonnable qui N'EST PAS un backdrop plein écran.
+      const descendants = collectDeep(overlay);
       const candidates = [];
-      for (const el of overlay.querySelectorAll("iframe, div, section, article, img")) {
+      for (const el of descendants) {
+        if (!(el instanceof HTMLElement)) continue;
         if (!isVisible(el)) continue;
         const r = el.getBoundingClientRect();
-        if (r.width < 160 || r.height < 120) continue;
-        if (r.width >= vw * 0.9 || r.height >= vh * 0.9) continue;
+        if (r.width < 100 || r.height < 80) continue;      // minimum populaire ad
+        if (r.width >= vw * 0.85 || r.height >= vh * 0.85) continue; // backdrop
         candidates.push(r);
       }
+      // Essai au clic point central : capte souvent la pop-up même quand
+      // elle est dans un sous-arbre inattendu.
+      try {
+        const cx = overlayRect.left + overlayRect.width / 2;
+        const cy = overlayRect.top + overlayRect.height / 2;
+        for (const el of document.elementsFromPoint(cx, cy)) {
+          if (!(el instanceof HTMLElement)) continue;
+          if (el === frame || el === overlay) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width < 100 || r.height < 80) continue;
+          if (r.width >= vw * 0.85 || r.height >= vh * 0.85) continue;
+          candidates.push(r);
+        }
+      } catch {}
       if (candidates.length > 0) {
         candidates.sort((a, b) => (a.width * a.height) - (b.width * b.height));
         return candidates[0];
       }
     }
-    // Fallback : rectangle centré, taille limitée côté desktop à la zone de
-    // l'app Split (#root) pour éviter d'afficher un cadre PUB géant autour
-    // d'une pop-up alors que l'app est centrée dans une colonne étroite.
-    const root = document.getElementById("root");
-    const rootRect = root ? root.getBoundingClientRect() : null;
-    if (rootRect && rootRect.width > 100 && rootRect.height > 100) {
-      // On garde la bbox de la pub, mais clampée à l'intérieur de #root.
-      const left = Math.max(overlayRect.left, rootRect.left);
-      const top = Math.max(overlayRect.top, rootRect.top);
-      const right = Math.min(overlayRect.right, rootRect.right);
-      const bottom = Math.min(overlayRect.bottom, rootRect.bottom);
-      if (right - left > 100 && bottom - top > 100) {
-        return { left, top, width: right - left, height: bottom - top };
-      }
-    }
-    return overlayRect;
+    // Fallback : rectangle centré de taille raisonnable au milieu de l'écran.
+    // Taille max 420×320 (format pop-up classique) sur desktop pour que le
+    // cadre reste proche de la pub même quand on n'arrive pas à la détecter.
+    const maxW = Math.min(vw - 40, 420);
+    const maxH = Math.min(vh - 40, 320);
+    const cx = overlayRect.left + overlayRect.width / 2;
+    const cy = overlayRect.top + overlayRect.height / 2;
+    return { left: cx - maxW / 2, top: cy - maxH / 2, width: maxW, height: maxH };
   };
 
   const buildFrame = () => {
