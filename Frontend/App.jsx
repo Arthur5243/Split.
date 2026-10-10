@@ -5005,10 +5005,12 @@ function RankBadgeCompact({ points, onClick }) {
       // Unranked: image dépasse ~10px sur chaque côté (H+V), centrée.
       // Réduit le dépassement pour éviter que le sujet paraisse décalé à gauche.
       backgroundImage: `url(${bgImg})`,
-      // Spec : on étire l'image pour qu'elle couvre pile le cadre, pas de
-      // bord vide, pas de crop. L'image des rangs est pensée pour fonctionner
-      // en légèrement déformée (gradient radial + éclats aux coins).
-      backgroundSize: "100% 100%",
+      // Les PNG de rang ont des bords transparents / sombres : on zoom l'image
+      // au-delà du cadre pour couper ces bords vides. backgroundColor met la
+      // couleur du rang en dessous, comme ça même si une marge transparente
+      // dépasse, c'est teinté au lieu d'être noir vide.
+      backgroundColor: isUnranked ? "#1c1c1c" : `rgba(${rgb},0.35)`,
+      backgroundSize: "130% 130%",
       backgroundPosition: "center center",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
