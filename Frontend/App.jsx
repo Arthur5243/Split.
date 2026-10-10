@@ -4389,7 +4389,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       </div>
 
       <div style={{ position: "relative", margin: "0 12px 12px", borderRadius: 16, overflow: "hidden", flexShrink: 0, height: 130 }}>
-        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 70%" }} />
+        <img src={REWARDS_BANNER} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.1) 100%)" }} />
         <div style={{ position: "relative", padding: "16px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
@@ -10190,51 +10190,70 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   // Carte d'historique universelle : réutilisée côté profil perso (data riche)
   // ET côté profil spectateur (data réduite venant de /api/social/history,
   // enrichie côté client via les listes de résultats finis chargées).
-  const GAME_BADGES = {
-    valo: { label: "Valorant", color: "#ff4655", bg: "rgba(255,70,85,0.14)", border: "rgba(255,70,85,0.3)" },
-    cs2:  { label: "CS2",      color: "#f0a500", bg: "rgba(240,165,0,0.14)", border: "rgba(240,165,0,0.3)" },
-    rl:   { label: "RL",       color: "#3B82F6", bg: "rgba(59,130,246,0.14)", border: "rgba(59,130,246,0.3)" },
+  // Logos de jeu réels (comme la navigation du bas) au lieu de pills texte.
+  const GAME_ICONS = {
+    valo: { img: NAV_VALORANT_IMG, color: "#ff4655" },
+    cs2:  { img: NAV_CSGO_IMG,     color: "#f0a500" },
+    rl:   { img: NAV_RL_IMG,       color: "#3B82F6" },
   };
+  // Résolution logo équipe : d'abord TEAM_META (logos blancs/visibles), puis
+  // le cache fusionné (valo+cs2+rl+teamLogoCache).
+  const mergedTeamCache = { ...teamLogoCache, ...(valoLogoCache || {}), ...(cs2LogoCache || {}), ...(rlLogoCache || {}) };
+  const resolveTeam = (name) => {
+    if (!name) return { logo: null, short: "—", long: "—" };
+    const meta = teamMeta(name);
+    if (meta?.logo) return meta;
+    const k = Object.keys(mergedTeamCache).find(x => x.toLowerCase() === String(name).toLowerCase());
+    return { ...meta, logo: k ? mergedTeamCache[k] : null };
+  };
+
+  // Carte historique uniforme : logo jeu | équipe1 (logo+court) | score centre
+  // (en gros) | équipe2 (logo+court) | pts à droite. Aligné pile sur chaque
+  // ligne, clic → redirige vers la carte du match terminé.
   const renderHistoryCard = (h, i) => {
-    const g = GAME_BADGES[h.game] || GAME_BADGES.valo;
-    const t1 = h.team1 || "—";
-    const t2 = h.team2 || "—";
-    const logo1 = getGameLogo(h.game, t1);
-    const logo2 = getGameLogo(h.game, t2);
+    const g = GAME_ICONS[h.game] || GAME_ICONS.valo;
+    const m1 = resolveTeam(h.team1);
+    const m2 = resolveTeam(h.team2);
     const pts = h.pts || 0;
     const ptsColor = pts >= 100 ? "#CCF71D" : pts > 0 ? "#9ac018" : "#555";
-    const resultBadge = h.actualSeries
-      ? <span style={{ fontSize: 20, fontWeight: 900, color: "#fff", letterSpacing: "0.02em" }}>{h.actualSeries}</span>
-      : null;
-    const predLine = h.predSeries
-      ? <p style={{ fontSize: 10.5, color: h.correct ? "#7ec850" : "#c14a4a", marginTop: 2, fontWeight: 600 }}>Ton pari {h.predSeries} {h.correct ? "✓" : "✗"}</p>
-      : null;
     return (
       <button
         key={h.id || i}
         onClick={() => onViewMatch && onViewMatch(h.id, h.game)}
         style={{
-          display: "flex", alignItems: "center", gap: 10, padding: "11px 12px",
+          display: "grid",
+          gridTemplateColumns: "28px 1fr auto 1fr 48px",
+          alignItems: "center", gap: 8, padding: "10px 10px",
           background: "linear-gradient(135deg, #141414 0%, #0e0e0e 100%)",
           border: "1px solid #202020", borderRadius: 14,
           cursor: "pointer", width: "100%", textAlign: "left",
         }}
       >
-        <span style={{ background: g.bg, border: `1px solid ${g.border}`, color: g.color, fontSize: 9, fontWeight: 900, letterSpacing: "0.08em", padding: "3px 7px", borderRadius: 6, textTransform: "uppercase", flexShrink: 0 }}>{g.label}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 6, background: "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-            {logo1 ? <img src={logo1} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <span style={{ color: "#555", fontSize: 9, fontWeight: 800 }}>{t1.slice(0, 2).toUpperCase()}</span>}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-            <p style={{ color: "#ddd", fontSize: 11.5, fontWeight: 700, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t1} <span style={{ color: "#555", fontWeight: 500 }}>vs</span> {t2}</p>
-            {predLine}
-          </div>
-          <div style={{ width: 24, height: 24, borderRadius: 6, background: "#1c1c1c", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-            {logo2 ? <img src={logo2} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} /> : <span style={{ color: "#555", fontSize: 9, fontWeight: 800 }}>{t2.slice(0, 2).toUpperCase()}</span>}
+        {/* Logo jeu */}
+        <img src={g.img} alt="" style={{ width: 24, height: 24, objectFit: "contain", filter: `drop-shadow(0 0 4px ${g.color}60)` }} />
+        {/* Équipe 1 : logo + nom court */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, justifyContent: "flex-end" }}>
+          <span style={{ color: "#ddd", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m1.short}</span>
+          <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {m1.logo ? <img src={m1.logo} alt="" style={{ maxWidth: 22, maxHeight: 22, objectFit: "contain" }} /> : <div style={{ width: 18, height: 18, borderRadius: 4, background: "#1c1c1c" }} />}
           </div>
         </div>
-        {resultBadge && <div style={{ marginLeft: 6, textAlign: "right" }}>{resultBadge}</div>}
-        <span style={{ color: ptsColor, fontSize: 13, fontWeight: 900, minWidth: 40, textAlign: "right" }}>{pts > 0 ? "+" + pts : "0"}</span>
+        {/* Score au centre : résultat réel en gros, prono dessous */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1, minWidth: 54 }}>
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff", letterSpacing: "0.02em", lineHeight: 1 }}>{h.actualSeries || "–"}</span>
+          {h.predSeries && (
+            <span style={{ fontSize: 9, fontWeight: 700, color: h.correct ? "#7ec850" : "#c14a4a", lineHeight: 1 }}>{h.predSeries} {h.correct ? "✓" : "✗"}</span>
+          )}
+        </div>
+        {/* Équipe 2 : logo + nom court */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {m2.logo ? <img src={m2.logo} alt="" style={{ maxWidth: 22, maxHeight: 22, objectFit: "contain" }} /> : <div style={{ width: 18, height: 18, borderRadius: 4, background: "#1c1c1c" }} />}
+          </div>
+          <span style={{ color: "#ddd", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m2.short}</span>
+        </div>
+        {/* Points gagnés */}
+        <span style={{ color: ptsColor, fontSize: 13, fontWeight: 900, textAlign: "right" }}>{pts > 0 ? "+" + pts : "0"}</span>
       </button>
     );
   };
@@ -11085,7 +11104,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             </div>
             <p style={{ color: "#888", fontSize: "12px" }} className="mb-2">{T.classementSubtitle}</p>
 
-            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center 70%", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
+            <button onClick={() => setShowRewards(true)} className="relative overflow-hidden w-full" style={{ height: "76px", backgroundColor: "#1a1a1a", backgroundImage: `url(${CLASSEMENT_BANNER})`, backgroundSize: "cover", backgroundPosition: "center 20%", backgroundRepeat: "no-repeat", display: "block", borderRadius: 14, border: "none" }}>
               <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.5) 100%)" }} />
               <div className="absolute flex items-center gap-2" style={{ right: "14px", top: "50%", transform: "translateY(-50%)" }}>
@@ -11483,7 +11502,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           <div style={{ flex: 1, minHeight: 100 }} />
           <div onClick={(e) => e.stopPropagation()} className="overflow-hidden flex flex-col" style={{ background: "#111", maxHeight: "calc(100% - 100px)", width: "min(370px, 92%)", margin: "0 auto", borderRadius: "20px 20px 0 0" }}>
             <div className="relative overflow-hidden" style={{ height: "120px", borderRadius: "20px 20px 0 0" }}>
-              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 70%" }} />
+              <img src={CLASSEMENT_BANNER} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 20%" }} />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #111 0%, transparent 60%)" }} />
               <button onClick={() => setShowRewards(false)} className="absolute" style={{ top: 12, right: 12 }}><X size={20} color="#999" /></button>
             </div>
