@@ -5011,7 +5011,7 @@ function RankBadgeCompact({ points, onClick }) {
       // dépasse, c'est teinté au lieu d'être noir vide.
       backgroundColor: isUnranked ? "#1c1c1c" : `rgba(${rgb},0.35)`,
       backgroundSize: "118% 118%",
-      backgroundPosition: "55% 60%",
+      backgroundPosition: "55% 80%",
       backgroundRepeat: "no-repeat",
       border: `1px solid rgba(${isUnranked ? "160,165,175" : rgb},${isUnranked ? 0.28 : 0.5})`,
       boxShadow: isUnranked ? "0 0 12px rgba(180,185,195,0.06)" : `0 0 16px rgba(${rgb},0.2)`,
