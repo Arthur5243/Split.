@@ -29,6 +29,9 @@ let adLabelWatching = false;
 // calque (collé à la pop-up). L'utilisateur veut un cadre qui "colle" vraiment
 // autour, pas un gros halo qui dépasse.
 const AD_FRAME_PAD = -2;
+// Padding vertical supplémentaire pour l'encadré pub : agrandit sa hauteur
+// (au-dessus et en-dessous de la pop-up) pour mieux la contenir visuellement.
+const AD_FRAME_PAD_V = 80;
 function watchAdOverlays() {
   if (adLabelWatching || typeof MutationObserver === "undefined") return;
   adLabelWatching = true;
@@ -160,9 +163,9 @@ function watchAdOverlays() {
     const box = findAdBox(overlay);
     const tabH = 36;
     const left = Math.max(2, box.left - AD_FRAME_PAD);
-    const top = Math.max(2 + tabH, box.top - AD_FRAME_PAD);
+    const top = Math.max(2 + tabH, box.top - AD_FRAME_PAD_V);
     const right = Math.min(vw - 2, box.left + box.width + AD_FRAME_PAD);
-    const bottom = Math.min(vh - 2, box.top + box.height + AD_FRAME_PAD);
+    const bottom = Math.min(vh - 2, box.top + box.height + AD_FRAME_PAD_V);
     Object.assign(frame.style, { left: `${left}px`, top: `${top}px`, width: `${Math.max(80, right - left)}px`, height: `${Math.max(60, bottom - top)}px` });
   };
 
