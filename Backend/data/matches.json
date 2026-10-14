@@ -784,6 +784,20 @@
     "match_id": 2609
   },
   {
+    "pandascore_id": 1716578,
+    "tournament_id": "PANDA_22081",
+    "tournament_name": "Playoffs",
+    "tier": "Monsters Reloaded",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Grand Final: FF vs BBL",
+    "team1": "Fire Flux Esports",
+    "team2": "BBL Esports",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2610
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
