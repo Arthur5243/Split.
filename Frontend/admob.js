@@ -29,10 +29,10 @@ let adLabelWatching = false;
 // calque (collé à la pop-up). L'utilisateur veut un cadre qui "colle" vraiment
 // autour, pas un gros halo qui dépasse.
 const AD_FRAME_PAD = -2;
-// Padding vertical séparé top/bot. Top = +30, bottom étendu de 30px en-dessous
-// du bord d'origine (-2). Sides inchangés.
-const AD_FRAME_PAD_TOP = 30;
-const AD_FRAME_PAD_BOT = 30;
+// Padding vertical séparé top/bot. Top et bottom à 20 (−10 chacun pour centrer
+// mieux au milieu). Sides inchangés.
+const AD_FRAME_PAD_TOP = 20;
+const AD_FRAME_PAD_BOT = 20;
 function watchAdOverlays() {
   if (adLabelWatching || typeof MutationObserver === "undefined") return;
   adLabelWatching = true;

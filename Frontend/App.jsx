@@ -2837,7 +2837,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // - Fallback immédiat à 140px pour que le background ait une hauteur
   //   réaliste au premier affichage, avant que la mesure ait pu réussir.
   //   Résultat : le fond ne saute plus au premier clic Map Score.
-  const [frozenBgH, setFrozenBgH] = useState(140);
+  // null = pas encore mesuré → le bg utilise 100% de la hauteur de la card
+  // (évite le gros bloc noir en bas si la mesure arrive après le 1er paint).
+  // Une fois mesuré, on fige la valeur en px et le bg ne bouge plus pendant
+  // les expands.
+  const [frozenBgH, setFrozenBgH] = useState(null);
   const frozenRef = useRef(null);
   useLayoutEffect(() => {
     if (frozenRef.current != null) return;
