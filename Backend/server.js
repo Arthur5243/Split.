@@ -69,6 +69,13 @@ import("./admin-db-transfer.js").then(({ mountAdminDbTransfer }) => mountAdminDb
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
+// Backup users (hors email/mdp — Supabase) dans data-backup/users.json.gz
+// toutes les 6h, pour survivre à un redémarrage/perte Railway.
+import("./github-user-backup.js").then(({ startUsersBackupWorker, mountUsersBackupEndpoints }) => {
+  startUsersBackupWorker();
+  mountUsersBackupEndpoints(app);
+});
+
 // VCT Champions 2026 bracket aggregator (multi-source: PandaScore + fallbacks)
 import("./valorant-champions-bracket.js").then(({ mountChampionsBracketEndpoint }) => mountChampionsBracketEndpoint(app));
 import("./generic-bracket.js").then(({ mountGenericBracketEndpoint }) => mountGenericBracketEndpoint(app));
@@ -2090,6 +2097,8 @@ app.get("/api/live-scraped", (req, res) => {
   }
   res.json(entries);
 });
+
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.post("/api/capture-card", async (req, res) => {
   try {
