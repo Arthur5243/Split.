@@ -11,15 +11,15 @@
     "build:aliases": "node scripts/build-team-aliases.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^13.0.3",
     "cheerio": "1.0.0-rc.12",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "puppeteer": "^23.0.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "graphql": "^16.9.0",
     "graphql-http": "^1.22.4",
+    "jsonwebtoken": "^9.0.2",
+    "puppeteer": "^23.0.0",
     "ruru": "^2.0.0-beta.16"
   }
 }
