@@ -98,5 +98,18 @@ export function mountAdminDbTransfer(app) {
     }
   );
 
-  console.log("[admin-db-transfer] endpoints /api/admin/{list,download,upload}-db montés (DATA_DIR=" + DATA_DIR + ")");
+  // Supprime les fichiers WAL/SHM obsolètes après un upload-db manuel.
+  // SQLite peut rejouer un vieux WAL par-dessus la DB fraîchement uploadée
+  // et écraser les données restaurées. Appeler cet endpoint PUIS redeploy.
+  app.post("/api/admin/clean-wal", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const removed = [];
+    for (const name of ["matches.db-wal", "matches.db-shm", "cs2-matches.db-wal", "cs2-matches.db-shm"]) {
+      const full = path.join(DATA_DIR, name);
+      try { if (fs.existsSync(full)) { fs.unlinkSync(full); removed.push(name); } } catch (e) { console.error("[clean-wal]", name, e.message); }
+    }
+    res.json({ ok: true, removed, note: "redeploy le service pour recharger la DB sans le WAL" });
+  });
+
+  console.log("[admin-db-transfer] endpoints /api/admin/{list,download,upload,clean-wal}-db montés (DATA_DIR=" + DATA_DIR + ")");
 }
