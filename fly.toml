@@ -1,0 +1,33 @@
+app = "split-01"
+primary_region = "cdg"
+
+[build]
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+  DB_PATH = "/data/matches.db"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/api/health"
+    timeout = "5s"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[mounts]]
+  source = "split_data"
+  destination = "/data"
+  initial_size = "1gb"
