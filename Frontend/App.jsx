@@ -12709,6 +12709,18 @@ function AuthScreen({ onAuth }) {
           <p style={{ color: "#555", fontSize: 10, textAlign: "center", marginBottom: 16, fontStyle: "italic" }}>Connexion Google momentanément indisponible</p>
         )}
 
+        {(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && (
+          <button onClick={async () => {
+            try {
+              const r = await fetch(API + "/api/auth/dev-login", { method: "POST" });
+              const d = await r.json();
+              if (d.token) acceptSession(d.token, d.user);
+            } catch (e) { setError("Backend local non démarré"); }
+          }} style={{ width: "100%", background: "transparent", color: "#555", border: "1px solid #333", borderRadius: 12, padding: "12px", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 8 }}>
+            Accès local 1h (dev)
+          </button>
+        )}
+
       </div>
     </div>
   );
@@ -12821,7 +12833,8 @@ export default function ClutchApp() {
   const [authUser, setAuthUser] = useState(() => {
     try { const u = JSON.parse(localStorage.getItem("split_auth_user")); return u && u.id ? u : null; } catch { return null; }
   });
-  const [showAuth, setShowAuth] = useState(() => !localStorage.getItem("split_auth_user"));
+  const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const [showAuth, setShowAuth] = useState(() => isLocalDev ? false : !localStorage.getItem("split_auth_user"));
   const showAuthRef = useRef(showAuth);
   useEffect(() => { showAuthRef.current = showAuth; }, [showAuth]);
   const [showMigrationNotice, setShowMigrationNotice] = useState(() => {
@@ -12864,6 +12877,7 @@ export default function ClutchApp() {
   }
 
   useEffect(() => {
+    if (isLocalDev) return;
     const userJson = localStorage.getItem("split_auth_user");
     const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
 

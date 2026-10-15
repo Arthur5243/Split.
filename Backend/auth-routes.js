@@ -212,6 +212,24 @@ router.get("/api/auth/pseudo-status", authMiddleware, (req, res) => {
   res.json(canChangePseudo(req.userId));
 });
 
+router.post("/api/auth/dev-login", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "";
+  const isLocal = ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+  if (!isLocal) return res.status(403).json({ error: "Local only" });
+  try {
+    let user = getUserByPseudo("DevLocal");
+    if (!user) {
+      const id = generateUserId();
+      createAuthUser({ id, pseudo: "DevLocal", email: "dev@localhost", password_hash: null, provider: "local" });
+      user = getUser(id);
+    }
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: "1h" });
+    res.json({ token, user: { id: user.id, pseudo: user.pseudo, email: user.email, provider: "local" } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.delete("/api/auth/account", authMiddleware, async (req, res) => {
   try {
     const user = getUser(req.userId);
