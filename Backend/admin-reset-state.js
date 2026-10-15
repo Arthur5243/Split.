@@ -187,5 +187,28 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
-  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users ready (v2)");
+  // POST /api/admin/set-user-points?userId=X&points=N
+  //   ou  ?pseudo=X&points=N
+  //   Overrride direct des points d'un user (sans toucher à XP ou aux breakdowns par jeu).
+  app.post("/api/admin/set-user-points", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const userId = req.query.userId;
+    const pseudo = req.query.pseudo;
+    const points = Number(req.query.points);
+    if (!userId && !pseudo) return res.status(400).json({ error: "userId or pseudo required" });
+    if (!Number.isFinite(points) || points < 0) return res.status(400).json({ error: "points must be a non-negative number" });
+    try {
+      const db = new Database(DB_PATH);
+      const where = userId ? "id = ?" : "pseudo = ?";
+      const param = userId || pseudo;
+      const result = db.prepare("UPDATE users SET points = ? WHERE " + where).run(points, param);
+      const user = db.prepare("SELECT id, pseudo, points FROM users WHERE " + where).get(param);
+      db.close();
+      res.json({ ok: true, changed: result.changes, user });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users + /set-user-points ready (v3)");
 }
