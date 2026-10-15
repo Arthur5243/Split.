@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/download", "destination": "/download.html" }
+  ],
+  "trailingSlash": false
+}
