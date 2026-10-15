@@ -19,6 +19,8 @@ RUN npm install --omit=dev
 
 COPY Backend/ .
 
+RUN node --input-type=module -e "import Database from 'better-sqlite3'; new Database(':memory:'); console.log('better-sqlite3 ok');"
+
 RUN mkdir -p /data
 
 ENV NODE_ENV=production
