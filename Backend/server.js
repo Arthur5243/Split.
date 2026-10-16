@@ -1521,12 +1521,12 @@ app.get("/api/vlr-events", async (req, res) => {
 
       const info = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
 
-      // Priorité : ongoing > completed récent > upcoming. On évite les events
-      // "upcoming" tant qu'il reste un ongoing/completed avec des matches.
+      // On n'affiche QUE les events ongoing ou completed (jamais upcoming,
+      // car vide → bracket vide côté app). Priorité : ongoing > completed.
+      if (e.status !== "ongoing" && e.status !== "completed") continue;
       const prefer = (prev, next) => {
         if (!prev) return true;
-        const rank = (s) => s === "ongoing" ? 3 : s === "completed" ? 2 : 1;
-        return rank(next.status) > rank(prev.status);
+        return next.status === "ongoing" && prev.status !== "ongoing";
       };
       if (t.includes("masters")) {
         if (prefer(result.masters, { ...info, status: e.status })) result.masters = info;
