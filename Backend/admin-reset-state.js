@@ -187,6 +187,42 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
+  // POST /api/admin/add-points-bonus?pseudo=X&points=N&game=valo
+  //   Ajoute un bonus persistant dans user_match_points (match_id fictif
+  //   `bonus-manual-<ts>`) + recalcule total users.points. Le worker ne
+  //   l'écrase pas car il ne touche pas aux match_id inconnus.
+  app.post("/api/admin/add-points-bonus", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const pseudo = req.query.pseudo;
+    const userId = req.query.userId;
+    const points = Number(req.query.points);
+    const game = (req.query.game || "valo").toLowerCase();
+    if (!userId && !pseudo) return res.status(400).json({ error: "userId or pseudo required" });
+    if (!Number.isFinite(points) || points === 0) return res.status(400).json({ error: "points must be a non-zero number" });
+    if (!["valo", "cs2", "rl"].includes(game)) return res.status(400).json({ error: "game must be valo|cs2|rl" });
+    try {
+      const db = new Database(DB_PATH);
+      const u = userId
+        ? db.prepare("SELECT id FROM users WHERE id = ?").get(userId)
+        : db.prepare("SELECT id FROM users WHERE pseudo = ?").get(pseudo);
+      if (!u) { db.close(); return res.status(404).json({ error: "user not found" }); }
+      const matchId = `bonus-manual-${Date.now()}`;
+      const now = new Date().toISOString();
+      db.transaction(() => {
+        db.prepare(`INSERT INTO user_match_points (user_id, match_id, game, points, correct, exact, updated_at) VALUES (?, ?, ?, ?, 0, 0, ?)`).run(u.id, matchId, game, points, now);
+        const rows = db.prepare(`SELECT game, SUM(points) AS pts, COUNT(*) AS n, SUM(correct) AS c, SUM(exact) AS e FROM user_match_points WHERE user_id = ? GROUP BY game`).all(u.id);
+        const by = Object.fromEntries(rows.map((r) => [r.game, r]));
+        const sum = (k) => rows.reduce((s, r) => s + (r[k] || 0), 0);
+        db.prepare(`UPDATE users SET points = ?, points_valo = ?, points_cs2 = ?, points_rl = ?, bets_total = ?, bets_correct = ?, bets_exact = ? WHERE id = ?`).run(sum("pts"), by.valo?.pts || 0, by.cs2?.pts || 0, by.rl?.pts || 0, sum("n"), sum("c"), sum("e"), u.id);
+      })();
+      const user = db.prepare("SELECT id, pseudo, points, points_valo, points_cs2, points_rl FROM users WHERE id = ?").get(u.id);
+      db.close();
+      res.json({ ok: true, matchId, user });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // POST /api/admin/set-user-points?userId=X&points=N
   //   ou  ?pseudo=X&points=N
   //   Overrride direct des points d'un user (sans toucher à XP ou aux breakdowns par jeu).
