@@ -1458,11 +1458,39 @@ const VCT_REGION_MAP = {
   CN: ["china", " cn "],
 };
 
+// vlrggapi est mort (ancien Railway down). On scrape vlr.gg/events direct.
+// Mappe le HTML des cards vers le même shape {event_id, title, status, dates}
+// que l'ancien vlrggapi, pour que le reste du code reste identique.
 async function fetchVlrEvents(query) {
-  const r = await fetch(VLRGGAPI_BASE + "/v2/events?q=" + query + "&page=1");
-  if (!r.ok) return [];
-  const b = await r.json();
-  return (b && b.data && b.data.segments) || [];
+  try {
+    const { load } = await import("cheerio");
+    const url = query === "completed"
+      ? "https://www.vlr.gg/events?page=1&status=completed"
+      : "https://www.vlr.gg/events?page=1";
+    const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; SplitBot/1.0)" } });
+    if (!r.ok) return [];
+    const html = await r.text();
+    const $ = load(html);
+    const out = [];
+    $("a.event-item, a.wf-card.event-item").each((_, el) => {
+      const $el = $(el);
+      const href = $el.attr("href") || "";
+      const m = href.match(/\/event\/(\d+)\//);
+      if (!m) return;
+      const title = $el.find(".event-item-title").text().trim();
+      const dates = $el.find(".event-item-desc-item.mod-dates").text().replace(/\s+/g, " ").trim();
+      let status = "upcoming";
+      const statusText = $el.find(".event-item-desc-item-status").text().toLowerCase();
+      if (statusText.includes("ongoing")) status = "ongoing";
+      else if (statusText.includes("completed")) status = "completed";
+      else if (query === "completed") status = "completed";
+      out.push({ event_id: m[1], title, status, dates });
+    });
+    return out;
+  } catch (e) {
+    console.error("[vlr-events] scrape error:", e.message);
+    return [];
+  }
 }
 
 app.get("/api/vlr-events", async (req, res) => {
