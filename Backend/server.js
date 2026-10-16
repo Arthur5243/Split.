@@ -1573,7 +1573,10 @@ app.get("/api/champions-groups", async (req, res) => {
     );
     const champSerie = (series || []).find((s) => {
       const n = (s.full_name || s.name || "").toLowerCase();
-      return n.includes("champions") && !n.includes("qualifier");
+      // Exclure game changers (championship féminin), qualifiers, challengers.
+      if (n.includes("game changers") || n.includes("game-changers") || n.includes("gc championship")) return false;
+      if (n.includes("qualifier") || n.includes("challengers")) return false;
+      return n.includes("champions");
     });
     if (!champSerie) {
       champGroupsCache.data = { groups: [], playoffs: [] };
