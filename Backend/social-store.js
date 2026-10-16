@@ -633,12 +633,19 @@ export function getUserHistory(userId, limit = 50) {
 }
 
 export function saveUserMatchPoints(userId, entries) {
+  // Points lock : chaque entrée de user_match_points NE PEUT QUE MONTER.
+  // Si le worker recalcule un match avec un score inférieur à ce qui est déjà
+  // enregistré, on garde l'ancien. Même règle pour les totaux users.* .
+  // Seul un reset explicite (reset-user-state / delete-all-users) remet à 0.
   const upsert = db.prepare(`
     INSERT INTO user_match_points (user_id, match_id, game, points, correct, exact, updated_at)
     VALUES (@userId, @matchId, @game, @points, @correct, @exact, @now)
     ON CONFLICT(user_id, match_id) DO UPDATE SET
-      game = excluded.game, points = excluded.points, correct = excluded.correct,
-      exact = excluded.exact, updated_at = excluded.updated_at
+      game = excluded.game,
+      points = MAX(user_match_points.points, excluded.points),
+      correct = MAX(user_match_points.correct, excluded.correct),
+      exact = MAX(user_match_points.exact, excluded.exact),
+      updated_at = excluded.updated_at
   `);
   const now = new Date().toISOString();
   db.transaction(() => {
@@ -649,11 +656,22 @@ export function saveUserMatchPoints(userId, entries) {
     `).all(userId);
     const by = Object.fromEntries(rows.map((r) => [r.game, r]));
     const sum = (k) => rows.reduce((s, r) => s + (r[k] || 0), 0);
+    const prev = db.prepare(`SELECT points, points_valo, points_cs2, points_rl, bets_total, bets_correct, bets_exact FROM users WHERE id = ?`).get(userId) || {};
+    const max = (a, b) => Math.max(Number(a) || 0, Number(b) || 0);
     db.prepare(`
       UPDATE users SET points = ?, points_valo = ?, points_cs2 = ?, points_rl = ?,
         bets_total = ?, bets_correct = ?, bets_exact = ?
       WHERE id = ?
-    `).run(sum("pts"), by.valo?.pts || 0, by.cs2?.pts || 0, by.rl?.pts || 0, sum("n"), sum("c"), sum("e"), userId);
+    `).run(
+      max(prev.points, sum("pts")),
+      max(prev.points_valo, by.valo?.pts || 0),
+      max(prev.points_cs2, by.cs2?.pts || 0),
+      max(prev.points_rl, by.rl?.pts || 0),
+      max(prev.bets_total, sum("n")),
+      max(prev.bets_correct, sum("c")),
+      max(prev.bets_exact, sum("e")),
+      userId
+    );
   })();
 }
 
