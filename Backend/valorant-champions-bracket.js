@@ -5,16 +5,9 @@
 const PANDA_KEY = process.env.PANDASCORE_API_KEY || "";
 const PANDA_BASE = "https://api.pandascore.co";
 
-// VCT Champions 2026 (Shanghai) — hardcoded IDs discovered via PandaScore API
-const CHAMPIONS_SERIE_ID = 10953;
-const GROUP_TOURNAMENT_IDS = {
-  A: 21881,
-  B: 21882,
-  C: 21883,
-  D: 21884,
-};
-const PLAYOFFS_TOURNAMENT_ID = 21917;
-
+// VCT Champions série courante — serieId découvert dynamiquement.
+// Si on hardcode le serieId, dès que la Champions suivante démarre il faut push.
+// On prend la série dont le full_name contient "Champions" la plus récente.
 const CACHE_TTL_MS = 10 * 60 * 1000;
 let cache = null;
 let cacheAt = 0;
@@ -25,6 +18,15 @@ async function pandaFetch(path) {
   const r = await fetch(url, { headers: { Authorization: "Bearer " + PANDA_KEY } });
   if (!r.ok) throw new Error("panda HTTP " + r.status + " for " + path);
   return r.json();
+}
+
+async function findChampionsSerie() {
+  // Toutes les séries Valo tier S triées par begin_at desc.
+  const series = await pandaFetch("/valorant/series?filter[tier]=s&sort=-begin_at");
+  // On garde la plus récente dont le full_name/name contient "Champions".
+  const champ = series.find((s) => /champions/i.test(s.full_name || s.name || ""));
+  if (!champ) throw new Error("no Champions serie found");
+  return { id: champ.id, name: champ.full_name || champ.name };
 }
 
 // Map PandaScore match to internal format.
@@ -84,30 +86,31 @@ function buildStandings(teams, matches) {
   return ranked;
 }
 
-async function fetchGroup(letter, tournamentId) {
-  // Get teams and matches for this tournament
-  const [teamsRaw, matchesRaw] = await Promise.all([
-    pandaFetch("/valorant/tournaments/" + tournamentId + "/teams").catch(() => []),
-    pandaFetch("/valorant/tournaments/" + tournamentId + "/matches").catch(() => []),
-  ]);
-  const teams = teamsRaw.map((t) => ({
-    id: t.id,
-    name: t.name,
-    acronym: t.acronym,
-    logo: t.image_url,
+function tournamentToGroup(t) {
+  // L'objet tournament PandaScore inclut teams + matches embedded.
+  // /tournaments/:id/teams et /:id/matches sont 404 donc on utilise ça.
+  const teams = (t.teams || []).map((x) => ({
+    id: x.id,
+    name: x.name,
+    acronym: x.acronym,
+    logo: x.image_url,
   }));
-  const matches = matchesRaw.map(normalizeMatch);
+  const matches = (t.matches || []).map(normalizeMatch);
+  const letter = (t.name || "").replace(/^Group\s+/i, "");
   const standings = buildStandings(teams, matches);
   return { name: letter, teams: standings, matches };
 }
 
 async function buildBracket() {
-  // Groups in parallel
-  const groupPromises = Object.entries(GROUP_TOURNAMENT_IDS).map(([letter, id]) => fetchGroup(letter, id));
-  // Playoffs
-  const playoffsMatchesPromise = pandaFetch("/valorant/tournaments/" + PLAYOFFS_TOURNAMENT_ID + "/matches").catch(() => []);
-  const [groupsResults, playoffsRaw] = await Promise.all([Promise.all(groupPromises), playoffsMatchesPromise]);
-  const playoffMatches = playoffsRaw.map(normalizeMatch);
+  const serie = await findChampionsSerie();
+  // Un seul appel renvoie tous les tournois (groups + playoffs) avec teams/matches.
+  const tournaments = await pandaFetch("/valorant/tournaments?filter[serie_id]=" + serie.id);
+  const groupTournaments = tournaments.filter((t) => /^group\s+/i.test(t.name || ""));
+  const playoffsTournament = tournaments.find((t) => /playoff/i.test(t.name || ""));
+  const groups = groupTournaments
+    .map(tournamentToGroup)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const playoffMatches = ((playoffsTournament && playoffsTournament.matches) || []).map(normalizeMatch);
   const playoffs = {
     upper: playoffMatches.filter((m) => m.phase === "upper" || m.phase === "grand-final"),
     lower: playoffMatches.filter((m) => m.phase === "lower"),
@@ -115,8 +118,8 @@ async function buildBracket() {
     all: playoffMatches,
   };
   return {
-    event: { name: "VCT Champions 2026", serieId: CHAMPIONS_SERIE_ID },
-    groups: groupsResults,
+    event: { name: serie.name, serieId: serie.id },
+    groups,
     playoffs,
     updatedAt: new Date().toISOString(),
   };
