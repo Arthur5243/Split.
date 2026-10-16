@@ -2800,8 +2800,22 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const running = match.status === "running";
   const seriesA = (pred && pred.seriesA) || "";
   const seriesB = (pred && pred.seriesB) || "";
-  const expanded = pred && pred.expanded;
-  const games = (pred && pred.games) || [];
+  // Auto-expand dès qu'un prono série est entré : évite que l'input map
+  // reste caché quand onSeriesChange a échoué à poser expanded=true.
+  const expanded = (pred && pred.expanded) || (seriesA !== "" && seriesB !== "");
+  // Si on a un prono série valide mais games vide (import depuis sync /
+  // depuis vue compacte où expanded n'a jamais été true), on régénère le
+  // tableau à la volée pour que les inputs Map apparaissent.
+  const games = (() => {
+    const g = (pred && pred.games) || [];
+    const sA = parseInt(seriesA, 10);
+    const sB = parseInt(seriesB, 10);
+    const expected = Number.isFinite(sA) && Number.isFinite(sB) ? sA + sB : 0;
+    if (expected > 0 && g.length !== expected) {
+      return Array.from({ length: expected }, (_, i) => g[i] || { a: "", b: "" });
+    }
+    return g;
+  })();
   const bo = match.number_of_games || 3;
   const winsNeeded = bo >= 7 ? 4 : bo === 5 ? 3 : 2;
   const validBo = bo >= 7 ? [[4,0],[4,1],[4,2],[4,3],[3,4],[2,4],[1,4],[0,4]] : bo === 5 ? [[3,0],[3,1],[3,2],[2,3],[1,3],[0,3]] : [[2,0],[2,1],[1,2],[0,2]];
@@ -14558,8 +14572,15 @@ export default function ClutchApp() {
     setPredictions((prev) => {
       const m = prev[matchId];
       if (!m) return prev;
-      const games = m.games.map((g, i) => (i === gameIndex ? { ...g, [team]: value } : g));
-      const next = { ...prev, [matchId]: { ...m, games } };
+      // Si games[] est vide ou plus court que gameIndex (ex: prono fait depuis
+      // la vue compacte où le tableau n'a pas été initialisé), on l'étend
+      // automatiquement à la taille attendue par le prono série.
+      const sA = parseInt(m.seriesA, 10);
+      const sB = parseInt(m.seriesB, 10);
+      const expected = Number.isFinite(sA) && Number.isFinite(sB) ? sA + sB : 0;
+      const baseGames = Array.from({ length: Math.max(m.games?.length || 0, gameIndex + 1, expected) }, (_, i) => (m.games && m.games[i]) || { a: "", b: "" });
+      const games = baseGames.map((g, i) => (i === gameIndex ? { ...g, [team]: value } : g));
+      const next = { ...prev, [matchId]: { ...m, games, expanded: true } };
       // Trigger pub quand TOUS les map scores d'un match sont remplis
       // (chaque game a a!=="" ET b!=="")
       try {
