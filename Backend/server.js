@@ -1902,9 +1902,15 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
 
     const { playIn, playoff } = splitPlayInsPlayoffs(bracketMatches);
 
+    // Groupe standings cumulés par lettre A/B/C/D au lieu de par round.
+    // round peut être "Opening (A)", "Winner's (A)", "Elimination (A)", "Decider (A)", …
+    const groupLetter = (round) => {
+      const m = (round || "").match(/\(([A-Da-d])\)/);
+      return m ? ("Group " + m[1].toUpperCase()) : (round || "Group");
+    };
     const groupStandings = {};
     for (const m of groupMatches) {
-      const grp = m.round || "Group";
+      const grp = groupLetter(m.round);
       if (!groupStandings[grp]) groupStandings[grp] = {};
       for (const team of [m.team1, m.team2]) {
         const name = team.name || "TBD";
