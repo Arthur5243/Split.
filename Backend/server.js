@@ -1521,12 +1521,19 @@ app.get("/api/vlr-events", async (req, res) => {
 
       const info = { event_id: e.event_id, title: e.title, status: e.status, dates: e.dates };
 
+      // Priorité : ongoing > completed récent > upcoming. On évite les events
+      // "upcoming" tant qu'il reste un ongoing/completed avec des matches.
+      const prefer = (prev, next) => {
+        if (!prev) return true;
+        const rank = (s) => s === "ongoing" ? 3 : s === "completed" ? 2 : 1;
+        return rank(next.status) > rank(prev.status);
+      };
       if (t.includes("masters")) {
-        if (!result.masters || e.status === "ongoing") result.masters = info;
+        if (prefer(result.masters, { ...info, status: e.status })) result.masters = info;
         continue;
       }
       if (t.includes("champions")) {
-        if (!result.champions || e.status === "upcoming") result.champions = info;
+        if (prefer(result.champions, { ...info, status: e.status })) result.champions = info;
         continue;
       }
 
@@ -1806,19 +1813,67 @@ app.get("/api/vlr-bracket/:eventId", async (req, res) => {
       return res.json(cached.data);
     }
 
-    const [matchesRes, eventRes] = await Promise.all([
-      fetch(VLRGGAPI_BASE + "/v2/events/matches?event_id=" + eventId),
-      fetch(VLRGGAPI_BASE + "/v2/event/" + eventId),
+    // vlrggapi est mort → on scrape https://www.vlr.gg/event/matches/:id direct.
+    const { load } = await import("cheerio");
+    const [matchesHtml, eventHtml] = await Promise.all([
+      fetch("https://www.vlr.gg/event/matches/" + eventId + "/?series_id=all", { headers: { "User-Agent": "Mozilla/5.0 (compatible; SplitBot/1.0)" } }).then((r) => r.ok ? r.text() : ""),
+      fetch("https://www.vlr.gg/event/" + eventId, { headers: { "User-Agent": "Mozilla/5.0 (compatible; SplitBot/1.0)" } }).then((r) => r.ok ? r.text() : ""),
     ]);
-    if (!matchesRes.ok) throw new Error("vlrggapi matches HTTP " + matchesRes.status);
-    const matchesBody = await matchesRes.json();
-    const allMatches = (matchesBody && matchesBody.data && matchesBody.data.segments) || [];
+    if (!matchesHtml) throw new Error("vlr.gg matches page empty");
+    const $ = load(matchesHtml);
+    const allMatches = [];
+    // Chaque "wf-card" sous "wf-label mod-large" contient les matches d'un round.
+    // On parcourt le DOM : à chaque label on retient le round courant, à chaque
+    // card suivante on extrait les match-item.
+    let currentRound = "";
+    $("body").find(".wf-label.mod-large, .wf-card").each((_, el) => {
+      const $el = $(el);
+      if ($el.hasClass("mod-large")) {
+        currentRound = $el.text().replace(/\s+/g, " ").trim();
+        return;
+      }
+      $el.find("a.wf-module-item.match-item").each((_, m) => {
+        const $m = $(m);
+        const href = $m.attr("href") || "";
+        const idMatch = href.match(/^\/(\d+)\//);
+        if (!idMatch) return;
+        const teamNames = $m.find(".match-item-vs-team-name .text-of").map((_, t) => $(t).text().trim()).get();
+        const teamScores = $m.find(".match-item-vs-team-score").map((_, t) => $(t).text().trim()).get();
+        const statusText = $m.find(".ml-status").text().trim().toLowerCase();
+        const seriesText = $m.find(".match-item-event-series").text().replace(/\s+/g, " ").trim();
+        const dateText = $m.find(".match-item-time, .match-item-date").text().trim();
+        const t1Score = parseInt(teamScores[0], 10);
+        const t2Score = parseInt(teamScores[1], 10);
+        const finished = statusText === "completed" || statusText === "final";
+        allMatches.push({
+          match_id: idMatch[1],
+          date: dateText,
+          status: finished ? "completed" : (statusText || "upcoming"),
+          event_series: seriesText || currentRound,
+          team1: {
+            name: teamNames[0] || "TBD",
+            score: Number.isNaN(t1Score) ? "–" : String(t1Score),
+            is_winner: finished && !Number.isNaN(t1Score) && !Number.isNaN(t2Score) && t1Score > t2Score,
+          },
+          team2: {
+            name: teamNames[1] || "TBD",
+            score: Number.isNaN(t2Score) ? "–" : String(t2Score),
+            is_winner: finished && !Number.isNaN(t1Score) && !Number.isNaN(t2Score) && t2Score > t1Score,
+          },
+          url: "https://www.vlr.gg" + href,
+        });
+      });
+    });
 
     let eventInfo = null;
-    if (eventRes.ok) {
-      const eventBody = await eventRes.json();
-      const seg = eventBody?.data?.segments;
-      eventInfo = { title: seg?.title, dates: seg?.dates, prize: seg?.prize, logo: seg?.logo };
+    if (eventHtml) {
+      const $e = load(eventHtml);
+      eventInfo = {
+        title: $e(".event-desc-item-title, h1.wf-title").first().text().trim() || null,
+        dates: $e(".event-desc-item .event-desc-item-value").first().text().trim() || null,
+        prize: $e(".event-desc-item:contains('Prize') .event-desc-item-value").text().trim() || null,
+        logo: $e(".event-header-thumb img").attr("src") || null,
+      };
     }
 
     const bracketMatches = [];
