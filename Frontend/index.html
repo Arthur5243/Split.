@@ -76,6 +76,16 @@
           || document.referrer.indexOf('android-app://') === 0;
         var isDev = host === 'localhost' || host === '127.0.0.1';
         var isRecovery = /[#&]type=recovery(&|$)/.test(location.hash);
+        // Cookie split_pwa : signale au serveur Node que l'app est bien ouverte
+        // en standalone (évite la redirect serveur / → /download pour la PWA).
+        // Pose/efface à chaque boot selon le mode d'affichage détecté.
+        try {
+          if (isStandalone || isDev) {
+            document.cookie = 'split_pwa=1; Path=/; Max-Age=' + (60 * 60 * 24 * 365) + '; SameSite=Lax';
+          } else {
+            document.cookie = 'split_pwa=; Path=/; Max-Age=0; SameSite=Lax';
+          }
+        } catch (e) {}
         if (!isStandalone && !isDev && !isRecovery) {
           location.replace('/download');
           return;

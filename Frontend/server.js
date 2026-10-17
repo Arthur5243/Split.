@@ -50,6 +50,20 @@ const server = createServer(async (req, res) => {
     return sendFile(res, join(DIST, "download.html"));
   }
 
+  // Redirect / → /download tant que la PWA n'est pas installée côté client.
+  // Le JS d'index.html pose le cookie split_pwa=1 au premier boot standalone.
+  // Sans ce cookie, on force la page d'install (sinon Chrome mobile peut ne
+  // jamais exécuter le JS redirect de index.html à cause du cache).
+  if (url === "/") {
+    const cookie = req.headers.cookie || "";
+    const isPwa = /(?:^|;\s*)split_pwa=1(?=;|$)/.test(cookie);
+    const isRecovery = (req.url || "").includes("#type=recovery") || (req.url || "").includes("&type=recovery");
+    if (!isPwa && !isRecovery) {
+      res.writeHead(302, { Location: "/download" });
+      return res.end();
+    }
+  }
+
   // Fichier statique existant (y compris download.html direct)
   const asFile = join(DIST, url === "/" ? "index.html" : url);
   try {
