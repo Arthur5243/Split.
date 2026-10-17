@@ -163,13 +163,10 @@ function watchAdOverlays() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const box = findAdBox(overlay);
     const tabH = 36;
-    // Rotation 90° du cadre : la nouvelle largeur = ancienne hauteur
-    // (box de la pop-up + débord top/bot) diminuée de 10%. La nouvelle
-    // hauteur reprend l'ancienne largeur (2/3 vw).
-    const oldHeight = (box.height + AD_FRAME_PAD_TOP + AD_FRAME_PAD_BOT);
-    const oldWidth = Math.round(vw * (2 / 3));
-    let width = Math.round(oldHeight * 0.9);
-    let height = oldWidth;
+    // Cadre portrait : largeur = 2/3 vw * 0.95 (très légère réduction),
+    // hauteur = largeur * 1.2 (ratio 1:1.2, hauteur 20% de plus que largeur).
+    let width = Math.round(vw * (2 / 3) * 0.95);
+    let height = Math.round(width * 1.2);
     width = Math.max(120, Math.min(vw - 4, width));
     height = Math.max(60, Math.min(vh - tabH - 4, height));
     const left = Math.max(2, Math.round((vw - width) / 2));
