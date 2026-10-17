@@ -2806,9 +2806,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const running = match.status === "running";
   const seriesA = (pred && pred.seriesA) || "";
   const seriesB = (pred && pred.seriesB) || "";
-  // Auto-expand dès qu'un prono série est entré : évite que l'input map
-  // reste caché quand onSeriesChange a échoué à poser expanded=true.
-  const expanded = (pred && pred.expanded) || (seriesA !== "" && seriesB !== "");
+  // expanded suit strictement pred.expanded (reset à false au boot via
+  // split_predictions, cf ClutchApp). On NE force PAS l'ouverture juste
+  // parce que seriesA/B sont set — sinon toutes les cartes avec un prono
+  // déjà posé s'ouvrent au reload / changement d'onglet.
+  const expanded = pred && pred.expanded;
   // Si on a un prono série valide mais games vide (import depuis sync /
   // depuis vue compacte où expanded n'a jamais été true), on régénère le
   // tableau à la volée pour que les inputs Map apparaissent.
