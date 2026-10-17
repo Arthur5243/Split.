@@ -14867,7 +14867,7 @@ export default function ClutchApp() {
         {showMessages && <MessagesScreen onClose={() => { setShowMessages(false); setDmTarget(null); }} T={T} profile={profile} dmTarget={dmTarget} />}
         </div>
 
-        <ScrollToTopButton visible={showScrollTop} onClick={scrollContentToTop} />
+        {/* bouton scroll-to-top retiré sur demande (apparaissait au mauvais moment / disparaissait trop vite). */}
 
         {showQuestModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
