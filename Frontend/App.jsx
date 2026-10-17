@@ -13133,14 +13133,9 @@ export default function ClutchApp() {
     }
     setShowBracketPage(false); setShowCs2BracketPage(false); setShowRlBracketPage(false); setShowFriendModal(false); setShowQuestModal(false); setShowRewardsModal(false); setProfileView(false); setShowCalendar(false); setShowCs2Calendar(false);
     setShowSettings(false); setShowNotifs(false);
-    // Reset tous les matchs 'expanded' (map scores ouverts) au switch tab:
-    // sinon un match ouvert dans Valorant reste ouvert au retour. Garde
-    // les predictions (seriesA/B, games) intactes.
-    setPredictions((prev) => {
-      const next = {};
-      for (const k in prev) next[k] = { ...prev[k], expanded: false };
-      return next;
-    });
+    // Les matchs ouverts (expanded) restent ouverts au switch tab. L'utilisateur
+    // doit explicitement cliquer sur le bouton de collapse pour fermer : un
+    // match jamais fermé manuellement reste ouvert partout, même après restart.
     tabSwitchCountRef.current++;
     tabSwitchSinceAdRef.current++;
     setActiveTab(tab);
