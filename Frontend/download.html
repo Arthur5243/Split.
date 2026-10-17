@@ -221,7 +221,6 @@ var isMobile = isIOS || isAndroid;
 
 function goToAppIfStandalone() {
   if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-    try { document.cookie = 'split_pwa=1; Path=/; Max-Age=' + (60 * 60 * 24 * 365) + '; SameSite=Lax'; } catch (e) {}
     window.location.replace('/');
     return true;
   }
