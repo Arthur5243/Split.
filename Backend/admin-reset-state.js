@@ -187,6 +187,45 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
+  // POST /api/admin/set-user-prediction?pseudo=X&matchId=ps-123
+  //   body JSON: { seriesA, seriesB, games: [{a,b},...] }
+  //   Pose/remplace la prédiction dans user_sync (synced au prochain load client).
+  app.post("/api/admin/set-user-prediction", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const pseudo = req.query.pseudo;
+    const userId = req.query.userId;
+    const matchId = req.query.matchId;
+    const body = req.body || {};
+    if (!userId && !pseudo) return res.status(400).json({ error: "userId or pseudo required" });
+    if (!matchId) return res.status(400).json({ error: "matchId required" });
+    if (body.seriesA == null || body.seriesB == null) return res.status(400).json({ error: "seriesA and seriesB required" });
+    try {
+      const db = new Database(DB_PATH);
+      const u = userId
+        ? db.prepare("SELECT id FROM users WHERE id = ?").get(userId)
+        : db.prepare("SELECT id FROM users WHERE pseudo = ?").get(pseudo);
+      if (!u) { db.close(); return res.status(404).json({ error: "user not found" }); }
+      const row = db.prepare("SELECT predictions FROM user_sync WHERE user_id = ?").get(u.id);
+      const preds = row ? JSON.parse(row.predictions || "{}") : {};
+      preds[matchId] = {
+        seriesA: String(body.seriesA),
+        seriesB: String(body.seriesB),
+        games: Array.isArray(body.games) ? body.games.map((g) => ({ a: String(g.a ?? ""), b: String(g.b ?? "") })) : [],
+        placedAt: Date.now(),
+      };
+      const now = new Date().toISOString();
+      if (row) {
+        db.prepare("UPDATE user_sync SET predictions = ?, updated_at = ? WHERE user_id = ?").run(JSON.stringify(preds), now, u.id);
+      } else {
+        db.prepare("INSERT INTO user_sync (user_id, predictions, settled, boosted, updated_at) VALUES (?, ?, '[]', '[]', ?)").run(u.id, JSON.stringify(preds), now);
+      }
+      db.close();
+      res.json({ ok: true, matchId, prediction: preds[matchId] });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // POST /api/admin/set-user-xp?pseudo=X&xp=N
   app.post("/api/admin/set-user-xp", (req, res) => {
     if (!checkAuth(req, res)) return;
