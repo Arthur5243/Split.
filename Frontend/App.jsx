@@ -1703,7 +1703,13 @@ function transformMatch(m) {
       return bumpFinalScoresIfFinished(ok, m.status, score1, score2, "valo");
     })(),
     live_map_scores: m.status === "running" ? (m.live_map_scores || null) : null,
-    number_of_games: m.number_of_games || 3,
+    number_of_games: (() => {
+      // Override manuel BO7 : Lower Final + Grand Final Champions 2026
+      // (PandaScore et vlr.gg annoncent BO5 à tort, l'utilisateur a confirmé BO7).
+      const BO7_IDS = new Set(["1685248", "1685249"]);
+      if (BO7_IDS.has(String(m.id))) return 7;
+      return m.number_of_games || 3;
+    })(),
   };
 }
 
