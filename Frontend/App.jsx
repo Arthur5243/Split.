@@ -378,7 +378,7 @@ function vlrTeamLogo(name) {
 // cache fusionné (`mergedLogoCache` injecté par le picker).
 const TEAM_META = [
   // Tier 1 — Valo / CS2 / RL mélangés
-  { long: "100 Thieves",           short: "100T",       logo: null,                 aliases: ["100t", "thieves", "hundred thieves"] },
+  { long: "100 Thieves",           short: "100T",       logo: "/logos/100t.png",    aliases: ["100t", "thieves", "hundred thieves"] },
   { long: "9z Team",               short: "9z",         logo: "/logos/9z.png",      aliases: ["9z"] },
   { long: "Astralis",              short: "Astralis",   logo: "/logos/astralis.png",aliases: ["ast"] },
   { long: "B8 Esports",            short: "B8",         logo: "/logos/b8.png",      aliases: ["b8"] },

@@ -212,6 +212,8 @@ export function mountAdminResetEndpoints(app) {
         seriesB: String(body.seriesB),
         games: Array.isArray(body.games) ? body.games.map((g) => ({ a: String(g.a ?? ""), b: String(g.b ?? "") })) : [],
         placedAt: Date.now(),
+        // ts très élevé pour que le client remote-wins face à une prédiction locale.
+        ts: Date.now() + 365 * 24 * 3600 * 1000,
       };
       const now = new Date().toISOString();
       if (row) {
