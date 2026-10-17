@@ -12786,15 +12786,14 @@ export default function ClutchApp() {
   const [predictions, setPredictions] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("split_predictions") || "{}");
-      // Les rectangles de détail (scores par map) ne doivent jamais rester
-      // ouverts après un reload : on repart toujours fermé, le reste de la
-      // prédiction (scores saisis, odds...) est conservé tel quel.
-      const reset = {};
+      // On persiste expanded tel quel : jamais ouvert reste fermé, déjà ouvert
+      // reste ouvert, fermé manuellement reste fermé au restart.
+      const out = {};
       for (const [id, pred] of Object.entries(stored)) {
         if (id.startsWith("demo-")) continue;
-        reset[id] = { ...pred, expanded: false };
+        out[id] = pred;
       }
-      return reset;
+      return out;
     } catch (e) {
       return {};
     }
