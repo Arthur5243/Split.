@@ -163,11 +163,21 @@ function watchAdOverlays() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const box = findAdBox(overlay);
     const tabH = 36;
-    const left = Math.max(2, box.left - AD_FRAME_PAD);
+    // Largeur = 2/3 de l'écran, centrée horizontalement (demande utilisateur
+    // : cadre plus large sur les côtés, pas collé à la pop-up).
+    const width = Math.round(vw * (2 / 3));
+    const left = Math.max(2, Math.round((vw - width) / 2));
+    // Hauteur : on garde la zone de la pop-up avec un léger débord haut/bas
+    // (quelques px au-dessus et en-dessous, "quasi bordure"), toujours sous
+    // l'onglet.
     const top = Math.max(2 + tabH, box.top - AD_FRAME_PAD_TOP);
-    const right = Math.min(vw - 2, box.left + box.width + AD_FRAME_PAD);
     const bottom = Math.min(vh - 2, box.top + box.height + AD_FRAME_PAD_BOT);
-    Object.assign(frame.style, { left: `${left}px`, top: `${top}px`, width: `${Math.max(80, right - left)}px`, height: `${Math.max(60, bottom - top)}px` });
+    Object.assign(frame.style, {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${Math.max(120, width)}px`,
+      height: `${Math.max(60, bottom - top)}px`,
+    });
   };
 
   const track = () => {
