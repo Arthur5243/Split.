@@ -2826,9 +2826,19 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // "running" trop tôt (planification d'un match annoncé), ce qui bloquait
   // des matchs à 3h d'intervalle.
   const LOCK_HOURS = 1;
+  // Override 2026-10-17 uniquement : pronostics autorisés jusqu'à 10 min APRÈS
+  // le début du match (Grand Final & matchs ongoing du jour). Expire automatiquement
+  // demain : plus besoin de retirer la condition.
+  const TODAY_PRONO_OVERRIDE = "2026-10-17";
+  const _todayStr = new Date().toISOString().slice(0, 10);
+  const _isTodayOverride = _todayStr === TODAY_PRONO_OVERRIDE;
   const lockedByTime = (() => {
     if (finished) return true;
     const t = match.beginAt ? new Date(match.beginAt).getTime() : NaN;
+    if (_isTodayOverride && !isNaN(t)) {
+      // Autorise prono jusqu'à 10 min après le début.
+      return Date.now() >= t + 10 * 60 * 1000;
+    }
     const minutesUntilStart = isNaN(t) ? Infinity : (t - Date.now()) / 60000;
     if (running && minutesUntilStart <= LOCK_HOURS * 60) return true;
     if (isNaN(t)) return running;
