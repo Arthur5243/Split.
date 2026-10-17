@@ -226,6 +226,15 @@ app.get("/api/valorant-live", async (req, res) => {
       if (scraped && scraped.length > 0) {
         m.live_map_scores = scraped;
       }
+      // Override manuel ordre des maps pour matchs spécifiques où vlr.gg
+      // retourne les maps dans un ordre erroné.
+      // ps-1685248 Vita vs 100T Lower Final : swap maps indexes 1 et 2
+      // (Map 2 doit être Summit, Map 3 doit être Lotus — confirmé user).
+      if (String(m.id) === "1685248" && Array.isArray(m.live_map_scores) && m.live_map_scores.length >= 3) {
+        const arr = m.live_map_scores.slice();
+        [arr[1], arr[2]] = [arr[2], arr[1]];
+        m.live_map_scores = arr;
+      }
       // Fallback / complément Twitch : titre du stream officiel Valorant
       const twitch = getTwitchScoresForMatch(t1, t2);
       if (twitch) {

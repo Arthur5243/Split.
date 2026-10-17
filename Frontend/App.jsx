@@ -2794,8 +2794,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // équipe a un logo connu ailleurs (upcoming/live/un autre résultat) — on
   // retombe sur ce logo déjà vu plutôt que de laisser tomber sans raison.
   const cache = teamLogoCache || {};
-  const resolvedLogo1 = match.team1Logo || cache[normTeamName(match.team1Name)] || null;
-  const resolvedLogo2 = match.team2Logo || cache[normTeamName(match.team2Name)] || null;
+  // TEAM_META local prévaut sur PandaScore pour les équipes où on a volontairement
+  // posé un logo custom (ex: 100 Thieves → /logos/100t.png au lieu du logo coloré).
+  const metaLogo1 = (teamMeta(match.team1Name) || {}).logo || null;
+  const metaLogo2 = (teamMeta(match.team2Name) || {}).logo || null;
+  const resolvedLogo1 = metaLogo1 || match.team1Logo || cache[normTeamName(match.team1Name)] || null;
+  const resolvedLogo2 = metaLogo2 || match.team2Logo || cache[normTeamName(match.team2Name)] || null;
   const finished = match.status === "finished";
   const running = match.status === "running";
   const seriesA = (pred && pred.seriesA) || "";
