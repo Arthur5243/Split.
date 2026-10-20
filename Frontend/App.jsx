@@ -7019,40 +7019,50 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
   );
 }
 
-// Rendu bracket arbre style tournament (colonnes par round, lignes de
-// connexion). Scroll horizontal sur mobile. Chaque match = card 2 lignes
-// (équipe + score). Lignes de liaison en pseudo-éléments.
+// Vrai bracket arbre style tournament : chaque colonne = round, cards
+// espacées pour que les paires s'alignent sur une card du round suivant.
+// Lignes de connexion dessinées en SVG en overlay par-dessus les colonnes.
+// Scroll horizontal sur mobile.
 function BracketTree({ matches, accent = "#E91E63", onMatchClick }) {
-  const UPPER_ORDER = [
-    { key: "ub-r1", label: "Upper R1", match: /upper bracket round 1/i },
-    { key: "ub-qf", label: "UB Quarterfinals", match: /upper (bracket )?quarter/i },
-    { key: "ub-sf", label: "UB Semifinals", match: /upper (bracket )?semi/i },
-    { key: "ub-f", label: "UB Final", match: /upper (bracket )?final/i },
+  const CARD_H = 56;        // hauteur d'une match card
+  const CARD_W = 170;       // largeur d'une match card
+  const BASE_GAP = 14;      // gap de base entre 2 cards du round 1
+  const COL_GAP = 32;       // gap horizontal entre 2 rounds
+
+  const UPPER = [
+    { key: "ub-r1", label: "Upper Bracket Round 1", match: /upper bracket round 1/i, slots: 2 },
+    { key: "ub-qf", label: "UB Quarterfinals",       match: /upper (bracket )?quarter/i, slots: 4 },
+    { key: "ub-sf", label: "Upper Bracket Semifinals", match: /upper (bracket )?semi/i, slots: 2 },
+    { key: "ub-f",  label: "Upper Bracket Final",    match: /upper (bracket )?final/i, slots: 1 },
+    { key: "gf",    label: "Grand Final",            match: /grand final/i, slots: 1 },
   ];
-  const LOWER_ORDER = [
-    { key: "lb-r1", label: "Lower R1", match: /lower bracket round 1/i },
-    { key: "lb-r2", label: "Lower R2", match: /lower bracket round 2/i },
-    { key: "lb-qf", label: "Lower Quarterfinals", match: /lower (bracket )?quarter/i },
-    { key: "lb-sf", label: "Lower Semifinals", match: /lower (bracket )?semi/i },
-    { key: "lb-f", label: "Lower Final", match: /lower (bracket )?final/i },
+  const LOWER = [
+    { key: "lb-r1", label: "Lower Bracket Round 1", match: /lower bracket round 1/i, slots: 2 },
+    { key: "lb-r2", label: "Lower Bracket Round 2", match: /lower bracket round 2/i, slots: 2 },
+    { key: "lb-qf", label: "Lower Bracket Quarterfinals", match: /lower (bracket )?quarter/i, slots: 2 },
+    { key: "lb-sf", label: "Lower Bracket Semifinals",    match: /lower (bracket )?semi/i, slots: 1 },
+    { key: "lb-f",  label: "Lower Bracket Final",         match: /lower (bracket )?final/i, slots: 1 },
   ];
-  const GF = { key: "gf", label: "Grand Final", match: /grand final/i };
-  const bucket = (regex) => matches.filter(m => regex.test(m.name || ""));
-  const upperCols = UPPER_ORDER.map(r => ({ ...r, items: bucket(r.match) }));
-  const lowerCols = LOWER_ORDER.map(r => ({ ...r, items: bucket(r.match) }));
-  const gfItems = bucket(GF.match);
+
+  // Pour chaque colonne, remplit `slots` matchs réels (ou TBD si manquant).
+  const buildCol = (cfg) => {
+    const items = matches.filter(m => cfg.match.test(m.name || ""));
+    const filled = Array.from({ length: cfg.slots }, (_, i) => items[i] || null);
+    return { ...cfg, items: filled };
+  };
+  const upperCols = UPPER.map(buildCol);
+  const lowerCols = LOWER.map(buildCol);
 
   const MatchCardMini = ({ m }) => {
-    const finished = m?.status === "finished";
     const live = m?.status === "running";
-    const t1 = m?.team1 || { name: "TBD" };
-    const t2 = m?.team2 || { name: "TBD" };
     return (
       <div onClick={() => m && onMatchClick && onMatchClick(m, m.status)}
         style={{
-          background: "#121212", border: `1px solid ${live ? "rgba(255,59,59,0.45)" : "#1f1f1f"}`,
-          borderRadius: 8, width: 160, cursor: m && onMatchClick ? "pointer" : "default",
+          background: "#121212", border: `1px solid ${live ? "rgba(255,59,59,0.45)" : "#262626"}`,
+          borderRadius: 6, width: CARD_W, height: CARD_H,
+          cursor: m && onMatchClick ? "pointer" : "default",
           overflow: "hidden", display: "flex", flexDirection: "column",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
         }}
       >
         {["team1","team2"].map((k, idx) => {
@@ -7061,12 +7071,12 @@ function BracketTree({ matches, accent = "#E91E63", onMatchClick }) {
           return (
             <div key={k} style={{
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-              padding: "6px 8px",
-              borderTop: idx === 1 ? "1px solid #1f1f1f" : "none",
-              background: won ? "rgba(233,30,99,0.08)" : "transparent",
+              padding: "0 8px", flex: 1,
+              borderTop: idx === 1 ? "1px solid #262626" : "none",
+              background: won ? "rgba(233,30,99,0.1)" : "transparent",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
-                {t?.logo ? <img src={t.logo} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} /> : <div style={{ width: 16, height: 16, borderRadius: 3, background: "#1a1a1a", flexShrink: 0 }} />}
+                {t?.logo ? <img src={t.logo} alt="" style={{ width: 14, height: 14, objectFit: "contain", flexShrink: 0 }} /> : <div style={{ width: 14, height: 14, borderRadius: 2, background: "#1f1f1f", flexShrink: 0 }} />}
                 <span style={{ color: won ? "#fff" : "#999", fontSize: 10.5, fontWeight: won ? 900 : 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t?.name || "TBD"}</span>
               </div>
               <span style={{ color: won ? accent : "#555", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>{t?.score ?? "—"}</span>
@@ -7077,28 +7087,73 @@ function BracketTree({ matches, accent = "#E91E63", onMatchClick }) {
     );
   };
 
-  const Column = ({ col, pad = 0 }) => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: pad }}>
-      <div style={{ color: "#999", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 2, whiteSpace: "nowrap" }}>{col.label}</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {col.items.length === 0
-          ? Array.from({ length: Math.max(1, Math.ceil(2 / Math.pow(2, UPPER_ORDER.findIndex(x => x.key === col.key)))) }).map((_, i) => <MatchCardMini key={i} m={null} />)
-          : col.items.map((m, i) => <MatchCardMini key={m.match_id || i} m={m} />)}
+  // Calcule la hauteur totale d'une colonne en se basant sur le round max.
+  const totalSlotsFor = (cols) => Math.max(...cols.map(c => c.slots));
+  const colHeight = (nSlots, pxPerSlot) => nSlots * pxPerSlot;
+
+  const renderBracket = (cols, title) => {
+    const maxSlots = totalSlotsFor(cols);
+    const pxPerSlot = CARD_H + BASE_GAP;
+    const totalH = colHeight(maxSlots, pxPerSlot);
+    return (
+      <div style={{ marginBottom: 32 }}>
+        {title && <div style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 10 }}>{title}</div>}
+        <div style={{ display: "flex", alignItems: "flex-start" }}>
+          {cols.map((col, colIdx) => {
+            // Pour chaque card, on calcule son offset vertical : la card i d'une
+            // colonne avec `slots` cards doit être centrée sur l'espace de
+            // 2*i et 2*i+1 des cards du round précédent.
+            const slotHeight = totalH / col.slots;
+            return (
+              <div key={col.key} style={{ display: "flex", flexDirection: "column", marginRight: colIdx < cols.length - 1 ? COL_GAP : 0, position: "relative" }}>
+                <div style={{ color: "#999", fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 10, whiteSpace: "nowrap", minHeight: 14 }}>{col.label}</div>
+                <div style={{ position: "relative", height: totalH }}>
+                  {col.items.map((m, i) => {
+                    const centerY = i * slotHeight + slotHeight / 2;
+                    return (
+                      <div key={i} style={{ position: "absolute", top: centerY - CARD_H / 2, left: 0 }}>
+                        <MatchCardMini m={m} />
+                      </div>
+                    );
+                  })}
+                  {/* Lignes de connexion : trait horizontal sortant de chaque
+                      card, puis vertical, puis horizontal entrant dans la card
+                      suivante. Dessinées en absolute à droite de la colonne. */}
+                  {colIdx < cols.length - 1 && col.items.map((m, i) => {
+                    const centerY = i * slotHeight + slotHeight / 2;
+                    const nextCol = cols[colIdx + 1];
+                    const nextSlotH = totalH / nextCol.slots;
+                    const pairIdx = Math.floor(i / 2);
+                    const nextCenterY = pairIdx * nextSlotH + nextSlotH / 2;
+                    return (
+                      <React.Fragment key={"line-" + i}>
+                        {/* trait horizontal sortant */}
+                        <div style={{ position: "absolute", top: centerY, left: CARD_W, width: COL_GAP / 2, height: 1, background: "#333" }} />
+                        {/* trait vertical joignant la paire */}
+                        {i % 2 === 0 && (
+                          <div style={{ position: "absolute", top: Math.min(centerY, nextCenterY), left: CARD_W + COL_GAP / 2, width: 1, height: Math.abs(nextCenterY - centerY) || 1, background: "#333" }} />
+                        )}
+                        {/* trait horizontal entrant (une fois par paire) */}
+                        {i % 2 === 0 && (
+                          <div style={{ position: "absolute", top: nextCenterY, left: CARD_W + COL_GAP / 2, width: COL_GAP / 2, height: 1, background: "#333" }} />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div style={{ overflowX: "auto", paddingBottom: 20 }} className="no-scrollbar">
-      <div style={{ display: "flex", gap: 16, minWidth: "max-content", paddingBottom: 10 }}>
-        {upperCols.map((c) => <Column key={c.key} col={c} />)}
-        <div style={{ width: 1, background: "#222", margin: "20px 0" }} />
-        <Column col={GF.key === "gf" ? { ...GF, items: gfItems } : GF} />
-      </div>
-      <div style={{ height: 20 }} />
-      <div style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>Lower Bracket</div>
-      <div style={{ display: "flex", gap: 16, minWidth: "max-content" }}>
-        {lowerCols.map((c) => <Column key={c.key} col={c} />)}
+      <div style={{ minWidth: "max-content" }}>
+        {renderBracket(upperCols)}
+        {renderBracket(lowerCols, "Lower Bracket")}
       </div>
     </div>
   );
