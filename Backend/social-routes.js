@@ -210,7 +210,56 @@ router.post("/api/social/bet-stats", (req, res) => {
   res.json({ ok: true });
 });
 
-// Retire: setXpByPseudo("ggez", 99999); boostait un compte test au boot.
+// Signalements : append dans /data/reports.jsonl + POST sur REPORT_WEBHOOK_URL
+// si configuré (Discord/Slack/Zapier/Formspree pour relayer en mail).
+import fs from "node:fs";
+import path from "node:path";
+const REPORTS_PATH = path.join(process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : "/data", "reports.jsonl");
+router.post("/api/social/report-user", async (req, res) => {
+  try {
+    const { reportedUserId, reportedPseudo, reason } = req.body || {};
+    if (!reportedUserId || !reason) return res.status(400).json({ error: "reportedUserId et reason requis" });
+    const header = req.headers.authorization;
+    let reporterId = null, reporterPseudo = null;
+    if (header && header.startsWith("Bearer ")) {
+      try {
+        const jwt = (await import("jsonwebtoken")).default;
+        const payload = jwt.verify(header.slice(7), process.env.JWT_SECRET || "split-secret-change-me");
+        reporterId = payload?.sub || null;
+        if (reporterId) {
+          const u = getUser(reporterId);
+          reporterPseudo = u?.pseudo || null;
+        }
+      } catch {}
+    }
+    const entry = {
+      at: new Date().toISOString(),
+      reporterId, reporterPseudo,
+      reportedUserId, reportedPseudo: reportedPseudo || null,
+      reason: String(reason).slice(0, 2000),
+      ua: req.headers["user-agent"] || null,
+    };
+    try {
+      fs.mkdirSync(path.dirname(REPORTS_PATH), { recursive: true });
+      fs.appendFileSync(REPORTS_PATH, JSON.stringify(entry) + "\n");
+    } catch (e) { console.error("[report] write fail:", e.message); }
+    const hook = process.env.REPORT_WEBHOOK_URL;
+    if (hook) {
+      try {
+        const content = `🚨 Signalement Split\n**Signalé** : ${entry.reportedPseudo || entry.reportedUserId}\n**Par** : ${entry.reporterPseudo || entry.reporterId || "anonyme"}\n**Raison** : ${entry.reason}\n**Date** : ${entry.at}`;
+        await fetch(hook, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content, text: content, embeds: [{ title: "Signalement Split", description: content, color: 0xff6600 }] }),
+        });
+      } catch (e) { console.error("[report] webhook fail:", e.message); }
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("[report] error:", e.message);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
 
 router.get("/api/referral/:userId", (req, res) => {
   const code = ensureReferralCode(req.params.userId);

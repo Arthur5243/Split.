@@ -5553,17 +5553,22 @@ function NotificationsPanel({ notifications, onClose, T }) {
 
 function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile }) {
   const [rawLeaderboard, setRawLeaderboard] = useState([]);
+  const [blockedIds, setBlockedIds] = useState(() => new Set((getBlockedUsers() || []).map((b) => b.id)));
   useEffect(() => {
     fetch(API_BASE + "/api/social/leaderboard").then(r => r.json()).then(d => {
       if (Array.isArray(d)) setRawLeaderboard(d);
     }).catch(() => {});
+    const sync = () => setBlockedIds(new Set((getBlockedUsers() || []).map((b) => b.id)));
+    window.addEventListener("split-blocked-changed", sync);
+    return () => window.removeEventListener("split-blocked-changed", sync);
   }, []);
   // Injecte l'user actif dans la liste si pas deja present (row backend pas
   // encore synced ou profile_ready = 0). Sinon merge pour reflechir son score
   // reel cote client (au cas ou le leaderboard backend serait en retard).
   const homeLeaderboard = React.useMemo(() => {
-    if (!profile?.userId) return rawLeaderboard;
-    const merged = [...rawLeaderboard];
+    const filtered = rawLeaderboard.filter((u) => !blockedIds.has(u.id));
+    if (!profile?.userId) return filtered;
+    const merged = [...filtered];
     const myIdx = merged.findIndex(u => u.id === profile.userId);
     const myPts = userPoints || 0;
     const myBanner = localStorage.getItem("split_equipped_banner_color") || null;
@@ -5577,7 +5582,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
     }
     merged.sort((a, b) => (b.points || 0) - (a.points || 0));
     return merged;
-  }, [rawLeaderboard, profile?.userId, profile?.pseudo, profile?.avatar, userPoints, userXp]);
+  }, [rawLeaderboard, profile?.userId, profile?.pseudo, profile?.avatar, userPoints, userXp, blockedIds]);
   return (
     <div className="px-4 pt-5 pb-6">
       {/* Circles row: notif + news label + quests */}
@@ -11057,11 +11062,31 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <>
                 <div onClick={() => setSpecMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 10 }} />
                 <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, overflow: "hidden", minWidth: 180, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
-                  <button onClick={() => { setSpecMenu(false); }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#e05252", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
+                  <button onClick={() => {
+                    setSpecMenu(false);
+                    blockUser({ id: su.id, pseudo: su.pseudo });
+                    alert(su.pseudo + " a été bloqué·e. Il/elle n'apparaîtra plus dans ton classement, tes posts ni tes DMs. Débloquage dans Paramètres > Comptes bloqués.");
+                    setSpectatorUser(null); setSpectatorStats(null); setSpecFollowList(null);
+                  }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#e05252", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                     Bannir
                   </button>
-                  <button onClick={() => { setSpecMenu(false); }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#f59e0b", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
+                  <button onClick={async () => {
+                    setSpecMenu(false);
+                    const reason = window.prompt("Raison du signalement (sois précis·e) :");
+                    if (!reason || !reason.trim()) return;
+                    try {
+                      const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
+                      await fetch(API_BASE + "/api/social/report-user", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+                        body: JSON.stringify({ reportedUserId: su.id, reportedPseudo: su.pseudo, reason: reason.trim() }),
+                      });
+                      alert("Signalement envoyé. Merci.");
+                    } catch (e) {
+                      alert("Erreur réseau : " + e.message);
+                    }
+                  }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#f59e0b", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
                     <AlertCircle size={14} />
                     Signaler
                   </button>
@@ -11942,6 +11967,47 @@ function ReferralSection({ T, profile, sectionStyle, rowStyle, labelStyle, chevS
   );
 }
 
+function BlockedUsersSection() {
+  const [list, setList] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("split_blocked_users") || "[]"); } catch { return []; }
+  });
+  useEffect(() => {
+    const handler = () => {
+      try { setList(JSON.parse(localStorage.getItem("split_blocked_users") || "[]")); } catch {}
+    };
+    window.addEventListener("split-blocked-changed", handler);
+    return () => window.removeEventListener("split-blocked-changed", handler);
+  }, []);
+  const unblock = (id) => {
+    const next = list.filter((x) => x.id !== id);
+    localStorage.setItem("split_blocked_users", JSON.stringify(next));
+    setList(next);
+    try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
+  };
+  if (list.length === 0) {
+    return (
+      <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+        <p style={{ color: "#777", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Aucun compte bloqué.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+      <div className="flex flex-col gap-2" style={{ marginTop: 10 }}>
+        {list.map((b) => (
+          <div key={b.id} className="flex items-center justify-between rounded-xl" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", padding: "10px 12px" }}>
+            <span style={{ color: "#eee", fontSize: 13, fontWeight: 700 }}>{b.pseudo || b.id.slice(0, 8)}</span>
+            <button onClick={() => unblock(b.id)} style={{
+              padding: "6px 14px", borderRadius: 8, background: "rgba(204,247,29,0.1)", color: "#CCF71D",
+              fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.3)", cursor: "pointer",
+            }}>Débloquer</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, cs2Teams, rlTeams, teamLogoCache, cs2LogoCache, rlLogoCache, onUpdateProfile, T, profile, onLogout, onDeleteAccount, onChangePseudo }) {
   const allTeams = teams || [];
   const [activeSection, setActiveSection] = useState(null);
@@ -12172,6 +12238,20 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
                   <TeamSearchSelect value={profile?.favTeams?.rl || ""} onChange={(v) => onUpdateProfile && onUpdateProfile({ rl: v === "__none__" ? "" : v })} teams={rlTeams || []} label="Rocket League" T={T} teamLogoCache={{ ...teamLogoCache, ...(cs2LogoCache || {}), ...(rlLogoCache || {}) }} />
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* COMPTES BLOQUÉS */}
+          <div style={sectionStyle} className="mb-3">
+            <button onClick={() => setActiveSection(activeSection === "blocked" ? null : "blocked")} style={rowStyle} className="w-full">
+              <span style={labelStyle}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                Comptes bloqués
+              </span>
+              <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "blocked" ? "rotate(180deg)" : "rotate(0deg)" }} />
+            </button>
+            {activeSection === "blocked" && (
+              <BlockedUsersSection />
             )}
           </div>
 
@@ -12882,6 +12962,30 @@ function AuthScreen({ onAuth }) {
       </div>
     </div>
   );
+}
+
+// Bannissement local : la liste des users bloqués est stockée dans
+// localStorage.split_blocked_users (array de {id, pseudo, at}). Le filtre
+// s'applique au leaderboard, aux posts et aux DMs. Déblocable via Paramètres.
+const BLOCKED_KEY = "split_blocked_users";
+function getBlockedUsers() {
+  try { return JSON.parse(localStorage.getItem(BLOCKED_KEY) || "[]"); } catch { return []; }
+}
+function blockUser(u) {
+  if (!u || !u.id) return;
+  const list = getBlockedUsers();
+  if (list.some((x) => x.id === u.id)) return;
+  list.push({ id: u.id, pseudo: u.pseudo || "", at: Date.now() });
+  localStorage.setItem(BLOCKED_KEY, JSON.stringify(list));
+  try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
+}
+function unblockUser(id) {
+  const list = getBlockedUsers().filter((x) => x.id !== id);
+  localStorage.setItem(BLOCKED_KEY, JSON.stringify(list));
+  try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
+}
+function isUserBlocked(id) {
+  return getBlockedUsers().some((x) => x.id === id);
 }
 
 export default function ClutchApp() {
