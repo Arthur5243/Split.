@@ -56,7 +56,7 @@ import {
 
 const SPLIT_LOGO = "/split-logo.png";
 const SPLIT_HEADER_LOGO = "/split-header-logo.png";
-const NEWS_IMAGE = "/news-champions.png";
+const NEWS_IMAGE = "/news-loud-champions.webp";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.webp";
@@ -584,7 +584,7 @@ const LOCALE_MAP = {
 const STR = {
   fr: {
     navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Ouverture du tournoi mondial à Shanghai 🇨🇳 · 32 équipes, 2,25 M$",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD GAGNE FACE À VITALITY AUX CHAMPIONS 2026", newsSub: "LOUD s'impose face à Vitality 3-1 et remporte les Champions VCT 2026 sur Valorant.",
     news2Badge: "Valorant", news2Title: "MARTEEN REJOINT FNATIC", news2Sub: "Après Gentle Mates, Marteen rejoint Fnatic pour la saison 2027.",
     news3Badge: "CS2", news3Title: "AVANT LES CHAMPIONS CS2", news3Sub: "Le Major de Singapour approche, avec 1,25 M$ à gagner.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
@@ -675,7 +675,7 @@ const STR = {
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "VCT CHAMPIONS 2026", newsSub: "Shanghai world tournament kicks off 🇨🇳 · 32 teams, $2.25M prize pool",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD BEAT VITALITY AT CHAMPIONS 2026", newsSub: "LOUD defeat Vitality 3-1 and win VCT Champions 2026 on Valorant.",
     news2Badge: "Valorant", news2Title: "MARTEEN JOINS FNATIC", news2Sub: "After Gentle Mates, Marteen joins Fnatic for the 2027 season.",
     news3Badge: "CS2", news3Title: "BEFORE THE CS2 CHAMPIONS", news3Sub: "The Singapore Major is approaching, with $1.25M on the line.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
@@ -4562,7 +4562,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                 fontSize: 13, fontWeight: 900, border: "none", borderRadius: 12, cursor: "pointer",
                 boxShadow: "0 4px 14px rgba(204,247,29,0.3)",
               }}>
-                OUVRIR TOUT ({pending.length})
+                TOUT OUVRIR ({pending.length})
               </button>
             );
           })()}
@@ -4969,42 +4969,82 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             }}>OUVRIR LE COFFRE</button>
           )}
 
-          {chestPhase === "done" && chestResult && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px" }}>
-              {(chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage) && (
-                <div style={{ margin: "0 auto 16px", width: "85%", maxWidth: 300, height: 80, borderRadius: 14, overflow: "hidden", border: `2px solid ${RAR[chestResult.rarity].border}`, boxShadow: RAR[chestResult.rarity].glow }}>
-                  <img src={chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          {chestPhase === "done" && chestResult && (() => {
+            const pending = allTiers.filter(t => t <= currentTier && !claimedTiers.includes(t) && t !== openingChest);
+            const hasImg = !!(chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage);
+            const hideEmoji = chestResult.type === "banner" || chestResult.type === "match_bg";
+            return (
+              <div
+                onClick={claimChestResult}
+                style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px", cursor: "pointer" }}
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: "88%", maxWidth: 340, padding: "20px 18px",
+                    background: "#0f0f0f", border: `2px solid ${RAR[chestResult.rarity].border}`, borderRadius: 20,
+                    boxShadow: RAR[chestResult.rarity].glow || "0 10px 40px rgba(0,0,0,0.6)",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+                    cursor: "default",
+                  }}
+                >
+                  {hasImg && (
+                    <div style={{ width: "100%", height: 110, borderRadius: 14, overflow: "hidden", border: `1.5px solid ${RAR[chestResult.rarity].border}66` }}>
+                      <img src={chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
+                  {!hasImg && !hideEmoji && (
+                    <span style={{ fontSize: 56 }}>{chestResult.emoji}</span>
+                  )}
+                  <span style={{ color: RAR[chestResult.rarity].text, fontSize: 22, fontWeight: 900, textAlign: "center", lineHeight: 1.1 }}>{chestResult.name}</span>
+                  <span style={{
+                    color: RAR[chestResult.rarity].text, fontSize: 10, fontWeight: 800, letterSpacing: 2,
+                    background: RAR[chestResult.rarity].bg, padding: "4px 14px", borderRadius: 8,
+                    border: `1.5px solid ${RAR[chestResult.rarity].border}`,
+                  }}>{RAR[chestResult.rarity].label}</span>
+                  {chestResult.desc && <p style={{ color: "#999", fontSize: 11, fontWeight: 600, textAlign: "center", marginTop: 2 }}>{chestResult.desc}</p>}
+
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 6, width: "100%" }}>
+                    <button onClick={claimChestResult} style={{
+                      flex: "1 1 auto", padding: "12px 20px", borderRadius: 12,
+                      background: "#CCF71D", color: "#000", fontSize: 13, fontWeight: 900, border: "none", cursor: "pointer",
+                      boxShadow: "0 0 20px rgba(204,247,29,0.25)",
+                    }}>RÉCUPÉRER</button>
+                    {(chestResult.type === "title" || chestResult.type === "banner") && (
+                      <button onClick={() => { equipItem(chestResult); claimChestResult(); }} style={{
+                        flex: "1 1 auto", padding: "12px 20px", borderRadius: 12,
+                        background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
+                      }}>ÉQUIPER</button>
+                    )}
+                    {chestResult.type === "match_bg" && (
+                      <button onClick={() => { claimChestResult(); setMatchBgPickerItem(chestResult); setShowMatchBgPicker(true); }} style={{
+                        flex: "1 1 auto", padding: "12px 20px", borderRadius: 12,
+                        background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
+                      }}>ÉQUIPER</button>
+                    )}
+                  </div>
+
+                  {pending.length > 0 && (
+                    <button onClick={() => {
+                      claimTier(openingChest, chestResult);
+                      setOpeningChest(null);
+                      phaseRef.current = "idle";
+                      setOpenAllQueue(pending.map(t => ({ tier: t, item: getChest(t) })));
+                    }} style={{
+                      width: "100%", marginTop: 4, padding: "10px",
+                      background: "transparent", color: "#CCF71D",
+                      fontSize: 12, fontWeight: 800, border: "1px solid rgba(204,247,29,0.4)", borderRadius: 10, cursor: "pointer",
+                    }}>TOUT OUVRIR ({pending.length})</button>
+                  )}
                 </div>
-              )}
-              <span style={{ fontSize: 52, marginBottom: 8 }}>{chestResult.emoji}</span>
-              <span style={{ color: RAR[chestResult.rarity].text, fontSize: 24, fontWeight: 900, marginBottom: 8 }}>{chestResult.name}</span>
-              <span style={{
-                color: RAR[chestResult.rarity].text, fontSize: 11, fontWeight: 800, letterSpacing: 2,
-                background: RAR[chestResult.rarity].bg, padding: "5px 16px", borderRadius: 8,
-                border: `1.5px solid ${RAR[chestResult.rarity].border}`, marginBottom: 20,
-              }}>{RAR[chestResult.rarity].label}</span>
-              {chestResult.desc && <p style={{ color: "#888", fontSize: 12, fontWeight: 600, marginBottom: 16 }}>{chestResult.desc}</p>}
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-                <button onClick={claimChestResult} style={{
-                  padding: "14px 36px", borderRadius: 12,
-                  background: "#CCF71D", color: "#000", fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
-                  boxShadow: "0 0 20px rgba(204,247,29,0.25)",
-                }}>RÉCUPÉRER</button>
-                {(chestResult.type === "title" || chestResult.type === "banner") && (
-                  <button onClick={() => { equipItem(chestResult); claimChestResult(); }} style={{
-                    padding: "14px 28px", borderRadius: 12,
-                    background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
-                  }}>ÉQUIPER</button>
-                )}
-                {chestResult.type === "match_bg" && (
-                  <button onClick={() => { claimChestResult(); setMatchBgPickerItem(chestResult); setShowMatchBgPicker(true); }} style={{
-                    padding: "14px 28px", borderRadius: 12,
-                    background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 14, fontWeight: 900, border: "1px solid #333", cursor: "pointer",
-                  }}>ÉQUIPER</button>
-                )}
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setOpeningChest(null); phaseRef.current = "idle"; }}
+                  style={{ marginTop: 14, background: "transparent", border: "none", color: "#666", fontSize: 11, fontWeight: 700, cursor: "pointer", padding: "6px 12px" }}
+                >Passer</button>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
