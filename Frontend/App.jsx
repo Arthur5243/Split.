@@ -6042,6 +6042,7 @@ const BRACKET_STAGES = [
   { key: "stage", labelKey: "bracketStage", color: "#C4F000" },
   { key: "masters", labelKey: "bracketMasters", color: "#FFD700" },
   { key: "champions", labelKey: "bracketChampions", color: "#ff4655" },
+  { key: "gc", label: "Game Changers", color: "#E91E63" },
 ];
 
 // Historique VCT Stage 2 (résultats définitifs fournis, ne pas modifier).
@@ -6928,6 +6929,114 @@ function BracketProgressBar({ bracket, accentColor }) {
   );
 }
 
+// Vue bracket Game Changers Championship 2026 : liste simple des matchs
+// playoffs regroupés par round (Upper R1, UB QF, UB SF, UB Final, LB R1..LB
+// Final, Grand Final). Les équipes et scores viennent de PandaScore via
+// /api/game-changers-groups. Même structure visuelle que ChampionsView mais
+// sans la phase de groupes (format bracket pur).
+function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
+  const [data, setData] = useState(() => {
+    try {
+      const raw = localStorage.getItem("split_gc_cache");
+      const p = raw ? JSON.parse(raw) : null;
+      return p && Array.isArray(p.playoffs) ? p : null;
+    } catch { return null; }
+  });
+  const [loading, setLoading] = useState(!data);
+  useEffect(() => {
+    let dead = false;
+    async function load() {
+      try {
+        const r = await fetch(API_BASE + "/api/game-changers-groups");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (dead) return;
+        setData(d);
+        try { localStorage.setItem("split_gc_cache", JSON.stringify(d)); } catch {}
+      } catch {}
+      finally { if (!dead) setLoading(false); }
+    }
+    load();
+    const id = setInterval(load, 3 * 60 * 1000);
+    return () => { dead = true; clearInterval(id); };
+  }, []);
+  if (loading && !data) return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>;
+  if (!data || !Array.isArray(data.playoffs) || data.playoffs.length === 0) {
+    return <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Pas de bracket disponible pour l'instant.</div>;
+  }
+  // Group matches by round name (Upper Bracket Round 1, Upper Quarterfinals,
+  // etc.). PandaScore renvoie des names structurés "Upper Bracket Round 1 Match 1".
+  const groups = new Map();
+  const roundOrder = [
+    "Upper Bracket Round 1", "Upper Bracket Quarterfinal", "Upper Bracket Semifinal",
+    "Upper Bracket Final", "Lower Bracket Round 1", "Lower Bracket Round 2",
+    "Lower Bracket Quarterfinal", "Lower Bracket Semifinal", "Lower Bracket Final",
+    "Grand Final",
+  ];
+  const normRound = (name) => {
+    const n = (name || "").replace(/\s*Match\s*\d+.*$/i, "").replace(/\s*:.*$/, "").trim();
+    for (const r of roundOrder) if (n.toLowerCase().startsWith(r.toLowerCase())) return r;
+    return n || "Autre";
+  };
+  for (const m of data.playoffs) {
+    const r = normRound(m.name);
+    if (!groups.has(r)) groups.set(r, []);
+    groups.get(r).push(m);
+  }
+  const orderedRounds = [...groups.keys()].sort((a, b) => {
+    const ia = roundOrder.indexOf(a), ib = roundOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return 0;
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+  return (
+    <div>
+      {data.event && (
+        <div style={{ padding: "8px 0 16px", textAlign: "center" }}>
+          <p style={{ color: "#fff", fontSize: 15, fontWeight: 900 }}>{data.event.name}</p>
+          {data.event.beginAt && <p style={{ color: "#777", fontSize: 11, marginTop: 2 }}>Début {new Date(data.event.beginAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</p>}
+        </div>
+      )}
+      {orderedRounds.map((round) => (
+        <div key={round} style={{ marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <div style={{ width: 3, height: 12, borderRadius: 2, background: accent }} />
+            <span style={{ fontSize: 10, fontWeight: 800, color: accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>{round}</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {groups.get(round).map((m) => {
+              const finished = m.status === "finished";
+              const live = m.status === "running";
+              return (
+                <div key={m.match_id} onClick={() => onMatchClick && onMatchClick(m, m.status)}
+                  style={{ background: "#111", border: `1px solid ${live ? "rgba(255,59,59,0.45)" : "#1e1e1e"}`, borderRadius: 12, padding: "10px 12px", cursor: onMatchClick ? "pointer" : "default", position: "relative", overflow: "hidden" }}>
+                  {live && <div style={{ position: "absolute", top: 6, right: 8, color: "#ff3b3b", fontSize: 9, fontWeight: 900, letterSpacing: 1 }}>LIVE</div>}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, justifyContent: "flex-end" }}>
+                      <span style={{ color: m.team1.is_winner ? "#fff" : "#888", fontSize: 12, fontWeight: m.team1.is_winner ? 900 : 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{m.team1.name}</span>
+                      {m.team1.logo && <img src={m.team1.logo} alt="" style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }} />}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, fontVariantNumeric: "tabular-nums" }}>
+                      <span style={{ color: m.team1.is_winner ? accent : finished ? "#666" : "#555", fontSize: 15, fontWeight: 900, minWidth: 14, textAlign: "center" }}>{m.team1.score ?? "—"}</span>
+                      <span style={{ color: "#333", fontSize: 11 }}>:</span>
+                      <span style={{ color: m.team2.is_winner ? accent : finished ? "#666" : "#555", fontSize: 15, fontWeight: 900, minWidth: 14, textAlign: "center" }}>{m.team2.score ?? "—"}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                      {m.team2.logo && <img src={m.team2.logo} alt="" style={{ width: 24, height: 24, objectFit: "contain", flexShrink: 0 }} />}
+                      <span style={{ color: m.team2.is_winner ? "#fff" : "#888", fontSize: 12, fontWeight: m.team2.is_winner ? 900 : 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.team2.name}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchClick, prefetchedBrackets }) {
   const [stage, setStage] = useState(null);
   const [phase, setPhase] = useState(null);
@@ -6978,6 +7087,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
 
   const stageAvailable = (key) => {
     if (key === "champions") return true;
+    if (key === "gc") return true;
     // Stage (= Stage 2 des régions) : désactivé dans le menu principal. Les
     // résultats restent accessibles dans l'Historique → "Stage 2 2026".
     if (key === "stage") return false;
@@ -7163,7 +7273,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
             const avail = stageAvailable(s.key);
             return (
               <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ ...bracketTileStyle(s.color, avail), padding: "36px 12px", gap: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[s.labelKey] || s.key}</span>
+                <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label || T[s.labelKey] || s.key}</span>
               </button>
             );
           })}
@@ -7189,6 +7299,16 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketChampions, "#ff4655")}</div>
         <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" onViewMatch={onLiveClick ? () => onLiveClick() : undefined} /></div>
+      </div>
+    );
+  }
+
+  // --- Game Changers ---
+  if (stage === "gc") {
+    return (
+      <div style={pageStylePlain}>
+        <div style={headerStyle}>{backBtn()}{titleSpan("Game Changers", "#E91E63")}</div>
+        <div style={{ padding: "0 16px 32px" }}><GameChangersView T={T} accent="#E91E63" onMatchClick={onMatchClick} /></div>
       </div>
     );
   }
