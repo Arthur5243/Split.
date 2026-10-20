@@ -4547,11 +4547,12 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             <span style={{ color: "#CCF71D", fontSize: 28, fontWeight: 900, letterSpacing: "-0.5px", lineHeight: 1 }}>{currentTier}</span>
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>Palier</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ flex: 1, height: 6, borderRadius: 4, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: progressPct + "%", borderRadius: 4, background: "linear-gradient(90deg, #CCF71D, #a8d90a)", transition: "width 0.4s ease", boxShadow: "0 0 10px rgba(204,247,29,0.4)" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, height: 12, borderRadius: 8, background: "rgba(255,255,255,0.08)", overflow: "hidden", border: "1px solid rgba(204,247,29,0.15)", position: "relative" }}>
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(204,247,29,0.05), transparent)" }} />
+              <div style={{ position: "relative", height: "100%", width: progressPct + "%", borderRadius: 8, background: "linear-gradient(90deg, #a8d90a 0%, #CCF71D 50%, #e6ff2e 100%)", transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 0 16px rgba(204,247,29,0.6), inset 0 1px 0 rgba(255,255,255,0.3)" }} />
             </div>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded} XP` : "MAX"}</span>
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums", flexShrink: 0, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded}` : "MAX"}</span>
           </div>
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 600, marginTop: 6, letterSpacing: 0.3 }}>
             L'XP sert aux paliers de récompenses, elle n'affecte pas ton classement.
@@ -10521,6 +10522,13 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
   const [friendModalTab, setFriendModalTab] = useState("search");
   const [specMenu, setSpecMenu] = useState(false);
   const [specInfoPopup, setSpecInfoPopup] = useState(false);
+  // Modals in-app pour masquer/signaler (plus de alert() / prompt() natifs).
+  const [blockConfirm, setBlockConfirm] = useState(null); // { id, pseudo }
+  const [reportTarget, setReportTarget] = useState(null); // { id, pseudo }
+  const [reportReason, setReportReason] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+  const [toastMsg, setToastMsg] = useState(null);
+  useEffect(() => { if (!toastMsg) return; const t = setTimeout(() => setToastMsg(null), 2600); return () => clearTimeout(t); }, [toastMsg]);
   const [specFollowList, setSpecFollowList] = useState(null);
   const [followersList, setFollowersList] = useState([]);
   const [discussionSubTab, setDiscussionSubTab] = useState("private");
@@ -11014,28 +11022,14 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 11, background: "#1c1c1c", border: "1px solid #333", borderRadius: 10, overflow: "hidden", minWidth: 180, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
                   <button onClick={() => {
                     setSpecMenu(false);
-                    blockUser({ id: su.id, pseudo: su.pseudo });
-                    alert(su.pseudo + " a été bloqué·e. Il/elle n'apparaîtra plus dans ton classement, tes posts ni tes DMs. Débloquage dans Paramètres > Comptes bloqués.");
-                    setSpectatorUser(null); setSpectatorStats(null); setSpecFollowList(null);
+                    setBlockConfirm({ id: su.id, pseudo: su.pseudo });
                   }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#e05252", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                    Bannir
+                    Masquer ce compte
                   </button>
-                  <button onClick={async () => {
+                  <button onClick={() => {
                     setSpecMenu(false);
-                    const reason = window.prompt("Raison du signalement (sois précis·e) :");
-                    if (!reason || !reason.trim()) return;
-                    try {
-                      const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
-                      await fetch(API_BASE + "/api/social/report-user", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
-                        body: JSON.stringify({ reportedUserId: su.id, reportedPseudo: su.pseudo, reason: reason.trim() }),
-                      });
-                      alert("Signalement envoyé. Merci.");
-                    } catch (e) {
-                      alert("Erreur réseau : " + e.message);
-                    }
+                    setReportTarget({ id: su.id, pseudo: su.pseudo });
                   }} className="w-full text-left flex items-center gap-2" style={{ padding: "10px 14px", color: "#f59e0b", fontSize: "12px", fontWeight: 700, background: "transparent", border: "none", borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
                     <AlertCircle size={14} />
                     Signaler
@@ -11188,6 +11182,96 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
             })}
           </div>
         </div>
+
+        {/* Confirm masquer (in-app, pas d'alert natif Google) */}
+        {blockConfirm && (
+          <>
+            <div onClick={() => setBlockConfirm(null)} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(2px)" }} />
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 61, background: "#111", border: "1px solid #333", borderRadius: 18, padding: "22px 20px", width: "min(340px, 92vw)", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05252" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                </div>
+                <div>
+                  <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 900, margin: 0 }}>Masquer ce compte</h3>
+                  <p style={{ color: "#888", fontSize: 11, margin: "2px 0 0" }}>{blockConfirm.pseudo}</p>
+                </div>
+              </div>
+              <p style={{ color: "#aaa", fontSize: 12, lineHeight: 1.5, marginBottom: 16 }}>
+                Son profil, ses posts, ses messages et son apparition sur ton classement seront cachés pour toi. Il reste visible pour la communauté. Débloquable dans Paramètres > Comptes bloqués.
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => setBlockConfirm(null)} style={{ flex: 1, padding: "11px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "#aaa", fontSize: 12, fontWeight: 800, border: "1px solid #2a2a2a", cursor: "pointer" }}>Annuler</button>
+                <button onClick={() => {
+                  blockUser({ id: blockConfirm.id, pseudo: blockConfirm.pseudo });
+                  setToastMsg(blockConfirm.pseudo + " masqué·e");
+                  setBlockConfirm(null);
+                  setSpectatorUser(null); setSpectatorStats(null); setSpecFollowList(null);
+                }} style={{ flex: 1, padding: "11px", borderRadius: 10, background: "#e05252", color: "#fff", fontSize: 12, fontWeight: 900, border: "none", cursor: "pointer" }}>Masquer</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Signaler : raison + envoi mail (in-app, pas d'alert/prompt) */}
+        {reportTarget && (
+          <>
+            <div onClick={() => { if (!reportSending) { setReportTarget(null); setReportReason(""); } }} style={{ position: "fixed", inset: 0, zIndex: 60, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(2px)" }} />
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 61, background: "#111", border: "1px solid #333", borderRadius: 18, padding: "22px 20px", width: "min(360px, 92vw)", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <AlertCircle size={22} color="#f59e0b" />
+                </div>
+                <div>
+                  <h3 style={{ color: "#fff", fontSize: 15, fontWeight: 900, margin: 0 }}>Signaler ce compte</h3>
+                  <p style={{ color: "#888", fontSize: 11, margin: "2px 0 0" }}>{reportTarget.pseudo}</p>
+                </div>
+              </div>
+              <p style={{ color: "#888", fontSize: 11, lineHeight: 1.5, marginBottom: 10 }}>Décris précisément le problème. Un modérateur vérifiera.</p>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Ex: insultes, triche, usurpation..."
+                maxLength={1000}
+                rows={4}
+                autoFocus
+                style={{ width: "100%", padding: "10px 12px", background: "#0a0a0a", color: "#fff", border: "1px solid #2a2a2a", borderRadius: 10, fontSize: 12, fontFamily: "inherit", resize: "vertical", outline: "none" }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "6px 0 14px" }}>
+                <span style={{ color: "#555", fontSize: 10 }}>{reportReason.length} / 1000</span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button disabled={reportSending} onClick={() => { setReportTarget(null); setReportReason(""); }} style={{ flex: 1, padding: "11px", borderRadius: 10, background: "rgba(255,255,255,0.06)", color: "#aaa", fontSize: 12, fontWeight: 800, border: "1px solid #2a2a2a", cursor: reportSending ? "wait" : "pointer", opacity: reportSending ? 0.5 : 1 }}>Annuler</button>
+                <button disabled={reportSending || !reportReason.trim()} onClick={async () => {
+                  setReportSending(true);
+                  try {
+                    const token = localStorage.getItem("split_token") || localStorage.getItem("split_auth_token") || "";
+                    const r = await fetch(API_BASE + "/api/social/report-user", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}) },
+                      body: JSON.stringify({ reportedUserId: reportTarget.id, reportedPseudo: reportTarget.pseudo, reason: reportReason.trim() }),
+                    });
+                    if (r.ok) setToastMsg("Signalement envoyé. Merci.");
+                    else setToastMsg("Erreur, réessaie");
+                  } catch (e) {
+                    setToastMsg("Erreur réseau");
+                  }
+                  setReportSending(false);
+                  setReportTarget(null); setReportReason("");
+                }} style={{ flex: 1, padding: "11px", borderRadius: 10, background: reportReason.trim() ? "#f59e0b" : "#444", color: "#111", fontSize: 12, fontWeight: 900, border: "none", cursor: reportSending || !reportReason.trim() ? "not-allowed" : "pointer", opacity: reportSending ? 0.6 : 1 }}>
+                  {reportSending ? "Envoi..." : "Envoyer"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Toast in-app */}
+        {toastMsg && (
+          <div style={{ position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: "#1a1a1a", color: "#fff", fontSize: 12, fontWeight: 700, padding: "10px 18px", borderRadius: 12, border: "1px solid #333", boxShadow: "0 8px 24px rgba(0,0,0,0.6)", animation: "streakSlide 0.3s ease-out" }}>
+            {toastMsg}
+          </div>
+        )}
 
         {specInfoPopup && (
           <>
@@ -11403,7 +11487,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
                 function renderRow(u, i) {
                   const isMe = u.id === profile.userId;
                   const rankLogo = getUserRank(u.points);
-                  const logoSize = rankLogo.name === "Immortal" ? 31 : 24;
+                  const logoSize = rankLogo.name === "Immortal" ? 40 : 24;
                   const isUnranked = rankLogo.name === "Unranked";
                   const uTitle = isMe ? (localStorage.getItem("split_equipped_title") || "") : (u.equipped_title || "");
                   const uBadge = isMe ? (localStorage.getItem("split_equipped_badge") || "") : (u.equipped_badge || "");
