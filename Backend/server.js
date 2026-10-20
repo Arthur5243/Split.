@@ -1568,9 +1568,70 @@ app.get("/api/vlr-events", async (req, res) => {
   }
 });
 
-// --- Champions Groups (auto from PandaScore) ---
+// --- Champions / Game Changers Groups (auto from PandaScore) ---
 const champGroupsCache = { data: null, at: 0 };
+const gcGroupsCache = { data: null, at: 0 };
 const CHAMP_GROUPS_TTL = 3 * 60 * 1000;
+
+async function buildSerieBracket(serieFilter) {
+  const series = await pandaFetch("/valorant/series?filter[year]=2026&sort=-begin_at&per_page=30");
+  const matched = (series || []).find(serieFilter);
+  if (!matched) return { groups: [], playoffs: [], event: null };
+  const allMatches = [];
+  for (let page = 1; page <= 5; page++) {
+    const pageData = await pandaFetch(
+      "/valorant/matches?filter[serie_id]=" + matched.id + "&sort=scheduled_at&per_page=100&page=" + page
+    );
+    if (!Array.isArray(pageData) || pageData.length === 0) break;
+    allMatches.push(...pageData);
+    if (pageData.length < 100) break;
+    await sleep(200);
+  }
+  return { matched, allMatches };
+}
+
+app.get("/api/game-changers-groups", async (req, res) => {
+  try {
+    if (gcGroupsCache.data && Date.now() - gcGroupsCache.at < CHAMP_GROUPS_TTL && !req.query.fresh) {
+      return res.json(gcGroupsCache.data);
+    }
+    const { matched, allMatches } = await buildSerieBracket((s) => {
+      const n = (s.full_name || s.name || "").toLowerCase();
+      return n.includes("game changers") && n.includes("championship");
+    });
+    if (!matched) { gcGroupsCache.data = { groups: [], playoffs: [], event: null }; gcGroupsCache.at = Date.now(); return res.json(gcGroupsCache.data); }
+    // Simple output : liste équipes + matches playoffs. Pas de groupes puisque
+    // le format GC Championship 2026 est un bracket pur sans phase de groupes.
+    const teamsMap = new Map();
+    const playoffMatches = [];
+    for (const m of allMatches || []) {
+      const t1 = m.opponents?.[0]?.opponent;
+      const t2 = m.opponents?.[1]?.opponent;
+      const r1 = (m.results || []).find((r) => t1 && r.team_id === t1.id);
+      const r2 = (m.results || []).find((r) => t2 && r.team_id === t2.id);
+      [t1, t2].forEach((t) => { if (t?.name && t.name !== "TBD" && !teamsMap.has(t.name)) teamsMap.set(t.name, { name: t.name, acronym: t.acronym || t.name.slice(0,3).toUpperCase(), logo: t.image_url }); });
+      playoffMatches.push({
+        match_id: m.id, name: m.name, status: m.status || "upcoming",
+        beginAt: m.begin_at, scheduledAt: m.scheduled_at, numberOfGames: m.number_of_games,
+        tournamentName: m.tournament?.name || null,
+        team1: { name: t1?.name || "TBD", score: r1?.score ?? null, is_winner: m.winner_id === t1?.id, logo: t1?.image_url || null },
+        team2: { name: t2?.name || "TBD", score: r2?.score ?? null, is_winner: m.winner_id === t2?.id, logo: t2?.image_url || null },
+      });
+    }
+    const data = {
+      event: { name: matched.full_name || matched.name, serieId: matched.id, beginAt: matched.begin_at },
+      teams: [...teamsMap.values()],
+      playoffs: playoffMatches,
+      groups: [],
+      updatedAt: new Date().toISOString(),
+    };
+    gcGroupsCache.data = data; gcGroupsCache.at = Date.now();
+    res.json(data);
+  } catch (e) {
+    console.error("[gc-groups]", e.message);
+    res.status(502).json({ error: e.message });
+  }
+});
 
 app.get("/api/champions-groups", async (req, res) => {
   try {
