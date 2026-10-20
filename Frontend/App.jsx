@@ -4463,12 +4463,19 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
 
   function openChestAnim(tier) {
     const ch = getChest(tier);
-    if (!isChestItem(ch) || claimedTiers.includes(tier)) return;
-    const winner = pickWin(ch.name);
-    const strip = [];
-    for (let i = 0; i < STRIP_N; i++) strip.push(i === WIN_I ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)]);
-    setChestStrip(strip); setChestResult(winner); setOpeningChest(tier);
-    setChestPhase("idle"); posRef.current = 0; phaseRef.current = "idle";
+    if (claimedTiers.includes(tier)) return;
+    // Chest = anim spin + reveal. Reward direct = pas d'anim, popup directe
+    // avec la même carte que chest ("done" tout de suite).
+    if (isChestItem(ch)) {
+      const winner = pickWin(ch.name);
+      const strip = [];
+      for (let i = 0; i < STRIP_N; i++) strip.push(i === WIN_I ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)]);
+      setChestStrip(strip); setChestResult(winner); setOpeningChest(tier);
+      setChestPhase("idle"); posRef.current = 0; phaseRef.current = "idle";
+    } else {
+      setChestStrip([]); setChestResult(ch); setOpeningChest(tier);
+      setChestPhase("done"); phaseRef.current = "done";
+    }
   }
 
   function triggerSpin() {
@@ -4495,7 +4502,20 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
   }, [openingChest]);
 
   function claimChestResult() {
-    if (openingChest && chestResult) { claimTier(openingChest, chestResult); setOpeningChest(null); phaseRef.current = "idle"; }
+    if (openingChest && chestResult) {
+      claimTier(openingChest, chestResult);
+      // Si une file "TOUT OUVRIR" est en cours, enchaîne direct sur le palier
+      // suivant au lieu de fermer la popup.
+      if (openAllQueue.length > 0) {
+        const next = openAllQueue[0];
+        setOpenAllQueue(openAllQueue.slice(1));
+        setOpeningChest(null); phaseRef.current = "idle";
+        // Un tick plus tard pour que React remonte la popup proprement.
+        setTimeout(() => openChestAnim(next.tier), 0);
+      } else {
+        setOpeningChest(null); phaseRef.current = "idle";
+      }
+    }
   }
 
   return (
@@ -4556,7 +4576,10 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             const pending = allTiers.filter(t => t <= currentTier && !claimedTiers.includes(t));
             if (pending.length === 0) return null;
             return (
-              <button onClick={() => setOpenAllQueue(pending.map(t => ({ tier: t, item: getChest(t) })))} style={{
+              <button onClick={() => {
+                setOpenAllQueue(pending.slice(1).map(t => ({ tier: t, item: getChest(t) })));
+                openChestAnim(pending[0]);
+              }} style={{
                 width: "100%", marginBottom: 12, padding: "12px",
                 background: "linear-gradient(135deg, #CCF71D, #a8d90a)", color: "#000",
                 fontSize: 13, fontWeight: 900, border: "none", borderRadius: 12, cursor: "pointer",
@@ -4622,7 +4645,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                       }}>OUVRIR</button>
                     )}
                     {unlocked && !claimed && !isChest && (
-                      <button onClick={() => claimTier(tier, chest)} style={{
+                      <button onClick={() => openChestAnim(tier)} style={{
                         padding: "8px 12px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
                         color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
                         cursor: "pointer",
@@ -4970,7 +4993,6 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
           )}
 
           {chestPhase === "done" && chestResult && (() => {
-            const pending = allTiers.filter(t => t <= currentTier && !claimedTiers.includes(t) && t !== openingChest);
             const hasImg = !!(chestResult.preview || chestResult.bannerImage || chestResult.matchBgImage);
             const hideEmoji = chestResult.type === "banner" || chestResult.type === "match_bg";
             return (
@@ -4978,6 +5000,11 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                 onClick={claimChestResult}
                 style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px", cursor: "pointer" }}
               >
+                {openAllQueue.length > 0 && (
+                  <div style={{ position: "absolute", top: 20, left: 20, color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                    {openAllQueue.length + 1} restant{openAllQueue.length + 1 > 1 ? "s" : ""}
+                  </div>
+                )}
                 <div
                   onClick={(e) => e.stopPropagation()}
                   style={{
@@ -5023,89 +5050,12 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                       }}>ÉQUIPER</button>
                     )}
                   </div>
-
-                  {pending.length > 0 && (
-                    <button onClick={() => {
-                      claimTier(openingChest, chestResult);
-                      setOpeningChest(null);
-                      phaseRef.current = "idle";
-                      setOpenAllQueue(pending.map(t => ({ tier: t, item: getChest(t) })));
-                    }} style={{
-                      width: "100%", marginTop: 4, padding: "10px",
-                      background: "transparent", color: "#CCF71D",
-                      fontSize: 12, fontWeight: 800, border: "1px solid rgba(204,247,29,0.4)", borderRadius: 10, cursor: "pointer",
-                    }}>TOUT OUVRIR ({pending.length})</button>
-                  )}
                 </div>
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); setOpeningChest(null); phaseRef.current = "idle"; }}
-                  style={{ marginTop: 14, background: "transparent", border: "none", color: "#666", fontSize: 11, fontWeight: 700, cursor: "pointer", padding: "6px 12px" }}
-                >Passer</button>
               </div>
             );
           })()}
         </div>
       )}
-
-      {/* Popup "Ouvrir tout" : affiche l'item courant au centre. Clic n'importe
-          où = claim + next. "Passer" ferme toute la file. Pendant que la file
-          est active, les catégories/boutons derrière ne doivent plus être
-          cliquables (overlay pleine zone + stopPropagation). */}
-      {openAllQueue.length > 0 && (() => {
-        const current = openAllQueue[0];
-        const img = current.item?.bannerImage || current.item?.matchBgImage || current.item?.preview || null;
-        const advance = () => {
-          const next = openAllQueue.slice(1);
-          claimTier(current.tier, current.item);
-          setOpenAllQueue(next);
-        };
-        return (
-          <div
-            onClick={advance}
-            style={{
-              position: "fixed", inset: 0, zIndex: 11000,
-              background: "rgba(0,0,0,0.92)",
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              padding: "24px",
-              cursor: "pointer",
-              userSelect: "none",
-            }}
-          >
-            <button
-              onClick={(e) => { e.stopPropagation(); setOpenAllQueue([]); }}
-              style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.08)", border: "1px solid #333", borderRadius: 10, padding: "8px 16px", color: "#aaa", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
-            >Passer</button>
-
-            <div style={{ position: "absolute", top: 20, left: 20, color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
-              {openAllQueue.length} restant{openAllQueue.length > 1 ? "s" : ""}
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: 340, textAlign: "center" }}>
-              <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
-                Palier {current.tier}
-              </span>
-
-              {img ? (
-                <div style={{ width: 240, height: 160, borderRadius: 20, overflow: "hidden", boxShadow: "0 10px 40px rgba(204,247,29,0.25)", border: "2px solid rgba(204,247,29,0.4)" }}>
-                  <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              ) : (
-                <div style={{ width: 140, height: 140, borderRadius: 20, background: "rgba(204,247,29,0.08)", border: "2px solid rgba(204,247,29,0.3)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(204,247,29,0.2)" }}>
-                  <span style={{ fontSize: 72 }}>{current.item?.emoji || "🎁"}</span>
-                </div>
-              )}
-
-              <div>
-                <p style={{ color: "#fff", fontSize: 20, fontWeight: 900, marginBottom: 6 }}>{current.item?.name || "Récompense"}</p>
-                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 700 }}>Objet récupéré</p>
-              </div>
-
-              <p style={{ color: "#555", fontSize: 11, fontWeight: 600, marginTop: 8 }}>Appuie n'importe où pour continuer</p>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
@@ -11984,25 +11934,54 @@ function BlockedUsersSection() {
     setList(next);
     try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
   };
+  const initials = (p) => (p || "?").trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   if (list.length === 0) {
     return (
-      <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
-        <p style={{ color: "#777", fontSize: 12, padding: "16px 0", textAlign: "center" }}>Aucun compte bloqué.</p>
+      <div style={{ borderTop: "1px solid #262626", padding: "22px 16px 20px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(224,82,82,0.08)", border: "1px solid rgba(224,82,82,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05252" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          </div>
+          <p style={{ color: "#aaa", fontSize: 13, fontWeight: 700 }}>Aucun compte bloqué</p>
+          <p style={{ color: "#666", fontSize: 11, textAlign: "center", lineHeight: 1.4, maxWidth: 240 }}>
+            Les comptes bloqués n'apparaîtront plus dans ton classement, tes posts ni tes DMs. Tu peux les débloquer d'ici à tout moment.
+          </p>
+        </div>
       </div>
     );
   }
   return (
-    <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
-      <div className="flex flex-col gap-2" style={{ marginTop: 10 }}>
-        {list.map((b) => (
-          <div key={b.id} className="flex items-center justify-between rounded-xl" style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", padding: "10px 12px" }}>
-            <span style={{ color: "#eee", fontSize: 13, fontWeight: 700 }}>{b.pseudo || b.id.slice(0, 8)}</span>
-            <button onClick={() => unblock(b.id)} style={{
-              padding: "6px 14px", borderRadius: 8, background: "rgba(204,247,29,0.1)", color: "#CCF71D",
-              fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.3)", cursor: "pointer",
-            }}>Débloquer</button>
-          </div>
-        ))}
+    <div style={{ borderTop: "1px solid #262626", padding: "16px 14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, padding: "0 2px" }}>
+        <span style={{ color: "#999", fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>{list.length} compte{list.length > 1 ? "s" : ""} bloqué{list.length > 1 ? "s" : ""}</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {list.map((b) => {
+          const dateStr = b.at ? new Date(b.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : null;
+          return (
+            <div key={b.id} style={{
+              display: "flex", alignItems: "center", gap: 12,
+              background: "linear-gradient(90deg, rgba(224,82,82,0.06), rgba(224,82,82,0.02))",
+              border: "1px solid rgba(224,82,82,0.2)", borderRadius: 14, padding: "10px 12px",
+            }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: "50%",
+                background: "linear-gradient(135deg, #2a2a2a, #1a1a1a)", border: "1px solid #333",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                color: "#777", fontSize: 12, fontWeight: 900, letterSpacing: 0.5,
+              }}>{initials(b.pseudo)}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "#eee", fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.pseudo || "Compte sans pseudo"}</div>
+                {dateStr && <div style={{ color: "#666", fontSize: 10, marginTop: 2 }}>Bloqué le {dateStr}</div>}
+              </div>
+              <button onClick={() => unblock(b.id)} style={{
+                padding: "7px 14px", borderRadius: 10, background: "transparent",
+                color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.4)",
+                cursor: "pointer", whiteSpace: "nowrap",
+              }}>Débloquer</button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
