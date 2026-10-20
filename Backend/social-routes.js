@@ -210,11 +210,44 @@ router.post("/api/social/bet-stats", (req, res) => {
   res.json({ ok: true });
 });
 
-// Signalements : append dans /data/reports.jsonl + POST sur REPORT_WEBHOOK_URL
-// si configuré (Discord/Slack/Zapier/Formspree pour relayer en mail).
+// Signalements : append dans /data/reports.jsonl + envoi email direct à
+// contact@splitapp.fr (ou REPORT_EMAIL_TO) via SMTP (nodemailer). Pas de
+// webhook payant. Config SMTP via env : SMTP_HOST, SMTP_PORT, SMTP_USER,
+// SMTP_PASS (le FROM = SMTP_USER, le TO = REPORT_EMAIL_TO par défaut
+// contact@splitapp.fr).
 import fs from "node:fs";
 import path from "node:path";
 const REPORTS_PATH = path.join(process.env.DB_PATH ? path.dirname(process.env.DB_PATH) : "/data", "reports.jsonl");
+
+let _mailer = null;
+async function getMailer() {
+  if (_mailer === "disabled") return null;
+  if (_mailer) return _mailer;
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  if (!host || !user || !pass) {
+    console.log("[report] SMTP non configuré (SMTP_HOST/USER/PASS absents) → emails désactivés, seul le fichier reports.jsonl est écrit.");
+    _mailer = "disabled";
+    return null;
+  }
+  try {
+    const nodemailer = (await import("nodemailer")).default;
+    _mailer = nodemailer.createTransport({
+      host,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: String(process.env.SMTP_SECURE || "false") === "true",
+      auth: { user, pass },
+    });
+    console.log("[report] SMTP prêt via " + host + ":" + (process.env.SMTP_PORT || 587));
+    return _mailer;
+  } catch (e) {
+    console.error("[report] SMTP init fail:", e.message);
+    _mailer = "disabled";
+    return null;
+  }
+}
+
 router.post("/api/social/report-user", async (req, res) => {
   try {
     const { reportedUserId, reportedPseudo, reason } = req.body || {};
@@ -243,17 +276,27 @@ router.post("/api/social/report-user", async (req, res) => {
       fs.mkdirSync(path.dirname(REPORTS_PATH), { recursive: true });
       fs.appendFileSync(REPORTS_PATH, JSON.stringify(entry) + "\n");
     } catch (e) { console.error("[report] write fail:", e.message); }
-    const hook = process.env.REPORT_WEBHOOK_URL;
-    if (hook) {
+
+    // Email
+    const mailer = await getMailer();
+    if (mailer) {
+      const to = process.env.REPORT_EMAIL_TO || "contact@splitapp.fr";
+      const from = process.env.REPORT_EMAIL_FROM || process.env.SMTP_USER;
+      const subject = `[Split] Signalement : ${entry.reportedPseudo || entry.reportedUserId}`;
+      const text =
+        "Nouveau signalement sur Split\n\n" +
+        "Compte signalé : " + (entry.reportedPseudo || "(sans pseudo)") + " (id=" + entry.reportedUserId + ")\n" +
+        "Signalé par : " + (entry.reporterPseudo || entry.reporterId || "anonyme") + "\n" +
+        "Date : " + entry.at + "\n" +
+        "User-Agent : " + (entry.ua || "?") + "\n\n" +
+        "--- Raison ---\n" + entry.reason + "\n";
       try {
-        const content = `🚨 Signalement Split\n**Signalé** : ${entry.reportedPseudo || entry.reportedUserId}\n**Par** : ${entry.reporterPseudo || entry.reporterId || "anonyme"}\n**Raison** : ${entry.reason}\n**Date** : ${entry.at}`;
-        await fetch(hook, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content, text: content, embeds: [{ title: "Signalement Split", description: content, color: 0xff6600 }] }),
-        });
-      } catch (e) { console.error("[report] webhook fail:", e.message); }
+        await mailer.sendMail({ from, to, subject, text });
+      } catch (e) {
+        console.error("[report] sendMail fail:", e.message);
+      }
     }
+
     res.json({ ok: true });
   } catch (e) {
     console.error("[report] error:", e.message);
