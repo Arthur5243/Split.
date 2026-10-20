@@ -4060,14 +4060,23 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       if (!saved.includes(1)) {
         const withFree = [1, ...saved];
         localStorage.setItem("split_claimed_tiers", JSON.stringify(withFree));
-        const tier1Reward = { emoji: "🖼️", name: "Bannière Starter", desc: "Ta première bannière de classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" };
         const inv = JSON.parse(localStorage.getItem("split_inventory") || "[]");
-        if (!inv.some(i => i.name === tier1Reward.name)) {
-          inv.push(tier1Reward);
-          localStorage.setItem("split_inventory", JSON.stringify(inv));
+        const starterBanner = { emoji: "🖼️", name: "Bannière Starter", desc: "Ta première bannière de classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" };
+        const communityBanner = { emoji: "🖼️", name: "Bannière Communauté", desc: "Bannière offerte à toute la communauté Split", type: "banner", bannerImage: "/banner-4.png", rarity: "commun" };
+        for (const b of [starterBanner, communityBanner]) {
+          if (!inv.some(i => i.name === b.name)) inv.push(b);
         }
+        localStorage.setItem("split_inventory", JSON.stringify(inv));
         return withFree;
       }
+      // Rétroactif : ajoute Bannière Communauté aux users déjà au-delà du tier 1.
+      try {
+        const inv = JSON.parse(localStorage.getItem("split_inventory") || "[]");
+        if (!inv.some(i => i.name === "Bannière Communauté")) {
+          inv.push({ emoji: "🖼️", name: "Bannière Communauté", desc: "Bannière offerte à toute la communauté Split", type: "banner", bannerImage: "/banner-4.png", rarity: "commun" });
+          localStorage.setItem("split_inventory", JSON.stringify(inv));
+        }
+      } catch {}
       return saved;
     } catch { return [1]; }
   });
@@ -4292,6 +4301,9 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
   const [showBoostPicker, setShowBoostPicker] = useState(false);
   const [boostItemIndex, setBoostItemIndex] = useState(null);
   const [boostTab, setBoostTab] = useState("valo");
+  // File "Ouvrir tout" : array de { tier, item } à montrer successivement
+  // dans la popup centrale. [] = aucune popup active.
+  const [openAllQueue, setOpenAllQueue] = useState([]);
   const [showMatchBgPicker, setShowMatchBgPicker] = useState(false);
   const [matchBgPickerItem, setMatchBgPickerItem] = useState(null);
   const [equippedMatchBgs, setEquippedMatchBgs] = useState(() => {
@@ -4540,6 +4552,20 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       {tab === "rewards" ? (
         <div ref={scrollRef} onScroll={handleRewardsScroll} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px", position: "relative" }}>
           {scrollDir && <div style={{ position: "sticky", top: scrollDir === "up" ? 8 : "auto", bottom: scrollDir === "down" ? 8 : "auto", left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none", animation: "fadeInOut 1.2s ease forwards" }}><div style={{ background: "rgba(204,247,29,0.15)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><ChevronDown size={18} color="#CCF71D" style={{ transform: scrollDir === "up" ? "rotate(180deg)" : "none" }} /></div></div>}
+          {(() => {
+            const pending = allTiers.filter(t => t <= currentTier && !claimedTiers.includes(t));
+            if (pending.length === 0) return null;
+            return (
+              <button onClick={() => setOpenAllQueue(pending.map(t => ({ tier: t, item: getChest(t) })))} style={{
+                width: "100%", marginBottom: 12, padding: "12px",
+                background: "linear-gradient(135deg, #CCF71D, #a8d90a)", color: "#000",
+                fontSize: 13, fontWeight: 900, border: "none", borderRadius: 12, cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(204,247,29,0.3)",
+              }}>
+                OUVRIR TOUT ({pending.length})
+              </button>
+            );
+          })()}
           {visibleTiers.map(tier => {
             const reward = getTierReward(tier);
             const unlocked = tier <= currentTier;
@@ -4654,7 +4680,10 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                 return (
                   <div key={i} style={{ background: isEquipped ? rc.bg : "#141414", border: `1.5px solid ${isEquipped ? rc.border : rc.border + "33"}`, borderRadius: 16, padding: "14px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, overflow: "hidden", boxShadow: isEquipped ? rc.glow : "none" }}>
                     {(item.preview || item.bannerImage || item.matchBgImage) && <img src={item.preview || item.bannerImage || item.matchBgImage} alt="" style={{ width: "100%", height: 56, objectFit: "cover", borderRadius: 10 }} />}
-                    <span style={{ fontSize: 28 }}>{item.emoji}</span>
+                    {/* Emoji caché pour bannières/match_bg : l'image preview parle d'elle-même. */}
+                    {item.type !== "banner" && item.type !== "match_bg" && (
+                      <span style={{ fontSize: 28 }}>{item.emoji}</span>
+                    )}
                     {item.type === "title" ? (
                       <span style={{ color: "#fff", fontSize: 13, fontWeight: 900, textAlign: "center", lineHeight: 1.2, background: `linear-gradient(135deg, ${rc.border}cc, ${rc.border}88)`, padding: "5px 14px", borderRadius: 8, border: `1.5px solid ${rc.border}`, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{item.name}</span>
                     ) : (
@@ -4978,6 +5007,65 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
           )}
         </div>
       )}
+
+      {/* Popup "Ouvrir tout" : affiche l'item courant au centre. Clic n'importe
+          où = claim + next. "Passer" ferme toute la file. Pendant que la file
+          est active, les catégories/boutons derrière ne doivent plus être
+          cliquables (overlay pleine zone + stopPropagation). */}
+      {openAllQueue.length > 0 && (() => {
+        const current = openAllQueue[0];
+        const img = current.item?.bannerImage || current.item?.matchBgImage || current.item?.preview || null;
+        const advance = () => {
+          const next = openAllQueue.slice(1);
+          claimTier(current.tier, current.item);
+          setOpenAllQueue(next);
+        };
+        return (
+          <div
+            onClick={advance}
+            style={{
+              position: "fixed", inset: 0, zIndex: 11000,
+              background: "rgba(0,0,0,0.92)",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              padding: "24px",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpenAllQueue([]); }}
+              style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.08)", border: "1px solid #333", borderRadius: 10, padding: "8px 16px", color: "#aaa", fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+            >Passer</button>
+
+            <div style={{ position: "absolute", top: 20, left: 20, color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+              {openAllQueue.length} restant{openAllQueue.length > 1 ? "s" : ""}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, maxWidth: 340, textAlign: "center" }}>
+              <span style={{ color: "#CCF71D", fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
+                Palier {current.tier}
+              </span>
+
+              {img ? (
+                <div style={{ width: 240, height: 160, borderRadius: 20, overflow: "hidden", boxShadow: "0 10px 40px rgba(204,247,29,0.25)", border: "2px solid rgba(204,247,29,0.4)" }}>
+                  <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ) : (
+                <div style={{ width: 140, height: 140, borderRadius: 20, background: "rgba(204,247,29,0.08)", border: "2px solid rgba(204,247,29,0.3)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 40px rgba(204,247,29,0.2)" }}>
+                  <span style={{ fontSize: 72 }}>{current.item?.emoji || "🎁"}</span>
+                </div>
+              )}
+
+              <div>
+                <p style={{ color: "#fff", fontSize: 20, fontWeight: 900, marginBottom: 6 }}>{current.item?.name || "Récompense"}</p>
+                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 700 }}>Objet récupéré</p>
+              </div>
+
+              <p style={{ color: "#555", fontSize: 11, fontWeight: 600, marginTop: 8 }}>Appuie n'importe où pour continuer</p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
