@@ -7013,17 +7013,16 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
       {tab === "bracket" && (
         loading && !data ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div> :
         (!data || !Array.isArray(data.playoffs) || data.playoffs.length === 0) ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Le bracket s'affichera dès le début du tournoi.</div> :
-        <BracketTree matches={data.playoffs} accent={accent} onMatchClick={onMatchClick} />
+        <GcBracketTree matches={data.playoffs} accent={accent} onMatchClick={onMatchClick} />
       )}
     </div>
   );
 }
 
-// Vrai bracket arbre style tournament : chaque colonne = round, cards
-// espacées pour que les paires s'alignent sur une card du round suivant.
-// Lignes de connexion dessinées en SVG en overlay par-dessus les colonnes.
-// Scroll horizontal sur mobile.
-function BracketTree({ matches, accent = "#E91E63", onMatchClick }) {
+// Vrai bracket arbre style tournament (Game Changers) : chaque colonne = round,
+// cards espacées pour que les paires s'alignent sur une card du round suivant.
+// Lignes de connexion en overlay. Scroll horizontal sur mobile.
+function GcBracketTree({ matches, accent = "#E91E63", onMatchClick }) {
   const CARD_H = 56;        // hauteur d'une match card
   const CARD_W = 170;       // largeur d'une match card
   const BASE_GAP = 14;      // gap de base entre 2 cards du round 1
