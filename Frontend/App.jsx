@@ -7013,239 +7013,56 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
       {tab === "bracket" && (
         loading && !data ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div> :
         (!data || !Array.isArray(data.playoffs) || data.playoffs.length === 0) ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Le bracket s'affichera dès le début du tournoi.</div> :
-        <GcBracketTree matches={data.playoffs} accent={accent} onMatchClick={onMatchClick} />
+        <GcBracketUsingSplit matches={data.playoffs} onMatchClick={onMatchClick} />
       )}
     </div>
   );
 }
 
-// Rendu bracket Game Changers reconstruit from scratch pour matcher l'image
-// de référence : grille claire, cards équipes avec logos, lignes SVG propres.
-// Structure HARDCODÉE pour les 10 équipes GC Championship 2026 (format
-// double élimination connu). Les scores sont injectés depuis les matchs
-// PandaScore si trouvés par noms d'équipes.
-function GcBracketTree({ matches, accent = "#E91E63", onMatchClick }) {
-  const CARD_W = 180;
-  const ROW_H = 32;
-  const COL_GAP = 40;
-
-  // normalisation nom équipe (sans accent, insensible casse, ponctuation)
-  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-
-  // Récupère un match par noms d'équipes (ordre indifférent). Si trouvé,
-  // retourne { team1, team2, score1, score2, status, winnerId } normalisés
-  // dans l'ordre demandé (ta team1 reste team1 même si Panda l'avait en team2).
-  const findMatch = (tA, tB) => {
-    if (!tA || !tB) return null;
-    const nA = norm(tA), nB = norm(tB);
-    for (const m of matches || []) {
-      const n1 = norm(m.team1?.name), n2 = norm(m.team2?.name);
-      if ((n1 === nA && n2 === nB) || (n1 === nB && n2 === nA)) {
-        const swap = !(n1 === nA);
-        return {
-          _raw: m,
-          team1: swap ? m.team2 : m.team1,
-          team2: swap ? m.team1 : m.team2,
-        };
-      }
-    }
-    return null;
-  };
-
-  // Logo venant de PandaScore si équipe connue, sinon fallback null
-  const logoOf = (name) => {
-    if (!name) return null;
-    const n = norm(name);
-    for (const m of matches || []) {
-      if (norm(m.team1?.name) === n) return m.team1?.logo || null;
-      if (norm(m.team2?.name) === n) return m.team2?.logo || null;
-    }
-    return null;
-  };
-
-  // Structure de bracket avec les 10 équipes qualifiées. ub_r1 = 2 matchs,
-  // les gagnants vont en ub_qf. 4 autres équipes commencent direct en ub_qf.
-  const BR = {
-    ub_r1: [
-      { id: "ub_r1_1", a: "FENNEL Female", b: "MIBR GC" },
-      { id: "ub_r1_2", a: "SK Nebula", b: "Nova Esports GC" },
-    ],
-    ub_qf: [
-      { id: "ub_qf_1", a: "G2 Gozen", b: null, bFrom: "ub_r1_1" },
-      { id: "ub_qf_2", a: "Team Liquid Brazil", b: "Gentle Mates GC" },
-      { id: "ub_qf_3", a: "SR Gold", b: null, bFrom: "ub_r1_2" },
-      { id: "ub_qf_4", a: "KRÜ Blaze", b: "Gen.G GC" },
-    ],
-    ub_sf: [
-      { id: "ub_sf_1", aFrom: "ub_qf_1", bFrom: "ub_qf_2" },
-      { id: "ub_sf_2", aFrom: "ub_qf_3", bFrom: "ub_qf_4" },
-    ],
-    ub_f: [{ id: "ub_f_1", aFrom: "ub_sf_1", bFrom: "ub_sf_2" }],
-    gf: [{ id: "gf_1", aFrom: "ub_f_1", bFrom: "lb_f_1" }],
-    lb_r1: [
-      { id: "lb_r1_1", aFrom: "ub_r1_1_L", bFrom: "ub_r1_2_L" }, // les perdants de UB R1
-      { id: "lb_r1_2", aFrom: null, bFrom: null }, // slot vide ou setup différent
-    ],
-    lb_r2: [
-      { id: "lb_r2_1", aFrom: "lb_r1_1", bFrom: "ub_qf_1_L" },
-      { id: "lb_r2_2", aFrom: "lb_r1_2", bFrom: "ub_qf_3_L" },
-    ],
-    lb_qf: [
-      { id: "lb_qf_1", aFrom: "lb_r2_1", bFrom: "ub_qf_2_L" },
-      { id: "lb_qf_2", aFrom: "lb_r2_2", bFrom: "ub_qf_4_L" },
-    ],
-    lb_sf: [{ id: "lb_sf_1", aFrom: "lb_qf_1", bFrom: "lb_qf_2" }],
-    lb_f: [{ id: "lb_f_1", aFrom: "lb_sf_1", bFrom: "ub_f_1_L" }],
-  };
-
-  // Match résolu avec scores depuis PandaScore
-  const resolve = (slot) => {
-    const nameA = slot.a || null;
-    const nameB = slot.b || null;
-    if (nameA && nameB) {
-      const live = findMatch(nameA, nameB);
-      if (live) return { team1: live.team1, team2: live.team2, raw: live._raw };
-    }
-    return {
-      team1: { name: nameA || "TBD", logo: logoOf(nameA), score: null, is_winner: false },
-      team2: { name: nameB || "TBD", logo: logoOf(nameB), score: null, is_winner: false },
-      raw: null,
-    };
-  };
-
-  const MatchBox = ({ slot }) => {
-    const resolved = resolve(slot);
-    const raw = resolved.raw;
-    const live = raw?.status === "running";
-    return (
-      <div
-        onClick={() => raw && onMatchClick && onMatchClick(raw, raw.status)}
-        style={{
-          width: CARD_W, background: "#121212",
-          border: `1px solid ${live ? "rgba(255,59,59,0.45)" : "#2a2a2a"}`,
-          borderRadius: 6, overflow: "hidden",
-          cursor: raw && onMatchClick ? "pointer" : "default",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.5)",
-        }}
-      >
-        {["team1","team2"].map((k, idx) => {
-          const t = resolved[k];
-          const won = t?.is_winner;
-          return (
-            <div key={k} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
-              padding: "0 8px", height: ROW_H,
-              borderTop: idx === 1 ? "1px solid #2a2a2a" : "none",
-              background: won ? "rgba(233,30,99,0.12)" : "transparent",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
-                {t?.logo ? <img src={t.logo} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} /> : <div style={{ width: 16, height: 16, borderRadius: 2, background: "#1f1f1f", flexShrink: 0 }} />}
-                <span style={{ color: won ? "#fff" : t?.name === "TBD" ? "#555" : "#aaa", fontSize: 10.5, fontWeight: won ? 900 : 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t?.name || "TBD"}</span>
-              </div>
-              <span style={{ color: won ? accent : "#555", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{t?.score ?? "—"}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Rendu d'une colonne avec positions verticales calculées pour arbre tournament.
-  // chaque match a une hauteur de 2 ROW_H. On espace les cards selon la position.
-  const Column = ({ label, slots, positions, color = "#777" }) => (
-    <div style={{ display: "flex", flexDirection: "column", flexShrink: 0 }}>
-      <div style={{ color, fontSize: 9, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8, whiteSpace: "nowrap", height: 14 }}>{label}</div>
-      <div style={{ position: "relative", width: CARD_W, height: positions.length ? positions[positions.length - 1] + ROW_H * 2 + 20 : 100 }}>
-        {slots.map((slot, i) => (
-          <div key={slot.id} style={{ position: "absolute", top: positions[i], left: 0 }}>
-            <MatchBox slot={slot} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  // Positions verticales : chaque card du round N est centrée sur une paire du round N-1.
-  const H1 = ROW_H * 2;      // hauteur match
-  const G1 = 24;              // gap entre matchs round 1
-  const posUbR1 = [0, H1 + G1];
-  // ub_qf : 4 matchs mais chacun aligné sur sa paire UB R1 (ou direct seed)
-  // Pour matcher l'image : qf_1 aligné à peu près sur ub_r1_1, qf_2 juste en-dessous...
-  // On garde un espacement simple pour les 4 QF.
-  const posUbQf = [0, H1 + G1, (H1 + G1) * 2, (H1 + G1) * 3];
-  // ub_sf : 2 matchs, chacun centré entre 2 qf consécutifs
-  const posUbSf = [
-    (posUbQf[0] + posUbQf[1]) / 2,
-    (posUbQf[2] + posUbQf[3]) / 2,
+// Convertit les matchs PandaScore GC vers le format `rounds` attendu par le
+// vrai composant BracketTree de l'app (celui utilisé par Masters / Kickoff /
+// Stage 2 etc), pour avoir l'EXACT même design. Upper + Lower en 2 appels.
+function GcBracketUsingSplit({ matches, onMatchClick }) {
+  const UPPER_PATTERNS = [
+    { name: "Upper Round 1", match: /upper bracket round 1/i },
+    { name: "Upper Quarterfinals", match: /upper (bracket )?quarter/i },
+    { name: "Upper Semifinals", match: /upper (bracket )?semi/i },
+    { name: "Upper Final", match: /upper (bracket )?final/i },
+    { name: "Grand Final", match: /grand final/i },
   ];
-  const posUbF = [(posUbSf[0] + posUbSf[1]) / 2];
-  const posGf = [posUbF[0] + H1 + 20]; // décalage pour laisser place à la jonction LB
-  // Lower
-  const posLbR1 = [0, H1 + G1];
-  const posLbR2 = [0, H1 + G1];
-  const posLbQf = [0, H1 + G1];
-  const posLbSf = [(posLbQf[0] + posLbQf[1]) / 2];
-  const posLbF = [posLbSf[0]];
-
-  // Lignes de connexion SVG entre 2 colonnes.
-  const Connectors = ({ fromPositions, toPositions }) => {
-    const h = Math.max(fromPositions[fromPositions.length - 1], toPositions[toPositions.length - 1]) + H1 + 20;
-    return (
-      <svg width={COL_GAP} height={h} style={{ flexShrink: 0, display: "block", alignSelf: "flex-start", marginTop: 22 }}>
-        {toPositions.map((toY, i) => {
-          const f1 = fromPositions[i * 2];
-          const f2 = fromPositions[i * 2 + 1];
-          const y1 = f1 != null ? f1 + ROW_H : null;
-          const y2 = f2 != null ? f2 + ROW_H : null;
-          const yT = toY + ROW_H;
-          const midX = COL_GAP / 2;
-          return (
-            <g key={i} stroke="#333" strokeWidth="1" fill="none">
-              {y1 != null && <line x1="0" y1={y1} x2={midX} y2={y1} />}
-              {y2 != null && <line x1="0" y1={y2} x2={midX} y2={y2} />}
-              {y1 != null && y2 != null && <line x1={midX} y1={y1} x2={midX} y2={y2} />}
-              {y1 != null && <line x1={midX} y1={yT} x2={COL_GAP} y2={yT} />}
-            </g>
-          );
-        })}
-      </svg>
-    );
-  };
-
+  const LOWER_PATTERNS = [
+    { name: "Lower Round 1", match: /lower bracket round 1/i },
+    { name: "Lower Round 2", match: /lower bracket round 2/i },
+    { name: "Lower Quarterfinals", match: /lower (bracket )?quarter/i },
+    { name: "Lower Semifinals", match: /lower (bracket )?semi/i },
+    { name: "Lower Final", match: /lower (bracket )?final/i },
+  ];
+  // Nombre de slots TBD à afficher si la liste PandaScore est vide (format
+  // double-élim 10 équipes). Permet d'avoir le visuel bracket même avant que
+  // les matchs ne soient créés.
+  const UPPER_SLOTS = [2, 4, 2, 1, 1];
+  const LOWER_SLOTS = [2, 2, 2, 1, 1];
+  const emptyTeam = { name: "TBD" };
+  const buildRounds = (patterns, slots) => patterns.map((p, i) => {
+    const found = (matches || []).filter(m => p.match.test(m.name || ""));
+    const pad = slots[i] - found.length;
+    const items = [...found];
+    for (let k = 0; k < pad; k++) items.push({ match_id: `tbd-${p.name}-${k}`, name: p.name, status: "upcoming", team1: emptyTeam, team2: emptyTeam });
+    return { name: p.name, matches: items };
+  });
+  const upperRounds = buildRounds(UPPER_PATTERNS, UPPER_SLOTS);
+  const lowerRounds = buildRounds(LOWER_PATTERNS, LOWER_SLOTS);
   return (
-    <div style={{ overflowX: "auto", paddingBottom: 24 }} className="no-scrollbar">
-      <div style={{ minWidth: "max-content", display: "flex", flexDirection: "column", gap: 28 }}>
-        {/* UPPER BRACKET */}
-        <div style={{ display: "flex", alignItems: "flex-start" }}>
-          <Column label="Upper Bracket R1" slots={BR.ub_r1} positions={posUbR1} color={accent} />
-          <Connectors fromPositions={posUbR1} toPositions={posUbQf.slice(0, 1)} />
-          <Column label="UB Quarterfinals" slots={BR.ub_qf} positions={posUbQf} color={accent} />
-          <Connectors fromPositions={posUbQf} toPositions={posUbSf} />
-          <Column label="UB Semifinals" slots={BR.ub_sf} positions={posUbSf} color={accent} />
-          <Connectors fromPositions={posUbSf} toPositions={posUbF} />
-          <Column label="UB Final" slots={BR.ub_f} positions={posUbF} color={accent} />
-          <Connectors fromPositions={posUbF} toPositions={posGf} />
-          <Column label="Grand Final" slots={BR.gf} positions={posGf} color="#FFD700" />
-        </div>
-        {/* LOWER BRACKET */}
-        <div>
-          <div style={{ color: "#666", fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 10 }}>Lower Bracket</div>
-          <div style={{ display: "flex", alignItems: "flex-start" }}>
-            <Column label="LB Round 1" slots={BR.lb_r1} positions={posLbR1} />
-            <Connectors fromPositions={posLbR1} toPositions={posLbR2.slice(0, 1)} />
-            <Column label="LB Round 2" slots={BR.lb_r2} positions={posLbR2} />
-            <Connectors fromPositions={posLbR2} toPositions={posLbQf.slice(0, 1)} />
-            <Column label="LB Quarterfinals" slots={BR.lb_qf} positions={posLbQf} />
-            <Connectors fromPositions={posLbQf} toPositions={posLbSf} />
-            <Column label="LB Semifinals" slots={BR.lb_sf} positions={posLbSf} />
-            <Connectors fromPositions={posLbSf} toPositions={posLbF} />
-            <Column label="LB Final" slots={BR.lb_f} positions={posLbF} />
-          </div>
-        </div>
+    <div style={{ overflowX: "auto", paddingBottom: 20 }} className="no-scrollbar">
+      <div style={{ minWidth: "max-content" }}>
+        <BracketTree rounds={upperRounds} accent="#E91E63" label="Upper Bracket" labelColor="#E91E63" isPlayoffs onMatchClick={onMatchClick} bracketType="upper" />
+        <div style={{ height: 20 }} />
+        <BracketTree rounds={lowerRounds} accent="#ff4655" label="Lower Bracket" labelColor="#ff4655" isPlayoffs onMatchClick={onMatchClick} bracketType="lower" />
       </div>
     </div>
   );
 }
+
 
 function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchClick, prefetchedBrackets }) {
   const [stage, setStage] = useState(null);
