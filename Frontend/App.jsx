@@ -15503,7 +15503,7 @@ export default function ClutchApp() {
           <QuestCompletedPopup
             quest={questPopupQueue[0]}
             T={T}
-            onClose={() => { setQuestPopupQueue(q => q.slice(1)); setShowQuestModal(true); }}
+            onClose={() => { setQuestPopupQueue(q => q.slice(1)); }}
           />
         )}
         {streakExpiredNotif && <StreakExpiredPopup lostStreak={streakExpiredNotif.lostStreak} onClose={() => setStreakExpiredNotif(null)} T={T} />}
