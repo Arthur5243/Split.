@@ -7045,8 +7045,9 @@ function GcBracketUsingSplit({ matches, onMatchClick }) {
   const emptyTeam = { name: "TBD" };
   const buildRounds = (patterns, slots) => patterns.map((p, i) => {
     const found = (matches || []).filter(m => p.match.test(m.name || ""));
-    const pad = slots[i] - found.length;
-    const items = [...found];
+    // Tronque si PandaScore renvoie plus de matchs que le format attendu.
+    const items = found.slice(0, slots[i]);
+    const pad = slots[i] - items.length;
     for (let k = 0; k < pad; k++) items.push({ match_id: `tbd-${p.name}-${k}`, name: p.name, status: "upcoming", team1: emptyTeam, team2: emptyTeam });
     return { name: p.name, matches: items };
   });
