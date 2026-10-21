@@ -15,6 +15,7 @@ import {
   classifyTeamRegion,
 } from "./cs2-scores.js";
 import { getRL_ScrapedScores } from "./liquipedia-rl-scraper.js";
+import { getRL1v1Snapshot, forceRL1v1Refresh } from "./rl-1v1-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -287,6 +288,31 @@ router.get("/api/rl-match-history", (req, res) => {
   } catch (e) {
     console.error("rl-match-history error:", e.message);
     res.status(500).json({ error: "Impossible de lire l'historique RL." });
+  }
+});
+
+// --- /api/rl-1v1-matches : scrape Liquipedia (PandaScore ne couvre pas le 1v1) ---
+router.get("/api/rl-1v1-matches", async (req, res) => {
+  try {
+    const snap = getRL1v1Snapshot();
+    res.json(snap);
+  } catch (e) {
+    console.error("rl-1v1-matches error:", e.message);
+    res.status(500).json({ error: "Impossible de récupérer les matchs 1v1." });
+  }
+});
+
+// Admin : force un refresh immédiat (bypass le worker)
+router.post("/api/rl-1v1-refresh", async (req, res) => {
+  const secret = req.headers["x-admin-secret"];
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  try {
+    const snap = await forceRL1v1Refresh();
+    res.json({ ok: true, snap });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

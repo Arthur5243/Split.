@@ -31,6 +31,7 @@ import { startCitoScraper } from "./cito-live-scraper.js";
 import { startGGScoreWorker } from "./ggscore-scores.js";
 import { startSofascoreWorker } from "./sofascore-scores.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
+import { startRL1v1Worker } from "./rl-1v1-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
@@ -2291,6 +2292,7 @@ app.listen(PORT, () => {
   // Bright Data) ou un plugin browserless-stealth.
   // startCitoScraper();
   startRlScraper();
+  startRL1v1Worker(); // Scrape Liquipedia pour les matchs RL 1v1 (PandaScore ne couvre pas)
   startPointsWorker(PORT); // points des joueurs calculés côté serveur, 24h/24
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon
