@@ -6934,7 +6934,7 @@ function BracketProgressBar({ bracket, accentColor }) {
 // PandaScore via /api/game-changers-groups. Format bracket pur
 // (upper/lower bracket, pas de phase de groupes). Scroll horizontal pour
 // voir tout l'arbre.
-function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
+function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, onLiveClick }) {
   const [tab, setTab] = useState("teams");
   const [data, setData] = useState(() => {
     try {
@@ -7013,7 +7013,7 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
       {tab === "bracket" && (
         loading && !data ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div> :
         (!data || !Array.isArray(data.playoffs) || data.playoffs.length === 0) ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Le bracket s'affichera dès le début du tournoi.</div> :
-        <GcBracketUsingSplit matches={data.playoffs} onMatchClick={onMatchClick} />
+        <GcBracketUsingSplit matches={data.playoffs} onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} T={T} />
       )}
     </div>
   );
@@ -7021,14 +7021,13 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick }) {
 
 // Convertit les matchs PandaScore GC vers le format `rounds` attendu par le
 // vrai composant BracketTree de l'app (celui utilisé par Masters / Kickoff /
-// Stage 2 etc), pour avoir l'EXACT même design. Upper + Lower en 2 appels.
-function GcBracketUsingSplit({ matches, onMatchClick }) {
+// Stage 2 etc), pour avoir l'EXACT même design. Upper + Lower + Grand Final.
+function GcBracketUsingSplit({ matches, onMatchClick, predictions, onLiveClick, T }) {
   const UPPER_PATTERNS = [
     { name: "Upper Round 1", match: /upper bracket round 1/i },
     { name: "Upper Quarterfinals", match: /upper (bracket )?quarter/i },
     { name: "Upper Semifinals", match: /upper (bracket )?semi/i },
     { name: "Upper Final", match: /upper (bracket )?final/i },
-    { name: "Grand Final", match: /grand final/i },
   ];
   const LOWER_PATTERNS = [
     { name: "Lower Round 1", match: /lower bracket round 1/i },
@@ -7037,15 +7036,15 @@ function GcBracketUsingSplit({ matches, onMatchClick }) {
     { name: "Lower Semifinals", match: /lower (bracket )?semi/i },
     { name: "Lower Final", match: /lower (bracket )?final/i },
   ];
+  const GF_PATTERN = { name: "Grand Final", match: /grand final/i };
   // Nombre de slots TBD à afficher si la liste PandaScore est vide (format
   // double-élim 10 équipes). Permet d'avoir le visuel bracket même avant que
   // les matchs ne soient créés.
-  const UPPER_SLOTS = [2, 4, 2, 1, 1];
+  const UPPER_SLOTS = [2, 4, 2, 1];
   const LOWER_SLOTS = [2, 2, 2, 1, 1];
   const emptyTeam = { name: "TBD" };
   const buildRounds = (patterns, slots) => patterns.map((p, i) => {
     const found = (matches || []).filter(m => p.match.test(m.name || ""));
-    // Tronque si PandaScore renvoie plus de matchs que le format attendu.
     const items = found.slice(0, slots[i]);
     const pad = slots[i] - items.length;
     for (let k = 0; k < pad; k++) items.push({ match_id: `tbd-${p.name}-${k}`, name: p.name, status: "upcoming", team1: emptyTeam, team2: emptyTeam });
@@ -7053,14 +7052,18 @@ function GcBracketUsingSplit({ matches, onMatchClick }) {
   });
   const upperRounds = buildRounds(UPPER_PATTERNS, UPPER_SLOTS);
   const lowerRounds = buildRounds(LOWER_PATTERNS, LOWER_SLOTS);
+  const gfFound = (matches || []).filter(m => GF_PATTERN.match.test(m.name || "")).slice(0, 1);
+  if (gfFound.length === 0) gfFound.push({ match_id: "tbd-grand-final-0", name: "Grand Final", status: "upcoming", team1: emptyTeam, team2: emptyTeam });
+  const grandFinalRounds = [{ name: "Grand Final", matches: gfFound }];
+  const upperLabel = (T && T.bracketUpper) || "Upper Bracket";
+  const lowerLabel = (T && T.bracketLower) || "Lower Bracket";
+  const gfLabel = (T && T.bracketGrandFinal) || "Grand Final";
   return (
-    <div style={{ overflowX: "auto", paddingBottom: 20 }} className="no-scrollbar">
-      <div style={{ minWidth: "max-content" }}>
-        <BracketTree rounds={upperRounds} accent="#E91E63" label="Upper Bracket" labelColor="#E91E63" isPlayoffs onMatchClick={onMatchClick} bracketType="upper" />
-        <div style={{ height: 20 }} />
-        <BracketTree rounds={lowerRounds} accent="#ff4655" label="Lower Bracket" labelColor="#ff4655" isPlayoffs onMatchClick={onMatchClick} bracketType="lower" />
-      </div>
-    </div>
+    <DragScroll>
+      <BracketTree rounds={upperRounds} accent="#E91E63" label={upperLabel} labelColor="#E91E63" isPlayoffs bracketType="upper" predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />
+      <BracketTree rounds={lowerRounds} accent="#E91E63" label={lowerLabel} labelColor="#ff4655" isPlayoffs bracketType="lower" predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />
+      <BracketTree rounds={grandFinalRounds} accent="#E91E63" label={gfLabel} labelColor="#FFD700" isPlayoffs predictions={predictions} onLiveClick={onLiveClick} onMatchClick={onMatchClick} />
+    </DragScroll>
   );
 }
 
@@ -7336,7 +7339,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan("Game Changers", "#E91E63")}</div>
-        <div style={{ padding: "0 16px 32px" }}><GameChangersView T={T} accent="#E91E63" onMatchClick={onMatchClick} /></div>
+        <div style={{ padding: "0 16px 32px" }}><GameChangersView T={T} accent="#E91E63" onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} /></div>
       </div>
     );
   }
