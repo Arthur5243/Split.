@@ -584,7 +584,7 @@ const LOCALE_MAP = {
 const STR = {
   fr: {
     navHome: "Accueil", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Classement",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD GAGNE FACE À VITALITY AUX CHAMPIONS 2026", newsSub: "LOUD s'impose face à Vitality 3-1 et remporte les Champions VCT 2026 sur Valorant.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD GAGNE FACE À VITALITY AUX CHAMPIONS 2026", newsSub: "LOUD gagne face à Vitality.",
     news2Badge: "Valorant", news2Title: "MARTEEN REJOINT FNATIC", news2Sub: "Après Gentle Mates, Marteen rejoint Fnatic pour la saison 2027.",
     news3Badge: "CS2", news3Title: "AVANT LES CHAMPIONS CS2", news3Sub: "Le Major de Singapour approche, avec 1,25 M$ à gagner.",
     classementLabel: "Classement", seeAll: "Tout voir", classementEmptyHome: "0 pronostiqueur classé pour le moment. Sois le premier !",
@@ -675,7 +675,7 @@ const STR = {
   },
   en: {
     navHome: "Home", navValorant: "Valorant", navCsgo: "CS2", navRl: "RL", navClassement: "Standings",
-    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD BEAT VITALITY AT CHAMPIONS 2026", newsSub: "LOUD defeat Vitality 3-1 and win VCT Champions 2026 on Valorant.",
+    newsLabel: "News", newsBadge: "Valorant", newsTitle: "LOUD BEAT VITALITY AT CHAMPIONS 2026", newsSub: "LOUD beat Vitality.",
     news2Badge: "Valorant", news2Title: "MARTEEN JOINS FNATIC", news2Sub: "After Gentle Mates, Marteen joins Fnatic for the 2027 season.",
     news3Badge: "CS2", news3Title: "BEFORE THE CS2 CHAMPIONS", news3Sub: "The Singapore Major is approaching, with $1.25M on the line.",
     classementLabel: "Standings", seeAll: "See all", classementEmptyHome: "0 ranked predictors so far. Be the first!",
@@ -5182,7 +5182,7 @@ function getStreakColor(s) {
 // (haut/bas/gauche/droite) dépasse de ~7,5% du cadre. Les bords transparents
 // des PNG sortent du cadre, le focal point (perso/glow) reste au milieu.
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back-fit.png",     bgCrop: { size: "cover", position: "center center" } },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/gris-back-fit.png",     bgCrop: { size: "auto 105%", position: "center center" } },
   { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back-fit.png",   bgCrop: { size: "cover", position: "center center" } },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
@@ -5373,7 +5373,7 @@ function NewsCarousel({ T, splashDone }) {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       if (!document.hidden) setActiveSlide((p) => (p + 1) % slideCount);
-    }, 6000);
+    }, 10000);
   }, []);
 
   useEffect(() => {
@@ -6350,7 +6350,7 @@ function GroupStandings({ standings, accent, T }) {
   );
 }
 
-function ChampionsView({ T, accent, onViewMatch }) {
+function ChampionsView({ T, accent, onViewMatch, internalBackRef }) {
   // Structure hardcodee des 4 groupes + matches Champions 2026. Les scores
   // sont mis a jour en background depuis /api/valorant-results (tous les
   // matchs valo terminés). Les W-L, ranks, qualified/eliminated se
@@ -6641,6 +6641,13 @@ function ChampionsView({ T, accent, onViewMatch }) {
 
   const [view, setView] = useState("menu");
   const [groupSel, setGroupSel] = useState(null);
+  useEffect(() => {
+    if (!internalBackRef) return;
+    if (view === "menu") internalBackRef.current = null;
+    else if (groupSel) internalBackRef.current = () => setGroupSel(null);
+    else internalBackRef.current = () => setView("menu");
+    return () => { if (internalBackRef) internalBackRef.current = null; };
+  }, [view, groupSel, internalBackRef]);
 
   // Style gris uniforme (comme les autres modules Settings/Calendar)
   const modBg = "#232323";
@@ -6673,7 +6680,6 @@ function ChampionsView({ T, accent, onViewMatch }) {
   if (view === "groups" && !groupSel) {
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           {data.groups.map((g) => (
             <button key={g.name} onClick={() => setGroupSel(g.name)} style={{ background: modBg, border: "none", borderRadius: 12, padding: 12, cursor: "pointer", textAlign: "left" }}>
@@ -6700,7 +6706,6 @@ function ChampionsView({ T, accent, onViewMatch }) {
     const phaseOrder = ["opening1", "opening2", "winners", "elimination", "decider"];
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <button onClick={() => setGroupSel(null)} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Groupes</button>
         <div style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", marginBottom: 10 }}>Groupe {g.name}</div>
         {/* Standings */}
         <div style={{ background: modBg, borderRadius: 12, overflow: "hidden", border: "none", marginBottom: 16 }}>
@@ -6738,7 +6743,6 @@ function ChampionsView({ T, accent, onViewMatch }) {
   if (view === "playoffs") {
     return (
       <div style={{ padding: "8px 0 120px" }}>
-        <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
         <div style={{ fontSize: 12, color: "#888", marginBottom: 18 }}>Bracket 8 équipes · Upper / Lower · Bo3/Bo5</div>
         <DragScroll>
           <BracketTree rounds={computedPlayoffs.upper} accent="#7ec850" label="Upper Bracket" labelColor="#7ec850" isPlayoffs />
@@ -6931,8 +6935,14 @@ function BracketProgressBar({ bracket, accentColor }) {
 // PandaScore via /api/game-changers-groups. Format bracket pur
 // (upper/lower bracket, pas de phase de groupes). Scroll horizontal pour
 // voir tout l'arbre.
-function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, onLiveClick }) {
+function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, onLiveClick, internalBackRef }) {
   const [view, setView] = useState("menu");
+  useEffect(() => {
+    if (!internalBackRef) return;
+    if (view === "menu") internalBackRef.current = null;
+    else internalBackRef.current = () => setView("menu");
+    return () => { if (internalBackRef) internalBackRef.current = null; };
+  }, [view, internalBackRef]);
   const [data, setData] = useState(() => {
     try {
       const raw = localStorage.getItem("split_gc_cache");
@@ -6967,10 +6977,6 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
   if (data && Array.isArray(data.teams)) data.teams.forEach(t => { teamsByName[t.name] = t; });
   const hasBracket = data && Array.isArray(data.playoffs) && data.playoffs.length > 0;
 
-  const backBtn = (
-    <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#888", fontSize: 12, marginBottom: 12, cursor: "pointer", padding: 0 }}>← Retour</button>
-  );
-
   if (view === "menu") {
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "12px 0 24px" }}>
@@ -6987,7 +6993,6 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
   if (view === "teams") {
     return (
       <div style={{ padding: "8px 0 24px" }}>
-        {backBtn}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {QUALIFIED.map((name) => {
             const t = teamsByName[name];
@@ -7009,7 +7014,6 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
   // view === "bracket"
   return (
     <div style={{ padding: "8px 0 24px" }}>
-      {backBtn}
       {loading && !data
         ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>
         : hasBracket
@@ -7077,6 +7081,9 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
   const [loading, setLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyRegion, setHistoryRegion] = useState(null);
+  // Permet aux sous-vues (GameChangersView, ChampionsView) de dire au backBtn
+  // du header de reculer d'un seul niveau interne au lieu de quitter l'étape.
+  const internalBackRef = useRef(null);
   useEffect(() => {
     if (prefetchedBrackets) setBracketData(prev => ({ ...prev, ...prefetchedBrackets }));
   }, [prefetchedBrackets]);
@@ -7107,6 +7114,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
   }, [stage, phase, vlrEvents, bracketData]);
 
   const goBack = () => {
+    if (internalBackRef.current) {
+      internalBackRef.current();
+      return;
+    }
     if (region) setRegion(null);
     else if (phase) setPhase(null);
     else if (stage) setStage(null);
@@ -7330,7 +7341,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T.bracketChampions, "#ff4655")}</div>
-        <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" onViewMatch={onLiveClick ? () => onLiveClick() : undefined} /></div>
+        <div style={{ padding: "0 16px 32px" }}><ChampionsView T={T} accent="#ff4655" onViewMatch={onLiveClick ? () => onLiveClick() : undefined} internalBackRef={internalBackRef} /></div>
       </div>
     );
   }
@@ -7340,7 +7351,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan("Game Changers", "#E91E63")}</div>
-        <div style={{ padding: "0 16px 32px" }}><GameChangersView T={T} accent="#E91E63" onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} /></div>
+        <div style={{ padding: "0 16px 32px" }}><GameChangersView T={T} accent="#E91E63" onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} internalBackRef={internalBackRef} /></div>
       </div>
     );
   }
@@ -14071,17 +14082,22 @@ export default function ClutchApp() {
           favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
           pseudoColor: d.pseudo_color || null,
         };
-        // Cosmétiques : écrase le cache local avec ce que le serveur a. Même
-        // politique que pour pseudo/avatar : backend prioritaire pour une
-        // version unique du compte sur tous les appareils.
+        // Cosmétiques : écrase TOUJOURS le cache local avec ce que le serveur
+        // a — même si c'est vide. Backend = source de vérité par user. Avant,
+        // un `if (d.equipped_X != null)` laissait traîner les valeurs d'un
+        // ancien compte dans le localStorage, qui étaient ensuite push au
+        // backend du NOUVEAU compte via syncProfileToBackend. Résultat : 2
+        // comptes du même user finissaient avec les mêmes bannière/titre.
         try {
-          if (d.equipped_title != null) localStorage.setItem("split_equipped_title", d.equipped_title || "");
-          if (d.equipped_banner != null) localStorage.setItem("split_equipped_banner_color", d.equipped_banner || "");
-          if (d.equipped_badge != null) localStorage.setItem("split_equipped_badge", d.equipped_badge || "");
-          if (d.equipped_badge_emoji != null) localStorage.setItem("split_equipped_badge_emoji", d.equipped_badge_emoji || "");
-          if (d.equipped_match_bg) localStorage.setItem("split_equipped_match_bg", d.equipped_match_bg);
+          localStorage.setItem("split_equipped_title", d.equipped_title || "");
+          localStorage.setItem("split_equipped_banner_color", d.equipped_banner || "");
+          localStorage.setItem("split_equipped_badge", d.equipped_badge || "");
+          localStorage.setItem("split_equipped_badge_emoji", d.equipped_badge_emoji || "");
+          localStorage.setItem("split_equipped_match_bg", d.equipped_match_bg || "");
           if (d.inventory) { try { JSON.parse(d.inventory); localStorage.setItem("split_inventory", d.inventory); } catch {} }
+          else localStorage.setItem("split_inventory", "[]");
           if (d.claimed_tiers) { try { JSON.parse(d.claimed_tiers); localStorage.setItem("split_claimed_tiers", d.claimed_tiers); } catch {} }
+          else localStorage.setItem("split_claimed_tiers", "[]");
         } catch {}
         // Backend prioritaire sur le cache local pour tout ce qui est identité
         // du compte, qu'un cache obsolète existe ou pas. On garde les éventuels
@@ -15487,6 +15503,17 @@ export default function ClutchApp() {
               localStorage.removeItem("split_auth_token");
               localStorage.removeItem("split_auth_user");
               localStorage.removeItem("split_profile");
+              // Vire aussi les cosmétiques équipés et l'inventaire pour éviter
+              // qu'un re-login vers un AUTRE compte hérite des cosmétiques
+              // de celui-ci.
+              localStorage.removeItem("split_equipped_title");
+              localStorage.removeItem("split_equipped_banner");
+              localStorage.removeItem("split_equipped_banner_color");
+              localStorage.removeItem("split_equipped_badge");
+              localStorage.removeItem("split_equipped_badge_emoji");
+              localStorage.removeItem("split_equipped_match_bg");
+              localStorage.removeItem("split_inventory");
+              localStorage.removeItem("split_claimed_tiers");
               setProfile(null);
               setAuthUser(null);
               setShowSettings(false);
