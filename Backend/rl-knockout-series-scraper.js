@@ -20,12 +20,16 @@ const PAGE = "FuuRy/KNOCKOUT_SERIES";
 const API = "https://liquipedia.net/rocketleague/api.php";
 const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (contact: arthur.pro.busi@gmail.com)";
 
-// Partage du throttle global avec les autres scrapers Liquipedia du projet.
+// Throttle timing partagé (pour pas spammer Liquipedia globalement) mais
+// rate-limit 429 LOCAL à ce scraper : si un autre scraper (rl-1v1,
+// liquipedia-rl) se fait 429, il ne doit pas nous bloquer — on scrape UNE
+// seule page toutes les heures, aucune raison d'être rate-limited par eux.
 if (!globalThis.__liquipediaThrottle) {
   globalThis.__liquipediaThrottle = { lastGeneral: 0, lastParse: 0, rateLimitedUntil: 0 };
 }
 const T = globalThis.__liquipediaThrottle;
 const PARSE_MS = 31000;
+let localRateLimitedUntil = 0;
 
 async function throttleParse() {
   const w = T.lastParse + PARSE_MS - Date.now();
@@ -35,13 +39,15 @@ async function throttleParse() {
 }
 
 async function fetchWikitext(page) {
-  if (Date.now() < T.rateLimitedUntil) throw new Error("knockout-series rate-limited");
+  if (Date.now() < localRateLimitedUntil) throw new Error("knockout-series rate-limited (local, " + Math.round((localRateLimitedUntil - Date.now()) / 1000) + "s left)");
   await throttleParse();
   const url = API + "?" + new URLSearchParams({ action: "parse", page, prop: "wikitext", format: "json" }).toString();
+  console.log("[rl-knockout] HTTP GET", url.substring(0, 120));
   const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Encoding": "gzip" } });
+  console.log("[rl-knockout] HTTP response:", res.status);
   if (res.status === 429) {
-    T.rateLimitedUntil = Date.now() + 30 * 60 * 1000;
-    throw new Error("knockout-series HTTP 429 — cooldown 30min");
+    localRateLimitedUntil = Date.now() + 10 * 60 * 1000; // 10 min local
+    throw new Error("knockout-series HTTP 429 — local cooldown 10min");
   }
   if (!res.ok) throw new Error("knockout-series HTTP " + res.status);
   const json = await res.json();
@@ -266,14 +272,23 @@ async function refresh() {
   }
 }
 
-const REFRESH_MS = 60 * 60 * 1000; // 1h
+const REFRESH_MS = 60 * 60 * 1000; // 1h quand succès
+const RETRY_MS = 5 * 60 * 1000;    // 5min si échec (rate-limit ou autre)
 
 export function startRLKnockoutSeriesWorker() {
-  if (STATE.matches.length === 0 || Date.now() - STATE.generated_at > REFRESH_MS) {
-    setTimeout(() => refresh().catch(() => {}), 45 * 1000);
-  }
-  setInterval(() => refresh().catch(() => {}), REFRESH_MS);
-  console.log("[rl-knockout] worker démarré (refresh/h)");
+  const scheduleNext = async () => {
+    const hadData = STATE.matches.length > 0;
+    try {
+      await refresh();
+      const ok = STATE.matches.length > 0 || hadData;
+      setTimeout(scheduleNext, ok ? REFRESH_MS : RETRY_MS);
+    } catch {
+      setTimeout(scheduleNext, RETRY_MS);
+    }
+  };
+  // Premier refresh plus tôt (5s après boot) + retry rapide si fail
+  setTimeout(scheduleNext, 5 * 1000);
+  console.log("[rl-knockout] worker démarré (1er refresh dans 5s, retry 5min si échec, cycle 1h si succès)");
 }
 
 export function getRLKnockoutSeriesSnapshot() {
