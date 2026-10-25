@@ -5710,14 +5710,13 @@ function BracketMatchCard({ match, accent, prediction, onLiveClick, onMatchClick
   const isTBD = t1Unknown && t2Unknown;
   const isPending = t1Unknown || t2Unknown;
   const predTeam = prediction?.winner;
-  // Clic : si on a un handler et que le match a bien eu lieu (live ou terminé)
-  // ou qu'il n'est pas en TBD, on redirige vers la carte du match. Pour les
-  // matchs à venir on va aussi dessus (utile pour mettre son prono vite).
-  const canClick = !isTBD && (onMatchClick || (isLive && onLiveClick));
+  // Clic : uniquement si le match est LIVE — sinon pas de redirection pour
+  // éviter d'ouvrir la carte d'un match déjà terminé ou pas encore joué.
+  const canClick = !isTBD && isLive && (onLiveClick || onMatchClick);
   const handleClick = () => {
     if (!canClick) return;
-    if (onMatchClick) onMatchClick(match, st);
-    else if (isLive && onLiveClick) onLiveClick();
+    if (onLiveClick) onLiveClick();
+    else if (onMatchClick) onMatchClick(match, st);
   };
   return (
     <div onClick={handleClick} style={{
@@ -8482,6 +8481,7 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
 
 function RlBracketPage({ onBack, T, predictions }) {
   const [phase, setPhase] = useState(null);
+  const [koSection, setKoSection] = useState(null); // "Night 1" ... "Night 7" | "Playoffs"
   const [knockoutData, setKnockoutData] = useState(() => {
     try {
       const raw = localStorage.getItem("split_rl_knockout_cache");
@@ -8514,7 +8514,11 @@ function RlBracketPage({ onBack, T, predictions }) {
   const pageStyle = { minHeight: "100%", background: "#000", paddingBottom: 100 };
   const headerStyle = { display: "flex", alignItems: "center", gap: 10, padding: "16px", position: "sticky", top: 0, background: "#000", zIndex: 10 };
   const backBtn = () => (
-    <button onClick={() => { if (phase) setPhase(null); else onBack(); }} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}>
+    <button onClick={() => {
+      if (koSection) setKoSection(null);
+      else if (phase) setPhase(null);
+      else onBack();
+    }} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}>
       <ChevronLeft size={18} color="#fff" />
     </button>
   );
@@ -8632,91 +8636,89 @@ function RlBracketPage({ onBack, T, predictions }) {
 
   if (phase === "knockout") {
     const koAccent = "#E91E63";
-    const hasAny = knockoutData && ((knockoutData.nights?.length || 0) > 0 || (knockoutData.playoffs?.length || 0) > 0);
+    const koGoldAccent = "#FFD700";
+    const nightsByName = {};
+    (knockoutData?.nights || []).forEach(n => { nightsByName[n.name] = n.matches || []; });
+    const playoffs = knockoutData?.playoffs || [];
+    const NIGHTS = [1, 2, 3, 4, 5, 6, 7].map(i => ({ key: "Night " + i, label: "Night " + i, color: koAccent, matches: nightsByName["Night " + i] || [] }));
+    const PLAYOFFS = { key: "Playoffs", label: "Playoffs", color: koGoldAccent, matches: playoffs };
+    const CARDS = [...NIGHTS, PLAYOFFS];
+
+    const renderMatchList = (list) => (
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {list.length === 0 && (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Les matchs s'afficheront dès que Liquipedia les publie.</div>
+        )}
+        {list.map((m) => {
+          const n1 = m.opponents?.[0]?.opponent?.name || "TBD";
+          const n2 = m.opponents?.[1]?.opponent?.name || "TBD";
+          const s1 = m.results?.[0]?.score ?? 0;
+          const s2 = m.results?.[1]?.score ?? 0;
+          const w1 = m.status === "finished" && s1 > s2;
+          const w2 = m.status === "finished" && s2 > s1;
+          const dateStr = m.begin_at ? new Date(m.begin_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+          const isPlayoff = m.stage === "playoffs";
+          const winColor = isPlayoff ? koGoldAccent : koAccent;
+          return (
+            <div key={m.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: w1 ? winColor : "#eee", fontSize: 12, fontWeight: w1 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n1}</div>
+                <div style={{ color: w2 ? winColor : "#eee", fontSize: 12, fontWeight: w2 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{n2}</div>
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                {m.status === "finished" ? (
+                  <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>
+                    <span style={{ color: w1 ? winColor : "#777" }}>{s1}</span>
+                    <span style={{ color: "#444", margin: "0 4px" }}>·</span>
+                    <span style={{ color: w2 ? winColor : "#777" }}>{s2}</span>
+                  </div>
+                ) : m.status === "running" ? (
+                  <span style={{ fontSize: 9, fontWeight: 900, color: "#ff4655", letterSpacing: "0.08em" }}>LIVE</span>
+                ) : (
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "#555" }}>{dateStr || "À venir"}</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    // Sous-vue : matchs d'une Night ou des Playoffs
+    if (koSection) {
+      const current = CARDS.find(c => c.key === koSection);
+      const label = current?.label || koSection;
+      const color = current?.color || koAccent;
+      return (
+        <div style={pageStyle}>
+          <div style={headerStyle}>
+            {backBtn()}
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color }}>{label}</span></span>
+          </div>
+          <div style={{ padding: "16px 16px 24px" }}>
+            {knockoutLoading && !knockoutData && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>}
+            {renderMatchList(current?.matches || [])}
+          </div>
+        </div>
+      );
+    }
+
+    // Menu : 7 Nights + Playoffs en grid 2 cols
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
           {backBtn()}
           <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>1v1</span></span>
         </div>
-        <div style={{ padding: "0 16px 24px" }}>
-          {knockoutLoading && !knockoutData && (
-            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>
-          )}
-          {!knockoutLoading && !hasAny && (
-            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Les matchs s'afficheront dès que Liquipedia les publie.</div>
-          )}
-          {knockoutData?.nights?.map((n) => (
-            <div key={n.name} style={{ marginBottom: 18 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ width: 3, height: 12, borderRadius: 2, background: koAccent }} />
-                <span style={{ fontSize: 10, fontWeight: 800, color: koAccent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{n.name}</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {n.matches.map((m) => {
-                  const n1 = m.opponents?.[0]?.opponent?.name || "TBD";
-                  const n2 = m.opponents?.[1]?.opponent?.name || "TBD";
-                  const s1 = m.results?.[0]?.score ?? 0;
-                  const s2 = m.results?.[1]?.score ?? 0;
-                  const w1 = m.status === "finished" && s1 > s2;
-                  const w2 = m.status === "finished" && s2 > s1;
-                  const dateStr = m.begin_at ? new Date(m.begin_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
-                  return (
-                    <div key={m.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: w1 ? koAccent : "#eee", fontSize: 12, fontWeight: w1 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n1}</div>
-                        <div style={{ color: w2 ? koAccent : "#eee", fontSize: 12, fontWeight: w2 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{n2}</div>
-                      </div>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        {m.status === "finished" ? (
-                          <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: 1 }}>
-                            <span style={{ color: w1 ? koAccent : "#777" }}>{s1}</span>
-                            <span style={{ color: "#444", margin: "0 4px" }}>·</span>
-                            <span style={{ color: w2 ? koAccent : "#777" }}>{s2}</span>
-                          </div>
-                        ) : m.status === "running" ? (
-                          <span style={{ fontSize: 9, fontWeight: 900, color: "#ff4655", letterSpacing: "0.08em" }}>LIVE</span>
-                        ) : (
-                          <span style={{ fontSize: 9, fontWeight: 700, color: "#555" }}>{dateStr || "À venir"}</span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+          {CARDS.map((c) => (
+            <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
+              {c.matches.length > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#555" }}>{c.matches.length} match{c.matches.length > 1 ? "s" : ""}</span>
+              )}
+            </button>
           ))}
-          {knockoutData?.playoffs?.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,215,0,0.15)" }}>
-                <div style={{ width: 3, height: 12, borderRadius: 2, background: "#FFD700" }} />
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#FFD700", letterSpacing: "0.08em", textTransform: "uppercase" }}>Playoffs</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {knockoutData.playoffs.map((m) => {
-                  const n1 = m.opponents?.[0]?.opponent?.name || "TBD";
-                  const n2 = m.opponents?.[1]?.opponent?.name || "TBD";
-                  const s1 = m.results?.[0]?.score ?? 0;
-                  const s2 = m.results?.[1]?.score ?? 0;
-                  const w1 = m.status === "finished" && s1 > s2;
-                  const w2 = m.status === "finished" && s2 > s1;
-                  return (
-                    <div key={m.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: w1 ? "#FFD700" : "#eee", fontSize: 12, fontWeight: w1 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n1}</div>
-                        <div style={{ color: w2 ? "#FFD700" : "#eee", fontSize: 12, fontWeight: w2 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{n2}</div>
-                      </div>
-                      <div style={{ textAlign: "right", flexShrink: 0, fontSize: 13, fontWeight: 900 }}>
-                        <span style={{ color: w1 ? "#FFD700" : "#777" }}>{s1}</span>
-                        <span style={{ color: "#444", margin: "0 4px" }}>·</span>
-                        <span style={{ color: w2 ? "#FFD700" : "#777" }}>{s2}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );

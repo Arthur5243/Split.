@@ -228,14 +228,25 @@ async function refresh() {
       return;
     }
     const sections = buildSectionMap(text);
-    const blocks = [
+    console.log(`[rl-knockout] ${sections.length} sections détectées:`, sections.map(s => s.title).slice(0, 15).join(" | "));
+    // Extract tous les Match / MatchMaps blocs dans l'ordre d'apparition.
+    const rawBlocks = [
       ...extractTemplateBlocks(text, "Match"),
       ...extractTemplateBlocks(text, "MatchMaps"),
-    ];
+    ].sort((a, b) => a.start - b.start);
+    console.log(`[rl-knockout] ${rawBlocks.length} blocks Match trouvés`);
     const matches = [];
     const seen = new Set();
-    for (const b of blocks) {
-      const section = { title: sectionAt(sections, b.start) };
+    for (let i = 0; i < rawBlocks.length; i++) {
+      const b = rawBlocks[i];
+      let section = { title: sectionAt(sections, b.start) };
+      // Fallback : si aucune section wiki n'est tombée dessus (section
+      // = "Overview" par défaut), classer par position — format fixe
+      // 7 nights × 4 matches = 28 matchs ladder, puis playoffs.
+      if (!section.title || section.title === "Overview") {
+        if (i < 28) section = { title: "Night " + (Math.floor(i / 4) + 1) };
+        else section = { title: "Playoffs" };
+      }
       const parsed = parseMatchBlock(b.text, section);
       if (!parsed) continue;
       if (seen.has(parsed.id)) continue;
@@ -244,9 +255,12 @@ async function refresh() {
     }
     STATE = { generated_at: Date.now(), matches, errors };
     persist();
-    console.log(`[rl-knockout] refresh ok: ${matches.length} matchs`);
+    const bySection = {};
+    for (const m of matches) bySection[m.section] = (bySection[m.section] || 0) + 1;
+    console.log(`[rl-knockout] refresh ok: ${matches.length} matchs. Par section:`, bySection);
   } catch (e) {
     console.log("[rl-knockout] refresh fatal:", e.message);
+    errors.push({ scope: "refresh", error: e.message });
   } finally {
     busy = false;
   }
