@@ -18,7 +18,9 @@ const PERSIST_PATH = join(DATA_DIR, "rl-knockout-series.json");
 
 const PAGE = "FuuRy/KNOCKOUT_SERIES";
 const API = "https://liquipedia.net/rocketleague/api.php";
-const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (contact: arthur.pro.busi@gmail.com)";
+// Liquipedia veut un contact dans le User-Agent. Garde aussi des headers
+// browser-like pour éviter que leur WAF nous flag comme bot abuser.
+const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr; contact: arthur.pro.busi@gmail.com)";
 
 // Throttle timing partagé (pour pas spammer Liquipedia globalement) mais
 // rate-limit 429 LOCAL à ce scraper : si un autre scraper (rl-1v1,
@@ -38,18 +40,32 @@ async function throttleParse() {
   T.lastGeneral = Date.now();
 }
 
+// Backoff exponentiel : à chaque 429, on double le cooldown (max 1h).
+let consecutive429 = 0;
 async function fetchWikitext(page) {
   if (Date.now() < localRateLimitedUntil) throw new Error("knockout-series rate-limited (local, " + Math.round((localRateLimitedUntil - Date.now()) / 1000) + "s left)");
   await throttleParse();
   const url = API + "?" + new URLSearchParams({ action: "parse", page, prop: "wikitext", format: "json" }).toString();
   console.log("[rl-knockout] HTTP GET", url.substring(0, 120));
-  const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Encoding": "gzip" } });
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": UA,
+      "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Cache-Control": "no-cache",
+    },
+  });
   console.log("[rl-knockout] HTTP response:", res.status);
   if (res.status === 429) {
-    localRateLimitedUntil = Date.now() + 10 * 60 * 1000; // 10 min local
-    throw new Error("knockout-series HTTP 429 — local cooldown 10min");
+    consecutive429++;
+    // 10min × 2^(n-1), plafonné à 60min
+    const cooldownMin = Math.min(60, 10 * Math.pow(2, consecutive429 - 1));
+    localRateLimitedUntil = Date.now() + cooldownMin * 60 * 1000;
+    throw new Error("knockout-series HTTP 429 — local cooldown " + cooldownMin + "min (consecutive: " + consecutive429 + ")");
   }
   if (!res.ok) throw new Error("knockout-series HTTP " + res.status);
+  consecutive429 = 0;
   const json = await res.json();
   const text = json?.parse?.wikitext?.["*"];
   return typeof text === "string" ? text : null;
@@ -286,9 +302,11 @@ export function startRLKnockoutSeriesWorker() {
       setTimeout(scheduleNext, RETRY_MS);
     }
   };
-  // Premier refresh plus tôt (5s après boot) + retry rapide si fail
-  setTimeout(scheduleNext, 5 * 1000);
-  console.log("[rl-knockout] worker démarré (1er refresh dans 5s, retry 5min si échec, cycle 1h si succès)");
+  // Premier refresh 2 min après boot : laisse les autres scrapers Liquipedia
+  // (rl-1v1, liquipedia-rl) finir leur discover + fetch pour pas spammer en
+  // même temps et augmenter nos chances de passer la WAF Liquipedia.
+  setTimeout(scheduleNext, 120 * 1000);
+  console.log("[rl-knockout] worker démarré (1er refresh dans 2min, retry 5min si échec, cycle 1h si succès)");
 }
 
 export function getRLKnockoutSeriesSnapshot() {
