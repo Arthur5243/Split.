@@ -6292,12 +6292,12 @@ const VCT_STAGE2_HISTORY = Object.fromEntries(Object.entries(VCT_STAGE2_HISTORY_
 // inactive = fond neutre, mais le titre garde toujours sa couleur.
 function bracketTileStyle(color, active) {
   return {
-    background: active ? `linear-gradient(135deg, ${color}10 0%, ${color}04 50%, #0d0d0d 100%)` : "#0d0d0d",
-    border: `1px solid ${active ? color + "30" : "#161616"}`,
+    background: active ? `linear-gradient(135deg, ${color}15 0%, ${color}06 50%, #0d0d0d 100%)` : "#0d0d0d",
+    border: `1px solid ${active ? color + "40" : "#161616"}`,
     borderRadius: 12,
     cursor: active ? "pointer" : "default",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    boxShadow: active ? `0 2px 10px ${color}10` : "none",
+    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+    boxShadow: active ? `0 3px 14px ${color}18, inset 0 1px 0 ${color}0c` : "none",
     filter: active ? "none" : "brightness(0.5)",
     transition: "transform 0.15s",
     position: "relative",
@@ -6977,10 +6977,10 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
   if (view === "menu") {
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "12px 0 24px" }}>
-        <button onClick={() => setView("teams")} style={{ ...bracketTileStyle(accent, true), padding: "36px 12px", gap: 8 }}>
+        <button onClick={() => setView("teams")} style={{ ...bracketTileStyle(accent, true), padding: "30px 12px", gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Équipes qualifiées</span>
         </button>
-        <button onClick={() => setView("bracket")} style={{ ...bracketTileStyle(accent, true), padding: "36px 12px", gap: 8 }}>
+        <button onClick={() => setView("bracket")} style={{ ...bracketTileStyle(accent, true), padding: "30px 12px", gap: 8 }}>
           <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Bracket</span>
         </button>
       </div>
@@ -7288,7 +7288,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
           {titleSpan(T.bracketHistory)}
         </div>
         <div style={{ padding: "20px 16px" }}>
-          <button onClick={() => { setShowHistory(false); setStage("stage2"); }} style={{ ...bracketTileStyle(s2Color, true), padding: "36px 12px", gap: 8, width: "100%" }}>
+          <button onClick={() => { setShowHistory(false); setStage("stage2"); }} style={{ ...bracketTileStyle(s2Color, true), padding: "30px 12px", gap: 8, width: "100%" }}>
             <span style={{ fontSize: 14, fontWeight: 900, color: s2Color, letterSpacing: "0.06em", textTransform: "uppercase" }}>Stage 2 · 2026</span>
           </button>
         </div>
@@ -7307,7 +7307,7 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
           {BRACKET_STAGES.map((s) => {
             const avail = stageAvailable(s.key);
             return (
-              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ ...bracketTileStyle(s.color, avail), padding: "36px 12px", gap: 8 }}>
+              <button key={s.key} onClick={() => avail && setStage(s.key)} style={{ ...bracketTileStyle(s.color, avail), padding: "30px 12px", gap: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: s.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{s.label || T[s.labelKey] || s.key}</span>
               </button>
             );
@@ -8067,7 +8067,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
         {CS2_BRACKET_COMPS.map((c) => {
           if (c.locked) {
             return (
-              <button key={c.key} disabled style={{ ...bracketTileStyle(c.color, false), padding: "32px 12px", gap: 6 }}>
+              <button key={c.key} disabled style={{ ...bracketTileStyle(c.color, false), padding: "30px 12px", gap: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               </button>
             );
@@ -8078,7 +8078,7 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
           const hasAny = events.length > 0;
           const hasRunning = events.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{ ...bracketTileStyle(c.color, hasAny), padding: "32px 12px", gap: 6 }}>
+            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{ ...bracketTileStyle(c.color, hasAny), padding: "30px 12px", gap: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
@@ -8668,7 +8668,7 @@ function RlBracketPage({ onBack, T, predictions }) {
             { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent },
             { key: "knockout", label: "Knockout Series", color: "#E91E63" },
           ].map((p) => (
-            <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "36px 12px", gap: 8 }}>
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "30px 12px", gap: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: p.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{p.label}</span>
             </button>
           ))}
