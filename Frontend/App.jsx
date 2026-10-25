@@ -6935,7 +6935,6 @@ function BracketProgressBar({ bracket, accentColor }) {
 // (upper/lower bracket, pas de phase de groupes). Scroll horizontal pour
 // voir tout l'arbre.
 function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, onLiveClick }) {
-  const [tab, setTab] = useState("teams");
   const [data, setData] = useState(() => {
     try {
       const raw = localStorage.getItem("split_gc_cache");
@@ -6962,59 +6961,36 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
     return () => { dead = true; clearInterval(id); };
   }, []);
 
-  // Équipes qualifiées en dur (fournies par l'utilisateur). On merge avec les
-  // logos remontés par PandaScore si trouvés.
+  // Équipes qualifiées en dur (fournies par l'utilisateur).
   const QUALIFIED = [
     "SR Gold", "Team Liquid Brazil", "G2 Gozen", "Gentle Mates GC", "SK Nebula",
     "Gen.G GC", "FENNEL Female", "KRÜ Blaze", "Nova Esports GC", "MIBR GC",
   ];
-  const teamsByName = {};
-  if (data && Array.isArray(data.teams)) data.teams.forEach(t => { teamsByName[t.name] = t; });
 
-  const tabBtn = (key, label) => (
-    <button onClick={() => setTab(key)} style={{
-      flex: 1, padding: "11px", background: tab === key ? accent : "#111",
-      color: tab === key ? "#fff" : "#888", fontSize: 12, fontWeight: 900,
-      border: "none", cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase",
-    }}>{label}</button>
-  );
+  const hasBracket = data && Array.isArray(data.playoffs) && data.playoffs.length > 0;
 
   return (
     <div>
-      {data?.event && (
-        <div style={{ padding: "8px 0 14px", textAlign: "center" }}>
-          <p style={{ color: "#fff", fontSize: 15, fontWeight: 900 }}>{data.event.name}</p>
-          {data.event.beginAt && <p style={{ color: "#777", fontSize: 11, marginTop: 2 }}>Début {new Date(data.event.beginAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</p>}
+      {loading && !data && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>}
+      {hasBracket
+        ? <GcBracketUsingSplit matches={data.playoffs} onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} T={T} />
+        : (!loading && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Le bracket s'affichera dès le début du tournoi.</div>)
+      }
+      <div style={{ padding: "0 0 24px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ width: 3, height: 12, borderRadius: 2, background: "#555" }} />
+          <span style={{ fontSize: 9, fontWeight: 800, color: "#555", letterSpacing: "0.08em", textTransform: "uppercase" }}>{(T && T.bracketTeams) || "Équipes"}</span>
         </div>
-      )}
-
-      <div style={{ display: "flex", gap: 0, borderRadius: 12, overflow: "hidden", border: "1px solid #222", marginBottom: 16 }}>
-        {tabBtn("teams", "Équipes qualifiées")}
-        {tabBtn("bracket", "Bracket")}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {QUALIFIED.map((name) => (
+            <span key={name} style={{
+              fontSize: 10, fontWeight: 600, color: "#777",
+              background: "#111", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 5, padding: "4px 8px",
+            }}>{name}</span>
+          ))}
+        </div>
       </div>
-
-      {tab === "teams" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          {QUALIFIED.map((name) => {
-            const t = teamsByName[name];
-            return (
-              <div key={name} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 12, padding: "10px 10px", display: "flex", alignItems: "center", gap: 10 }}>
-                {t?.logo ? <img src={t.logo} alt="" style={{ width: 30, height: 30, objectFit: "contain", flexShrink: 0 }} /> : <div style={{ width: 30, height: 30, borderRadius: 8, background: "#1a1a1a", flexShrink: 0 }} />}
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ color: "#fff", fontSize: 11, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
-                  <div style={{ color: accent, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, marginTop: 2 }}>Qualifié·e</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {tab === "bracket" && (
-        loading && !data ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div> :
-        (!data || !Array.isArray(data.playoffs) || data.playoffs.length === 0) ? <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Le bracket s'affichera dès le début du tournoi.</div> :
-        <GcBracketUsingSplit matches={data.playoffs} onMatchClick={onMatchClick} predictions={predictions} onLiveClick={onLiveClick} T={T} />
-      )}
     </div>
   );
 }
