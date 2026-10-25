@@ -6656,17 +6656,15 @@ function ChampionsView({ T, accent, onViewMatch }) {
 
   const data = { groups: HARDCODED_GROUPS };
 
-  // MENU: 2 gros boutons Groupes / Playoffs (fond gris uniforme)
+  // MENU: 2 cases Groupes / Playoffs — format uniforme bracket (grid 2 cols)
   if (view === "menu") {
     return (
-      <div style={{ padding: "12px 0 120px" }}>
-        <button onClick={() => setView("groups")} style={{ ...bracketTileStyle("#ff4655", true), width: "100%", alignItems: "flex-start", padding: "22px", marginBottom: 10, textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#ff4655", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Phase de groupes</div>
-          <div style={{ fontSize: 11, color: "#888" }}>4 groupes · Top 2 qualifiés · GSL Bo3</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "12px 0 120px" }}>
+        <button onClick={() => setView("groups")} style={{ ...bracketTileStyle("#ff4655", true), padding: "30px 12px", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: "#ff4655", letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Phase de groupes</span>
         </button>
-        <button onClick={() => setView("playoffs")} style={{ ...bracketTileStyle("#FFD700", true), width: "100%", alignItems: "flex-start", padding: "22px", textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: "#FFD700", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Playoffs</div>
-          <div style={{ fontSize: 11, color: "#888" }}>Bracket 8 équipes · Upper / Lower</div>
+        <button onClick={() => setView("playoffs")} style={{ ...bracketTileStyle("#FFD700", true), padding: "30px 12px", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: "#FFD700", letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Playoffs</span>
         </button>
       </div>
     );
@@ -7383,20 +7381,10 @@ function BracketPage({ vlrEvents, onBack, T, predictions, onLiveClick, onMatchCl
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(headerTitle, stageInfo?.color)}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {BRACKET_PHASES.map((p) => (
-            <button key={p.key} onClick={() => setPhase(p.key)} style={{
-              background: `linear-gradient(90deg, ${p.color}08 0%, #111 50%)`,
-              border: `1px solid ${p.color}20`,
-              borderRadius: 10, padding: "24px 18px", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              boxShadow: `0 2px 12px ${p.color}08`,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 3, height: 20, borderRadius: 2, background: p.color }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: p.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{T[p.labelKey] || p.key}</span>
-              </div>
-              <ChevronRight size={16} color="#444" />
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "30px 12px", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: p.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{T[p.labelKey] || p.key}</span>
             </button>
           ))}
         </div>
@@ -7665,28 +7653,19 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
           <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>{headerLabel}</span>
         </div>
         {!isSingleRecord && recordsForRound.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
             {recordsForRound.flat().map((rec) => {
               const recMatches = allRoundMatches.filter((mm) => parseRecord(mm) === rec);
               const recDone = recMatches.length > 0 && recMatches.every((m) => m.status === "finished");
               const recLive = recMatches.some((m) => m.status === "running");
               return (
-                <button key={rec} onClick={() => setActiveRecord(rec)} style={{
-                  background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-                  border: `1px solid ${accent}20`,
-                  borderRadius: 10, padding: "20px 18px", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  boxShadow: `0 2px 12px ${accent}08`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 3, height: 18, borderRadius: 2, background: accent }} />
-                    <span style={{ fontSize: 13, fontWeight: 800, color: accent, letterSpacing: "0.04em" }}>{SWISS_RECORD_LABEL[rec] || rec}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: "#555" }}>({rec})</span>
-                    {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
-                    {recDone && <span style={{ fontSize: 9, color: "#4CAF50", fontWeight: 700 }}>✓</span>}
-                    <span style={{ fontSize: 10, color: "#444", fontWeight: 600 }}>{recMatches.length} match{recMatches.length > 1 ? "s" : ""}</span>
-                  </div>
-                  {chevron}
+                <button key={rec} onClick={() => setActiveRecord(rec)} style={{ ...bracketTileStyle(accent, true), padding: "30px 12px", gap: 6 }}>
+                  <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{SWISS_RECORD_LABEL[rec] || rec}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#555", letterSpacing: "0.04em" }}>
+                    {rec} · {recMatches.length} match{recMatches.length > 1 ? "s" : ""}
+                  </span>
+                  {recLive && <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>}
+                  {recDone && !recLive && <span style={{ fontSize: 9, color: "#4CAF50", fontWeight: 700 }}>✓ Terminé</span>}
                 </button>
               );
             })}
@@ -7709,33 +7688,17 @@ function CS2SwissView({ serieData, onBack, T, accent }) {
         <button onClick={onBack} style={backBtnStyle}>{backIcon}</button>
         <span style={{ fontSize: 15, fontWeight: 800, color: accent, letterSpacing: "-0.01em" }}>EPL · Round</span>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
         {[1, 2, 3, 4, 5].map((r) => {
           const available = isRoundAvailable(r);
           const status = getRoundStatus(r);
           const rm = roundMatches[r] || [];
+          const subLabel = status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : "";
           return (
-            <React.Fragment key={r}>
-              <button onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{
-                background: available ? `linear-gradient(90deg, ${accent}08 0%, #111 50%)` : "#0d0d0d",
-                border: `1px solid ${available ? accent + "20" : "#1a1a1a"}`,
-                borderRadius: 10, padding: "20px 18px", cursor: available ? "pointer" : "default",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                boxShadow: available ? `0 2px 12px ${accent}08` : "none",
-                opacity: available ? 1 : 0.35,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 3, height: 20, borderRadius: 2, background: available ? accent : "#333" }} />
-                  <div>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: available ? accent : "#444", textTransform: "uppercase", letterSpacing: "0.06em", display: "block" }}>Round {r}</span>
-                    <span style={{ fontSize: 10, color: status === "live" ? "#ff3b3b" : status === "finished" ? "#4CAF50" : "#555", fontWeight: 700, marginTop: 2, display: "block" }}>
-                      {status === "finished" ? `Terminé · ${rm.length} matchs` : status === "live" ? "EN COURS" : status === "partial" ? "En cours" : rm.length > 0 ? `${rm.length} matchs` : ""}
-                    </span>
-                  </div>
-                </div>
-                {available ? chevron : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>}
-              </button>
-            </React.Fragment>
+            <button key={r} onClick={() => { if (available) setActiveRound(r); }} disabled={!available} style={{ ...bracketTileStyle(accent, available), padding: "30px 12px", gap: 6 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: available ? accent : "#444", letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Round {r}</span>
+              {subLabel && <span style={{ fontSize: 10, color: status === "live" ? "#ff3b3b" : status === "finished" ? "#4CAF50" : "#555", fontWeight: 700 }}>{subLabel}</span>}
+            </button>
           );
         })}
       </div>
@@ -7986,20 +7949,10 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
     return (
       <div style={pageStylePlain}>
         <div style={headerStyle}>{backBtn()}{titleSpan(T[compInfo?.labelKey] || comp, accent)}</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {phases.map((p) => (
-            <button key={p.key} onClick={() => { if (bestEvent && !serie) selectSerie(bestEvent); setPhase(p.key); }} style={{
-              background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-              border: `1px solid ${accent}20`,
-              borderRadius: 10, padding: "24px 18px", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              boxShadow: `0 2px 12px ${accent}08`,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label || T[p.labelKey] || p.key}</span>
-              </div>
-              <ChevronRight size={16} color="#444" />
+            <button key={p.key} onClick={() => { if (bestEvent && !serie) selectSerie(bestEvent); setPhase(p.key); }} style={{ ...bracketTileStyle(accent, true), padding: "30px 12px", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{p.label || T[p.labelKey] || p.key}</span>
             </button>
           ))}
         </div>
