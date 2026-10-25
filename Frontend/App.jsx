@@ -8531,6 +8531,33 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
 
 function RlBracketPage({ onBack, T, predictions }) {
   const [phase, setPhase] = useState(null);
+  const [knockoutData, setKnockoutData] = useState(() => {
+    try {
+      const raw = localStorage.getItem("split_rl_knockout_cache");
+      const p = raw ? JSON.parse(raw) : null;
+      return p && (Array.isArray(p.nights) || Array.isArray(p.playoffs)) ? p : null;
+    } catch { return null; }
+  });
+  const [knockoutLoading, setKnockoutLoading] = useState(false);
+  useEffect(() => {
+    if (phase !== "knockout") return;
+    let dead = false;
+    setKnockoutLoading(true);
+    async function load() {
+      try {
+        const r = await fetch(API_BASE + "/api/rl-knockout-series");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (dead) return;
+        setKnockoutData(d);
+        try { localStorage.setItem("split_rl_knockout_cache", JSON.stringify(d)); } catch {}
+      } catch {}
+      finally { if (!dead) setKnockoutLoading(false); }
+    }
+    load();
+    const id = setInterval(load, 3 * 60 * 1000);
+    return () => { dead = true; clearInterval(id); };
+  }, [phase]);
   const accent = RL_ACCENT;
 
   const pageStyle = { minHeight: "100%", background: "#000", paddingBottom: 100 };
@@ -8639,23 +8666,117 @@ function RlBracketPage({ onBack, T, predictions }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
           {[
-            { key: "playin", label: T.rlPlayIn || "Play-In", done: allPlayInDone },
-            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", done: allPlayoffsDone },
+            { key: "playin", label: T.rlPlayIn || "Play-In", color: accent, done: allPlayInDone },
+            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent, done: allPlayoffsDone },
+            { key: "knockout", label: "Knockout Series", color: "#E91E63", sub: "1v1 · FuuRy" },
           ].map((p) => (
             <button key={p.key} onClick={() => setPhase(p.key)} style={{
-              background: `linear-gradient(90deg, ${accent}08 0%, #111 50%)`,
-              border: `1px solid ${accent}20`, borderRadius: 10, padding: "24px 18px", cursor: "pointer",
+              background: `linear-gradient(90deg, ${p.color}08 0%, #111 50%)`,
+              border: `1px solid ${p.color}20`, borderRadius: 10, padding: "24px 18px", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              boxShadow: `0 2px 12px ${accent}08`,
+              boxShadow: `0 2px 12px ${p.color}08`,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 3, height: 20, borderRadius: 2, background: accent }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label}</span>
+                <div style={{ width: 3, height: 20, borderRadius: 2, background: p.color }} />
+                <span style={{ fontSize: 14, fontWeight: 800, color: p.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label}</span>
                 {p.done && <span style={{ fontSize: 9, fontWeight: 700, color: "#4CAF50" }}>✓ Terminé</span>}
+                {p.sub && <span style={{ fontSize: 9, fontWeight: 700, color: "#666", letterSpacing: "0.04em" }}>{p.sub}</span>}
               </div>
               <ChevronRight size={16} color="#555" />
             </button>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "knockout") {
+    const koAccent = "#E91E63";
+    const hasAny = knockoutData && ((knockoutData.nights?.length || 0) > 0 || (knockoutData.playoffs?.length || 0) > 0);
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          {backBtn()}
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>1v1</span></span>
+        </div>
+        <div style={{ padding: "0 16px 24px" }}>
+          {knockoutLoading && !knockoutData && (
+            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>
+          )}
+          {!knockoutLoading && !hasAny && (
+            <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>Pas de match disponible pour l'instant.<br/>Les matchs s'afficheront dès que Liquipedia les publie.</div>
+          )}
+          {knockoutData?.nights?.map((n) => (
+            <div key={n.name} style={{ marginBottom: 18 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ width: 3, height: 12, borderRadius: 2, background: koAccent }} />
+                <span style={{ fontSize: 10, fontWeight: 800, color: koAccent, letterSpacing: "0.08em", textTransform: "uppercase" }}>{n.name}</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {n.matches.map((m) => {
+                  const n1 = m.opponents?.[0]?.opponent?.name || "TBD";
+                  const n2 = m.opponents?.[1]?.opponent?.name || "TBD";
+                  const s1 = m.results?.[0]?.score ?? 0;
+                  const s2 = m.results?.[1]?.score ?? 0;
+                  const w1 = m.status === "finished" && s1 > s2;
+                  const w2 = m.status === "finished" && s2 > s1;
+                  const dateStr = m.begin_at ? new Date(m.begin_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+                  return (
+                    <div key={m.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: w1 ? koAccent : "#eee", fontSize: 12, fontWeight: w1 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n1}</div>
+                        <div style={{ color: w2 ? koAccent : "#eee", fontSize: 12, fontWeight: w2 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{n2}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        {m.status === "finished" ? (
+                          <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: 1 }}>
+                            <span style={{ color: w1 ? koAccent : "#777" }}>{s1}</span>
+                            <span style={{ color: "#444", margin: "0 4px" }}>·</span>
+                            <span style={{ color: w2 ? koAccent : "#777" }}>{s2}</span>
+                          </div>
+                        ) : m.status === "running" ? (
+                          <span style={{ fontSize: 9, fontWeight: 900, color: "#ff4655", letterSpacing: "0.08em" }}>LIVE</span>
+                        ) : (
+                          <span style={{ fontSize: 9, fontWeight: 700, color: "#555" }}>{dateStr || "À venir"}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          {knockoutData?.playoffs?.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px 3px 7px", marginBottom: 10, background: "rgba(255,255,255,0.03)", borderRadius: 5, border: "1px solid rgba(255,215,0,0.15)" }}>
+                <div style={{ width: 3, height: 12, borderRadius: 2, background: "#FFD700" }} />
+                <span style={{ fontSize: 10, fontWeight: 800, color: "#FFD700", letterSpacing: "0.08em", textTransform: "uppercase" }}>Playoffs</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {knockoutData.playoffs.map((m) => {
+                  const n1 = m.opponents?.[0]?.opponent?.name || "TBD";
+                  const n2 = m.opponents?.[1]?.opponent?.name || "TBD";
+                  const s1 = m.results?.[0]?.score ?? 0;
+                  const s2 = m.results?.[1]?.score ?? 0;
+                  const w1 = m.status === "finished" && s1 > s2;
+                  const w2 = m.status === "finished" && s2 > s1;
+                  return (
+                    <div key={m.id} style={{ background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ color: w1 ? "#FFD700" : "#eee", fontSize: 12, fontWeight: w1 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n1}</div>
+                        <div style={{ color: w2 ? "#FFD700" : "#eee", fontSize: 12, fontWeight: w2 ? 900 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>{n2}</div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0, fontSize: 13, fontWeight: 900 }}>
+                        <span style={{ color: w1 ? "#FFD700" : "#777" }}>{s1}</span>
+                        <span style={{ color: "#444", margin: "0 4px" }}>·</span>
+                        <span style={{ color: w2 ? "#FFD700" : "#777" }}>{s2}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

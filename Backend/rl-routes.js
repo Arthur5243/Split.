@@ -16,6 +16,7 @@ import {
 } from "./cs2-scores.js";
 import { getRL_ScrapedScores } from "./liquipedia-rl-scraper.js";
 import { getRL1v1Snapshot, forceRL1v1Refresh } from "./rl-1v1-scraper.js";
+import { getRLKnockoutSeriesSnapshot, forceRLKnockoutSeriesRefresh } from "./rl-knockout-series-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -310,6 +311,30 @@ router.post("/api/rl-1v1-refresh", async (req, res) => {
   }
   try {
     const snap = await forceRL1v1Refresh();
+    res.json({ ok: true, snap });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- /api/rl-knockout-series : tournoi FuuRy KNOCKOUT SERIES (1v1 FR) ---
+router.get("/api/rl-knockout-series", async (req, res) => {
+  try {
+    const snap = getRLKnockoutSeriesSnapshot();
+    res.json(snap);
+  } catch (e) {
+    console.error("rl-knockout-series error:", e.message);
+    res.status(500).json({ error: "Impossible de récupérer le tournoi Knockout Series." });
+  }
+});
+
+router.post("/api/rl-knockout-series-refresh", async (req, res) => {
+  const secret = req.headers["x-admin-secret"];
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  try {
+    const snap = await forceRLKnockoutSeriesRefresh();
     res.json({ ok: true, snap });
   } catch (e) {
     res.status(500).json({ error: e.message });
