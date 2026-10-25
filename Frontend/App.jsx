@@ -56,7 +56,7 @@ import {
 
 const SPLIT_LOGO = "/split-logo.png";
 const SPLIT_HEADER_LOGO = "/split-header-logo.png";
-const NEWS_IMAGE = "/news-loud-champions.webp";
+const NEWS_IMAGE = "/news-loud-champions.png";
 const NEWS_EWC_IMAGE = "/news-marteen.png";
 const NEWS_CS2_IMAGE = "/news-champions-cs.png";
 const REWARDS_BANNER = "/rewards-banner.webp";
