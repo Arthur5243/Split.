@@ -6292,12 +6292,12 @@ const VCT_STAGE2_HISTORY = Object.fromEntries(Object.entries(VCT_STAGE2_HISTORY_
 // inactive = fond neutre, mais le titre garde toujours sa couleur.
 function bracketTileStyle(color, active) {
   return {
-    background: active ? `linear-gradient(135deg, ${color}20 0%, ${color}08 50%, #0d0d0d 100%)` : "#0d0d0d",
-    border: `1px solid ${active ? color + "55" : "#161616"}`,
+    background: active ? `linear-gradient(135deg, ${color}10 0%, ${color}04 50%, #0d0d0d 100%)` : "#0d0d0d",
+    border: `1px solid ${active ? color + "30" : "#161616"}`,
     borderRadius: 12,
     cursor: active ? "pointer" : "default",
     display: "flex", flexDirection: "column", alignItems: "center",
-    boxShadow: active ? `0 4px 24px ${color}30, inset 0 1px 0 ${color}18` : "none",
+    boxShadow: active ? `0 2px 10px ${color}10` : "none",
     filter: active ? "none" : "brightness(0.5)",
     transition: "transform 0.15s",
     position: "relative",
@@ -6976,14 +6976,12 @@ function GameChangersView({ T, accent = "#E91E63", onMatchClick, predictions, on
 
   if (view === "menu") {
     return (
-      <div style={{ padding: "12px 0 24px" }}>
-        <button onClick={() => setView("teams")} style={{ ...bracketTileStyle(accent, true), width: "100%", alignItems: "flex-start", padding: "22px", marginBottom: 10, textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: accent, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Équipes qualifiées</div>
-          <div style={{ fontSize: 11, color: "#888" }}>{QUALIFIED.length} équipes · Game Changers Championship 2026</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "12px 0 24px" }}>
+        <button onClick={() => setView("teams")} style={{ ...bracketTileStyle(accent, true), padding: "36px 12px", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Équipes qualifiées</span>
         </button>
-        <button onClick={() => setView("bracket")} style={{ ...bracketTileStyle(accent, true), width: "100%", alignItems: "flex-start", padding: "22px", textAlign: "left" }}>
-          <div style={{ fontSize: 15, fontWeight: 900, color: accent, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 }}>Bracket</div>
-          <div style={{ fontSize: 11, color: "#888" }}>Double élimination · Upper / Lower / Grand Final</div>
+        <button onClick={() => setView("bracket")} style={{ ...bracketTileStyle(accent, true), padding: "36px 12px", gap: 8 }}>
+          <span style={{ fontSize: 14, fontWeight: 900, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>Bracket</span>
         </button>
       </div>
     );
@@ -8664,25 +8662,14 @@ function RlBracketPage({ onBack, T, predictions }) {
           {backBtn()}
           <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>RLCS 2026</span>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "20px 16px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
           {[
-            { key: "playin", label: T.rlPlayIn || "Play-In", color: accent, done: allPlayInDone },
-            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent, done: allPlayoffsDone },
-            { key: "knockout", label: "Knockout Series", color: "#E91E63", sub: "1v1 · FuuRy" },
+            { key: "playin", label: T.rlPlayIn || "Play-In", color: accent },
+            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent },
+            { key: "knockout", label: "Knockout Series", color: "#E91E63" },
           ].map((p) => (
-            <button key={p.key} onClick={() => setPhase(p.key)} style={{
-              background: `linear-gradient(90deg, ${p.color}08 0%, #111 50%)`,
-              border: `1px solid ${p.color}20`, borderRadius: 10, padding: "24px 18px", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              boxShadow: `0 2px 12px ${p.color}08`,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 3, height: 20, borderRadius: 2, background: p.color }} />
-                <span style={{ fontSize: 14, fontWeight: 800, color: p.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{p.label}</span>
-                {p.done && <span style={{ fontSize: 9, fontWeight: 700, color: "#4CAF50" }}>✓ Terminé</span>}
-                {p.sub && <span style={{ fontSize: 9, fontWeight: 700, color: "#666", letterSpacing: "0.04em" }}>{p.sub}</span>}
-              </div>
-              <ChevronRight size={16} color="#555" />
+            <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "36px 12px", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: p.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{p.label}</span>
             </button>
           ))}
         </div>
