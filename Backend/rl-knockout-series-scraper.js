@@ -18,9 +18,12 @@ const PERSIST_PATH = join(DATA_DIR, "rl-knockout-series.json");
 
 const PAGE = "FuuRy/KNOCKOUT_SERIES";
 const API = "https://liquipedia.net/rocketleague/api.php";
-// Liquipedia veut un contact dans le User-Agent. Garde aussi des headers
-// browser-like pour éviter que leur WAF nous flag comme bot abuser.
 const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr; contact: arthur.pro.busi@gmail.com)";
+// Apify : proxy résidentiel contourne le WAF Liquipedia qui 429 l'IP Railway.
+// Si APIFY_TOKEN est set, on fetch via leur actor apify/web-fetch au lieu de
+// taper direct. ~$0.00005 par requête → <$0.05/mois pour 1 fetch/h.
+const APIFY_TOKEN = process.env.APIFY_TOKEN || "";
+const APIFY_WEB_FETCH_URL = "https://api.apify.com/v2/acts/apify~web-fetch/run-sync-get-dataset-items";
 
 // Throttle timing partagé (pour pas spammer Liquipedia globalement) mais
 // rate-limit 429 LOCAL à ce scraper : si un autre scraper (rl-1v1,
@@ -40,14 +43,36 @@ async function throttleParse() {
   T.lastGeneral = Date.now();
 }
 
-// Backoff exponentiel : à chaque 429, on double le cooldown (max 1h).
 let consecutive429 = 0;
-async function fetchWikitext(page) {
-  if (Date.now() < localRateLimitedUntil) throw new Error("knockout-series rate-limited (local, " + Math.round((localRateLimitedUntil - Date.now()) / 1000) + "s left)");
-  await throttleParse();
-  const url = API + "?" + new URLSearchParams({ action: "parse", page, prop: "wikitext", format: "json" }).toString();
-  console.log("[rl-knockout] HTTP GET", url.substring(0, 120));
-  const res = await fetch(url, {
+
+// Fetch via Apify (proxy résidentiel). Contourne le WAF Liquipedia.
+async function fetchViaApify(targetUrl) {
+  const apifyUrl = APIFY_WEB_FETCH_URL + "?token=" + encodeURIComponent(APIFY_TOKEN);
+  console.log("[rl-knockout] Apify web-fetch →", targetUrl.substring(0, 120));
+  const res = await fetch(apifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl }),
+  });
+  console.log("[rl-knockout] Apify response:", res.status);
+  if (!res.ok) throw new Error("knockout-series Apify HTTP " + res.status);
+  const items = await res.json();
+  if (!Array.isArray(items) || items.length === 0) throw new Error("Apify renvoie dataset vide");
+  const item = items[0];
+  const httpStatus = item?.fetch?.httpStatusCode;
+  if (httpStatus && httpStatus !== 200) throw new Error("Liquipedia via Apify HTTP " + httpStatus);
+  const textRaw = item?.text;
+  if (typeof textRaw !== "string") throw new Error("Apify renvoie pas de text");
+  // Le body texte est le JSON Liquipedia. On parse pour extraire wikitext.
+  let liquiJson;
+  try { liquiJson = JSON.parse(textRaw); } catch { throw new Error("Apify text pas du JSON Liquipedia"); }
+  return liquiJson?.parse?.wikitext?.["*"] || null;
+}
+
+// Fetch direct (IP Railway). Souvent 429 à cause du WAF Liquipedia.
+async function fetchDirect(targetUrl) {
+  console.log("[rl-knockout] direct HTTP GET", targetUrl.substring(0, 120));
+  const res = await fetch(targetUrl, {
     headers: {
       "User-Agent": UA,
       "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
@@ -56,19 +81,34 @@ async function fetchWikitext(page) {
       "Cache-Control": "no-cache",
     },
   });
-  console.log("[rl-knockout] HTTP response:", res.status);
+  console.log("[rl-knockout] direct response:", res.status);
   if (res.status === 429) {
     consecutive429++;
-    // 10min × 2^(n-1), plafonné à 60min
     const cooldownMin = Math.min(60, 10 * Math.pow(2, consecutive429 - 1));
     localRateLimitedUntil = Date.now() + cooldownMin * 60 * 1000;
-    throw new Error("knockout-series HTTP 429 — local cooldown " + cooldownMin + "min (consecutive: " + consecutive429 + ")");
+    throw new Error("knockout-series HTTP 429 — local cooldown " + cooldownMin + "min");
   }
   if (!res.ok) throw new Error("knockout-series HTTP " + res.status);
   consecutive429 = 0;
   const json = await res.json();
-  const text = json?.parse?.wikitext?.["*"];
-  return typeof text === "string" ? text : null;
+  return json?.parse?.wikitext?.["*"] || null;
+}
+
+async function fetchWikitext(page) {
+  if (Date.now() < localRateLimitedUntil) throw new Error("knockout-series rate-limited (local, " + Math.round((localRateLimitedUntil - Date.now()) / 1000) + "s left)");
+  await throttleParse();
+  const targetUrl = API + "?" + new URLSearchParams({ action: "parse", page, prop: "wikitext", format: "json" }).toString();
+  // Si APIFY_TOKEN est config, on l'utilise d'abord (proxy résidentiel = fiable).
+  if (APIFY_TOKEN) {
+    try {
+      const text = await fetchViaApify(targetUrl);
+      if (text) return text;
+    } catch (e) {
+      console.log("[rl-knockout] Apify a fail, fallback direct:", e.message);
+    }
+  }
+  // Fallback / mode principal si pas de token Apify
+  return fetchDirect(targetUrl);
 }
 
 function extractTemplateBlocks(text, templateName) {
