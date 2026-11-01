@@ -347,54 +347,6 @@
     "vlr_name": "FENNEL GC",
     "vlr_id": "9516"
   },
-  "FULL SENSE SISU": {
-    "vlr_name": "FULL SENSE SISU",
-    "vlr_id": "23236"
-  },
-  "LNG Esports GC": {
-    "vlr_name": "LNG Esports GC",
-    "vlr_id": "23397"
-  },
-  "Misa Esports": {
-    "vlr_name": "Misa Esports",
-    "vlr_id": "19218"
-  },
-  "Mix My Miks": {
-    "vlr_name": "Mix My Miks",
-    "vlr_id": "23069"
-  },
-  "NKVT": {
-    "vlr_name": "NKVT",
-    "vlr_id": "20519"
-  },
-  "Nova Esports GC": {
-    "vlr_name": "Nova Esports GC",
-    "vlr_id": "13807"
-  },
-  "Rising Esports GC": {
-    "vlr_name": "Rising Esports GC",
-    "vlr_id": "19323"
-  },
-  "Team Falcons VEGA": {
-    "vlr_name": "Team Falcons Vega",
-    "vlr_id": "9314"
-  },
-  "Tidal Legends Gaming": {
-    "vlr_name": "Tidal Legends Gaming",
-    "vlr_id": "23399"
-  },
-  "Trigon Titans": {
-    "vlr_name": "Trigon Titans",
-    "vlr_id": "23339"
-  },
-  "VLG GC": {
-    "vlr_name": "Victory No Limits Gaming GC",
-    "vlr_id": "20082"
-  },
-  "swaglord9000": {
-    "vlr_name": "swaglord9000",
-    "vlr_id": "15880"
-  },
   "Fire Flux Esports": {
     "vlr_name": "Fire Flux Esports",
     "vlr_id": "20085"
@@ -450,6 +402,10 @@
   "FULL SENSE": {
     "vlr_name": "FULL SENSE",
     "vlr_id": "4050"
+  },
+  "FULL SENSE SISU": {
+    "vlr_name": "FULL SENSE SISU",
+    "vlr_id": "23236"
   },
   "FunPlus Phoenix": {
     "vlr_name": "FunPlus Phoenix",
@@ -647,6 +603,10 @@
     "vlr_name": "LEVIATÁN GC",
     "vlr_id": "9205"
   },
+  "LNG Esports GC": {
+    "vlr_name": "LNG Esports GC",
+    "vlr_id": "23397"
+  },
   "Looking For Home": {
     "vlr_name": "Looking For Home",
     "vlr_id": "22344"
@@ -715,6 +675,14 @@
     "vlr_name": "Mir Gaming",
     "vlr_id": "21437"
   },
+  "Misa Esports": {
+    "vlr_name": "Misa Esports",
+    "vlr_id": "19218"
+  },
+  "Mix My Miks": {
+    "vlr_name": "Mix My Miks",
+    "vlr_id": "23069"
+  },
   "Mom Said No": {
     "vlr_name": "Mom Said No",
     "vlr_id": "23143"
@@ -747,6 +715,10 @@
     "vlr_name": "Ninetails",
     "vlr_id": "18418"
   },
+  "NKVT": {
+    "vlr_name": "NKVT",
+    "vlr_id": "20519"
+  },
   "No Salary Peek": {
     "vlr_name": "No Salary Peek",
     "vlr_id": "22341"
@@ -762,6 +734,10 @@
   "Nova Esports": {
     "vlr_name": "Nova Esports",
     "vlr_id": "12064"
+  },
+  "Nova Esports GC": {
+    "vlr_name": "Nova Esports GC",
+    "vlr_id": "13807"
   },
   "NOVO Esports": {
     "vlr_name": "NOVO Esports",
@@ -899,6 +875,10 @@
     "vlr_name": "Rex Regum Qeon",
     "vlr_id": "878"
   },
+  "Rising Esports GC": {
+    "vlr_name": "Rising Esports GC",
+    "vlr_id": "19323"
+  },
   "Rival Esports": {
     "vlr_name": "Rival Esports",
     "vlr_id": "17139"
@@ -987,6 +967,10 @@
     "vlr_name": "STREAMER ARENA",
     "vlr_id": "21459"
   },
+  "swaglord9000": {
+    "vlr_name": "swaglord9000",
+    "vlr_id": "15880"
+  },
   "SwimTrek Blue": {
     "vlr_name": "SwimTrek Blue",
     "vlr_id": "21711"
@@ -1006,6 +990,10 @@
   "Team Envy": {
     "vlr_name": "ENVY",
     "vlr_id": "427"
+  },
+  "Team Falcons VEGA": {
+    "vlr_name": "Team Falcons Vega",
+    "vlr_id": "9314"
   },
   "Team Heretics": {
     "vlr_name": "Team Heretics",
@@ -1059,9 +1047,17 @@
     "vlr_name": "The Spiders",
     "vlr_id": "22718"
   },
+  "Tidal Legends Gaming": {
+    "vlr_name": "Tidal Legends Gaming",
+    "vlr_id": "23399"
+  },
   "Trace Esports": {
     "vlr_name": "Trace Esports",
     "vlr_id": "12685"
+  },
+  "Trigon Titans": {
+    "vlr_name": "Trigon Titans",
+    "vlr_id": "23339"
   },
   "TrinitY": {
     "vlr_name": "Trinity",
@@ -1118,6 +1114,10 @@
   "VillianArc": {
     "vlr_name": "VillianArc",
     "vlr_id": "18504"
+  },
+  "VLG GC": {
+    "vlr_name": "Victory No Limits Gaming GC",
+    "vlr_id": "20082"
   },
   "VR2": {
     "vlr_name": "VR2",
