@@ -69,7 +69,7 @@ router.post("/api/webhooks/whop", async (req, res) => {
   res.status(200).json({ ok: true });
 
   try {
-    const rawBody = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+    const rawBody = req.rawBody || (typeof req.body === "string" ? req.body : JSON.stringify(req.body));
     const secret = process.env.WHOP_WEBHOOK_SECRET;
 
     console.log("[whop-webhook] received event, headers:", JSON.stringify(Object.keys(req.headers)));

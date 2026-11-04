@@ -5252,6 +5252,8 @@ function NotifPromptModal({ onClose, T }) {
 // Modal d'abonnement Split+ : prix fixe 11,99€ TTC/mois via Whop.
 function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscribed }) {
   const [waiting, setWaiting] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const [checking, setChecking] = useState(false);
   const pollRef = useRef(null);
   const perks = [
     { icon: "🎁", label: "Accès aux paliers Split+ exclusifs" },
@@ -5273,6 +5275,7 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
     if (params.length) url += "?" + params.join("&");
     window.open(url, "_blank");
     setWaiting(true);
+    setTimedOut(false);
     if (pollRef.current) clearInterval(pollRef.current);
     pollRef.current = setInterval(() => {
       if (!userId) return;
@@ -5281,11 +5284,23 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
           clearInterval(pollRef.current);
           pollRef.current = null;
           setWaiting(false);
+          setTimedOut(false);
           if (onSubscribed) onSubscribed();
         }
       }).catch(() => {});
     }, 4000);
-    setTimeout(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setWaiting(false); } }, 120000);
+    setTimeout(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setWaiting(false); setTimedOut(true); } }, 300000);
+  }
+  function handleCheckSubscription() {
+    if (!userId) return;
+    setChecking(true);
+    fetch(API_BASE + "/api/social/me/" + userId).then(r => r.json()).then(d => {
+      setChecking(false);
+      if (d.is_subscribed) {
+        setTimedOut(false);
+        if (onSubscribed) onSubscribed();
+      }
+    }).catch(() => setChecking(false));
   }
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 14000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -5327,6 +5342,22 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
               <div style={{ width: 24, height: 24, border: "3px solid #333", borderTopColor: "#FFB800", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 10px" }} />
               <p style={{ color: "#FFB800", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>En attente du paiement...</p>
               <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Termine ton achat sur Whop. Cette page se met à jour automatiquement.</p>
+            </div>
+          ) : timedOut ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button
+                onClick={handleCheckSubscription}
+                disabled={checking}
+                style={{
+                  width: "100%", padding: "14px", borderRadius: 12,
+                  background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
+                  fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
+                  letterSpacing: 0.5, opacity: checking ? 0.6 : 1,
+                }}
+              >
+                {checking ? "Vérification..." : "Vérifier mon abonnement"}
+              </button>
+              <p style={{ color: "#666", fontSize: 10, textAlign: "center", lineHeight: 1.4 }}>Si tu as déjà payé, clique ici pour vérifier que ton abonnement est bien activé.</p>
             </div>
           ) : (
             <button
@@ -12628,7 +12659,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   return (
     <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50, background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
-        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>Forfait Split+</h2>
       </div>
       <div className="overflow-y-auto no-scrollbar px-5 flex-1" style={{ overscrollBehavior: "contain", paddingBottom: 120 }}>
 
