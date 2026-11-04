@@ -5262,6 +5262,9 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin, userEmail, us
   ];
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
   function handleSubscribe() {
+    if (userEmail && userId) {
+      fetch(API_BASE + "/api/whop/checkout-started", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail, userId }) }).catch(() => {});
+    }
     const url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7" + (userEmail ? "?email=" + encodeURIComponent(userEmail) : "");
     window.open(url, "_blank");
     setWaiting(true);
