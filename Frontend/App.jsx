@@ -5249,17 +5249,13 @@ function NotifPromptModal({ onClose, T }) {
   );
 }
 
-// Modal d'abonnement Split+ : prix fixe 7,99€/mois + champ don libre.
-// Le paiement passera via Shopify (webhook + App Proxy) une fois la boutique
-// prête. Pour l'instant, bouton "Bientôt disponible" + toggle admin local
-// pour tester le gating premium côté app.
+// Modal d'abonnement Split+ : prix fixe 7,99€/mois via Whop.
 function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
-  const [donation, setDonation] = useState("");
   const perks = [
-    { icon: "🎁", label: "Accès à ~1 palier Split+ sur 5" },
-    { icon: "🔥", label: "50% des boosts premium" },
-    { icon: "🖼️", label: "25% des bannières exclusives" },
-    { icon: "💎", label: "25% des coffres rares & légendaires" },
+    { icon: "🎁", label: "Accès aux paliers Split+ exclusifs" },
+    { icon: "🔥", label: "Boosts premium" },
+    { icon: "🖼️", label: "Bannières exclusives" },
+    { icon: "💎", label: "Coffres rares & légendaires" },
     { icon: "📊", label: "Scores map en LIVE pendant les matchs" },
   ];
   return (
@@ -5292,23 +5288,6 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
             <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Résiliable à tout moment. Pas d'engagement.</p>
           </div>
 
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ color: "#888", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Don libre (optionnel)</label>
-            <div style={{ display: "flex", alignItems: "center", background: "#121212", border: "1px solid #1e1e1e", borderRadius: 10, padding: "4px 12px" }}>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={donation}
-                onChange={e => setDonation(e.target.value)}
-                placeholder="0"
-                style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, padding: "10px 0", outline: "none" }}
-              />
-              <span style={{ color: "#888", fontSize: 14, fontWeight: 700 }}>€</span>
-            </div>
-            <p style={{ color: "#555", fontSize: 10, marginTop: 4, lineHeight: 1.4 }}>100% du don sert à faire marcher l'app et son dev.</p>
-          </div>
-
           {isSubscribed ? (
             <div style={{ padding: "14px", background: "linear-gradient(135deg, rgba(204,247,29,0.08), rgba(204,247,29,0.02))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 12, textAlign: "center" }}>
               <p style={{ color: "#CCF71D", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>✓ Tu es abonné Split+</p>
@@ -5316,15 +5295,15 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
             </div>
           ) : (
             <button
-              disabled
+              onClick={() => window.open("https://whop.com/checkout/plan_Lp1zplU0E2xh7", "_blank")}
               style={{
                 width: "100%", padding: "14px", borderRadius: 12,
                 background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
-                fontSize: 14, fontWeight: 900, border: "none", cursor: "not-allowed", opacity: 0.55,
+                fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer",
                 letterSpacing: 0.5,
               }}
             >
-              BIENTÔT DISPONIBLE (Shopify)
+              S'ABONNER — 7,99€/mois
             </button>
           )}
 
@@ -5760,7 +5739,7 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile, showSplitBanner, onOpenSubscribe, isSubscribed }) {
   const [rawLeaderboard, setRawLeaderboard] = useState([]);
   const [blockedIds, setBlockedIds] = useState(() => new Set((getBlockedUsers() || []).map((b) => b.id)));
   useEffect(() => {
@@ -5881,6 +5860,24 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         {/* Card 3: Rank badge */}
         <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} />
       </div>
+
+      {showSplitBanner && !isSubscribed && (
+        <button
+          onClick={onOpenSubscribe}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 14px", marginBottom: 16,
+            background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12,
+            cursor: "pointer",
+          }}
+        >
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>✨</span>
+            <span style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>Passe à Split+ pour débloquer le contenu premium</span>
+          </span>
+          <ChevronRight size={14} color="#555" />
+        </button>
+      )}
 
       <div className="flex items-center justify-between mb-3">
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
@@ -13806,6 +13803,7 @@ export default function ClutchApp() {
   const deferredPromptRef = useRef(null);
   const [canInstall, setCanInstall] = useState(false);
   const [showAd, setShowAd] = useState(false);
+  const [showHomeSplitBanner, setShowHomeSplitBanner] = useState(false);
   const adShownRef = useRef(false);
   const adTimerRef = useRef(null);
   const lastInteractionRef = useRef(Date.now());
@@ -13837,6 +13835,7 @@ export default function ClutchApp() {
     tabSwitchSinceAdRef.current = 0;
     predictionsSinceAdRef.current = 0;
     console.log(`[ad-trigger] reason=${reason} cooldown-next=${getAdCooldown()}ms`);
+    setTimeout(() => setShowHomeSplitBanner(true), 3000);
     if (isNative()) {
       const shown = await showInterstitial();
       if (shown) return;
@@ -15647,7 +15646,7 @@ export default function ClutchApp() {
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
         <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", overscrollBehaviorY: "none" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
-            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} />
+            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} showSplitBanner={showHomeSplitBanner} onOpenSubscribe={() => setShowSubscribeModal(true)} isSubscribed={isSubscribed} />
           </div>
           <div style={{ display: activeTab === "valorant" ? "block" : "none" }}>
             <ValorantTab
