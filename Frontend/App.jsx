@@ -12863,15 +12863,44 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
           {/* PARRAINAGE */}
           <ReferralSection T={T} profile={profile} sectionStyle={sectionStyle} rowStyle={rowStyle} labelStyle={labelStyle} chevStyle={chevStyle} activeSection={activeSection} setActiveSection={setActiveSection} />
 
+          {/* SPLIT+ */}
+          <div style={sectionStyle} className="mb-3">
+            {isSubscribed ? (
+              <>
+                <button onClick={() => setActiveSection(activeSection === "splitplus" ? null : "splitplus")} style={{ ...rowStyle, background: "rgba(204,247,29,0.08)" }} className="w-full">
+                  <span style={{ ...labelStyle, color: "#CCF71D" }}>
+                    <span style={{ fontSize: 18 }}>✨</span>
+                    Split+ actif
+                  </span>
+                  <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "splitplus" ? "rotate(180deg)" : "rotate(0deg)" }} />
+                </button>
+                {activeSection === "splitplus" && (
+                  <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+                    <p style={{ color: "#888", fontSize: 12, marginTop: 12, marginBottom: 12, lineHeight: 1.5 }}>
+                      Ton abonnement Split+ est actif. Tu bénéficies de tous les avantages premium.
+                    </p>
+                    <button onClick={() => window.open("https://whop.com/orders", "_blank")} style={{ width: "100%", padding: "10px 0", borderRadius: 10, background: "#2a2a2a", border: "1px solid #333", color: "#ff4655", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
+                      Annuler l'abonnement
+                    </button>
+                    <p style={{ color: "#555", fontSize: 10, textAlign: "center", lineHeight: 1.4 }}>
+                      L'annulation prend effet à la fin de la période en cours. Aucun remboursement ne sera effectué pour la période déjà payée.
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer", background: "rgba(255,184,0,0.08)" }} className="w-full">
+                <span style={{ ...labelStyle, color: "#FFB800" }}>
+                  <span style={{ fontSize: 18 }}>✨</span>
+                  Passer à Split+
+                </span>
+                <ChevronRight size={16} color="#888" />
+              </button>
+            )}
+          </div>
+
           {/* DÉCONNEXION */}
           <div style={sectionStyle}>
-            <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer", background: isSubscribed ? "rgba(204,247,29,0.08)" : "rgba(255,184,0,0.08)", border: `1px solid ${isSubscribed ? "rgba(204,247,29,0.25)" : "rgba(255,184,0,0.25)"}` }} className="w-full">
-              <span style={{ ...labelStyle, color: isSubscribed ? "#CCF71D" : "#FFB800" }}>
-                <span style={{ fontSize: 18 }}>✨</span>
-                {isSubscribed ? "Split+ actif" : "Passer à Split+"}
-              </span>
-              <ChevronRight size={16} color="#888" />
-            </button>
             <button onClick={onLogout} style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
               <span style={{ ...labelStyle, color: "#ff4655" }}><LogOut size={18} color="#ff4655" />{T.settingsLogout}</span>
             </button>
