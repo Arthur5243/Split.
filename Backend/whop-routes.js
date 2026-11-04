@@ -87,30 +87,40 @@ router.post("/api/webhooks/whop", async (req, res) => {
 
     console.log(`[whop-webhook] event=${event} email=${email} membershipId=${membershipId}`);
 
-    if (event === "membership.created" || event === "membership.went_valid" || event === "membership.renewed") {
-      if (email) {
-        const user = getUserByEmail(email);
-        if (user) {
-          setUserSubscribed(user.id, true);
-          console.log(`[whop-webhook] ✅ ${email} → elite (userId=${user.id})`);
-        } else {
-          db.prepare(`INSERT OR REPLACE INTO pending_subscriptions (email, whop_membership_id, status) VALUES (?, ?, 'elite')`).run(email, membershipId);
-          console.log(`[whop-webhook] ⏳ ${email} pas encore inscrit, abonnement en attente`);
-        }
-      } else {
-        console.warn("[whop-webhook] pas d'email dans le payload, impossible de lier");
-      }
-    } else if (event === "membership.deactivated" || event === "membership.went_invalid" || event === "membership.cancelled") {
-      if (email) {
-        const user = getUserByEmail(email);
-        if (user) {
-          setUserSubscribed(user.id, false);
-          console.log(`[whop-webhook] ❌ ${email} → free (userId=${user.id})`);
-        }
-        db.prepare(`DELETE FROM pending_subscriptions WHERE email = ?`).run(email);
-      }
+    const status = data.status || data.membership?.status || "";
+    let activate = false;
+    let deactivate = false;
+
+    if (event === "membership.activated" || event === "member.created") {
+      activate = true;
+    } else if (event === "membership.deactivated") {
+      deactivate = true;
+    } else if (event === "membership.updated" || event === "member.updated") {
+      if (status === "active" || status === "completed" || status === "trialing") activate = true;
+      else if (status === "inactive" || status === "expired" || status === "cancelled") deactivate = true;
+      else activate = true;
     } else {
       console.log(`[whop-webhook] événement ignoré: ${event}`);
+    }
+
+    if (activate && email) {
+      const user = getUserByEmail(email);
+      if (user) {
+        setUserSubscribed(user.id, true);
+        console.log(`[whop-webhook] ✅ ${email} → elite (userId=${user.id})`);
+      } else {
+        db.prepare(`INSERT OR REPLACE INTO pending_subscriptions (email, whop_membership_id, status) VALUES (?, ?, 'elite')`).run(email, membershipId);
+        console.log(`[whop-webhook] ⏳ ${email} pas encore inscrit, abonnement en attente`);
+      }
+    } else if (deactivate && email) {
+      const user = getUserByEmail(email);
+      if (user) {
+        setUserSubscribed(user.id, false);
+        console.log(`[whop-webhook] ❌ ${email} → free (userId=${user.id})`);
+      }
+      db.prepare(`DELETE FROM pending_subscriptions WHERE email = ?`).run(email);
+    } else if ((activate || deactivate) && !email) {
+      console.warn("[whop-webhook] pas d'email dans le payload, impossible de lier");
     }
   } catch (e) {
     console.error("[whop-webhook] erreur traitement:", e.message);
