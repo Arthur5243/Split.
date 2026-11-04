@@ -13835,12 +13835,18 @@ export default function ClutchApp() {
     tabSwitchSinceAdRef.current = 0;
     predictionsSinceAdRef.current = 0;
     console.log(`[ad-trigger] reason=${reason} cooldown-next=${getAdCooldown()}ms`);
-    setTimeout(() => setShowHomeSplitBanner(true), 3000);
+    if (!showHomeSplitBanner) setTimeout(() => setShowHomeSplitBanner(true), 3000);
     if (isNative()) {
       const shown = await showInterstitial();
       if (shown) return;
     }
     setShowAd(true);
+  }, []);
+  useEffect(() => {
+    if (!ADS_ENABLED && !showHomeSplitBanner) {
+      const t = setTimeout(() => setShowHomeSplitBanner(true), 3000);
+      return () => clearTimeout(t);
+    }
   }, []);
   // Reset adShown quand on ferme la pub (sinon on peut plus trigger a nouveau)
   useEffect(() => {
