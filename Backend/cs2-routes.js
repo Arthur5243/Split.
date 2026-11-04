@@ -85,10 +85,88 @@ function normalizeTeamName(s) {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
+// Alias courants CS2 : variantes entre PandaScore, Liquipedia, HLTV et noms d'usage.
+// Le lookup se fait sur la version "noyau" (pas d'esports/gaming/team/club/etc.).
+// Objectif : qu'un match "Falcons vs Vitality" trouve ses map scores même si
+// la source les référence "Team Falcons vs Team Vitality".
+const CS2_TEAM_ALIASES = {
+  "faze": "faze", "faze clan": "faze",
+  "navi": "navi", "natus vincere": "navi",
+  "g2": "g2", "g2 esports": "g2",
+  "mouz": "mouz", "mousesports": "mouz",
+  "vitality": "vitality", "team vitality": "vitality", "vita": "vitality",
+  "spirit": "spirit", "team spirit": "spirit",
+  "falcons": "falcons", "team falcons": "falcons",
+  "virtus pro": "vp", "virtus.pro": "vp", "vp": "vp",
+  "furia": "furia", "furia esports": "furia",
+  "liquid": "liquid", "team liquid": "liquid",
+  "mibr": "mibr",
+  "heroic": "heroic",
+  "pain": "pain", "pain gaming": "pain",
+  "astralis": "astralis",
+  "cloud9": "cloud9", "c9": "cloud9",
+  "nip": "nip", "ninjas in pyjamas": "nip",
+  "mongolz": "mongolz", "the mongolz": "mongolz", "the mongolz(cn)": "mongolz",
+  "complexity": "complexity", "complexity gaming": "complexity", "col": "complexity",
+  "9ine": "9ine", "9INE": "9ine",
+  "big": "big", "big esports": "big",
+  "ence": "ence",
+  "fnatic": "fnatic",
+  "bbl": "bbl", "bbl esports": "bbl",
+  "eternal fire": "eternal fire", "eternalfire": "eternal fire",
+  "astralis talent": "astralis talent",
+  "3dmax": "3dmax", "3d max": "3dmax",
+  "nemiga": "nemiga", "nemiga gaming": "nemiga",
+  "aurora": "aurora", "aurora gaming": "aurora",
+  "fluxo": "fluxo",
+  "imperial": "imperial", "imperial esports": "imperial",
+  "rare atom": "rare atom", "rareatom": "rare atom",
+  "legacy": "legacy",
+  "lynn vision": "lynn vision", "lynn vision gaming": "lynn vision",
+  "tyloo": "tyloo",
+  "metizsport": "metizsport", "metiz sport": "metizsport",
+  "monte": "monte",
+  "sashi": "sashi", "sashi esports": "sashi",
+  "9z": "9z", "9z team": "9z",
+  "flyquest": "flyquest",
+  "gamerlegion": "gamerlegion",
+  "saw": "saw",
+  "pgs esports": "pgs", "pgs": "pgs",
+  "wildcard": "wildcard", "wildcard gaming": "wildcard", "wc": "wildcard",
+  "nrg": "nrg", "nrg esports": "nrg",
+  "bc.game": "bc.game", "bc game": "bc.game",
+  "m80": "m80",
+  "m8": "m8", "metizsport academy": "m8",
+  "1win": "1win",
+  "chinggis warriors": "chinggis warriors", "chinggis": "chinggis warriors",
+  "betboom": "betboom", "betboom team": "betboom",
+};
+
+function stripNoise(s) {
+  return s
+    .replace(/\s*(esports?|gaming|team|club|clan|fc)\s*$/gi, "")
+    .replace(/^\s*(team|the)\s+/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function aliasKey(name) {
+  const base = normalizeTeamName(name);
+  if (CS2_TEAM_ALIASES[base]) return CS2_TEAM_ALIASES[base];
+  const stripped = stripNoise(base);
+  if (CS2_TEAM_ALIASES[stripped]) return CS2_TEAM_ALIASES[stripped];
+  return stripped;
+}
+
 function teamNamesMatch(a, b) {
   if (a === b) return true;
   if (a.includes(b) || b.includes(a)) return true;
-  const stripSuffix = (s) => s.replace(/\s*(esports?|gaming|team|club)\s*$/i, "").trim();
+  const ka = aliasKey(a);
+  const kb = aliasKey(b);
+  if (ka === kb) return true;
+  // Dernier recours : correspondance partielle après strip. Utile pour
+  // "Virtus.pro Prodigy" ~ "VP Prodigy" via le même noyau "vp" dans l'alias.
+  const stripSuffix = (s) => stripNoise(s);
   return stripSuffix(a) === stripSuffix(b);
 }
 
