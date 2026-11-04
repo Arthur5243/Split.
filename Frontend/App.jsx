@@ -5250,7 +5250,7 @@ function NotifPromptModal({ onClose, T }) {
 }
 
 // Modal d'abonnement Split+ : prix fixe 11,99€ TTC/mois via Whop.
-function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin, userEmail, userId, onSubscribed }) {
+function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscribed }) {
   const [waiting, setWaiting] = useState(false);
   const pollRef = useRef(null);
   const perks = [
@@ -5342,17 +5342,6 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin, userEmail, us
             </button>
           )}
 
-          {onToggleAdmin && (
-            <button
-              onClick={onToggleAdmin}
-              style={{
-                width: "100%", marginTop: 10, padding: "8px", borderRadius: 8,
-                background: "transparent", color: "#555", fontSize: 10, border: "1px dashed #333", cursor: "pointer",
-              }}
-            >
-              [admin] Toggle local Split+ ({isSubscribed ? "ON" : "OFF"})
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -16037,11 +16026,6 @@ export default function ClutchApp() {
             onSubscribed={() => {
               setIsSubscribed(true);
               try { localStorage.setItem("split_is_subscribed", "1"); } catch {}
-            }}
-            onToggleAdmin={() => {
-              const next = !isSubscribed;
-              setIsSubscribed(next);
-              try { localStorage.setItem("split_is_subscribed", next ? "1" : "0"); } catch {}
             }}
           />
         )}
