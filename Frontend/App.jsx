@@ -5250,7 +5250,9 @@ function NotifPromptModal({ onClose, T }) {
 }
 
 // Modal d'abonnement Split+ : prix fixe 11,99€ TTC/mois via Whop.
-function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
+function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin, userEmail, userId, onSubscribed }) {
+  const [waiting, setWaiting] = useState(false);
+  const pollRef = useRef(null);
   const perks = [
     { icon: "🎁", label: "Accès aux paliers Split+ exclusifs" },
     { icon: "🔥", label: "Boosts premium" },
@@ -5258,6 +5260,25 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
     { icon: "💎", label: "Coffres rares & légendaires" },
     { icon: "📊", label: "Scores map en LIVE pendant les matchs" },
   ];
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+  function handleSubscribe() {
+    const url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7" + (userEmail ? "?email=" + encodeURIComponent(userEmail) : "");
+    window.open(url, "_blank");
+    setWaiting(true);
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(() => {
+      if (!userId) return;
+      fetch(API_BASE + "/api/social/me/" + userId).then(r => r.json()).then(d => {
+        if (d.is_subscribed) {
+          clearInterval(pollRef.current);
+          pollRef.current = null;
+          setWaiting(false);
+          if (onSubscribed) onSubscribed();
+        }
+      }).catch(() => {});
+    }, 4000);
+    setTimeout(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setWaiting(false); } }, 120000);
+  }
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 14000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: "min(400px, 100%)", maxHeight: "90vh", background: "#0a0a0a", border: "1.5px solid #2a2a2a", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -5293,9 +5314,15 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
               <p style={{ color: "#CCF71D", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>✓ Tu es abonné Split+</p>
               <p style={{ color: "#888", fontSize: 11 }}>Toutes les récompenses premium sont débloquées.</p>
             </div>
+          ) : waiting ? (
+            <div style={{ padding: "18px 14px", borderRadius: 12, border: "1px solid #2a2a2a", background: "#121212", textAlign: "center" }}>
+              <div style={{ width: 24, height: 24, border: "3px solid #333", borderTopColor: "#FFB800", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 10px" }} />
+              <p style={{ color: "#FFB800", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>En attente du paiement...</p>
+              <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Termine ton achat sur Whop. Cette page se met à jour automatiquement.</p>
+            </div>
           ) : (
             <button
-              onClick={() => window.open("https://whop.com/checkout/plan_Lp1zplU0E2xh7", "_blank")}
+              onClick={handleSubscribe}
               style={{
                 width: "100%", padding: "14px", borderRadius: 12,
                 background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
@@ -15968,6 +15995,12 @@ export default function ClutchApp() {
             onClose={() => setShowSubscribeModal(false)}
             T={T}
             isSubscribed={isSubscribed}
+            userEmail={authUser?.email || ""}
+            userId={profile?.userId || authUser?.id || ""}
+            onSubscribed={() => {
+              setIsSubscribed(true);
+              try { localStorage.setItem("split_is_subscribed", "1"); } catch {}
+            }}
             onToggleAdmin={() => {
               const next = !isSubscribed;
               setIsSubscribed(next);
