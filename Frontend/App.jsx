@@ -12852,14 +12852,14 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
           {/* PARRAINAGE */}
           <ReferralSection T={T} profile={profile} sectionStyle={sectionStyle} rowStyle={rowStyle} labelStyle={labelStyle} chevStyle={chevStyle} activeSection={activeSection} setActiveSection={setActiveSection} />
 
-          {/* SPLIT+ */}
+          {/* FORFAIT SPLIT+ */}
           <div style={sectionStyle} className="mb-3">
             {isSubscribed ? (
               <>
                 <button onClick={() => setActiveSection(activeSection === "splitplus" ? null : "splitplus")} style={{ ...rowStyle, background: "rgba(204,247,29,0.08)" }} className="w-full">
                   <span style={{ ...labelStyle, color: "#CCF71D" }}>
                     <span style={{ fontSize: 18 }}>✨</span>
-                    Split+ actif
+                    Forfait Split+
                   </span>
                   <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "splitplus" ? "rotate(180deg)" : "rotate(0deg)" }} />
                 </button>
@@ -12881,7 +12881,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
               <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer", background: "rgba(255,184,0,0.08)" }} className="w-full">
                 <span style={{ ...labelStyle, color: "#FFB800" }}>
                   <span style={{ fontSize: 18 }}>✨</span>
-                  Passer à Split+
+                  Forfait Split+
                 </span>
                 <ChevronRight size={16} color="#888" />
               </button>
