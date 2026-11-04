@@ -5249,7 +5249,7 @@ function NotifPromptModal({ onClose, T }) {
   );
 }
 
-// Modal d'abonnement Split+ : prix fixe 7,99€/mois via Whop.
+// Modal d'abonnement Split+ : prix fixe 11,99€ TTC/mois via Whop.
 function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
   const perks = [
     { icon: "🎁", label: "Accès aux paliers Split+ exclusifs" },
@@ -5283,7 +5283,7 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
           <div style={{ padding: "14px", background: "#121212", border: "1px solid #1e1e1e", borderRadius: 12, marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
               <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>Prix mensuel</span>
-              <span style={{ color: "#FFB800", fontSize: 22, fontWeight: 900 }}>7,99€</span>
+              <span style={{ color: "#FFB800", fontSize: 22, fontWeight: 900 }}>11,99€</span>
             </div>
             <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Résiliable à tout moment. Pas d'engagement.</p>
           </div>
@@ -5303,7 +5303,7 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
                 letterSpacing: 0.5,
               }}
             >
-              S'ABONNER — 7,99€/mois
+              S'ABONNER — 11,99€/mois
             </button>
           )}
 
@@ -14318,8 +14318,7 @@ export default function ClutchApp() {
   const [pointsPerGame, setPointsPerGame] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
-  // Abonnement Split+ (sera synchronisé avec le backend Shopify une fois branché).
-  // Pour l'instant, lecture locale + possibilité de toggle admin via SettingsModal.
+  // Abonnement Split+ (synchronisé via webhook Whop → backend).
   const [isSubscribed, setIsSubscribed] = useState(() => {
     try { return localStorage.getItem("split_is_subscribed") === "1"; } catch { return false; }
   });
@@ -14404,7 +14403,7 @@ export default function ClutchApp() {
           else localStorage.setItem("split_inventory", "[]");
           if (d.claimed_tiers) { try { JSON.parse(d.claimed_tiers); localStorage.setItem("split_claimed_tiers", d.claimed_tiers); } catch {} }
           else localStorage.setItem("split_claimed_tiers", "[]");
-          // Split+ : source de vérité = backend (webhook Shopify demain).
+          // Split+ : source de vérité = backend (webhook Whop).
           const subNow = d.is_subscribed ? 1 : 0;
           localStorage.setItem("split_is_subscribed", String(subNow));
           setIsSubscribed(!!subNow);

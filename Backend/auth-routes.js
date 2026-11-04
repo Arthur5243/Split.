@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { getUserByEmail, getUserByPseudo, createAuthUser, getUser, generateUserId, getUserCount, updatePseudo, deleteUser, mergeDuplicatesForEmail, canChangePseudo, consumePseudoChange, linkGoogleToUser, getUserBySupabaseId, linkSupabaseUser } from "./social-store.js";
+import { applyPendingSubscription } from "./whop-routes.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "split-secret-change-me";
@@ -110,7 +111,10 @@ router.post("/api/auth/supabase", async (req, res) => {
     const email = sUser.email ? sUser.email.toLowerCase() : null;
 
     const linked = getUserBySupabaseId(sUser.id);
-    if (linked) return res.json({ token: signToken(linked.id), user: publicUser(linked, email) });
+    if (linked) {
+      if (email) try { applyPendingSubscription(email); } catch {}
+      return res.json({ token: signToken(linked.id), user: publicUser(linked, email) });
+    }
 
     const byEmail = email ? getUserByEmail(email) : null;
     if (byEmail) {
@@ -129,6 +133,7 @@ router.post("/api/auth/supabase", async (req, res) => {
     const id = generateUserId();
     createAuthUser({ id, email, passwordHash: null, pseudo: wanted, provider: "local" });
     linkSupabaseUser(id, sUser.id, email);
+    if (email) try { applyPendingSubscription(email); } catch {}
     res.json({ token: signToken(id), user: { id, pseudo: wanted, email, provider: "local" } });
   } catch (e) {
     console.error("[auth] supabase exchange error:", e.message);
@@ -170,6 +175,7 @@ router.post("/api/auth/google", async (req, res) => {
 
     const id = generateUserId();
     createAuthUser({ id, email: email.toLowerCase(), passwordHash: null, pseudo, provider: "google" });
+    try { applyPendingSubscription(email.toLowerCase()); } catch {}
     const token = signToken(id);
     res.json({ token, user: { id, pseudo, email: email.toLowerCase() } });
   } catch (e) {

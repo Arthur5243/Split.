@@ -76,8 +76,8 @@ try { db.exec(`ALTER TABLE users ADD COLUMN claimed_tiers TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge_emoji TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_match_bg TEXT`); } catch {}
-// Split+ : abonnement payant (Shopify plus tard). Par défaut 0. Toggle via
-// endpoint admin ou webhook Shopify. Rend accessibles les récompenses premium
+// Split+ : abonnement payant via Whop. Par défaut 0. Toggle via
+// webhook Whop (/api/webhooks/whop). Rend accessibles les récompenses premium
 // + les scores map en LIVE pendant les matchs.
 try { db.exec(`ALTER TABLE users ADD COLUMN is_subscribed INTEGER DEFAULT 0`); } catch {}
 // Comptes masqués côté client : JSON array des userId bloqués. Sync pour

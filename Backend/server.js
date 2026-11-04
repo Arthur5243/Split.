@@ -37,6 +37,7 @@ import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
+import whopRouter from "./whop-routes.js";
 import { captureCardHtml, warmupBrowser } from "./capture.js";
 import { startPointsWorker } from "./points-engine.js";
 
@@ -57,6 +58,7 @@ app.use(authRouter);
 app.use(socialRouter);
 app.use(postsRouter);
 app.use(messagesRouter);
+app.use(whopRouter);
 
 // Endpoint /graphql + /graphiql (UI web pour tester les queries).
 // Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).
