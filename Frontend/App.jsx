@@ -4039,7 +4039,23 @@ const ACHIEVEMENT_BADGES = [
   { id: "streak5", emoji: "\u{1F4A5}", name: "Inarrêtable", desc: "Série de 5 bons paris", check: (s) => (s.streak || 0) >= 5, color: "#ef4444" },
 ];
 
-function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp }) {
+// Pattern premium pour les récompenses palier : déterministe par tier/type, mais
+// "un peu aléatoire" (hash pseudo-random). Utilisé pour afficher un verrou Split+
+// et bloquer le claim si l'utilisateur n'est pas abonné.
+function isTierPremium(tier, item) {
+  const t = Number(tier) || 0;
+  if (t === 1) return false; // starter toujours gratuit
+  const hash = ((t * 2654435761) ^ 0x9e3779b9) >>> 0;
+  const type = item?.type;
+  const isChest = !type && (item?.emoji === "🎁" || item?.emoji === "💎");
+  if (type === "boost") return (hash % 100) < 50;       // 50% des boosts
+  if (type === "banner") return (hash % 100) < 25;      // 25% des bannières
+  if (isChest) return (hash % 100) < 25;                // 25% des coffres
+  // Reste : 1 palier sur ~5 (≈20%), pas de pattern robotique grâce au hash
+  return (hash % 5) === 0;
+}
+
+function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp, isSubscribed, onOpenSubscribe }) {
   const tierInfo = getTierFromPoints(userXp || 0);
   const currentTier = tierInfo.tier;
   const scrollRef = useRef(null);
@@ -4116,6 +4132,11 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
   }
 
   function claimTier(tier, item) {
+    // Récompenses premium : bloquées tant que l'utilisateur n'est pas abonné.
+    if (isTierPremium(tier, item) && !isSubscribed) {
+      if (onOpenSubscribe) onOpenSubscribe();
+      return false;
+    }
     const next = [...claimedTiers, tier];
     setClaimedTiers(next);
     localStorage.setItem("split_claimed_tiers", JSON.stringify(next));
@@ -4125,6 +4146,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       localStorage.setItem("split_inventory", JSON.stringify(ni));
       showClaimToast(item);
     }
+    return true;
   }
 
   const TIER_REWARDS = {
@@ -4464,6 +4486,12 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
   function openChestAnim(tier) {
     const ch = getChest(tier);
     if (claimedTiers.includes(tier)) return;
+    // Split+ gate : si le palier est premium et l'user n'est pas abonné, bascule
+    // sur la fenêtre d'abonnement au lieu d'ouvrir l'anim.
+    if (isTierPremium(tier, ch) && !isSubscribed) {
+      if (onOpenSubscribe) onOpenSubscribe();
+      return;
+    }
     // Chest = anim spin + reveal. Reward direct = pas d'anim, popup directe
     // avec la même carte que chest ("done" tout de suite).
     if (isChestItem(ch)) {
@@ -4574,7 +4602,12 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
         <div ref={scrollRef} onScroll={handleRewardsScroll} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px", position: "relative" }}>
           {scrollDir && <div style={{ position: "sticky", top: scrollDir === "up" ? 8 : "auto", bottom: scrollDir === "down" ? 8 : "auto", left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none", animation: "fadeInOut 1.2s ease forwards" }}><div style={{ background: "rgba(204,247,29,0.15)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><ChevronDown size={18} color="#CCF71D" style={{ transform: scrollDir === "up" ? "rotate(180deg)" : "none" }} /></div></div>}
           {(() => {
-            const pending = allTiers.filter(t => t <= currentTier && !claimedTiers.includes(t));
+            // "Tout ouvrir" ignore les paliers Split+ si l'utilisateur n'est pas abonné.
+            const pending = allTiers.filter(t => {
+              if (t > currentTier || claimedTiers.includes(t)) return false;
+              if (!isSubscribed && isTierPremium(t, getChest(t))) return false;
+              return true;
+            });
             if (pending.length === 0) return null;
             return (
               <button onClick={() => {
@@ -4600,12 +4633,15 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             const rar = getRar(chest);
             const rc = RAR[rar];
             const isChest = isChestItem(chest);
+            const premium = isTierPremium(tier, chest);
+            const lockedByPremium = premium && !isSubscribed;
             const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.55 : 0.4;
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
                 marginBottom: 8, borderRadius: 14, overflow: "hidden",
-                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
+                border: `1.5px solid ${lockedByPremium ? "rgba(255,180,0,0.45)" : isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
                 opacity: tierOpacity,
+                position: "relative",
               }}>
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 12,
@@ -4635,17 +4671,29 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                     <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textAlign: "center", display: "inline-block", background: rc.bg, border: `1px solid ${rc.border}33`, borderRadius: 4, padding: "1px 8px" }}>{rc.label}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                    {premium && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 3, background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000", fontSize: 8, fontWeight: 900, letterSpacing: 0.5, padding: "3px 7px", borderRadius: 5 }}>
+                        ✨ SPLIT+
+                      </span>
+                    )}
                     {previewImg && (
                       <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#aaa", fontSize: 8, fontWeight: 800, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, padding: "3px 8px", cursor: "pointer", letterSpacing: 0.5, textTransform: "uppercase" }}>Aperçu</button>
                     )}
-                    {unlocked && !claimed && isChest && (
+                    {unlocked && !claimed && lockedByPremium && (
+                      <button onClick={() => onOpenSubscribe && onOpenSubscribe()} style={{
+                        padding: "8px 12px", borderRadius: 10, background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
+                        fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 4,
+                      }}><Lock size={11} /> DÉBLOQUER</button>
+                    )}
+                    {unlocked && !claimed && !lockedByPremium && isChest && (
                       <button onClick={() => openChestAnim(tier)} style={{
                         padding: "8px 12px", borderRadius: 10, background: "#CCF71D", color: "#000",
                         fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer",
                         animation: "chestPulse 2s ease infinite",
                       }}>OUVRIR</button>
                     )}
-                    {unlocked && !claimed && !isChest && (
+                    {unlocked && !claimed && !lockedByPremium && !isChest && (
                       <button onClick={() => openChestAnim(tier)} style={{
                         padding: "8px 12px", borderRadius: 10, background: "rgba(204,247,29,0.12)",
                         color: "#CCF71D", fontSize: 11, fontWeight: 800, border: "1px solid rgba(204,247,29,0.2)",
@@ -4999,7 +5047,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             return (
               <div
                 onClick={claimChestResult}
-                style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", animation: "resultReveal 0.5s ease", zIndex: 20, padding: "20px", cursor: "pointer" }}
+                style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#000", animation: "resultReveal 0.5s ease", zIndex: 15000, padding: "20px", cursor: "pointer" }}
               >
                 {openAllQueue.length > 0 && (
                   <div style={{ position: "absolute", top: 20, left: 20, color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
@@ -5082,6 +5130,102 @@ function XpPopup({ xp, onClose, T }) {
       <div>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900 }}>+{xp} {T.xpLabel}</p>
         <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 600 }}>{T.xpEarned}</p>
+      </div>
+    </div>
+  );
+}
+
+// Modal d'abonnement Split+ : prix fixe 7,99€/mois + champ don libre.
+// Le paiement passera via Shopify (webhook + App Proxy) une fois la boutique
+// prête. Pour l'instant, bouton "Bientôt disponible" + toggle admin local
+// pour tester le gating premium côté app.
+function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin }) {
+  const [donation, setDonation] = useState("");
+  const perks = [
+    { icon: "🎁", label: "Accès à ~1 palier Split+ sur 5" },
+    { icon: "🔥", label: "50% des boosts premium" },
+    { icon: "🖼️", label: "25% des bannières exclusives" },
+    { icon: "💎", label: "25% des coffres rares & légendaires" },
+    { icon: "📊", label: "Scores map en LIVE pendant les matchs" },
+  ];
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 14000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(400px, 100%)", maxHeight: "90vh", background: "#0a0a0a", border: "1.5px solid #2a2a2a", borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "22px 20px 18px", background: "linear-gradient(135deg, rgba(255,184,0,0.12), rgba(255,138,0,0.06))", borderBottom: "1px solid #1a1a1a", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: 14, right: 14, background: "#1a1a1a", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 32 }}>✨</span>
+            <h2 style={{ color: "#FFB800", fontSize: 24, fontWeight: 900, letterSpacing: -0.5 }}>Split+</h2>
+          </div>
+          <p style={{ color: "#aaa", fontSize: 12, lineHeight: 1.5 }}>Débloque le contenu premium et soutiens le dev de Split. Chaque centime sert à faire tourner l'app et le développeur derrière.</p>
+        </div>
+
+        <div style={{ flex: 1, overflowY: "auto", padding: "18px 20px" }} className="no-scrollbar">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {perks.map((p, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#121212", borderRadius: 10, border: "1px solid #1e1e1e" }}>
+                <span style={{ fontSize: 18 }}>{p.icon}</span>
+                <span style={{ color: "#ddd", fontSize: 12, fontWeight: 600 }}>{p.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ padding: "14px", background: "#121212", border: "1px solid #1e1e1e", borderRadius: 12, marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+              <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>Prix mensuel</span>
+              <span style={{ color: "#FFB800", fontSize: 22, fontWeight: 900 }}>7,99€</span>
+            </div>
+            <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Résiliable à tout moment. Pas d'engagement.</p>
+          </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ color: "#888", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", display: "block", marginBottom: 6 }}>Don libre (optionnel)</label>
+            <div style={{ display: "flex", alignItems: "center", background: "#121212", border: "1px solid #1e1e1e", borderRadius: 10, padding: "4px 12px" }}>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={donation}
+                onChange={e => setDonation(e.target.value)}
+                placeholder="0"
+                style={{ flex: 1, background: "transparent", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, padding: "10px 0", outline: "none" }}
+              />
+              <span style={{ color: "#888", fontSize: 14, fontWeight: 700 }}>€</span>
+            </div>
+            <p style={{ color: "#555", fontSize: 10, marginTop: 4, lineHeight: 1.4 }}>100% du don sert à faire marcher l'app et son dev.</p>
+          </div>
+
+          {isSubscribed ? (
+            <div style={{ padding: "14px", background: "linear-gradient(135deg, rgba(204,247,29,0.08), rgba(204,247,29,0.02))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 12, textAlign: "center" }}>
+              <p style={{ color: "#CCF71D", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>✓ Tu es abonné Split+</p>
+              <p style={{ color: "#888", fontSize: 11 }}>Toutes les récompenses premium sont débloquées.</p>
+            </div>
+          ) : (
+            <button
+              disabled
+              style={{
+                width: "100%", padding: "14px", borderRadius: 12,
+                background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
+                fontSize: 14, fontWeight: 900, border: "none", cursor: "not-allowed", opacity: 0.55,
+                letterSpacing: 0.5,
+              }}
+            >
+              BIENTÔT DISPONIBLE (Shopify)
+            </button>
+          )}
+
+          {onToggleAdmin && (
+            <button
+              onClick={onToggleAdmin}
+              style={{
+                width: "100%", marginTop: 10, padding: "8px", borderRadius: 8,
+                background: "transparent", color: "#555", fontSize: 10, border: "1px dashed #333", cursor: "pointer",
+              }}
+            >
+              [admin] Toggle local Split+ ({isSubscribed ? "ON" : "OFF"})
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -9202,7 +9346,7 @@ function TeamSearchSelect({ value, onChange, teams, label, T, teamLogoCache }) {
   );
 }
 
-function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, defaultPseudo }) {
+function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTeams, T, teamLogoCache, valoLogoCache, cs2LogoCache, rlLogoCache, defaultPseudo, onLogout }) {
   const [step, setStep] = useState(profile?.pseudo ? 0 : 0);
   const [pseudo, setPseudo] = useState(profile?.pseudo || defaultPseudo || "");
   const pseudoLocked = !!(profile?.pseudo || defaultPseudo);
@@ -9251,13 +9395,21 @@ function ProfileSetupModal({ onClose, onSave, profile, valoTeams, cs2Teams, rlTe
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={profile?.pseudo ? onClose : undefined}>
       <div onClick={e => e.stopPropagation()} style={{ width: "min(370px, 92%)", maxHeight: "85vh", background: "#0a0a0a", border: "1px solid #222", borderRadius: 24, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ flexShrink: 0, padding: "16px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ flexShrink: 0, padding: "16px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          {!profile?.pseudo && onLogout ? (
+            <button
+              onClick={() => { if (confirm(T.logoutConfirm || "Se déconnecter ?")) onLogout(); }}
+              style={{ background: "#2a1414", border: "1px solid #5a1f1f", borderRadius: 14, padding: "5px 10px", cursor: "pointer", color: "#ff6b6b", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}
+            >
+              <LogOut size={12} /> {T.logout || "Déconnexion"}
+            </button>
+          ) : <div />}
+          <div style={{ display: "flex", gap: 6, flex: 1, justifyContent: "center" }}>
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div key={i} style={{ width: i === step ? 24 : 8, height: 4, borderRadius: 2, background: i <= step ? "#CCF71D" : "#333", transition: "all 0.3s" }} />
             ))}
           </div>
-          {profile?.pseudo && <button onClick={onClose} style={{ background: "#222", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button>}
+          {profile?.pseudo ? <button onClick={onClose} style={{ background: "#222", border: "none", borderRadius: 20, padding: "6px 8px", cursor: "pointer" }}><X size={16} color="#888" /></button> : <div />}
         </div>
 
         <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", flexDirection: "column" }} className="no-scrollbar">
@@ -12302,7 +12454,7 @@ function BlockedUsersSection() {
   );
 }
 
-function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, cs2Teams, rlTeams, teamLogoCache, cs2LogoCache, rlLogoCache, onUpdateProfile, T, profile, onLogout, onDeleteAccount, onChangePseudo }) {
+function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFavoriteTeam, teams, cs2Teams, rlTeams, teamLogoCache, cs2LogoCache, rlLogoCache, onUpdateProfile, T, profile, onLogout, onDeleteAccount, onChangePseudo, isSubscribed, onOpenSubscribe }) {
   const allTeams = teams || [];
   const [activeSection, setActiveSection] = useState(null);
   const [showPwd, setShowPwd] = useState(false);
@@ -12567,6 +12719,13 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
 
           {/* DÉCONNEXION */}
           <div style={sectionStyle}>
+            <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer", background: isSubscribed ? "rgba(204,247,29,0.08)" : "rgba(255,184,0,0.08)", border: `1px solid ${isSubscribed ? "rgba(204,247,29,0.25)" : "rgba(255,184,0,0.25)"}` }} className="w-full">
+              <span style={{ ...labelStyle, color: isSubscribed ? "#CCF71D" : "#FFB800" }}>
+                <span style={{ fontSize: 18 }}>✨</span>
+                {isSubscribed ? "Split+ actif" : "Passer à Split+"}
+              </span>
+              <ChevronRight size={16} color="#888" />
+            </button>
             <button onClick={onLogout} style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
               <span style={{ ...labelStyle, color: "#ff4655" }}><LogOut size={18} color="#ff4655" />{T.settingsLogout}</span>
             </button>
@@ -14044,6 +14203,12 @@ export default function ClutchApp() {
   const [pointsPerGame, setPointsPerGame] = useState(() => {
     try { return JSON.parse(localStorage.getItem("split_points_per_game") || '{"valo":0,"cs2":0,"rl":0}'); } catch { return { valo: 0, cs2: 0, rl: 0 }; }
   });
+  // Abonnement Split+ (sera synchronisé avec le backend Shopify une fois branché).
+  // Pour l'instant, lecture locale + possibilité de toggle admin via SettingsModal.
+  const [isSubscribed, setIsSubscribed] = useState(() => {
+    try { return localStorage.getItem("split_is_subscribed") === "1"; } catch { return false; }
+  });
+  const [showSubscribeModal, setShowSubscribeModal] = useState(false);
 
   // Garde-fou multi-appareils : tant que le pull depuis /api/social/me n'a pas
   // fini (profileHydratedRef.current = false), on bloque tout push automatique
@@ -15448,7 +15613,7 @@ export default function ClutchApp() {
 
         {showRewardsModal && (
           <div style={{ position: "absolute", left: 0, right: 0, bottom: 56, top: 0, zIndex: 50, background: "#0a0a0a" }}>
-            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userPoints={userPoints} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} />
+            <RewardsModal onClose={() => setShowRewardsModal(false)} T={T} userPoints={userPoints} userXp={userXp} predictions={predictions} upcomingMatches={upcomingMatches} liveMatches={liveMatches} cs2UpcomingMatches={cs2UpcomingMatches} cs2LiveMatches={cs2LiveMatches} rlUpcomingMatches={rlUpcomingMatches} rlLiveMatches={rlLiveMatches} settledMatchIds={settledMatchIds} onAddXp={(amount) => { const next = (userXp || 0) + amount; setUserXp(next); saveXp(next); }} isSubscribed={isSubscribed} onOpenSubscribe={() => setShowSubscribeModal(true)} />
           </div>
         )}
 
@@ -15521,6 +15686,8 @@ export default function ClutchApp() {
             teams={allTeams}
             T={T}
             profile={profile}
+            isSubscribed={isSubscribed}
+            onOpenSubscribe={() => { setShowSettings(false); setShowSubscribeModal(true); }}
             onLogout={() => {
               localStorage.removeItem("split_token");
               localStorage.removeItem("split_auth_token");
@@ -15609,6 +15776,29 @@ export default function ClutchApp() {
             cs2LogoCache={cs2TeamLogoCache}
             rlLogoCache={rlTeamLogoCache}
             defaultPseudo={authUser?.pseudo}
+            onLogout={() => {
+              localStorage.removeItem("split_token");
+              localStorage.removeItem("split_auth_token");
+              localStorage.removeItem("split_auth_user");
+              localStorage.removeItem("split_profile");
+              setProfile(null);
+              setAuthUser(null);
+              setShowProfile(false);
+              setShowAuth(true);
+              setActiveTab("valorant");
+            }}
+          />
+        )}
+        {showSubscribeModal && (
+          <SubscribeModal
+            onClose={() => setShowSubscribeModal(false)}
+            T={T}
+            isSubscribed={isSubscribed}
+            onToggleAdmin={() => {
+              const next = !isSubscribed;
+              setIsSubscribed(next);
+              try { localStorage.setItem("split_is_subscribed", next ? "1" : "0"); } catch {}
+            }}
           />
         )}
         {showCalendar && <CalendarModal onClose={() => setShowCalendar(false)} T={T} lang={currentLang} />}
