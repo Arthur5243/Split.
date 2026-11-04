@@ -96,7 +96,12 @@ router.post("/api/webhooks/whop", async (req, res) => {
     }
     db.prepare(`INSERT OR IGNORE INTO processed_webhooks (event_id) VALUES (?)`).run(eventId);
 
+    const metadata = data.metadata || {};
+    const splitUserId = metadata.split_user_id || "";
+    const splitEmail = (metadata.split_email || "").toLowerCase().trim();
+
     let email = (
+      splitEmail ||
       data.email ||
       data.user?.email ||
       data.customer?.email ||
@@ -110,11 +115,19 @@ router.post("/api/webhooks/whop", async (req, res) => {
     const membershipId = data.id || data.membership_id || "";
     const whopUserId = data.user_id || data.member_id || "";
 
+    if (!email && splitUserId) {
+      const pending = db.prepare(`SELECT * FROM pending_checkouts WHERE user_id = ?`).get(String(splitUserId));
+      if (pending) {
+        email = pending.email;
+        console.log(`[whop-webhook] email retrouvé via metadata.split_user_id=${splitUserId}: ${email}`);
+      }
+    }
+
     if (!email) {
       const pending = db.prepare(`SELECT * FROM pending_checkouts WHERE created_at > datetime('now', '-30 minutes') ORDER BY created_at DESC LIMIT 1`).get();
       if (pending) {
         email = pending.email;
-        console.log(`[whop-webhook] email retrouvé via pending_checkouts: ${email}`);
+        console.log(`[whop-webhook] email retrouvé via pending_checkouts (fallback): ${email}`);
       }
     }
 
@@ -136,25 +149,39 @@ router.post("/api/webhooks/whop", async (req, res) => {
       console.log(`[whop-webhook] événement ignoré: ${event}`);
     }
 
-    if (activate && email) {
-      const user = getUserByEmail(email);
-      if (user) {
-        setUserSubscribed(user.id, true);
-        db.prepare(`DELETE FROM pending_checkouts WHERE email = ?`).run(email);
-        console.log(`[whop-webhook] ✅ ${email} → elite (userId=${user.id})`);
-      } else {
-        db.prepare(`INSERT OR REPLACE INTO pending_subscriptions (email, whop_membership_id, status) VALUES (?, ?, 'elite')`).run(email, membershipId);
-        console.log(`[whop-webhook] ⏳ ${email} pas encore inscrit, abonnement en attente`);
+    if (activate) {
+      let matched = false;
+      if (splitUserId) {
+        setUserSubscribed(splitUserId, true);
+        db.prepare(`DELETE FROM pending_checkouts WHERE user_id = ?`).run(String(splitUserId));
+        console.log(`[whop-webhook] ✅ splitUserId=${splitUserId} → elite (via metadata)`);
+        matched = true;
+      } else if (email) {
+        const user = getUserByEmail(email);
+        if (user) {
+          setUserSubscribed(user.id, true);
+          db.prepare(`DELETE FROM pending_checkouts WHERE email = ?`).run(email);
+          console.log(`[whop-webhook] ✅ ${email} → elite (userId=${user.id})`);
+          matched = true;
+        } else {
+          db.prepare(`INSERT OR REPLACE INTO pending_subscriptions (email, whop_membership_id, status) VALUES (?, ?, 'elite')`).run(email, membershipId);
+          console.log(`[whop-webhook] ⏳ ${email} pas encore inscrit, abonnement en attente`);
+          matched = true;
+        }
       }
-    } else if (deactivate && email) {
-      const user = getUserByEmail(email);
-      if (user) {
-        setUserSubscribed(user.id, false);
-        console.log(`[whop-webhook] ❌ ${email} → free (userId=${user.id})`);
+      if (!matched) console.warn("[whop-webhook] pas de splitUserId ni d'email, impossible de lier");
+    } else if (deactivate) {
+      if (splitUserId) {
+        setUserSubscribed(splitUserId, false);
+        console.log(`[whop-webhook] ❌ splitUserId=${splitUserId} → free (via metadata)`);
+      } else if (email) {
+        const user = getUserByEmail(email);
+        if (user) {
+          setUserSubscribed(user.id, false);
+          console.log(`[whop-webhook] ❌ ${email} → free (userId=${user.id})`);
+        }
+        db.prepare(`DELETE FROM pending_subscriptions WHERE email = ?`).run(email);
       }
-      db.prepare(`DELETE FROM pending_subscriptions WHERE email = ?`).run(email);
-    } else if ((activate || deactivate) && !email) {
-      console.warn("[whop-webhook] pas d'email dans le payload ni dans pending_checkouts, impossible de lier");
     }
   } catch (e) {
     console.error("[whop-webhook] erreur traitement:", e.message);

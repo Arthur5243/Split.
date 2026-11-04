@@ -5265,7 +5265,12 @@ function SubscribeModal({ onClose, T, isSubscribed, onToggleAdmin, userEmail, us
     if (userEmail && userId) {
       fetch(API_BASE + "/api/whop/checkout-started", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail, userId }) }).catch(() => {});
     }
-    const url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7" + (userEmail ? "?email=" + encodeURIComponent(userEmail) : "");
+    let url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7";
+    const params = [];
+    if (userEmail) params.push("email=" + encodeURIComponent(userEmail));
+    if (userId) params.push("metadata[split_user_id]=" + encodeURIComponent(userId));
+    if (userEmail) params.push("metadata[split_email]=" + encodeURIComponent(userEmail));
+    if (params.length) url += "?" + params.join("&");
     window.open(url, "_blank");
     setWaiting(true);
     if (pollRef.current) clearInterval(pollRef.current);
