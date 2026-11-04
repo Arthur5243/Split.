@@ -5135,6 +5135,78 @@ function XpPopup({ xp, onClose, T }) {
   );
 }
 
+// Prompt custom qui explique l'intérêt des notifs avant d'ouvrir le picker
+// natif. S'affiche à la 1ère connexion (si permission === "default"), puis
+// plus jamais. Marque `split_notif_prompt_seen` dans tous les cas (accept /
+// refuse / skip) pour éviter d'énerver l'utilisateur.
+function NotifPromptModal({ onClose, T }) {
+  const [loading, setLoading] = useState(false);
+  async function enableNotifs() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      localStorage.setItem("split_notif_prompt_seen", "1");
+      if (typeof Notification === "undefined") { onClose(); return; }
+      const p = await Notification.requestPermission();
+      if (p === "granted") {
+        try {
+          const reg = navigator.serviceWorker ? await navigator.serviceWorker.ready.catch(() => null) : null;
+          if (reg) {
+            reg.showNotification("🎯 Split", {
+              body: "Notifs activées — tu recevras les alertes live et les rappels de pronos.",
+              icon: "/split-logo.png", badge: "/split-logo.png", silent: false,
+            });
+          }
+        } catch {}
+      }
+    } catch {}
+    setLoading(false);
+    onClose();
+  }
+  function skip() {
+    try { localStorage.setItem("split_notif_prompt_seen", "1"); } catch {}
+    onClose();
+  }
+  return (
+    <div onClick={skip} style={{ position: "fixed", inset: 0, zIndex: 13500, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "min(360px, 100%)", background: "#0a0a0a", border: "1.5px solid #2a2a2a", borderRadius: 20, padding: "26px 22px", textAlign: "center" }}>
+        <div style={{ width: 68, height: 68, borderRadius: "50%", background: "rgba(204,247,29,0.12)", border: "1.5px solid rgba(204,247,29,0.3)", margin: "0 auto 18px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Bell size={30} color="#CCF71D" />
+        </div>
+        <h3 style={{ color: "#fff", fontSize: 20, fontWeight: 900, marginBottom: 10 }}>Active les notifications</h3>
+        <p style={{ color: "#aaa", fontSize: 13, lineHeight: 1.5, marginBottom: 20 }}>
+          Reçois une alerte quand un match de ton équipe commence et pour les rappels de pronostics quotidiens.
+        </p>
+        <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
+          {[
+            { icon: "🎮", text: "Rappels pronos (5 slots/jour)" },
+            { icon: "🔴", text: "Matchs LIVE de tes équipes favorites" },
+            { icon: "🏆", text: "Récompenses palier débloquées" },
+          ].map((p, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#121212", borderRadius: 10, border: "1px solid #1e1e1e" }}>
+              <span style={{ fontSize: 15 }}>{p.icon}</span>
+              <span style={{ color: "#bbb", fontSize: 12, fontWeight: 600 }}>{p.text}</span>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={enableNotifs}
+          disabled={loading}
+          style={{ width: "100%", padding: "14px", borderRadius: 12, background: "#CCF71D", color: "#000", fontSize: 14, fontWeight: 900, border: "none", cursor: "pointer", marginBottom: 8, opacity: loading ? 0.6 : 1 }}
+        >
+          {loading ? "…" : "ACTIVER"}
+        </button>
+        <button
+          onClick={skip}
+          style={{ width: "100%", padding: "10px", borderRadius: 10, background: "transparent", color: "#666", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
+        >
+          Plus tard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Modal d'abonnement Split+ : prix fixe 7,99€/mois + champ don libre.
 // Le paiement passera via Shopify (webhook + App Proxy) une fois la boutique
 // prête. Pour l'instant, bouton "Bientôt disponible" + toggle admin local
@@ -14209,6 +14281,7 @@ export default function ClutchApp() {
     try { return localStorage.getItem("split_is_subscribed") === "1"; } catch { return false; }
   });
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+  const [showNotifPrompt, setShowNotifPrompt] = useState(false);
 
   // Garde-fou multi-appareils : tant que le pull depuis /api/social/me n'a pas
   // fini (profileHydratedRef.current = false), on bloque tout push automatique
@@ -15370,6 +15443,15 @@ export default function ClutchApp() {
             setShowAuth(false);
             lastAdAtRef.current = Date.now();
             if (!localStorage.getItem("split_intro_seen")) setShowIntroCards(true);
+            // Prompt notif PWA à la 1ère connexion (jamais vu + permission encore
+            // par défaut). On délègue l'affichage à l'app principale via state :
+            // la modal custom évite le prompt natif agressif et explique l'intérêt.
+            try {
+              const seen = localStorage.getItem("split_notif_prompt_seen");
+              if (!seen && typeof Notification !== "undefined" && Notification.permission === "default") {
+                setTimeout(() => setShowNotifPrompt(true), 1200);
+              }
+            } catch {}
             // Compte test "portable" : spam de notifs push (sur le téléphone,
             // pas dans l'app) à chaque connexion, pour vérifier la perm et le
             // SW.
@@ -15788,6 +15870,9 @@ export default function ClutchApp() {
               setActiveTab("valorant");
             }}
           />
+        )}
+        {showNotifPrompt && (
+          <NotifPromptModal onClose={() => setShowNotifPrompt(false)} T={T} />
         )}
         {showSubscribeModal && (
           <SubscribeModal
