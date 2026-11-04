@@ -308,5 +308,26 @@ export function mountAdminResetEndpoints(app) {
     }
   });
 
-  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users + /set-user-points ready (v3)");
+  // POST /api/admin/set-user-subscribed?userId=X&subscribed=1 (ou 0)
+  //   Toggle Split+ sur un user. En attendant le webhook Shopify.
+  app.post("/api/admin/set-user-subscribed", (req, res) => {
+    if (!checkAuth(req, res)) return;
+    const userId = req.query.userId;
+    const pseudo = req.query.pseudo;
+    const subscribed = String(req.query.subscribed || "").trim() === "1" ? 1 : 0;
+    if (!userId && !pseudo) return res.status(400).json({ error: "userId or pseudo required" });
+    try {
+      const db = new Database(DB_PATH);
+      const where = userId ? "id = ?" : "pseudo = ?";
+      const param = userId || pseudo;
+      const result = db.prepare("UPDATE users SET is_subscribed = ?, updated_at = datetime('now') WHERE " + where).run(subscribed, param);
+      const user = db.prepare("SELECT id, pseudo, is_subscribed FROM users WHERE " + where).get(param);
+      db.close();
+      res.json({ ok: true, changed: result.changes, user });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  console.log("[admin-reset] endpoints /api/admin/reset-all-users-state + /reset-user-state + /delete-all-users + /set-user-points + /set-user-subscribed ready (v4)");
 }

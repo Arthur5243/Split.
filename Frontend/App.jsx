@@ -2966,6 +2966,12 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   const [justRevealedL, setJustRevealedL] = useState(false);
   const isBoosted = (() => { try { return JSON.parse(localStorage.getItem("split_boosted_matches") || "[]").includes(String(match.id)); } catch { return false; } })();
   const hasLiveScores = running && Array.isArray(match.live_map_scores) && match.live_map_scores.length > 0;
+  // Split+ gate : les scores map en LIVE sont réservés aux abonnés.
+  // On relit le flag au render (pas d'état propre) pour que l'UI update
+  // dès qu'un toggle admin ou un retour du backend change la valeur.
+  const liveScoresGatedBySplit = hasLiveScores && (() => {
+    try { return localStorage.getItem("split_is_subscribed") !== "1"; } catch { return true; }
+  })();
   const replayCacheKey = [match.team1, match.team2, match.day, gameLabel, match.league].join("|");
   const replayUrl = _ytCache.get(replayCacheKey) || "https://www.youtube.com/results?search_query=" + encodeURIComponent(match.team1 + " vs " + match.team2 + " replay " + gameLabel + " esport");
   const onReplayClick = () => {
@@ -3489,6 +3495,37 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   );
                 }
                 if (!hasLiveScores) return null;
+                if (liveScoresGatedBySplit) {
+                  return (
+                    <div style={{
+                      position: "relative", borderRadius: 10, overflow: "hidden",
+                      border: "1px solid rgba(255,184,0,0.3)",
+                      background: "linear-gradient(135deg, rgba(255,184,0,0.08), rgba(255,138,0,0.03))",
+                      padding: "14px 12px", textAlign: "center",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
+                        <Lock size={14} color="#FFB800" />
+                        <span style={{ color: "#FFB800", fontSize: 11, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase" }}>Scores map LIVE — Split+</span>
+                      </div>
+                      <p style={{ color: "#aaa", fontSize: 11, lineHeight: 1.4, marginBottom: 10 }}>
+                        Débloque les scores map en temps réel pendant les matchs.
+                      </p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          try { window.dispatchEvent(new CustomEvent("split-open-subscribe")); } catch {}
+                        }}
+                        style={{
+                          padding: "7px 18px", borderRadius: 9,
+                          background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
+                          fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer",
+                        }}
+                      >
+                        VOIR SPLIT+
+                      </button>
+                    </div>
+                  );
+                }
                 return (
                   <div className="flex flex-col gap-2">
                     {match.live_map_scores.map((lm, i) => {
@@ -4146,6 +4183,8 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       localStorage.setItem("split_inventory", JSON.stringify(ni));
       showClaimToast(item);
     }
+    // Sync cross-device : PC ↔ mobile doivent voir la même récompense à vie.
+    try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
     return true;
   }
 
@@ -4318,6 +4357,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       localStorage.setItem("split_equipped_badge", val);
       localStorage.setItem("split_equipped_badge_emoji", val ? (item.emoji || "🏅") : "");
     }
+    try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
   }
 
   const [showBoostPicker, setShowBoostPicker] = useState(false);
@@ -4382,6 +4422,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     setEquippedMatchBgs(updated);
     setShowMatchBgPicker(false);
     setMatchBgPickerItem(null);
+    try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
   }
 
   function unequipMatchBg(name) {
@@ -4390,6 +4431,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     setEquippedMatchBgs(updated);
     setShowMatchBgPicker(false);
     setMatchBgPickerItem(null);
+    try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
   }
 
   function useXpBonusItem(itemIndex) {
@@ -13526,11 +13568,13 @@ function blockUser(u) {
   list.push({ id: u.id, pseudo: u.pseudo || "", at: Date.now() });
   localStorage.setItem(BLOCKED_KEY, JSON.stringify(list));
   try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
+  try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
 }
 function unblockUser(id) {
   const list = getBlockedUsers().filter((x) => x.id !== id);
   localStorage.setItem(BLOCKED_KEY, JSON.stringify(list));
   try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
+  try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
 }
 function isUserBlocked(id) {
   return getBlockedUsers().some((x) => x.id === id);
@@ -14300,10 +14344,12 @@ export default function ClutchApp() {
     const equippedMatchBg = localStorage.getItem("split_equipped_match_bg") || "";
     const inventory = localStorage.getItem("split_inventory") || "[]";
     const claimedTiers = localStorage.getItem("split_claimed_tiers") || "[]";
+    // Multi-appareils : la liste de comptes masqués suit le compte, pas l'appareil.
+    const blockedUsers = localStorage.getItem("split_blocked_users") || "[]";
     fetch(API_BASE + "/api/social/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers }),
+      body: JSON.stringify({ id: p.userId, pseudo: p.pseudo, avatar: p.avatar, bio: p.bio, favTeams: p.favTeams, points: pts || 0, pointsPerGame: ppg || pointsPerGame, xp: xp || 0, pseudoColor: p.pseudoColor || null, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers, blockedUsers }),
     }).catch(() => {});
   }
   useEffect(() => {
@@ -14359,6 +14405,15 @@ export default function ClutchApp() {
           else localStorage.setItem("split_inventory", "[]");
           if (d.claimed_tiers) { try { JSON.parse(d.claimed_tiers); localStorage.setItem("split_claimed_tiers", d.claimed_tiers); } catch {} }
           else localStorage.setItem("split_claimed_tiers", "[]");
+          // Split+ : source de vérité = backend (webhook Shopify demain).
+          const subNow = d.is_subscribed ? 1 : 0;
+          localStorage.setItem("split_is_subscribed", String(subNow));
+          setIsSubscribed(!!subNow);
+          // Comptes masqués : backend prioritaire pour matcher PC ↔ mobile.
+          if (d.blocked_users) {
+            try { JSON.parse(d.blocked_users); localStorage.setItem("split_blocked_users", d.blocked_users); } catch {}
+          }
+          try { window.dispatchEvent(new CustomEvent("split-blocked-changed")); } catch {}
         } catch {}
         // Backend prioritaire sur le cache local pour tout ce qui est identité
         // du compte, qu'un cache obsolète existe ou pas. On garde les éventuels
@@ -14374,6 +14429,36 @@ export default function ClutchApp() {
       .finally(() => { profileHydratedRef.current = true; })
       .catch(() => {});
   }, [authUser?.id]);
+
+  // Pont MatchCard → ClutchApp : les cartes de match ne connaissent pas le
+  // setter du modal d'abonnement, elles émettent un event qu'on écoute ici.
+  useEffect(() => {
+    const open = () => setShowSubscribeModal(true);
+    window.addEventListener("split-open-subscribe", open);
+    return () => window.removeEventListener("split-open-subscribe", open);
+  }, []);
+
+  // Déclenche un push vers le backend à chaque changement de cosmétiques /
+  // bloqués / inventaire. Debounced pour grouper les claims successifs d'un
+  // "TOUT OUVRIR". Garantit que PC et mobile restent synchro sans refresh.
+  useEffect(() => {
+    let t = null;
+    const handler = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => {
+        if (profile && profileHydratedRef.current) {
+          syncProfileToBackend(profile, userPoints, pointsPerGame, userXp);
+        }
+      }, 800);
+    };
+    window.addEventListener("split-sync-cosmetics", handler);
+    window.addEventListener("split-blocked-changed", handler);
+    return () => {
+      if (t) clearTimeout(t);
+      window.removeEventListener("split-sync-cosmetics", handler);
+      window.removeEventListener("split-blocked-changed", handler);
+    };
+  }, [profile, userPoints, pointsPerGame, userXp]);
 
   const [scoreCats, setScoreCats] = useState(["tout"]);
 

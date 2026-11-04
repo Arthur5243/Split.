@@ -76,6 +76,13 @@ try { db.exec(`ALTER TABLE users ADD COLUMN claimed_tiers TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_badge_emoji TEXT`); } catch {}
 try { db.exec(`ALTER TABLE users ADD COLUMN equipped_match_bg TEXT`); } catch {}
+// Split+ : abonnement payant (Shopify plus tard). Par défaut 0. Toggle via
+// endpoint admin ou webhook Shopify. Rend accessibles les récompenses premium
+// + les scores map en LIVE pendant les matchs.
+try { db.exec(`ALTER TABLE users ADD COLUMN is_subscribed INTEGER DEFAULT 0`); } catch {}
+// Comptes masqués côté client : JSON array des userId bloqués. Sync pour
+// que le ban reste identique PC/mobile.
+try { db.exec(`ALTER TABLE users ADD COLUMN blocked_users TEXT`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas
@@ -103,8 +110,8 @@ db.exec(`
 
 const stmts = {
   upsertUser: db.prepare(`
-    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, equipped_badge, equipped_badge_emoji, equipped_match_bg, inventory, claimed_tiers, profile_ready, updated_at)
-    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, 0, 0, 0, 0, 0, @pseudo_color, @equipped_title, @equipped_banner, @equipped_badge, @equipped_badge_emoji, @equipped_match_bg, @inventory, @claimed_tiers, 1, datetime('now'))
+    INSERT INTO users (id, pseudo, pseudo_lower, avatar, bio, fav_valo, fav_cs2, fav_rl, points, points_valo, points_cs2, points_rl, xp, pseudo_color, equipped_title, equipped_banner, equipped_badge, equipped_badge_emoji, equipped_match_bg, inventory, claimed_tiers, blocked_users, profile_ready, updated_at)
+    VALUES (@id, @pseudo, @pseudo_lower, @avatar, @bio, @fav_valo, @fav_cs2, @fav_rl, 0, 0, 0, 0, 0, @pseudo_color, @equipped_title, @equipped_banner, @equipped_badge, @equipped_badge_emoji, @equipped_match_bg, @inventory, @claimed_tiers, @blocked_users, 1, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       pseudo = @pseudo,
       pseudo_lower = @pseudo_lower,
@@ -121,6 +128,7 @@ const stmts = {
       equipped_match_bg = COALESCE(@equipped_match_bg, users.equipped_match_bg),
       inventory = COALESCE(@inventory, users.inventory),
       claimed_tiers = COALESCE(@claimed_tiers, users.claimed_tiers),
+      blocked_users = COALESCE(@blocked_users, users.blocked_users),
       profile_ready = 1,
       updated_at = datetime('now')
     /* NOTE: points/xp/points_valo/cs2/rl JAMAIS mis a jour ici. Ces valeurs
@@ -159,7 +167,7 @@ const stmts = {
   setXp: db.prepare(`UPDATE users SET xp = ? WHERE pseudo_lower = ?`),
 };
 
-export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers }) {
+export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPerGame, xp, pseudoColor, equippedTitle, equippedBanner, equippedBadge, equippedBadgeEmoji, equippedMatchBg, inventory, claimedTiers, blockedUsers }) {
   stmts.upsertUser.run({
     id,
     pseudo: pseudo || "Joueur",
@@ -182,7 +190,13 @@ export function upsertUser({ id, pseudo, avatar, bio, favTeams, points, pointsPe
     equipped_match_bg: equippedMatchBg != null ? String(equippedMatchBg) : null,
     inventory: inventory != null ? (typeof inventory === "string" ? inventory : JSON.stringify(inventory)) : null,
     claimed_tiers: claimedTiers != null ? (typeof claimedTiers === "string" ? claimedTiers : JSON.stringify(claimedTiers)) : null,
+    blocked_users: blockedUsers != null ? (typeof blockedUsers === "string" ? blockedUsers : JSON.stringify(blockedUsers)) : null,
   });
+}
+
+// Admin : toggle Split+ sur un user (manuel, en attendant le webhook Shopify).
+export function setUserSubscribed(id, subscribed) {
+  db.prepare(`UPDATE users SET is_subscribed = ?, updated_at = datetime('now') WHERE id = ?`).run(subscribed ? 1 : 0, id);
 }
 
 export function getUser(id) {
