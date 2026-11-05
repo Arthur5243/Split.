@@ -45,33 +45,47 @@ function verifyStandardWebhookSignature(rawBody, headers, secret) {
     return false;
   }
 
-  // Standard Webhooks spec : secret = `whsec_` + base64, on strip le préfixe
-  // avant le décode. Certains tenants retournent la clé sans préfixe — on
-  // gère les deux cas. On trim aussi pour éviter un \n/ espace copié depuis
-  // le dashboard.
   const clean = String(secret).trim().replace(/^whsec_/, "");
-  let secretBytes;
-  try { secretBytes = Buffer.from(clean, "base64"); } catch { console.warn("[whop-verify] secret base64 invalide"); return false; }
-  if (secretBytes.length === 0) { console.warn("[whop-verify] secret base64 vide après décodage"); return false; }
-
   const toSign = `${msgId}.${timestamp}.${rawBody}`;
-  const expected = crypto.createHmac("sha256", secretBytes).update(toSign).digest("base64");
+
+  // Whop/Standard Webhooks : la clé HMAC peut être soit le secret en raw
+  // utf-8 (format Whop actuel), soit sa valeur base64-décodée (spec
+  // Standard Webhooks d'origine). On tente les deux pour couvrir les deux
+  // conventions et parer aux changements futurs.
+  const keyCandidates = [
+    { name: "raw-utf8", bytes: Buffer.from(clean, "utf8") },
+  ];
+  try {
+    const b64 = Buffer.from(clean, "base64");
+    if (b64.length > 0 && b64.length !== Buffer.from(clean, "utf8").length) {
+      keyCandidates.push({ name: "base64-decoded", bytes: b64 });
+    }
+  } catch {}
 
   const sigs = String(signatures).split(" ");
   const receivedSamples = [];
-  for (const sig of sigs) {
-    // Chaque entrée est `<version>,<base64>` (ex: v1,xxx ou v1a,xxx).
-    // On garde tout ce qui est après la virgule, peu importe la version.
-    const commaIdx = sig.indexOf(",");
-    const val = commaIdx >= 0 ? sig.slice(commaIdx + 1) : sig;
-    receivedSamples.push(val.slice(0, 8) + "…");
-    try {
-      const a = Buffer.from(val, "base64");
-      const b = Buffer.from(expected, "base64");
-      if (a.length === b.length && crypto.timingSafeEqual(a, b)) return true;
-    } catch { /* length mismatch */ }
+  const expectedByKey = [];
+
+  for (const { name, bytes } of keyCandidates) {
+    const expected = crypto.createHmac("sha256", bytes).update(toSign).digest("base64");
+    expectedByKey.push(`${name}=${expected.slice(0, 8)}…(len${bytes.length})`);
+    for (const sig of sigs) {
+      // "<version>,<base64>" — on garde tout après la 1ère virgule.
+      const commaIdx = sig.indexOf(",");
+      const val = commaIdx >= 0 ? sig.slice(commaIdx + 1) : sig;
+      if (receivedSamples.length < sigs.length) receivedSamples.push(val.slice(0, 8) + "…");
+      try {
+        const a = Buffer.from(val, "base64");
+        const b = Buffer.from(expected, "base64");
+        if (a.length === b.length && crypto.timingSafeEqual(a, b)) {
+          console.log(`[whop-verify] ✅ match via clé ${name}`);
+          return true;
+        }
+      } catch { /* length mismatch */ }
+    }
   }
-  console.warn("[whop-verify] aucun match. secretLen=" + secretBytes.length + " bodyLen=" + rawBody.length + " expected=" + expected.slice(0, 8) + "… received=[" + receivedSamples.join(",") + "] toSignStart=" + toSign.slice(0, 80));
+
+  console.warn("[whop-verify] aucun match. bodyLen=" + rawBody.length + " expected=[" + expectedByKey.join(", ") + "] received=[" + receivedSamples.join(",") + "] toSignStart=" + toSign.slice(0, 80));
   return false;
 }
 
