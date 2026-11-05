@@ -132,6 +132,16 @@
   // Comme cette page est servie sur app.splitapp.fr (même origine que l'API
   // backend proxifiée), le fetch réutilisera les cookies/token si présents.
   (function() {
+    // Est-ce qu'on est chargé dans l'iframe du checkout (ouvert depuis la
+    // PWA) ou en top-level (onglet externe, PWA fermée) ?
+    var inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+
+    function notifyParent() {
+      if (!inIframe) return;
+      try { window.parent.postMessage({ type: "split-paid" }, "*"); } catch (e) {}
+    }
+
     try {
       var auth = JSON.parse(localStorage.getItem("split_auth_user") || "null");
       var uid = auth && auth.id;
@@ -142,16 +152,37 @@
             if (d && d.is_subscribed) {
               try { localStorage.setItem("split_is_subscribed", "1"); } catch(e) {}
             }
+            // On notifie le parent même si on n'a pas confirmation : c'est
+            // la page "paiement-reussi" donc Whop a déjà validé côté sien.
+            // Le parent va re-fetcher /api/social/me après fermeture.
+            notifyParent();
           })
-          .catch(function() {});
+          .catch(function() { notifyParent(); });
+      } else {
+        notifyParent();
       }
-    } catch(e) {}
+    } catch(e) { notifyParent(); }
 
     // Auto-redirect après 6s pour que l'user ne soit pas bloqué ici.
+    // En iframe : au lieu de rediriger (on changerait juste l'iframe), on
+    // re-notifie le parent pour qu'il ferme la fenêtre de checkout.
     var t = setTimeout(function() {
-      window.location.href = "/";
+      if (inIframe) {
+        notifyParent();
+      } else {
+        window.location.href = "/";
+      }
     }, 6000);
-    document.getElementById("back").addEventListener("click", function() { clearTimeout(t); });
+
+    document.getElementById("back").addEventListener("click", function(e) {
+      clearTimeout(t);
+      if (inIframe) {
+        // Click utilisateur : ferme l'iframe plein écran côté parent (PWA).
+        e.preventDefault();
+        notifyParent();
+      }
+      // Sinon : comportement normal du <a href="/">, pas d'intervention.
+    });
   })();
 </script>
 </body>

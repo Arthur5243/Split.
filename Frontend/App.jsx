@@ -5283,6 +5283,35 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
     { icon: "📊", label: "Scores map en LIVE pendant les matchs" },
   ];
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  // Écoute les messages de la page /paiement-reussi (chargée dans l'iframe
+  // de checkout) pour fermer la fenêtre dès que l'user clique "RETOUR À
+  // SPLIT" ou que le ping /api/social/me confirme is_subscribed=1.
+  useEffect(() => {
+    function onMessage(e) {
+      if (!e.data || e.data.type !== "split-paid") return;
+      // On ne restreint pas l'origin : l'iframe charge whop.com puis
+      // redirige vers app.splitapp.fr/paiement-reussi (notre domaine).
+      // Le payload est juste un signal, aucune donnée sensible.
+      setCheckoutUrl(null);
+      setIframeBlocked(false);
+      setWaiting(false);
+      setTimedOut(false);
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+      // Re-fetch une dernière fois pour mettre à jour is_subscribed côté
+      // app avant d'appeler onSubscribed (qui peut déjà être OK via la
+      // sync faite par paiement-reussi.html).
+      if (userId) {
+        fetch(API_BASE + "/api/social/me/" + userId).then(r => r.json()).then(d => {
+          if (onSubscribed) onSubscribed(d && d.is_subscribed);
+        }).catch(() => { if (onSubscribed) onSubscribed(); });
+      } else if (onSubscribed) {
+        onSubscribed();
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [userId, onSubscribed]);
   function buildCheckoutUrl() {
     let url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7";
     const params = [];
