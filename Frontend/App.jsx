@@ -4538,12 +4538,18 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     // avec la même carte que chest ("done" tout de suite).
     if (isChestItem(ch)) {
       const winner = pickWin(ch.name);
+      const safeWinner = { ...winner, rarity: winner.rarity || getRar(winner) };
       const strip = [];
-      for (let i = 0; i < STRIP_N; i++) strip.push(i === WIN_I ? winner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)]);
-      setChestStrip(strip); setChestResult(winner); setOpeningChest(tier);
+      for (let i = 0; i < STRIP_N; i++) strip.push(i === WIN_I ? safeWinner : LOOT_POOL[Math.floor(Math.random() * LOOT_POOL.length)]);
+      setChestStrip(strip); setChestResult(safeWinner); setOpeningChest(tier);
       setChestPhase("idle"); posRef.current = 0; phaseRef.current = "idle";
     } else {
-      setChestStrip([]); setChestResult(ch); setOpeningChest(tier);
+      // Les récompenses directes (boost XP, bannière, titre…) n'ont pas toutes
+      // une `rarity`. On garantit un fallback via getRar() pour que la carte
+      // de reveal (RAR[chestResult.rarity].text, .border, .glow, .label) ne
+      // crash plus sur un undefined (ex: tier 39 "Boost XP +600").
+      const safeItem = { ...ch, rarity: ch.rarity || getRar(ch) };
+      setChestStrip([]); setChestResult(safeItem); setOpeningChest(tier);
       setChestPhase("done"); phaseRef.current = "done";
     }
   }
@@ -4575,13 +4581,17 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     if (openingChest && chestResult) {
       claimTier(openingChest, chestResult);
       // Si une file "TOUT OUVRIR" est en cours, enchaîne direct sur le palier
-      // suivant au lieu de fermer la popup.
+      // suivant SANS repasser par openingChest=null (sinon l'overlay noir
+      // plein écran disparaît pendant un tick → flash entre deux récompenses,
+      // visible à partir de la 2e-3e carte).
       if (openAllQueue.length > 0) {
         const next = openAllQueue[0];
         setOpenAllQueue(openAllQueue.slice(1));
-        setOpeningChest(null); phaseRef.current = "idle";
-        // Un tick plus tard pour que React remonte la popup proprement.
-        setTimeout(() => openChestAnim(next.tier), 0);
+        // Réinitialise l'anim mais garde openingChest actif pour que l'overlay
+        // reste monté. openChestAnim va écraser chestResult / chestStrip et
+        // relancer la phase idle/done.
+        phaseRef.current = "idle";
+        openChestAnim(next.tier);
       } else {
         setOpeningChest(null); phaseRef.current = "idle";
       }
@@ -14527,24 +14537,37 @@ export default function ClutchApp() {
   }, []);
 
   // Déclenche un push vers le backend à chaque changement de cosmétiques /
-  // bloqués / inventaire. Debounced pour grouper les claims successifs d'un
-  // "TOUT OUVRIR". Garantit que PC et mobile restent synchro sans refresh.
+  // bloqués / inventaire. Debounced court (300 ms) pour que l'enchaînement
+  // "TOUT OUVRIR" ne spam pas le backend, tout en gardant une sauvegarde
+  // quasi-instantanée en cas de fermeture d'app juste après un claim.
+  // `visibilitychange` flush immédiatement si l'onglet passe en arrière-plan.
   useEffect(() => {
     let t = null;
-    const handler = () => {
-      if (t) clearTimeout(t);
-      t = setTimeout(() => {
-        if (profile && profileHydratedRef.current) {
-          syncProfileToBackend(profile, userPoints, pointsPerGame, userXp);
-        }
-      }, 800);
+    let pending = false;
+    const flush = () => {
+      if (!pending) return;
+      pending = false;
+      if (t) { clearTimeout(t); t = null; }
+      if (profile && profileHydratedRef.current) {
+        syncProfileToBackend(profile, userPoints, pointsPerGame, userXp);
+      }
     };
+    const handler = () => {
+      pending = true;
+      if (t) clearTimeout(t);
+      t = setTimeout(flush, 300);
+    };
+    const onVisibility = () => { if (document.visibilityState === "hidden") flush(); };
     window.addEventListener("split-sync-cosmetics", handler);
     window.addEventListener("split-blocked-changed", handler);
+    window.addEventListener("beforeunload", flush);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       if (t) clearTimeout(t);
       window.removeEventListener("split-sync-cosmetics", handler);
       window.removeEventListener("split-blocked-changed", handler);
+      window.removeEventListener("beforeunload", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [profile, userPoints, pointsPerGame, userXp]);
 
