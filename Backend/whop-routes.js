@@ -89,6 +89,19 @@ function verifyStandardWebhookSignature(rawBody, headers, secret) {
   return false;
 }
 
+// Admin : vire un event_id de processed_webhooks pour autoriser un resend
+// (ex: un ancien event marqué traité avant que le lien user soit possible).
+// Protégé par ADMIN_KEY — pas d'automatisation côté externe.
+router.post("/api/whop/forget-event", (req, res) => {
+  const key = req.headers["x-admin-key"] || req.query.key;
+  if (!key || key !== process.env.ADMIN_KEY) return res.status(403).json({ error: "forbidden" });
+  const eventId = (req.body?.eventId || req.query.eventId || "").toString().trim();
+  if (!eventId) return res.status(400).json({ error: "eventId required" });
+  const r = db.prepare(`DELETE FROM processed_webhooks WHERE event_id = ?`).run(eventId);
+  console.log(`[whop] forget-event ${eventId} (changed=${r.changes})`);
+  res.json({ ok: true, changed: r.changes });
+});
+
 router.post("/api/whop/checkout-started", (req, res) => {
   const { email, userId } = req.body || {};
   if (!email || !userId) return res.status(400).json({ error: "email and userId required" });
@@ -122,12 +135,15 @@ router.post("/api/webhooks/whop", async (req, res) => {
     const data = payload.data || payload;
 
     const eventId = payload.id || data.id || `${event}-${Date.now()}`;
+    // On marque "déjà traité" SEULEMENT après avoir réussi à lier l'event
+    // à un user Split (cf. plus bas). Sinon un 1er resend qui échoue sur
+    // le lien verrouille les resend suivants qui pourraient marcher avec
+    // un pending_checkouts élargi ou un register entre-temps.
     const already = db.prepare(`SELECT 1 FROM processed_webhooks WHERE event_id = ?`).get(eventId);
     if (already) {
       console.log("[whop-webhook] event déjà traité:", eventId);
       return;
     }
-    db.prepare(`INSERT OR IGNORE INTO processed_webhooks (event_id) VALUES (?)`).run(eventId);
 
     const metadata = data.metadata || {};
     const splitUserId = metadata.split_user_id || "";
@@ -205,7 +221,10 @@ router.post("/api/webhooks/whop", async (req, res) => {
           matched = true;
         }
       }
-      if (!matched) console.warn("[whop-webhook] pas de splitUserId ni d'email, impossible de lier");
+      if (!matched) {
+        console.warn("[whop-webhook] pas de splitUserId ni d'email, impossible de lier (event laissé non-traité, retry possible)");
+        return; // ne marque PAS comme traité : le resend suivant pourra retenter
+      }
     } else if (deactivate) {
       if (splitUserId) {
         setUserSubscribed(splitUserId, false);
@@ -219,6 +238,10 @@ router.post("/api/webhooks/whop", async (req, res) => {
         db.prepare(`DELETE FROM pending_subscriptions WHERE email = ?`).run(email);
       }
     }
+
+    // Marquage "traité" APRÈS traitement réussi. Un event qui tombe ici
+    // ne sera plus re-processé sur un resend.
+    db.prepare(`INSERT OR IGNORE INTO processed_webhooks (event_id) VALUES (?)`).run(eventId);
   } catch (e) {
     console.error("[whop-webhook] erreur traitement:", e.message);
   }
