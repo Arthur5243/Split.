@@ -5264,7 +5264,14 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
   const [waiting, setWaiting] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [checking, setChecking] = useState(false);
+  // URL du checkout à charger en iframe plein écran : reste dans la PWA au
+  // lieu d'ouvrir un onglet externe. Null = pas d'iframe active.
+  const [checkoutUrl, setCheckoutUrl] = useState(null);
+  // Si l'iframe refuse de charger (X-Frame-Options: DENY côté Whop), fallback
+  // vers window.open après ~6s.
+  const [iframeBlocked, setIframeBlocked] = useState(false);
   const pollRef = useRef(null);
+  const iframeLoadedRef = useRef(false);
   const perks = [
     { icon: "🎁", label: "Accès aux paliers Split+ exclusifs" },
     { icon: "🔥", label: "Boosts premium" },
@@ -5273,17 +5280,18 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
     { icon: "📊", label: "Scores map en LIVE pendant les matchs" },
   ];
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
-  function handleSubscribe() {
-    if (userEmail && userId) {
-      fetch(API_BASE + "/api/whop/checkout-started", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail, userId }) }).catch(() => {});
-    }
+  function buildCheckoutUrl() {
     let url = "https://whop.com/checkout/plan_Lp1zplU0E2xh7";
     const params = [];
     if (userEmail) params.push("email=" + encodeURIComponent(userEmail));
     if (userId) params.push("metadata[split_user_id]=" + encodeURIComponent(userId));
     if (userEmail) params.push("metadata[split_email]=" + encodeURIComponent(userEmail));
+    // utm pour tracer "iframe" vs "window.open" côté analytics Whop.
+    params.push("utm_source=split_pwa");
     if (params.length) url += "?" + params.join("&");
-    window.open(url, "_blank");
+    return url;
+  }
+  function startPolling() {
     setWaiting(true);
     setTimedOut(false);
     if (pollRef.current) clearInterval(pollRef.current);
@@ -5295,11 +5303,46 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
           pollRef.current = null;
           setWaiting(false);
           setTimedOut(false);
+          setCheckoutUrl(null);
           if (onSubscribed) onSubscribed();
         }
       }).catch(() => {});
     }, 4000);
-    setTimeout(() => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; setWaiting(false); setTimedOut(true); } }, 300000);
+    setTimeout(() => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current); pollRef.current = null;
+        setWaiting(false); setTimedOut(true);
+        setCheckoutUrl(null);
+      }
+    }, 300000);
+  }
+  function handleSubscribe() {
+    if (userEmail && userId) {
+      fetch(API_BASE + "/api/whop/checkout-started", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail, userId }) }).catch(() => {});
+    }
+    const url = buildCheckoutUrl();
+    // Charge d'abord le checkout en iframe plein écran dans l'app. Si Whop
+    // refuse (X-Frame-Options), on bascule sur window.open après le timeout
+    // iframe. Le polling backend tourne dans tous les cas et ferme l'iframe
+    // dès réception du webhook membership.activated.
+    iframeLoadedRef.current = false;
+    setIframeBlocked(false);
+    setCheckoutUrl(url);
+    // Watchdog : si l'iframe n'a pas chargé en 6s, on considère qu'elle est
+    // bloquée et on ouvre le checkout dans un onglet externe.
+    setTimeout(() => {
+      if (!iframeLoadedRef.current) {
+        setIframeBlocked(true);
+        setCheckoutUrl(null);
+        try { window.open(url, "_blank"); } catch {}
+      }
+    }, 6000);
+    startPolling();
+  }
+  function closeCheckoutIframe() {
+    setCheckoutUrl(null);
+    // On garde le polling actif : le user peut avoir payé juste avant de
+    // fermer, et le webhook peut tomber dans la foulée.
   }
   function handleCheckSubscription() {
     if (!userId) return;
@@ -5383,8 +5426,61 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
             </button>
           )}
 
+          {iframeBlocked && !isSubscribed && (
+            <p style={{ color: "#888", fontSize: 10, textAlign: "center", marginTop: 8, lineHeight: 1.4 }}>
+              Le checkout s'est ouvert dans un nouvel onglet (Whop bloque l'intégration directe). Reviens sur Split dès que t'as payé, on détecte automatiquement.
+            </p>
+          )}
+
         </div>
       </div>
+
+      {checkoutUrl && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 15000, background: "#000",
+            display: "flex", flexDirection: "column",
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div style={{
+            flexShrink: 0, padding: "10px 14px", background: "#0a0a0a",
+            borderBottom: "1px solid #1a1a1a",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 18 }}>✨</span>
+              <span style={{ color: "#FFB800", fontSize: 13, fontWeight: 900 }}>Split+ — Paiement sécurisé</span>
+            </div>
+            <button
+              onClick={closeCheckoutIframe}
+              aria-label="Fermer"
+              style={{
+                background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10,
+                width: 34, height: 34, display: "flex", alignItems: "center",
+                justifyContent: "center", cursor: "pointer",
+              }}
+            >
+              <X size={18} color="#fff" />
+            </button>
+          </div>
+          <iframe
+            src={checkoutUrl}
+            title="Checkout Split+"
+            allow="payment *"
+            onLoad={() => { iframeLoadedRef.current = true; }}
+            style={{ flex: 1, width: "100%", border: "none", background: "#fff" }}
+          />
+          <div style={{
+            flexShrink: 0, padding: "8px 14px", background: "#0a0a0a",
+            borderTop: "1px solid #1a1a1a", textAlign: "center",
+          }}>
+            <span style={{ color: "#666", fontSize: 10 }}>
+              Paiement par Whop. On détecte ton abonnement automatiquement dès réception.
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
