@@ -5270,6 +5270,9 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
   // Si l'iframe refuse de charger (X-Frame-Options: DENY côté Whop), fallback
   // vers window.open après ~6s.
   const [iframeBlocked, setIframeBlocked] = useState(false);
+  // État du bouton "J'AI DÉJÀ ACHETÉ" : "idle" | "notfound" après un check
+  // qui n'a rien trouvé → bouton rouge + message explicatif.
+  const [checkState, setCheckState] = useState("idle");
   const pollRef = useRef(null);
   const iframeLoadedRef = useRef(false);
   const perks = [
@@ -5347,13 +5350,18 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
   function handleCheckSubscription() {
     if (!userId) return;
     setChecking(true);
+    setCheckState("idle");
     fetch(API_BASE + "/api/social/me/" + userId).then(r => r.json()).then(d => {
       setChecking(false);
       if (d.is_subscribed) {
         setTimedOut(false);
+        setCheckState("idle");
         if (onSubscribed) onSubscribed();
+      } else {
+        // Backend ne voit pas d'abo actif : passe le bouton en rouge + message.
+        setCheckState("notfound");
       }
-    }).catch(() => setChecking(false));
+    }).catch(() => { setChecking(false); setCheckState("notfound"); });
   }
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 14000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -5427,19 +5435,28 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
           )}
 
           {!isSubscribed && (
-            <button
-              onClick={handleCheckSubscription}
-              disabled={checking}
-              style={{
-                width: "100%", marginTop: 10, padding: "11px", borderRadius: 11,
-                background: "transparent", color: "#FFB800",
-                fontSize: 12, fontWeight: 800, border: "1px solid rgba(255,184,0,0.35)",
-                cursor: checking ? "default" : "pointer", opacity: checking ? 0.55 : 1,
-                letterSpacing: 0.3,
-              }}
-            >
-              {checking ? "Vérification…" : "J'AI DÉJÀ ACHETÉ"}
-            </button>
+            <>
+              <button
+                onClick={handleCheckSubscription}
+                disabled={checking}
+                style={{
+                  width: "100%", marginTop: 10, padding: "11px", borderRadius: 11,
+                  background: checkState === "notfound" ? "rgba(255,55,70,0.12)" : "transparent",
+                  color: checkState === "notfound" ? "#ff3746" : "#FFB800",
+                  fontSize: 12, fontWeight: 800,
+                  border: `1px solid ${checkState === "notfound" ? "rgba(255,55,70,0.55)" : "rgba(255,184,0,0.35)"}`,
+                  cursor: checking ? "default" : "pointer", opacity: checking ? 0.55 : 1,
+                  letterSpacing: 0.3,
+                }}
+              >
+                {checking ? "Vérification…" : checkState === "notfound" ? "AUCUN ABONNEMENT TROUVÉ" : "J'AI DÉJÀ ACHETÉ"}
+              </button>
+              {checkState === "notfound" && (
+                <p style={{ color: "#ff3746", fontSize: 10, textAlign: "center", marginTop: 6, lineHeight: 1.4 }}>
+                  On ne trouve pas ton abonnement. Vérifie que t'as payé avec la même adresse email que Split, ou patiente une minute puis réessaie.
+                </p>
+              )}
+            </>
           )}
 
           {iframeBlocked && !isSubscribed && (
