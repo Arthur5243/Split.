@@ -50,6 +50,20 @@ const server = createServer(async (req, res) => {
     return sendFile(res, join(DIST, "download.html"));
   }
 
+  // Page de confirmation après un paiement Whop. On accepte toutes les
+  // variantes orthographiques (accent, pas d'accent, trailing slash, URL
+  // encodée côté navigateur, "/success" en fallback générique).
+  const decoded = (() => { try { return decodeURIComponent(url); } catch { return url; } })();
+  const paiementPaths = new Set([
+    "/paiement-reussi", "/paiement-reussi/",
+    "/paiement-réussi", "/paiement-réussi/",
+    "/success", "/success/",
+    "/paiement-success", "/paiement-success/",
+  ]);
+  if (paiementPaths.has(url) || paiementPaths.has(decoded)) {
+    return sendFile(res, join(DIST, "paiement-reussi.html"));
+  }
+
   // Fichier statique existant (y compris download.html direct)
   const asFile = join(DIST, url === "/" ? "index.html" : url);
   try {

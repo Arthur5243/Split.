@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#060607" />
+<title>Paiement réussi — Split+</title>
+<link rel="icon" href="/split-logo.png" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: #060607;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px; min-height: 100vh;
+    background: radial-gradient(circle at 50% 30%, rgba(255,184,0,0.1), transparent 60%), #060607;
+  }
+  .card {
+    width: 100%; max-width: 380px;
+    background: #0a0a0a;
+    border: 1.5px solid #1e1e1e;
+    border-radius: 24px;
+    padding: 36px 24px 28px;
+    text-align: center;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+    animation: pop 0.5s cubic-bezier(.17,.84,.44,1);
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .logo {
+    width: 48px; height: 48px;
+    margin: 0 auto 22px;
+    display: block;
+    opacity: 0.85;
+  }
+  .check {
+    width: 86px; height: 86px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #CCF71D, #a8d90a);
+    margin: 0 auto 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 40px rgba(204,247,29,0.4);
+    animation: checkIn 0.6s cubic-bezier(.17,.84,.44,1) 0.1s both;
+  }
+  @keyframes checkIn {
+    from { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    to { transform: scale(1); }
+  }
+  .check svg { width: 42px; height: 42px; stroke: #060607; stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .check svg path { stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw 0.5s ease 0.5s forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  h1 {
+    font-size: 22px; font-weight: 900; letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #FFB800, #FF8A00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .sub {
+    color: #aaa; font-size: 13px; line-height: 1.5;
+    margin-bottom: 26px;
+  }
+  .perks {
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .perks .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    color: #ddd; font-size: 12px; font-weight: 600;
+  }
+  .perks .row .em { font-size: 15px; width: 20px; }
+  .cta {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #CCF71D, #a8d90a);
+    color: #060607;
+    font-size: 14px; font-weight: 900;
+    letter-spacing: 0.5px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    box-shadow: 0 6px 24px rgba(204,247,29,0.3);
+    transition: transform 0.15s ease;
+  }
+  .cta:active { transform: scale(0.97); }
+  .foot {
+    margin-top: 14px;
+    color: #555; font-size: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/split-logo.png" alt="Split" onerror="this.style.display='none'" />
+    <div class="check">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M10 25 L21 36 L38 14" />
+      </svg>
+    </div>
+    <h1>Paiement réussi</h1>
+    <p class="sub">Bienvenue dans Split+. Ton abonnement est actif, tout le contenu premium est débloqué.</p>
+    <div class="perks">
+      <div class="row"><span class="em">🎁</span><span>Paliers récompenses exclusifs</span></div>
+      <div class="row"><span class="em">📊</span><span>Scores map en LIVE</span></div>
+      <div class="row"><span class="em">🔥</span><span>Boosts & bannières premium</span></div>
+      <div class="row"><span class="em">💎</span><span>Coffres rares & légendaires</span></div>
+    </div>
+    <a class="cta" href="/" id="back">RETOUR À SPLIT</a>
+    <p class="foot">Tu peux fermer cette fenêtre</p>
+  </div>
+
+<script>
+  // Si on vient d'un paiement Whop, on ping /api/social/me pour forcer la
+  // sync du flag is_subscribed côté client avant de rentrer dans l'app.
+  // Comme cette page est servie sur app.splitapp.fr (même origine que l'API
+  // backend proxifiée), le fetch réutilisera les cookies/token si présents.
+  (function() {
+    try {
+      var auth = JSON.parse(localStorage.getItem("split_auth_user") || "null");
+      var uid = auth && auth.id;
+      if (uid) {
+        fetch("/api/social/me/" + encodeURIComponent(uid), { cache: "no-store" })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d && d.is_subscribed) {
+              try { localStorage.setItem("split_is_subscribed", "1"); } catch(e) {}
+            }
+          })
+          .catch(function() {});
+      }
+    } catch(e) {}
+
+    // Auto-redirect après 6s pour que l'user ne soit pas bloqué ici.
+    var t = setTimeout(function() {
+      window.location.href = "/";
+    }, 6000);
+    document.getElementById("back").addEventListener("click", function() { clearTimeout(t); });
+  })();
+</script>
+</body>
+</html>
