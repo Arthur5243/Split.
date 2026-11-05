@@ -40,19 +40,38 @@ function verifyStandardWebhookSignature(rawBody, headers, secret) {
   const msgId = headers["webhook-id"];
   const timestamp = headers["webhook-timestamp"];
   const signatures = headers["webhook-signature"];
-  if (!msgId || !timestamp || !signatures || !secret) return false;
+  if (!msgId || !timestamp || !signatures || !secret) {
+    console.warn("[whop-verify] manque un champ:", { hasMsgId: !!msgId, hasTs: !!timestamp, hasSig: !!signatures, hasSecret: !!secret });
+    return false;
+  }
 
-  const secretBytes = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
+  // Standard Webhooks spec : secret = `whsec_` + base64, on strip le préfixe
+  // avant le décode. Certains tenants retournent la clé sans préfixe — on
+  // gère les deux cas. On trim aussi pour éviter un \n/ espace copié depuis
+  // le dashboard.
+  const clean = String(secret).trim().replace(/^whsec_/, "");
+  let secretBytes;
+  try { secretBytes = Buffer.from(clean, "base64"); } catch { console.warn("[whop-verify] secret base64 invalide"); return false; }
+  if (secretBytes.length === 0) { console.warn("[whop-verify] secret base64 vide après décodage"); return false; }
+
   const toSign = `${msgId}.${timestamp}.${rawBody}`;
   const expected = crypto.createHmac("sha256", secretBytes).update(toSign).digest("base64");
 
-  const sigs = signatures.split(" ");
+  const sigs = String(signatures).split(" ");
+  const receivedSamples = [];
   for (const sig of sigs) {
-    const val = sig.replace(/^v1,/, "");
+    // Chaque entrée est `<version>,<base64>` (ex: v1,xxx ou v1a,xxx).
+    // On garde tout ce qui est après la virgule, peu importe la version.
+    const commaIdx = sig.indexOf(",");
+    const val = commaIdx >= 0 ? sig.slice(commaIdx + 1) : sig;
+    receivedSamples.push(val.slice(0, 8) + "…");
     try {
-      if (crypto.timingSafeEqual(Buffer.from(val, "base64"), Buffer.from(expected, "base64"))) return true;
+      const a = Buffer.from(val, "base64");
+      const b = Buffer.from(expected, "base64");
+      if (a.length === b.length && crypto.timingSafeEqual(a, b)) return true;
     } catch { /* length mismatch */ }
   }
+  console.warn("[whop-verify] aucun match. secretLen=" + secretBytes.length + " bodyLen=" + rawBody.length + " expected=" + expected.slice(0, 8) + "… received=[" + receivedSamples.join(",") + "] toSignStart=" + toSign.slice(0, 80));
   return false;
 }
 
