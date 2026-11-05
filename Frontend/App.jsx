@@ -4079,17 +4079,13 @@ const ACHIEVEMENT_BADGES = [
 // Pattern premium pour les récompenses palier : déterministe par tier/type, mais
 // "un peu aléatoire" (hash pseudo-random). Utilisé pour afficher un verrou Split+
 // et bloquer le claim si l'utilisateur n'est pas abonné.
-function isTierPremium(tier, item) {
+function isTierPremium(tier /*, item */) {
+  // Pattern régulier : 1 palier sur 5 est réservé aux abonnés Split+.
+  // Tier 1 reste gratuit (starter). Ensuite 5, 10, 15, 20, 25 ... sont
+  // premium. Déterministe, prévisible pour l'utilisateur.
   const t = Number(tier) || 0;
-  if (t === 1) return false; // starter toujours gratuit
-  const hash = ((t * 2654435761) ^ 0x9e3779b9) >>> 0;
-  const type = item?.type;
-  const isChest = !type && (item?.emoji === "🎁" || item?.emoji === "💎");
-  if (type === "boost") return (hash % 100) < 50;       // 50% des boosts
-  if (type === "banner") return (hash % 100) < 25;      // 25% des bannières
-  if (isChest) return (hash % 100) < 25;                // 25% des coffres
-  // Reste : 1 palier sur ~5 (≈20%), pas de pattern robotique grâce au hash
-  return (hash % 5) === 0;
+  if (t <= 1) return false;
+  return t % 5 === 0;
 }
 
 function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMatches, liveMatches, cs2UpcomingMatches, cs2LiveMatches, rlUpcomingMatches, rlLiveMatches, settledMatchIds, onAddXp, isSubscribed, onOpenSubscribe }) {
@@ -4688,17 +4684,19 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             const premium = isTierPremium(tier, chest);
             const lockedByPremium = premium && !isSubscribed;
             const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.55 : 0.4;
+            // Premium : fond orange léger uniforme (pas d'étiquette "SPLIT+"
+            // visible, pas de bordure flashy). Le signal reste subtil.
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
                 marginBottom: 8, borderRadius: 14, overflow: "hidden",
-                border: `1.5px solid ${lockedByPremium ? "rgba(255,180,0,0.45)" : isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
+                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
                 opacity: tierOpacity,
                 position: "relative",
               }}>
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 12,
                   padding: "12px 12px",
-                  background: isCurrent ? "rgba(204,247,29,0.06)" : "#111",
+                  background: premium ? "rgba(255,170,40,0.09)" : isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
                   {previewImg ? (
                     <div style={{ width: 72, height: 52, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
@@ -4723,11 +4721,6 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                     <span style={{ color: rc.text, fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textAlign: "center", display: "inline-block", background: rc.bg, border: `1px solid ${rc.border}33`, borderRadius: 4, padding: "1px 8px" }}>{rc.label}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                    {premium && (
-                      <span style={{ display: "flex", alignItems: "center", gap: 3, background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000", fontSize: 8, fontWeight: 900, letterSpacing: 0.5, padding: "3px 7px", borderRadius: 5 }}>
-                        ✨ SPLIT+
-                      </span>
-                    )}
                     {previewImg && (
                       <button onClick={(e) => { e.stopPropagation(); setPreviewItem(chest); }} style={{ color: "#aaa", fontSize: 8, fontWeight: 800, background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 4, padding: "3px 8px", cursor: "pointer", letterSpacing: 0.5, textTransform: "uppercase" }}>Aperçu</button>
                     )}
