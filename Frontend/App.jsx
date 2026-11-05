@@ -5426,6 +5426,22 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
             </button>
           )}
 
+          {!isSubscribed && (
+            <button
+              onClick={handleCheckSubscription}
+              disabled={checking}
+              style={{
+                width: "100%", marginTop: 10, padding: "11px", borderRadius: 11,
+                background: "transparent", color: "#FFB800",
+                fontSize: 12, fontWeight: 800, border: "1px solid rgba(255,184,0,0.35)",
+                cursor: checking ? "default" : "pointer", opacity: checking ? 0.55 : 1,
+                letterSpacing: 0.3,
+              }}
+            >
+              {checking ? "Vérification…" : "J'AI DÉJÀ ACHETÉ"}
+            </button>
+          )}
+
           {iframeBlocked && !isSubscribed && (
             <p style={{ color: "#888", fontSize: 10, textAlign: "center", marginTop: 8, lineHeight: 1.4 }}>
               Le checkout s'est ouvert dans un nouvel onglet (Whop bloque l'intégration directe). Reviens sur Split dès que t'as payé, on détecte automatiquement.
