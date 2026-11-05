@@ -157,10 +157,13 @@ router.post("/api/webhooks/whop", async (req, res) => {
     }
 
     if (!email) {
-      const pending = db.prepare(`SELECT * FROM pending_checkouts WHERE created_at > datetime('now', '-30 minutes') ORDER BY created_at DESC LIMIT 1`).get();
+      // Fenêtre large (24h) pour couvrir les cas où le webhook est retry
+      // longtemps après le checkout (l'user a payé, reset son app, bouge
+      // d'appareil...) et les resend manuels côté dashboard Whop.
+      const pending = db.prepare(`SELECT * FROM pending_checkouts WHERE created_at > datetime('now', '-24 hours') ORDER BY created_at DESC LIMIT 1`).get();
       if (pending) {
         email = pending.email;
-        console.log(`[whop-webhook] email retrouvé via pending_checkouts (fallback): ${email}`);
+        console.log(`[whop-webhook] email retrouvé via pending_checkouts (fallback 24h): ${email}`);
       }
     }
 
