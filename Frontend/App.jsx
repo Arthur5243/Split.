@@ -5351,17 +5351,29 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
     if (!userId) return;
     setChecking(true);
     setCheckState("idle");
-    fetch(API_BASE + "/api/social/me/" + userId).then(r => r.json()).then(d => {
-      setChecking(false);
-      if (d.is_subscribed) {
-        setTimedOut(false);
-        setCheckState("idle");
-        if (onSubscribed) onSubscribed();
-      } else {
-        // Backend ne voit pas d'abo actif : passe le bouton en rouge + message.
-        setCheckState("notfound");
-      }
-    }).catch(() => { setChecking(false); setCheckState("notfound"); });
+    // Minimum 4 s en spinner avant de montrer le résultat. Sinon un fetch
+    // qui revient en 100 ms affiche "AUCUN ABONNEMENT TROUVÉ" instant —
+    // perçu comme bug / vérif pas faite. Et sur mobile ça laisse une
+    // fenêtre au webhook Whop pour tomber si l'user vient de payer.
+    const started = Date.now();
+    const finish = (ok) => {
+      const elapsed = Date.now() - started;
+      const wait = Math.max(0, 4000 - elapsed);
+      setTimeout(() => {
+        setChecking(false);
+        if (ok) {
+          setTimedOut(false);
+          setCheckState("idle");
+          if (onSubscribed) onSubscribed();
+        } else {
+          setCheckState("notfound");
+        }
+      }, wait);
+    };
+    fetch(API_BASE + "/api/social/me/" + userId)
+      .then(r => r.json())
+      .then(d => finish(!!d.is_subscribed))
+      .catch(() => finish(false));
   }
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 14000, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
