@@ -9300,7 +9300,7 @@ function RlBracketPage({ onBack, T, predictions }) {
   if (showHistory && !phase) {
     const historyTiles = [];
     if (isKnockoutInHistory && hasKnockoutData) {
-      historyTiles.push({ key: "knockout", label: "Knockout Series", color: "#E91E63", endMs: knockoutLastDate });
+      historyTiles.push({ key: "knockout", label: "Knockout", color: "#E91E63", endMs: knockoutLastDate });
     }
     return (
       <div style={pageStyle}>
@@ -9326,11 +9326,11 @@ function RlBracketPage({ onBack, T, predictions }) {
 
   if (!phase) {
     const tiles = [
-      { key: "playin", label: T.rlPlayIn || "Play-In", color: accent },
-      { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent },
+      { key: "playin", label: T.rlPlayIn || "Play-In", color: "#4A90D9" },
+      { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: "#FFD700" },
     ];
     // Knockout visible uniquement tant que < 15j depuis le dernier match. Après, il part dans Historique.
-    if (!isKnockoutInHistory) tiles.push({ key: "knockout", label: "Knockout Series", color: "#E91E63" });
+    if (!isKnockoutInHistory) tiles.push({ key: "knockout", label: "Knockout", color: "#E91E63" });
     const showHistoryBtn = isKnockoutInHistory && hasKnockoutData;
     return (
       <div style={pageStyle}>
@@ -9419,12 +9419,56 @@ function RlBracketPage({ onBack, T, predictions }) {
     const qfRound = findRound(/quarter/) || { name: "Quarterfinals", matches: [] };
     const sfRound = findRound(/semi/) || { name: "Semifinals", matches: [] };
     const gfRound = findRound(/grand\s*final|^final$/) || { name: "Grand Final", matches: [] };
+    // Tri QF par heure (seed bracket)
+    const qfSorted = [...(qfRound.matches || [])].sort((a, b) => {
+      const ta = a.begin_at ? new Date(a.begin_at).getTime() : 0;
+      const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
+      return ta - tb;
+    });
+    const winnerName = (m) => {
+      if (!m || m.status !== "finished") return null;
+      const s1 = m.results?.[0]?.score;
+      const s2 = m.results?.[1]?.score;
+      if (s1 == null || s2 == null || s1 === s2) return null;
+      return (s1 > s2 ? m.opponents?.[0]?.opponent?.name : m.opponents?.[1]?.opponent?.name) || null;
+    };
+    // Dérive un round suivant depuis les gagnants du précédent (quand Liquipedia
+    // n'a pas encore créé les blocs du round suivant). Les slots vides restent TBD.
+    const deriveNext = (prev, nextName, stepIdx) => {
+      const derived = [];
+      for (let i = 0; i < Math.ceil(prev.length / 2); i++) {
+        const a = prev[i * 2];
+        const b = prev[i * 2 + 1];
+        const nA = winnerName(a) || "TBD";
+        const nB = b ? (winnerName(b) || "TBD") : "TBD";
+        derived.push({
+          id: `rl-knockout-derived-${nextName}-${stepIdx}-${i}`,
+          opponents: [{ opponent: { name: nA } }, { opponent: { name: nB } }],
+          results: [{ score: null }, { score: null }],
+          status: "not_started",
+          begin_at: null,
+          stage: "playoffs",
+        });
+      }
+      return derived;
+    };
     const padRound = (round, size) => {
       const matches = [...(round.matches || [])];
       while (matches.length < size) matches.push({ id: round.name + "-tbd-" + matches.length, opponents: [{ opponent: { name: "TBD" } }, { opponent: { name: "TBD" } }], results: [{ score: null }, { score: null }], status: "not_started", stage: "playoffs" });
       return { ...round, matches };
     };
-    const bracketRounds = [padRound(qfRound, 4), padRound(sfRound, 2), padRound(gfRound, 1)];
+    // Si Liquipedia a déjà rempli SF/GF, on les garde tels quels, sinon on les dérive des QF.
+    const sfMatches = (sfRound.matches && sfRound.matches.length > 0)
+      ? sfRound.matches
+      : (qfSorted.length > 0 ? deriveNext(qfSorted, "sf", 0) : []);
+    const gfMatches = (gfRound.matches && gfRound.matches.length > 0)
+      ? gfRound.matches
+      : (sfMatches.length > 0 ? deriveNext(sfMatches, "gf", 0) : []);
+    const bracketRounds = [
+      padRound({ ...qfRound, matches: qfSorted }, 4),
+      padRound({ ...sfRound, matches: sfMatches }, 2),
+      padRound({ ...gfRound, matches: gfMatches }, 1),
+    ];
 
     const toBracketMatch = (m) => {
       const t1 = m.opponents?.[0]?.opponent?.name || "TBD";
