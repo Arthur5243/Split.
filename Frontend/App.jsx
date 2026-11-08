@@ -8624,10 +8624,12 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
   // --- Historique brackets CS2 ---
   if (showHistory) {
     const historyEvents = [];
+    const fifteenDaysAgo = Date.now() - BRACKET_HISTORY_DAYS * 24 * 60 * 60 * 1000;
     for (const c of CS2_BRACKET_COMPS) {
       const events = cs2Events ? (cs2Events[c.key] || []) : [];
       for (const ev of events) {
-        if (ev.status === "finished") {
+        // N'apparaît dans l'historique qu'après 15j écoulés depuis la fin.
+        if (ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < fifteenDaysAgo) {
           historyEvents.push({ ...ev, compKey: c.key, compColor: c.color, compLabel: T[c.labelKey] || c.key });
         }
       }
@@ -8665,9 +8667,10 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
     );
   }
 
+  const cs2FifteenDaysAgo = Date.now() - BRACKET_HISTORY_DAYS * 24 * 60 * 60 * 1000;
   const hasHistoryEvents = CS2_BRACKET_COMPS.some((c) => {
     const events = cs2Events ? (cs2Events[c.key] || []) : [];
-    return events.some((ev) => ev.status === "finished");
+    return events.some((ev) => ev.status === "finished" && ev.end_at && new Date(ev.end_at).getTime() < cs2FifteenDaysAgo);
   });
 
   // --- Step 1: Choose competition ---
@@ -8681,18 +8684,18 @@ function CS2BracketPage({ cs2Events, onBack, T, predictions, onLiveClick, onMatc
         {CS2_BRACKET_COMPS.map((c) => {
           if (c.locked) {
             return (
-              <button key={c.key} disabled style={{ ...bracketTileStyle(c.color, false), padding: "30px 12px", gap: 6 }}>
+              <button key={c.key} disabled style={{ ...bracketTileStyle(c.color, false), padding: "30px 12px", gap: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               </button>
             );
           }
           const events = cs2Events ? (cs2Events[c.key] || []) : [];
-          const activeEvents = events.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= sevenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
+          const fifteenDaysAgo = Date.now() - BRACKET_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+          const activeEvents = events.filter((e) => e.status === "running" || (e.status === "finished" && e.end_at && new Date(e.end_at).getTime() >= fifteenDaysAgo) || (e.status !== "finished" && e.status !== "canceled"));
           const hasActive = activeEvents.length > 0;
-          const hasAny = events.length > 0;
-          const hasRunning = events.some((e) => e.status === "running");
+          const hasRunning = activeEvents.some((e) => e.status === "running");
           return (
-            <button key={c.key} onClick={() => { if (hasAny) setComp(c.key); }} disabled={!hasAny} style={{ ...bracketTileStyle(c.color, hasAny), padding: "30px 12px", gap: 6 }}>
+            <button key={c.key} onClick={() => { if (hasActive) setComp(c.key); }} disabled={!hasActive} style={{ ...bracketTileStyle(c.color, hasActive), padding: "30px 12px", gap: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase" }}>{T[c.labelKey] || c.key}</span>
               {hasRunning && (
                 <span style={{ fontSize: 8, fontWeight: 800, color: "#ff3b3b", border: "1px solid #ff3b3b55", borderRadius: 9999, padding: "1px 6px", textTransform: "uppercase" }}>LIVE</span>
@@ -9141,10 +9144,13 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
   );
 }
 
+const BRACKET_HISTORY_DAYS = 15;
+
 function RlBracketPage({ onBack, T, predictions }) {
   const [phase, setPhase] = useState(null);
   const [koView, setKoView] = useState(null); // "group" | "playoffs"
   const [koSection, setKoSection] = useState(null); // "Night 1" ... | "Playoffs"
+  const [showHistory, setShowHistory] = useState(false);
   const [knockoutData, setKnockoutData] = useState(() => {
     try {
       const raw = localStorage.getItem("split_rl_knockout_cache");
@@ -9180,12 +9186,28 @@ function RlBracketPage({ onBack, T, predictions }) {
     <button onClick={() => {
       if (koSection) setKoSection(null);
       else if (koView) setKoView(null);
-      else if (phase) setPhase(null);
+      else if (phase) { setPhase(null); /* la nav histoire ne quitte pas showHistory */ }
+      else if (showHistory) setShowHistory(false);
       else onBack();
     }} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}>
       <ChevronLeft size={18} color="#fff" />
     </button>
   );
+
+  // Dernière date d'un match du knockout → sert à décider si l'event part en historique.
+  const knockoutLastDate = (() => {
+    if (!knockoutData) return null;
+    let max = 0;
+    const scan = (list) => (list || []).forEach(m => { if (m?.begin_at) { const t = new Date(m.begin_at).getTime(); if (!Number.isNaN(t) && t > max) max = t; } });
+    (knockoutData.nights || []).forEach(n => scan(n.matches));
+    scan(knockoutData.playoffs);
+    scan(knockoutData.other);
+    return max || null;
+  })();
+  const nowMs = Date.now();
+  const historyCutoff = nowMs - BRACKET_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+  const isKnockoutInHistory = knockoutLastDate ? knockoutLastDate < historyCutoff : false;
+  const hasKnockoutData = !!(knockoutData && ((knockoutData.nights?.length || 0) + (knockoutData.playoffs?.length || 0) + (knockoutData.other?.length || 0)) > 0);
 
   const tbdMatch = (id) => ({ match_id: id, team1: { name: "TBD", score: null }, team2: { name: "TBD", score: null }, status: "not_started" });
 
@@ -9274,9 +9296,42 @@ function RlBracketPage({ onBack, T, predictions }) {
     );
   };
 
+  // Vue Historique (événements terminés depuis + de 15j)
+  if (showHistory && !phase) {
+    const historyTiles = [];
+    if (isKnockoutInHistory && hasKnockoutData) {
+      historyTiles.push({ key: "knockout", label: "Knockout Series", color: "#E91E63", endMs: knockoutLastDate });
+    }
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          {backBtn()}
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>{T.bracketHistory || "Historique"}</span>
+        </div>
+        {historyTiles.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Aucun bracket dans l'historique</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+            {historyTiles.map((p) => (
+              <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "30px 12px", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: p.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{p.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: "#555" }}>{new Date(p.endMs).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!phase) {
-    const allPlayInDone = playInBracket.upper.every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed")) && playInBracket.lower.every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed"));
-    const allPlayoffsDone = [...playoffsBracket.upper, ...playoffsBracket.lower, ...playoffsBracket.grand_final].every(r => r.matches.every(mm => mm.status === "finished" || mm.status === "completed"));
+    const tiles = [
+      { key: "playin", label: T.rlPlayIn || "Play-In", color: accent },
+      { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent },
+    ];
+    // Knockout visible uniquement tant que < 15j depuis le dernier match. Après, il part dans Historique.
+    if (!isKnockoutInHistory) tiles.push({ key: "knockout", label: "Knockout Series", color: "#E91E63" });
+    const showHistoryBtn = isKnockoutInHistory && hasKnockoutData;
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
@@ -9284,16 +9339,28 @@ function RlBracketPage({ onBack, T, predictions }) {
           <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>RLCS 2026</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
-          {[
-            { key: "playin", label: T.rlPlayIn || "Play-In", color: accent },
-            { key: "playoffs", label: T.rlPlayoffs || "Playoffs", color: accent },
-            { key: "knockout", label: "Knockout Series", color: "#E91E63" },
-          ].map((p) => (
+          {tiles.map((p) => (
             <button key={p.key} onClick={() => setPhase(p.key)} style={{ ...bracketTileStyle(p.color, true), padding: "30px 12px", gap: 8 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: p.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{p.label}</span>
             </button>
           ))}
         </div>
+        {showHistoryBtn && (
+          <div style={{ padding: "0 16px 20px" }}>
+            <button onClick={() => setShowHistory(true)} className="rounded-xl px-4 py-3 flex items-center justify-between w-full" style={{ background: "#1e1e1e", border: "1px solid #333", cursor: "pointer" }}>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full flex items-center justify-center" style={{ width: 34, height: 34, background: "#1c1c1c" }}>
+                  <Trophy size={15} color="#888" />
+                </span>
+                <div style={{ textAlign: "left" }}>
+                  <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{T.bracketHistory || "Historique"}</span>
+                  <span className="block" style={{ color: "#555", fontSize: "10px" }}>Brackets terminés</span>
+                </div>
+              </div>
+              <ChevronRight size={14} color="#444" />
+            </button>
+          </div>
+        )}
       </div>
     );
   }
