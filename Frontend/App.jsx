@@ -1859,6 +1859,17 @@ function normalizePlayerName(name) {
   return String(name).toLowerCase().trim().replace(/[^a-z]/g, "");
 }
 
+// Filtre les blocs placeholder du bracket Liquipedia (ex: "Winner of QF1",
+// "SF1 Loser", "Match 7") qui ne sont pas de vrais joueurs du tournoi.
+function isRealKnockoutPlayer(name) {
+  if (!name || name === "TBD") return false;
+  const k = normalizePlayerName(name);
+  if (!k) return false;
+  if (/winner|loser|match|^qf|^sf|^gf|^r\d/i.test(name)) return false;
+  if (Object.prototype.hasOwnProperty.call(KNOCKOUT_PLAYER_LOGO, k)) return true;
+  return k.length >= 2 && k.length <= 20;
+}
+
 // Agrège wins/losses par joueur sur l'ensemble des matchs knockout (nights + playoffs
 // déjà joués). Sert à calculer un winrate 1v1 injecté comme odds dans les matchs à venir.
 function computeKnockoutPlayerStats(allKnockoutMatches) {
@@ -9381,9 +9392,13 @@ function RlBracketPage({ onBack, T, predictions }) {
       })
       .slice(0, 4);
 
-    // Groupe les playoffs par section Liquipedia (Quarterfinals / Semifinals / Grand Final).
-    // Fallback : si tout est lumpé dans "Playoffs", on découpe par position (4+2+1).
-    const playoffsRaw = Array.isArray(knockoutData?.playoffs) ? knockoutData.playoffs : [];
+    // Filtre les blocs placeholder du bracket Liquipedia (ex: "Winner of QF1").
+    const playoffsRawAll = Array.isArray(knockoutData?.playoffs) ? knockoutData.playoffs : [];
+    const playoffsRaw = playoffsRawAll.filter(pm => {
+      const n1 = pm.opponents?.[0]?.opponent?.name;
+      const n2 = pm.opponents?.[1]?.opponent?.name;
+      return isRealKnockoutPlayer(n1) && isRealKnockoutPlayer(n2);
+    });
     const bySection = new Map();
     for (const pm of playoffsRaw) {
       const key = cleanKnockoutSection(pm.section || "Playoffs");
@@ -9397,10 +9412,14 @@ function RlBracketPage({ onBack, T, predictions }) {
         const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
         return ta - tb;
       });
+      // On garde uniquement les 4 premiers comme QF, le reste est ignoré :
+      // SF et GF sont systématiquement dérivés des winners (plus fiable que les
+      // placeholders Liquipedia qui peuvent exister avant que les matchs soient
+      // réellement programmés).
       playoffRounds = [
         { name: "Quarterfinals", matches: sorted.slice(0, 4) },
-        { name: "Semifinals", matches: sorted.slice(4, 6) },
-        { name: "Grand Final", matches: sorted.slice(6, 7) },
+        { name: "Semifinals", matches: [] },
+        { name: "Grand Final", matches: [] },
       ];
     } else {
       const order = (name) => {
@@ -15230,7 +15249,7 @@ export default function ClutchApp() {
         (rKo.other || []).forEach(m => rKoAll.push(m));
       }
       const rKoStats = computeKnockoutPlayerStats(rKoAll);
-      const rKoT = rKoAll.map(m => transformKnockoutSeriesMatch(m, rKoStats)).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+      const rKoT = rKoAll.map(m => transformKnockoutSeriesMatch(m, rKoStats)).filter(m => isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
       const rKoUp = rKoT.filter(m => m.status === "not_started" || m.status === "upcoming");
       const rKoLi = rKoT.filter(m => m.status === "running");
       const rKoFin = rKoT.filter(m => m.status === "finished");
@@ -15532,7 +15551,7 @@ export default function ClutchApp() {
           (knockout.other || []).forEach((m) => koAll.push(m));
         }
         const koPlayerStats = computeKnockoutPlayerStats(koAll);
-        const koTransformed = koAll.map(m => transformKnockoutSeriesMatch(m, koPlayerStats)).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+        const koTransformed = koAll.map(m => transformKnockoutSeriesMatch(m, koPlayerStats)).filter(m => isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
         const koUpcoming = koTransformed.filter(m => m.status === "not_started" || m.status === "upcoming");
         const koLive = koTransformed.filter(m => m.status === "running");
         const koFinished = koTransformed.filter(m => m.status === "finished");
