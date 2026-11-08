@@ -9042,7 +9042,8 @@ function Cs2Tab({ selectedRegions, toggleRegion, selectedStatuses, toggleStatus,
 
 function RlBracketPage({ onBack, T, predictions }) {
   const [phase, setPhase] = useState(null);
-  const [koSection, setKoSection] = useState(null); // "Night 1" ... "Night 7" | "Playoffs"
+  const [koView, setKoView] = useState(null); // "group" | "playoffs"
+  const [koSection, setKoSection] = useState(null); // "Night 1" ... | "Playoffs"
   const [knockoutData, setKnockoutData] = useState(() => {
     try {
       const raw = localStorage.getItem("split_rl_knockout_cache");
@@ -9077,6 +9078,7 @@ function RlBracketPage({ onBack, T, predictions }) {
   const backBtn = () => (
     <button onClick={() => {
       if (koSection) setKoSection(null);
+      else if (koView) setKoView(null);
       else if (phase) setPhase(null);
       else onBack();
     }} style={{ background: "#1a1a1a", border: "none", borderRadius: 10, padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center" }}>
@@ -9205,7 +9207,8 @@ function RlBracketPage({ onBack, T, predictions }) {
         const na = parseInt(String(a.key).replace(/[^0-9]/g, ""), 10) || 0;
         const nb = parseInt(String(b.key).replace(/[^0-9]/g, ""), 10) || 0;
         return na - nb;
-      });
+      })
+      .slice(0, 4);
 
     // Groupe les playoffs par section Liquipedia (Quarterfinals / Semifinals / Grand Final).
     // Fallback : si tout est lumpé dans "Playoffs", on découpe par position (4+2+1).
@@ -9216,21 +9219,18 @@ function RlBracketPage({ onBack, T, predictions }) {
       if (!bySection.has(key)) bySection.set(key, []);
       bySection.get(key).push(pm);
     }
-    let PLAYOFFS_CARDS;
+    let playoffRounds;
     if (bySection.size <= 1 && playoffsRaw.length > 0) {
       const sorted = [...playoffsRaw].sort((a, b) => {
         const ta = a.begin_at ? new Date(a.begin_at).getTime() : 0;
         const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
         return ta - tb;
       });
-      const qf = sorted.slice(0, Math.min(4, sorted.length));
-      const sf = sorted.slice(4, Math.min(6, sorted.length));
-      const gf = sorted.slice(6, 7);
-      PLAYOFFS_CARDS = [
-        { key: "Quarterfinals", label: "Quarterfinals", color: koGoldAccent, matches: qf },
-        { key: "Semifinals", label: "Semifinals", color: koGoldAccent, matches: sf },
-        { key: "Grand Final", label: "Grand Final", color: koGoldAccent, matches: gf },
-      ].filter(c => c.matches.length > 0);
+      playoffRounds = [
+        { name: "Quarterfinals", matches: sorted.slice(0, 4) },
+        { name: "Semifinals", matches: sorted.slice(4, 6) },
+        { name: "Grand Final", matches: sorted.slice(6, 7) },
+      ];
     } else {
       const order = (name) => {
         const t = (name || "").toLowerCase();
@@ -9239,11 +9239,38 @@ function RlBracketPage({ onBack, T, predictions }) {
         if (/quarter/.test(t)) return 1;
         return 0;
       };
-      PLAYOFFS_CARDS = [...bySection.entries()]
-        .map(([name, matches]) => ({ key: name, label: name, color: koGoldAccent, matches }))
-        .sort((a, b) => order(a.key) - order(b.key));
+      playoffRounds = [...bySection.entries()]
+        .map(([name, matches]) => ({ name, matches }))
+        .sort((a, b) => order(a.name) - order(b.name));
     }
-    const CARDS = [...NIGHTS, ...PLAYOFFS_CARDS];
+    // Garantit 3 rounds pour l'affichage bracket, même sans matchs.
+    const findRound = (re) => playoffRounds.find(r => re.test((r.name || "").toLowerCase()));
+    const qfRound = findRound(/quarter/) || { name: "Quarterfinals", matches: [] };
+    const sfRound = findRound(/semi/) || { name: "Semifinals", matches: [] };
+    const gfRound = findRound(/grand\s*final|^final$/) || { name: "Grand Final", matches: [] };
+    const padRound = (round, size) => {
+      const matches = [...(round.matches || [])];
+      while (matches.length < size) matches.push({ id: round.name + "-tbd-" + matches.length, opponents: [{ opponent: { name: "TBD" } }, { opponent: { name: "TBD" } }], results: [{ score: null }, { score: null }], status: "not_started", stage: "playoffs" });
+      return { ...round, matches };
+    };
+    const bracketRounds = [padRound(qfRound, 4), padRound(sfRound, 2), padRound(gfRound, 1)];
+
+    const toBracketMatch = (m) => {
+      const t1 = m.opponents?.[0]?.opponent?.name || "TBD";
+      const t2 = m.opponents?.[1]?.opponent?.name || "TBD";
+      const s1 = m.results?.[0]?.score;
+      const s2 = m.results?.[1]?.score;
+      const done = m.status === "finished";
+      const w1 = done && s1 != null && s2 != null && s1 > s2;
+      const w2 = done && s1 != null && s2 != null && s2 > s1;
+      return {
+        match_id: m.id,
+        team1: { name: t1, score: s1 ?? null, is_winner: w1 },
+        team2: { name: t2, score: s2 ?? null, is_winner: w2 },
+        status: m.status,
+      };
+    };
+    const displayBracketRounds = bracketRounds.map(r => ({ name: r.name, matches: r.matches.map(toBracketMatch) }));
 
     const renderMatchList = (list) => (
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -9285,16 +9312,15 @@ function RlBracketPage({ onBack, T, predictions }) {
       </div>
     );
 
-    // Sous-vue : matchs d'une Night ou des Playoffs
-    if (koSection) {
-      const current = CARDS.find(c => c.key === koSection);
+    // Sous-vue : matchs d'une Night
+    if (koView === "group" && koSection) {
+      const current = NIGHTS.find(c => c.key === koSection);
       const label = current?.label || koSection;
-      const color = current?.color || koAccent;
       return (
         <div style={pageStyle}>
           <div style={headerStyle}>
             {backBtn()}
-            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color }}>{label}</span></span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>{label}</span></span>
           </div>
           <div style={{ padding: "16px 16px 24px" }}>
             {knockoutLoading && !knockoutData && <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>}
@@ -9304,20 +9330,20 @@ function RlBracketPage({ onBack, T, predictions }) {
       );
     }
 
-    // Menu : Nights + rounds Playoffs (QF/SF/GF) en grid 2 cols
-    return (
-      <div style={pageStyle}>
-        <div style={headerStyle}>
-          {backBtn()}
-          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>1v1</span></span>
-        </div>
-        {CARDS.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>
-            {knockoutLoading ? "Chargement..." : <>Pas de match disponible pour l'instant.<br/>Les matchs s'afficheront dès que Liquipedia les publie.</>}
+    // Vue Group Stage : 4 Nights
+    if (koView === "group") {
+      const slots = [1, 2, 3, 4].map(i => {
+        const found = NIGHTS.find(n => parseInt(String(n.key).replace(/[^0-9]/g, ""), 10) === i);
+        return found || { key: "Night " + i, label: "Night " + i, color: koAccent, matches: [] };
+      });
+      return (
+        <div style={pageStyle}>
+          <div style={headerStyle}>
+            {backBtn()}
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>{T.bracketGroupStage || "Group Stage"}</span></span>
           </div>
-        ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
-            {CARDS.map((c) => (
+            {slots.map((c) => (
               <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
                 {c.matches.length > 0 && (
@@ -9326,7 +9352,52 @@ function RlBracketPage({ onBack, T, predictions }) {
               </button>
             ))}
           </div>
-        )}
+        </div>
+      );
+    }
+
+    // Vue Playoffs : vrai bracket single-elim 4 → 2 → 1 (même design que Valo)
+    if (koView === "playoffs") {
+      return (
+        <div style={pageStyle}>
+          <div style={headerStyle}>
+            {backBtn()}
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koGoldAccent }}>{T.bracketPlayoffs || "Playoffs"}</span></span>
+          </div>
+          <div style={{ padding: "0 16px 24px", overflowX: "auto" }}>
+            {knockoutLoading && !knockoutData ? (
+              <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12 }}>Chargement...</div>
+            ) : (
+              <BracketTree
+                rounds={displayBracketRounds}
+                accent={koGoldAccent}
+                label={T.bracketPlayoffs || "Playoffs"}
+                labelColor={koGoldAccent}
+                predictions={predictions}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Menu top-level : Group Stage / Playoffs
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          {backBtn()}
+          <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>1v1</span></span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+          {[
+            { key: "group", label: T.bracketGroupStage || "Group Stage", color: koAccent },
+            { key: "playoffs", label: T.bracketPlayoffs || "Playoffs", color: koGoldAccent },
+          ].map((c) => (
+            <button key={c.key} onClick={() => setKoView(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }
