@@ -1693,11 +1693,7 @@ function transformMatch(m) {
     // le winrate — battre une petite équipe en tournoi régional ne doit pas
     // compter pareil que battre une équipe VCT.
     tier: m.tier || (m.league && m.league.name) || null,
-    // Score détaillé par map (13-9 etc.), récupéré via vlr.gg côté backend
-    // (/api/valorant-results). Sans cette ligne, la donnée existe dans la
-    // réponse brute du backend mais se perd ici avant d'arriver à MatchCard.
-    // Passée au garde-fou de cohérence (cf isMapScoresConsistent) avant
-    // d'être acceptée.
+    tournamentTier: (m.tournament && m.tournament.tier) || null,
     map_scores: (() => {
       const ok = isMapScoresConsistent(m.map_scores, score1, score2) ? (m.map_scores || null) : null;
       return bumpFinalScoresIfFinished(ok, m.status, score1, score2, "valo");
@@ -2913,12 +2909,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
   // (Valorant). Pour CS2, pas de repli région : soit un lien direct est
   // fourni via `streamUrl` (flux officiel PandaScore du match), soit aucun
   // bouton cliquable n'est proposé (cf JSX plus bas).
-  const twitchChannel = useRegionStreamFallback ? REGION_TWITCH[match.region] || "valorant_emea" : null;
+  const isTierD = match.tournamentTier === "d" || match.tournamentTier === "e";
+  const twitchChannel = useRegionStreamFallback && !isTierD ? REGION_TWITCH[match.region] || "valorant_emea" : null;
   const twitchLiveUrl = twitchChannel ? "https://www.twitch.tv/" + twitchChannel : null;
 
-  // Lien du direct YouTube selon la région (repli sur EMEA si inconnue) -
-  // proposé en alternative à Twitch au clic sur "LIVE". Valorant uniquement.
-  const youtubeLiveUrl = useRegionStreamFallback ? REGION_YOUTUBE_LIVE[match.region] || REGION_YOUTUBE_LIVE.EMEA : null;
+  const youtubeLiveUrl = useRegionStreamFallback && !isTierD ? REGION_YOUTUBE_LIVE[match.region] || REGION_YOUTUBE_LIVE.EMEA : null;
 
   // Petit sélecteur Twitch/YouTube affiché au clic sur "LIVE", plutôt que
   // d'ouvrir Twitch directement.
@@ -3024,6 +3019,9 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
             {match.matchTier && (
               <span style={{ color: match.matchTier.color, fontWeight: 800, fontSize: 9, border: `1px solid ${match.matchTier.color}44`, borderRadius: 4, padding: "1px 5px", marginRight: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>{match.matchTier.label}</span>
             )}
+            {isTierD && !match.matchTier && (
+              <span style={{ color: "#888", fontWeight: 800, fontSize: 9, border: "1px solid #88888844", borderRadius: 4, padding: "1px 5px", marginRight: 5, display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>Tier 4</span>
+            )}
             {shortenCompName(match.league)} • {match.phase}
             {isPlayoffs(match) && !/playoff/i.test(match.phase || "") && (
               <span style={{ color: hasBg ? "#ccc" : "#888", fontWeight: 700 }}> • Playoffs</span>
@@ -3051,7 +3049,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
               <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
               LIVE
             </a>
-          ) : useRegionStreamFallback ? (
+          ) : (twitchLiveUrl || youtubeLiveUrl) ? (
             <div style={{ position: "relative", marginTop: 3 }}>
               <button
                 onClick={() => setShowStreamPicker((v) => !v)}
@@ -3106,6 +3104,11 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                 </>
               )}
             </div>
+          ) : isTierD ? (
+            <span className="flex items-center gap-1.5" style={{ color: "#ff3b3b", fontSize: "12px", fontWeight: 900, letterSpacing: "0.08em", fontStyle: "italic" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "9999px", background: "#ff3b3b", display: "inline-block", animation: "pulseLive 1.2s ease-in-out infinite" }} />
+              LIVE
+            </span>
           ) : (
             <button
               onClick={openLiveYT}
@@ -3339,7 +3342,7 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                   const mapsList = match.map_scores && match.map_scores.length > 0
                     ? match.map_scores
                     : null;
-                  if (!mapsList) return <p style={{ color: "#555", fontSize: "11px", textAlign: "center" }}>{T.mapScoresPending || "Scores par map en attente..."}</p>;
+                  if (!mapsList) return <p style={{ color: "#555", fontSize: "11px", textAlign: "center" }}>{isTierD ? "Scores par map non disponibles pour les matchs Tier 4" : (T.mapScoresPending || "Scores par map en attente...")}</p>;
                   const mapsPts = (pointsBreakdown && pointsBreakdown.maps) || [];
                   return mapsList.map((g, i) => {
                     const gamePred = (pred && pred.games && pred.games[i]) || null;
@@ -3494,7 +3497,10 @@ function MatchCard({ match, accent, pred, onSeriesChange, onToggleExpand, onScor
                     </div>
                   );
                 }
-                if (!hasLiveScores) return null;
+                if (!hasLiveScores) {
+                  if (isTierD) return <p style={{ color: "#555", fontSize: 10, textAlign: "center", padding: "6px 0" }}>Scores par map non disponibles pour les matchs Tier 4</p>;
+                  return null;
+                }
                 if (liveScoresGatedBySplit) {
                   return (
                     <div style={{
