@@ -290,10 +290,20 @@ function parseMatchBlock(block, section) {
   }
 
   const anyGameStarted = games.some(g => g.finished || (g.score1 != null && g.score2 != null && (g.score1 > 0 || g.score2 > 0)));
-  const startedBeforeNow = begin_at ? new Date(begin_at).getTime() <= Date.now() : false;
+  const beginMs = begin_at ? new Date(begin_at).getTime() : null;
+  const minutesSinceStart = beginMs ? (Date.now() - beginMs) / 60000 : null;
+  const startedRecently = minutesSinceStart != null && minutesSinceStart >= 0 && minutesSinceStart < 6 * 60; // < 6h
   let status = "upcoming";
-  if (finished) status = "finished";
-  else if (anyGameStarted || startedBeforeNow) status = "running";
+  if (finished) {
+    status = "finished";
+  } else if (anyGameStarted) {
+    // Game jouée mais pas de finished=true match-level : si plus de 6h depuis
+    // le début, on infère finished (Liquipedia a juste oublié de set le flag).
+    status = startedRecently || minutesSinceStart == null ? "running" : "finished";
+  } else if (startedRecently) {
+    // Match devait commencer, pas encore de scores : live imminent / vient de commencer
+    status = "running";
+  }
 
   return {
     id: `rl-knockout-${section.title}-${opp1}-${opp2}-${date || ""}`.replace(/\s+/g, "_"),

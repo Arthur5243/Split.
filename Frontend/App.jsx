@@ -1824,7 +1824,7 @@ function transformMatchCS2(m) {
 
 const KNOCKOUT_PLAYER_LOGO = {
   zen: "/logos/m8.webp",
-  atow: "/logos/m8.webp",
+  atow: "https://flagcdn.com/w40/be.png",
   mawkzy: "https://flagcdn.com/w40/fr.png",
   nwpo: "https://flagcdn.com/w40/sa.png",
   nass: "https://flagcdn.com/w40/ma.png",
@@ -9448,11 +9448,8 @@ function RlBracketPage({ onBack, T, predictions }) {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
             {slots.map((c) => (
-              <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 6 }}>
+              <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
-                {c.matches.length > 0 && (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#555" }}>{c.matches.length} match{c.matches.length > 1 ? "s" : ""}</span>
-                )}
               </button>
             ))}
           </div>
