@@ -190,6 +190,16 @@ function sectionAt(sections, pos) {
   return current.title;
 }
 
+function cleanSectionName(raw) {
+  if (!raw) return raw;
+  // {{Stage|Playoffs}} → Playoffs, {{Stage|Ladder}} → Ladder
+  const stage = /\{\{Stage\|([^}|]+)/i.exec(raw);
+  if (stage) return stage[1].trim();
+  // Fallback : strip tout template Liquipedia
+  const stripped = raw.replace(/\{\{[^}]+\}\}/g, "").trim();
+  return stripped || raw;
+}
+
 function classifySection(title) {
   const t = (title || "").toLowerCase();
   if (/playoff|final|bracket/.test(t)) return "playoffs";
@@ -327,6 +337,7 @@ async function refresh() {
         if (i < ladderMax) section = { title: "Night " + (Math.floor(i / perNight) + 1) };
         else section = { title: "Playoffs" };
       }
+      section.title = cleanSectionName(section.title);
       const parsed = parseMatchBlock(b.text, section);
       if (!parsed) continue;
       if (seen.has(parsed.id)) continue;
@@ -346,8 +357,26 @@ async function refresh() {
   }
 }
 
-const REFRESH_MS = 60 * 60 * 1000; // 1h quand succès
+const REFRESH_MS = 60 * 60 * 1000; // 1h quand succès et aucun match live
+const LIVE_REFRESH_MS = 2 * 60 * 1000; // 2min si un match est en cours
 const RETRY_MS = 5 * 60 * 1000;    // 5min si échec (rate-limit ou autre)
+
+function hasLiveOrImminentMatch() {
+  if (!STATE.matches || !STATE.matches.length) return false;
+  const now = Date.now();
+  for (const m of STATE.matches) {
+    if (m.status === "running") return true;
+    // Match à venir dans les 15 prochaines minutes OU déjà commencé il y a < 4h
+    if (m.begin_at) {
+      const t = new Date(m.begin_at).getTime();
+      if (!Number.isNaN(t)) {
+        if (t > now && t - now < 15 * 60 * 1000 && m.status !== "finished") return true;
+        if (t <= now && now - t < 4 * 60 * 60 * 1000 && m.status !== "finished") return true;
+      }
+    }
+  }
+  return false;
+}
 
 export function startRLKnockoutSeriesWorker() {
   const scheduleNext = async () => {
@@ -355,7 +384,8 @@ export function startRLKnockoutSeriesWorker() {
     try {
       await refresh();
       const ok = STATE.matches.length > 0 || hadData;
-      setTimeout(scheduleNext, ok ? REFRESH_MS : RETRY_MS);
+      const base = hasLiveOrImminentMatch() ? LIVE_REFRESH_MS : REFRESH_MS;
+      setTimeout(scheduleNext, ok ? base : RETRY_MS);
     } catch {
       setTimeout(scheduleNext, RETRY_MS);
     }

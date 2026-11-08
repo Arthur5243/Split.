@@ -1822,6 +1822,36 @@ function transformMatchCS2(m) {
   };
 }
 
+const KNOCKOUT_PLAYER_LOGO = {
+  zen: "/logos/m8.webp",
+  atow: "/logos/m8.webp",
+  mawkzy: "https://flagcdn.com/w40/fr.png",
+  nwpo: "https://flagcdn.com/w40/sa.png",
+  nass: "https://flagcdn.com/w40/ma.png",
+  prozy: "https://flagcdn.com/w40/ch.png",
+  osaft: "https://flagcdn.com/w40/de.png",
+  dralii: "https://flagcdn.com/w40/ma.png",
+};
+
+function knockoutPlayerLogo(name) {
+  if (!name) return null;
+  const k = String(name).toLowerCase().trim().replace(/[^a-z]/g, "");
+  if (!k) return null;
+  if (KNOCKOUT_PLAYER_LOGO[k]) return KNOCKOUT_PLAYER_LOGO[k];
+  for (const key of Object.keys(KNOCKOUT_PLAYER_LOGO)) {
+    if (k.startsWith(key) || key.startsWith(k)) return KNOCKOUT_PLAYER_LOGO[key];
+  }
+  return null;
+}
+
+function cleanKnockoutSection(raw) {
+  if (!raw) return raw;
+  const stage = /\{\{Stage\|([^}|]+)/i.exec(raw);
+  if (stage) return stage[1].trim();
+  const stripped = String(raw).replace(/\{\{[^}]+\}\}/g, "").trim();
+  return stripped || raw;
+}
+
 function transformKnockoutSeriesMatch(km) {
   const n1 = km.opponents?.[0]?.opponent?.name || "TBD";
   const n2 = km.opponents?.[1]?.opponent?.name || "TBD";
@@ -1832,7 +1862,10 @@ function transformKnockoutSeriesMatch(km) {
   const s2raw = km.results?.[1]?.score;
   const hasScore = Number.isFinite(s1raw) && Number.isFinite(s2raw) && (s1raw > 0 || s2raw > 0);
   const games = Array.isArray(km.live_map_scores) ? km.live_map_scores : [];
-  const phaseLabel = km.section ? ("FuuRy Knockout — " + km.section) : "FuuRy Knockout Series";
+  const liveGames = games.filter(g => g && (Number.isFinite(g.score1) || Number.isFinite(g.score2)) && (g.score1 > 0 || g.score2 > 0 || g.finished));
+  const cleanSection = cleanKnockoutSection(km.section || "");
+  const phaseLabel = cleanSection ? ("FuuRy Knockout — " + cleanSection) : "FuuRy Knockout Series";
+  const isRunning = status === "running";
   return {
     id: km.id,
     day: d ? isoDate(d) : null,
@@ -1844,19 +1877,20 @@ function transformKnockoutSeriesMatch(km) {
     team2: n2,
     team1Name: n1,
     team2Name: n2,
-    team1Logo: null,
-    team2Logo: null,
+    team1Logo: knockoutPlayerLogo(n1),
+    team2Logo: knockoutPlayerLogo(n2),
     team1Region: null,
     team2Region: null,
     status: status === "upcoming" ? "not_started" : status,
     score1: hasScore ? s1raw : undefined,
     score2: hasScore ? s2raw : undefined,
     tier: "b",
-    map_scores: games.length > 0 ? games.map(g => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
+    map_scores: !isRunning && games.length > 0 ? games.map(g => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
+    live_map_scores: isRunning && liveGames.length > 0 ? liveGames.map(g => ({ map: null, score1: g.score1 ?? 0, score2: g.score2 ?? 0 })) : null,
     number_of_games: 5,
     streamUrl: null,
     isKnockoutSeries: true,
-    knockoutSection: km.section || null,
+    knockoutSection: cleanSection || null,
     knockoutStage: km.stage || null,
   };
 }
@@ -9202,7 +9236,10 @@ function RlBracketPage({ onBack, T, predictions }) {
     const koGoldAccent = "#FFD700";
     const backendNights = Array.isArray(knockoutData?.nights) ? knockoutData.nights : [];
     const NIGHTS = backendNights
-      .map(n => ({ key: n.name || "Night", label: n.name || "Night", color: koAccent, matches: n.matches || [] }))
+      .map(n => {
+        const cleaned = cleanKnockoutSection(n.name || "Night");
+        return { key: cleaned, label: cleaned, color: koAccent, matches: n.matches || [] };
+      })
       .sort((a, b) => {
         const na = parseInt(String(a.key).replace(/[^0-9]/g, ""), 10) || 0;
         const nb = parseInt(String(b.key).replace(/[^0-9]/g, ""), 10) || 0;
@@ -9215,7 +9252,7 @@ function RlBracketPage({ onBack, T, predictions }) {
     const playoffsRaw = Array.isArray(knockoutData?.playoffs) ? knockoutData.playoffs : [];
     const bySection = new Map();
     for (const pm of playoffsRaw) {
-      const key = pm.section || "Playoffs";
+      const key = cleanKnockoutSection(pm.section || "Playoffs");
       if (!bySection.has(key)) bySection.set(key, []);
       bySection.get(key).push(pm);
     }
