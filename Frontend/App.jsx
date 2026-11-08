@@ -24,7 +24,6 @@ import {
   Plus,
   ArrowLeft,
   Bell,
-  CreditCard,
   LogOut,
   Eye,
   EyeOff,
@@ -4170,8 +4169,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     claimToastTimer.current = setTimeout(() => setClaimToast(null), 2200);
   }
 
-  function claimTier(tier, item) {
-    // Récompenses premium : bloquées tant que l'utilisateur n'est pas abonné.
+  function claimTier(tier, item, skipToast) {
     if (isTierPremium(tier, item) && !isSubscribed) {
       if (onOpenSubscribe) onOpenSubscribe();
       return false;
@@ -4183,7 +4181,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
       const ni = [...inventoryItems, item];
       setInventoryItems(ni);
       localStorage.setItem("split_inventory", JSON.stringify(ni));
-      showClaimToast(item);
+      if (!skipToast) showClaimToast(item);
     }
     // Sync cross-device : PC ↔ mobile doivent voir la même récompense à vie.
     try { window.dispatchEvent(new CustomEvent("split-sync-cosmetics")); } catch {}
@@ -4581,7 +4579,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
 
   function claimChestResult() {
     if (openingChest && chestResult) {
-      claimTier(openingChest, chestResult);
+      claimTier(openingChest, chestResult, true);
       // Si une file "TOUT OUVRIR" est en cours, enchaîne direct sur le palier
       // suivant SANS repasser par openingChest=null (sinon l'overlay noir
       // plein écran disparaît pendant un tick → flash entre deux récompenses,
@@ -4690,19 +4688,18 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             const premium = isTierPremium(tier, chest);
             const lockedByPremium = premium && !isSubscribed;
             const tierOpacity = isCurrent ? 1 : unlocked ? 0.85 : tier === currentTier + 1 ? 0.55 : 0.4;
-            // Premium : fond orange léger uniforme (pas d'étiquette "SPLIT+"
-            // visible, pas de bordure flashy). Le signal reste subtil.
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
                 marginBottom: 8, borderRadius: 14, overflow: "hidden",
-                border: `1.5px solid ${isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
+                border: `1.5px solid ${premium ? "rgba(204,247,29,0.25)" : isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
                 opacity: tierOpacity,
                 position: "relative",
               }}>
+                {premium && <div style={{ position: "absolute", top: 6, right: 8, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.2)", borderRadius: 6, padding: "1px 6px", zIndex: 1 }}><span style={{ color: "#CCF71D", fontSize: 8, fontWeight: 900, letterSpacing: 0.8 }}>SPLIT+</span></div>}
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 12,
                   padding: "12px 12px",
-                  background: premium ? "rgba(255,170,40,0.09)" : isCurrent ? "rgba(204,247,29,0.06)" : "#111",
+                  background: premium ? "linear-gradient(135deg, rgba(204,247,29,0.07), rgba(204,247,29,0.02))" : isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
                   {previewImg ? (
                     <div style={{ width: 72, height: 52, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
@@ -12854,7 +12851,7 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   return (
     <div style={{ position: "absolute", top: 47, left: 0, right: 0, bottom: 0, zIndex: 50, background: "#1a1a1a", display: "flex", flexDirection: "column" }}>
       <div className="flex items-center justify-between px-5 pt-4 pb-3">
-        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>Forfait Split+</h2>
+        <h2 className="font-black text-white" style={{ fontSize: "18px" }}>{T.settingsTitle}</h2>
       </div>
       <div className="overflow-y-auto no-scrollbar px-5 flex-1" style={{ overscrollBehavior: "contain", paddingBottom: 120 }}>
 
@@ -12982,19 +12979,39 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
             )}
           </div>
 
-          {/* FORFAIT */}
+          {/* FORFAIT SPLIT+ */}
           <div style={sectionStyle} className="mb-3">
-            <button onClick={() => setActiveSection(activeSection === "plan" ? null : "plan")} style={rowStyle} className="w-full">
-              <span style={labelStyle}><CreditCard size={18} color="#CCF71D" />{T.settingsPlan}</span>
-              <div className="flex items-center gap-2">
-                <span style={{ color: "#CCF71D", fontSize: "12px", fontWeight: 700, background: "rgba(204,247,29,0.12)", padding: "3px 10px", borderRadius: 9999 }}>{T.settingsPlanFree}</span>
-                <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "plan" ? "rotate(180deg)" : "rotate(0deg)" }} />
-              </div>
-            </button>
-            {activeSection === "plan" && (
-              <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
-                <p style={{ color: "#888", fontSize: "13px", marginTop: 12 }}>{T.settingsPlanDesc}</p>
-              </div>
+            {isSubscribed ? (
+              <>
+                <button onClick={() => setActiveSection(activeSection === "splitplus" ? null : "splitplus")} style={{ ...rowStyle, background: "rgba(204,247,29,0.08)" }} className="w-full">
+                  <span style={{ ...labelStyle, color: "#CCF71D" }}>
+                    <span style={{ fontSize: 18 }}>✨</span>
+                    Forfait Split+
+                  </span>
+                  <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "splitplus" ? "rotate(180deg)" : "rotate(0deg)" }} />
+                </button>
+                {activeSection === "splitplus" && (
+                  <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
+                    <p style={{ color: "#888", fontSize: 12, marginTop: 12, marginBottom: 12, lineHeight: 1.5 }}>
+                      Ton abonnement Split+ est actif. Tu bénéficies de tous les avantages premium.
+                    </p>
+                    <button onClick={() => window.open("https://whop.com/orders", "_blank")} style={{ width: "100%", padding: "10px 0", borderRadius: 10, background: "#2a2a2a", border: "1px solid #333", color: "#ff4655", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
+                      Annuler l'abonnement
+                    </button>
+                    <p style={{ color: "#555", fontSize: 10, textAlign: "center", lineHeight: 1.4 }}>
+                      L'annulation prend effet à la fin de la période en cours. Aucun remboursement ne sera effectué pour la période déjà payée.
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer" }} className="w-full">
+                <span style={{ ...labelStyle, color: "#CCF71D" }}>
+                  <span style={{ fontSize: 18 }}>✨</span>
+                  Forfait Split+
+                </span>
+                <ChevronRight size={16} color="#888" />
+              </button>
             )}
           </div>
 
@@ -13077,42 +13094,6 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
 
           {/* PARRAINAGE */}
           <ReferralSection T={T} profile={profile} sectionStyle={sectionStyle} rowStyle={rowStyle} labelStyle={labelStyle} chevStyle={chevStyle} activeSection={activeSection} setActiveSection={setActiveSection} />
-
-          {/* FORFAIT SPLIT+ */}
-          <div style={sectionStyle} className="mb-3">
-            {isSubscribed ? (
-              <>
-                <button onClick={() => setActiveSection(activeSection === "splitplus" ? null : "splitplus")} style={{ ...rowStyle, background: "rgba(204,247,29,0.08)" }} className="w-full">
-                  <span style={{ ...labelStyle, color: "#CCF71D" }}>
-                    <span style={{ fontSize: 18 }}>✨</span>
-                    Forfait Split+
-                  </span>
-                  <ChevronDown size={16} style={{ ...chevStyle, transform: activeSection === "splitplus" ? "rotate(180deg)" : "rotate(0deg)" }} />
-                </button>
-                {activeSection === "splitplus" && (
-                  <div className="px-4 pb-4" style={{ borderTop: "1px solid #262626" }}>
-                    <p style={{ color: "#888", fontSize: 12, marginTop: 12, marginBottom: 12, lineHeight: 1.5 }}>
-                      Ton abonnement Split+ est actif. Tu bénéficies de tous les avantages premium.
-                    </p>
-                    <button onClick={() => window.open("https://whop.com/orders", "_blank")} style={{ width: "100%", padding: "10px 0", borderRadius: 10, background: "#2a2a2a", border: "1px solid #333", color: "#ff4655", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
-                      Annuler l'abonnement
-                    </button>
-                    <p style={{ color: "#555", fontSize: 10, textAlign: "center", lineHeight: 1.4 }}>
-                      L'annulation prend effet à la fin de la période en cours. Aucun remboursement ne sera effectué pour la période déjà payée.
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <button onClick={onOpenSubscribe} style={{ ...rowStyle, cursor: "pointer", background: "rgba(255,184,0,0.08)" }} className="w-full">
-                <span style={{ ...labelStyle, color: "#FFB800" }}>
-                  <span style={{ fontSize: 18 }}>✨</span>
-                  Forfait Split+
-                </span>
-                <ChevronRight size={16} color="#888" />
-              </button>
-            )}
-          </div>
 
           {/* DÉCONNEXION */}
           <div style={sectionStyle}>
