@@ -299,14 +299,32 @@ async function refresh() {
     console.log(`[rl-knockout] ${rawBlocks.length} blocks Match trouvés`);
     const matches = [];
     const seen = new Set();
+    // Compte le nombre de matchs par section wiki pour pouvoir inférer
+    // le format (n nights × k matchs/night) quand une partie des blocs
+    // tombe en "Overview" (fallback).
+    const sectionMatchCount = {};
+    for (const b of rawBlocks) {
+      const t = sectionAt(sections, b.start);
+      sectionMatchCount[t] = (sectionMatchCount[t] || 0) + 1;
+    }
+    // Déduis combien de matches par Night à partir des sections "Night X"
+    // réellement reconnues. Défaut : 4 (compat historique).
+    const nightMatchCounts = Object.entries(sectionMatchCount)
+      .filter(([t]) => /^night\s*\d+$/i.test(t))
+      .map(([, c]) => c);
+    const perNight = nightMatchCounts.length
+      ? Math.max(...nightMatchCounts)
+      : 4;
+    const totalSectionedNights = Object.keys(sectionMatchCount).filter(t => /^night\s*\d+$/i.test(t)).length;
+
     for (let i = 0; i < rawBlocks.length; i++) {
       const b = rawBlocks[i];
       let section = { title: sectionAt(sections, b.start) };
-      // Fallback : si aucune section wiki n'est tombée dessus (section
-      // = "Overview" par défaut), classer par position — format fixe
-      // 7 nights × 4 matches = 28 matchs ladder, puis playoffs.
       if (!section.title || section.title === "Overview") {
-        if (i < 28) section = { title: "Night " + (Math.floor(i / 4) + 1) };
+        // Playoffs typiques : QF (4) + SF (2) + GF (1) = 7 matchs. Si la position
+        // dépasse les ladder matches, on bascule en Playoffs.
+        const ladderMax = (totalSectionedNights || 8) * perNight;
+        if (i < ladderMax) section = { title: "Night " + (Math.floor(i / perNight) + 1) };
         else section = { title: "Playoffs" };
       }
       const parsed = parseMatchBlock(b.text, section);

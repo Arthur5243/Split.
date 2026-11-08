@@ -1822,6 +1822,45 @@ function transformMatchCS2(m) {
   };
 }
 
+function transformKnockoutSeriesMatch(km) {
+  const n1 = km.opponents?.[0]?.opponent?.name || "TBD";
+  const n2 = km.opponents?.[1]?.opponent?.name || "TBD";
+  const beginRaw = km.begin_at || null;
+  const d = beginRaw ? new Date(beginRaw) : null;
+  const status = km.status || "not_started";
+  const s1raw = km.results?.[0]?.score;
+  const s2raw = km.results?.[1]?.score;
+  const hasScore = Number.isFinite(s1raw) && Number.isFinite(s2raw) && (s1raw > 0 || s2raw > 0);
+  const games = Array.isArray(km.live_map_scores) ? km.live_map_scores : [];
+  const phaseLabel = km.section ? ("FuuRy Knockout — " + km.section) : "FuuRy Knockout Series";
+  return {
+    id: km.id,
+    day: d ? isoDate(d) : null,
+    time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    beginAt: beginRaw,
+    league: "FuuRy Knockout Series",
+    phase: phaseLabel,
+    team1: n1,
+    team2: n2,
+    team1Name: n1,
+    team2Name: n2,
+    team1Logo: null,
+    team2Logo: null,
+    team1Region: null,
+    team2Region: null,
+    status: status === "upcoming" ? "not_started" : status,
+    score1: hasScore ? s1raw : undefined,
+    score2: hasScore ? s2raw : undefined,
+    tier: "b",
+    map_scores: games.length > 0 ? games.map(g => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
+    number_of_games: 5,
+    streamUrl: null,
+    isKnockoutSeries: true,
+    knockoutSection: km.section || null,
+    knockoutStage: km.stage || null,
+  };
+}
+
 function transformMatchRL(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -9159,12 +9198,52 @@ function RlBracketPage({ onBack, T, predictions }) {
   if (phase === "knockout") {
     const koAccent = "#E91E63";
     const koGoldAccent = "#FFD700";
-    const nightsByName = {};
-    (knockoutData?.nights || []).forEach(n => { nightsByName[n.name] = n.matches || []; });
-    const playoffs = knockoutData?.playoffs || [];
-    const NIGHTS = [1, 2, 3, 4, 5, 6, 7].map(i => ({ key: "Night " + i, label: "Night " + i, color: koAccent, matches: nightsByName["Night " + i] || [] }));
-    const PLAYOFFS = { key: "Playoffs", label: "Playoffs", color: koGoldAccent, matches: playoffs };
-    const CARDS = [...NIGHTS, PLAYOFFS];
+    const backendNights = Array.isArray(knockoutData?.nights) ? knockoutData.nights : [];
+    const NIGHTS = backendNights
+      .map(n => ({ key: n.name || "Night", label: n.name || "Night", color: koAccent, matches: n.matches || [] }))
+      .sort((a, b) => {
+        const na = parseInt(String(a.key).replace(/[^0-9]/g, ""), 10) || 0;
+        const nb = parseInt(String(b.key).replace(/[^0-9]/g, ""), 10) || 0;
+        return na - nb;
+      });
+
+    // Groupe les playoffs par section Liquipedia (Quarterfinals / Semifinals / Grand Final).
+    // Fallback : si tout est lumpé dans "Playoffs", on découpe par position (4+2+1).
+    const playoffsRaw = Array.isArray(knockoutData?.playoffs) ? knockoutData.playoffs : [];
+    const bySection = new Map();
+    for (const pm of playoffsRaw) {
+      const key = pm.section || "Playoffs";
+      if (!bySection.has(key)) bySection.set(key, []);
+      bySection.get(key).push(pm);
+    }
+    let PLAYOFFS_CARDS;
+    if (bySection.size <= 1 && playoffsRaw.length > 0) {
+      const sorted = [...playoffsRaw].sort((a, b) => {
+        const ta = a.begin_at ? new Date(a.begin_at).getTime() : 0;
+        const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
+        return ta - tb;
+      });
+      const qf = sorted.slice(0, Math.min(4, sorted.length));
+      const sf = sorted.slice(4, Math.min(6, sorted.length));
+      const gf = sorted.slice(6, 7);
+      PLAYOFFS_CARDS = [
+        { key: "Quarterfinals", label: "Quarterfinals", color: koGoldAccent, matches: qf },
+        { key: "Semifinals", label: "Semifinals", color: koGoldAccent, matches: sf },
+        { key: "Grand Final", label: "Grand Final", color: koGoldAccent, matches: gf },
+      ].filter(c => c.matches.length > 0);
+    } else {
+      const order = (name) => {
+        const t = (name || "").toLowerCase();
+        if (/grand\s*final|^final$/.test(t)) return 3;
+        if (/semi/.test(t)) return 2;
+        if (/quarter/.test(t)) return 1;
+        return 0;
+      };
+      PLAYOFFS_CARDS = [...bySection.entries()]
+        .map(([name, matches]) => ({ key: name, label: name, color: koGoldAccent, matches }))
+        .sort((a, b) => order(a.key) - order(b.key));
+    }
+    const CARDS = [...NIGHTS, ...PLAYOFFS_CARDS];
 
     const renderMatchList = (list) => (
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -9225,23 +9304,29 @@ function RlBracketPage({ onBack, T, predictions }) {
       );
     }
 
-    // Menu : 7 Nights + Playoffs en grid 2 cols
+    // Menu : Nights + rounds Playoffs (QF/SF/GF) en grid 2 cols
     return (
       <div style={pageStyle}>
         <div style={headerStyle}>
           {backBtn()}
           <span style={{ fontSize: 16, fontWeight: 900, color: "#fff" }}>Knockout Series — <span style={{ color: koAccent }}>1v1</span></span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
-          {CARDS.map((c) => (
-            <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 6 }}>
-              <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
-              {c.matches.length > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: "#555" }}>{c.matches.length} match{c.matches.length > 1 ? "s" : ""}</span>
-              )}
-            </button>
-          ))}
-        </div>
+        {CARDS.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 40, color: "#555", fontSize: 12, lineHeight: 1.5 }}>
+            {knockoutLoading ? "Chargement..." : <>Pas de match disponible pour l'instant.<br/>Les matchs s'afficheront dès que Liquipedia les publie.</>}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, padding: "20px 16px" }}>
+            {CARDS.map((c) => (
+              <button key={c.key} onClick={() => setKoSection(c.key)} style={{ ...bracketTileStyle(c.color, true), padding: "30px 12px", gap: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: c.color, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>{c.label}</span>
+                {c.matches.length > 0 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#555" }}>{c.matches.length} match{c.matches.length > 1 ? "s" : ""}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -14811,10 +14896,11 @@ export default function ClutchApp() {
     resetAppState();
     const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
-      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
+      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, rKo, lb] = await Promise.all([
         fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
         fj("/api/cs2-upcoming"), fj("/api/cs2-live"), fj("/api/cs2-results"), fj("/api/cs2-match-history").catch(() => null),
         fj("/api/rl-upcoming"), fj("/api/rl-live"), fj("/api/rl-results"), fj("/api/rl-match-history").catch(() => null),
+        fj("/api/rl-knockout-series").catch(() => null),
         fj("/api/social/leaderboard").catch(() => null),
       ]);
       const vUpT = Array.isArray(vUp) ? vUp.map(transformMatch).filter(m => m.region) : [];
@@ -14854,15 +14940,39 @@ export default function ClutchApp() {
       const rPaT = Array.isArray(rPa) ? rPa.map(transformMatchRL) : [];
       const rHistT = Array.isArray(rHist) ? rHist.map(transformMatchRL) : [];
       const rFinished = rHistT.length > rPaT.length ? rHistT : rPaT;
-      const rUpFut = rUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      const rKoAll = [];
+      if (rKo && (Array.isArray(rKo.nights) || Array.isArray(rKo.playoffs))) {
+        (rKo.nights || []).forEach(n => (n.matches || []).forEach(m => rKoAll.push(m)));
+        (rKo.playoffs || []).forEach(m => rKoAll.push(m));
+        (rKo.other || []).forEach(m => rKoAll.push(m));
+      }
+      const rKoT = rKoAll.map(transformKnockoutSeriesMatch).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+      const rKoUp = rKoT.filter(m => m.status === "not_started" || m.status === "upcoming");
+      const rKoLi = rKoT.filter(m => m.status === "running");
+      const rKoFin = rKoT.filter(m => m.status === "finished");
+      const rUpFut = [...rUpT, ...rKoUp].filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
       setRlUpcomingMatches(attachComputedOdds(rUpFut, rFinished, tierWeightRL));
-      setRlLiveMatches(attachComputedOdds(rLiT, rFinished, tierWeightRL));
+      setRlLiveMatches(attachComputedOdds([...rLiT, ...rKoLi], rFinished, tierWeightRL));
       setRlResultsMatches((() => {
         const elo = computeEloRatings(rFinished, tierWeightRL);
-        return rPaT.map(m => {
+        const standard = rPaT.map(m => {
           const h = rFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
+        });
+        const koTagged = rKoFin.map(m => ({ ...m, insufficientData: true }));
+        const seen = new Set();
+        const combined = [];
+        for (const m of [...standard, ...koTagged]) {
+          const k = String(m.id);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          combined.push(m);
+        }
+        return combined.sort((a, b) => {
+          const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
+          const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
+          return tb - ta;
         });
       })());
       if (Array.isArray(lb)) setLeaderboard(lb);
@@ -15119,18 +15229,32 @@ export default function ClutchApp() {
     }
     async function loadRL() {
       try {
-        const [up, li, pa, history] = await Promise.all([
+        const [up, li, pa, history, knockout] = await Promise.all([
           fetchJson("/api/rl-upcoming"),
           fetchJson("/api/rl-live"),
           fetchJson("/api/rl-results"),
           fetchJson("/api/rl-match-history").catch(() => null),
+          fetchJson("/api/rl-knockout-series").catch(() => null),
         ]);
         if (cancelled) return;
         setRlDataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
-        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
+
+        const koAll = [];
+        if (knockout && (Array.isArray(knockout.nights) || Array.isArray(knockout.playoffs))) {
+          (knockout.nights || []).forEach((n) => (n.matches || []).forEach((m) => koAll.push(m)));
+          (knockout.playoffs || []).forEach((m) => koAll.push(m));
+          (knockout.other || []).forEach((m) => koAll.push(m));
+        }
+        const koTransformed = koAll.map(transformKnockoutSeriesMatch).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+        const koUpcoming = koTransformed.filter(m => m.status === "not_started" || m.status === "upcoming");
+        const koLive = koTransformed.filter(m => m.status === "running");
+        const koFinished = koTransformed.filter(m => m.status === "finished");
+        try { if (koTransformed.length) window.__splitKnockoutMatches = koTransformed; } catch {}
+
+        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0 && koTransformed.length === 0) return;
         rlLoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchRL) : [];
         const finishedMatchesRL = historyT.length > paT.length ? historyT : paT;
@@ -15147,24 +15271,30 @@ export default function ClutchApp() {
           return out;
         }
         const now = Date.now();
-        const upFuture = dedupeByIdRL(upT).filter((m) => {
+        const upFuture = dedupeByIdRL([...upT, ...koUpcoming]).filter((m) => {
           if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false;
           if (m.status === "finished" || m.status === "canceled") return false;
           if (!m.beginAt) return true;
           const t = new Date(m.beginAt).getTime();
           return Number.isNaN(t) || t > now;
         });
-        const liDeduped = dedupeByIdRL(liT);
+        const liDeduped = dedupeByIdRL([...liT, ...koLive]);
 
         setRlUpcomingMatches(attachComputedOdds(upFuture, finishedMatchesRL, tierWeightRL));
         setRlLiveMatches(attachComputedOdds(liDeduped, finishedMatchesRL, tierWeightRL));
         setRlResultsMatches(
           (() => {
             const eloDataRLResults = computeEloRatings(finishedMatchesRL, tierWeightRL);
-            return paT.map((m) => {
+            const standard = paT.map((m) => {
               const historyWithoutSelf = finishedMatchesRL.filter((h) => String(h.id) !== String(m.id));
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
+            });
+            const koFinishedTagged = koFinished.map(m => ({ ...m, insufficientData: true }));
+            return dedupeByIdRL([...standard, ...koFinishedTagged]).sort((a, b) => {
+              const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
+              const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
+              return tb - ta;
             });
           })()
         );
