@@ -235,8 +235,23 @@ function parseMatchBlock(block, section) {
     }
   }
 
-  let series1 = games.filter(g => g.finished && g.score1 > g.score2).length;
-  let series2 = games.filter(g => g.finished && g.score2 > g.score1).length;
+  // Les éditeurs Liquipedia posent rarement finished=true par map pendant le
+  // match. On considère une game "jouée" si :
+  //  - elle a un vainqueur clair (scores différents) ET
+  //  - soit la série est globalement finie, soit son propre flag finished est set,
+  //    soit une game plus tard a des scores (on ne peut pas commencer la game N+1
+  //    avant d'avoir fini la game N).
+  const gamePlayed = (g, i) => {
+    if (g.score1 == null || g.score2 == null || g.score1 === g.score2) return false;
+    if (finished || g.finished) return true;
+    for (let j = i + 1; j < games.length; j++) {
+      const nx = games[j];
+      if (nx.finished || (nx.score1 != null && nx.score2 != null && (nx.score1 > 0 || nx.score2 > 0))) return true;
+    }
+    return false;
+  };
+  let series1 = games.filter((g, i) => gamePlayed(g, i) && g.score1 > g.score2).length;
+  let series2 = games.filter((g, i) => gamePlayed(g, i) && g.score2 > g.score1).length;
   const rawW = getParam(block, "winner");
   if (!series1 && !series2 && rawW) {
     const w = parseInt(rawW, 10);
@@ -244,9 +259,11 @@ function parseMatchBlock(block, section) {
     else if (w === 2) series2 = 1;
   }
 
+  const anyGameStarted = games.some(g => g.finished || (g.score1 != null && g.score2 != null && (g.score1 > 0 || g.score2 > 0)));
+  const startedBeforeNow = begin_at ? new Date(begin_at).getTime() <= Date.now() : false;
   let status = "upcoming";
   if (finished) status = "finished";
-  else if (games.some(g => g.finished)) status = "running";
+  else if (anyGameStarted || startedBeforeNow) status = "running";
 
   return {
     id: `rl-knockout-${section.title}-${opp1}-${opp2}-${date || ""}`.replace(/\s+/g, "_"),
