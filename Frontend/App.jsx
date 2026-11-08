@@ -4190,8 +4190,8 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
 
   const TIER_REWARDS = {
     1: { emoji: "🖼️", name: "Bannière Starter", desc: "Ta première bannière de classement", type: "banner", bannerImage: "/banner-6.png", rarity: "commun" },
-    2: { emoji: "🎴", name: "Fond Match Starter", desc: "Ton premier fond de carte de match", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
-    3: { emoji: "🏷️", name: "Rookie", desc: "Titre de débutant", type: "title", rarity: "commun" },
+    2: { emoji: "🏷️", name: "Rookie", desc: "Titre de débutant", type: "title", rarity: "commun" },
+    3: { emoji: "🎴", name: "Fond Match Starter", desc: "Ton premier fond de carte de match", type: "match_bg", matchBgImage: "/match-bg-1.png", rarity: "commun" },
     4: { emoji: "⭐", name: "Boost XP +200", desc: "+200 XP bonus", type: "xp_bonus", xpAmount: 200 },
     5: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     6: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
@@ -4225,8 +4225,8 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
     34: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     35: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     36: { emoji: "🖼️", name: "Bannière Trophée", desc: "Fond trophée rose pour ton classement", type: "banner", bannerImage: "/banner-3.png", rarity: "epique" },
-    37: { emoji: "🎴", name: "Fond Match Storm", desc: "Background storm pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
-    38: { emoji: "🏷️", name: "Sniper", desc: "Titre sniper", type: "title", rarity: "rare" },
+    37: { emoji: "🏷️", name: "Sniper", desc: "Titre sniper", type: "title", rarity: "rare" },
+    38: { emoji: "🎴", name: "Fond Match Storm", desc: "Background storm pour tes cartes de match", type: "match_bg", matchBgImage: "/match-bg-4.png", rarity: "rare" },
     39: { emoji: "⭐", name: "Boost XP +600", desc: "+600 XP bonus", type: "xp_bonus", xpAmount: 600 },
     40: { emoji: "🔥", name: "Boost ×2", desc: "Double les points d'un match", type: "boost", rarity: "rare" },
     41: { emoji: "🏷️", name: "Tacticien", desc: "Titre tacticien", type: "title", rarity: "rare" },
@@ -4630,7 +4630,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, height: 12, borderRadius: 8, background: "rgba(255,255,255,0.08)", overflow: "hidden", border: "1px solid rgba(204,247,29,0.15)", position: "relative" }}>
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(204,247,29,0.05), transparent)" }} />
-              <div style={{ position: "relative", height: "100%", width: progressPct + "%", borderRadius: 8, background: "linear-gradient(90deg, #a8d90a 0%, #CCF71D 50%, #e6ff2e 100%)", transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 0 16px rgba(204,247,29,0.6), inset 0 1px 0 rgba(255,255,255,0.3)" }} />
+              <div style={{ position: "relative", height: "100%", width: Math.max(3, progressPct) + "%", borderRadius: 8, background: "linear-gradient(90deg, #a8d90a 0%, #CCF71D 50%, #e6ff2e 100%)", transition: "width 0.5s cubic-bezier(0.22, 1, 0.36, 1)", boxShadow: "0 0 16px rgba(204,247,29,0.6), inset 0 1px 0 rgba(255,255,255,0.3)" }} />
             </div>
             <span style={{ color: "#fff", fontSize: 11, fontWeight: 900, fontVariantNumeric: "tabular-nums", flexShrink: 0, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>{tierInfo.xpNeeded ? `${tierInfo.xpInTier}/${tierInfo.xpNeeded}` : "MAX"}</span>
           </div>
@@ -4652,7 +4652,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
 
       {tab === "rewards" ? (
         <div ref={scrollRef} onScroll={handleRewardsScroll} className="no-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "14px 12px 24px", position: "relative" }}>
-          {scrollDir && <div style={{ position: "sticky", top: scrollDir === "up" ? 8 : "auto", bottom: scrollDir === "down" ? 8 : "auto", left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", justifyContent: "center", pointerEvents: "none", animation: "fadeInOut 1.2s ease forwards" }}><div style={{ background: "rgba(204,247,29,0.15)", border: "1px solid rgba(204,247,29,0.3)", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><ChevronDown size={18} color="#CCF71D" style={{ transform: scrollDir === "up" ? "rotate(180deg)" : "none" }} /></div></div>}
+          {scrollDir === "down" && <button onClick={() => { if (currentRef.current && scrollRef.current) { const container = scrollRef.current; const el = currentRef.current; const top = el.offsetTop - container.offsetTop - 80; container.scrollTo({ top: Math.max(0, top), behavior: "smooth" }); } }} style={{ position: "sticky", bottom: 12, left: "50%", transform: "translateX(-50%)", zIndex: 5, display: "flex", alignItems: "center", gap: 6, background: "rgba(204,247,29,0.95)", color: "#000", border: "none", borderRadius: 20, padding: "8px 16px", fontSize: 11, fontWeight: 900, cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.5)", animation: "fadeInOut 3s ease forwards" }}>Palier actuel ↑</button>}
           {(() => {
             // "Tout ouvrir" ignore les paliers Split+ si l'utilisateur n'est pas abonné.
             const pending = allTiers.filter(t => {
@@ -4691,15 +4691,15 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             return (
               <div key={tier} ref={isCurrent ? currentRef : undefined} style={{
                 marginBottom: 8, borderRadius: 14, overflow: "hidden",
-                border: `1.5px solid ${premium ? "rgba(204,247,29,0.25)" : isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
+                border: `1.5px solid ${lockedByPremium && unlocked ? "rgba(255,184,0,0.3)" : isCurrent ? "rgba(204,247,29,0.4)" : rar !== "commun" ? rc.border + "33" : "#1e1e1e"}`,
                 opacity: tierOpacity,
                 position: "relative",
               }}>
-                {premium && <div style={{ position: "absolute", top: 6, right: 8, background: "rgba(204,247,29,0.12)", border: "1px solid rgba(204,247,29,0.2)", borderRadius: 6, padding: "1px 6px", zIndex: 1 }}><span style={{ color: "#CCF71D", fontSize: 8, fontWeight: 900, letterSpacing: 0.8 }}>SPLIT+</span></div>}
+                {lockedByPremium && unlocked && <div style={{ position: "absolute", top: 6, right: 8, background: "rgba(255,184,0,0.15)", border: "1px solid rgba(255,184,0,0.3)", borderRadius: 6, padding: "1px 6px", zIndex: 1 }}><span style={{ color: "#FFB800", fontSize: 8, fontWeight: 900, letterSpacing: 0.8 }}>SPLIT+</span></div>}
                 <div style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 12,
                   padding: "12px 12px",
-                  background: premium ? "linear-gradient(135deg, rgba(204,247,29,0.07), rgba(204,247,29,0.02))" : isCurrent ? "rgba(204,247,29,0.06)" : "#111",
+                  background: lockedByPremium && unlocked ? "linear-gradient(135deg, rgba(255,184,0,0.07), rgba(255,140,0,0.02))" : isCurrent ? "rgba(204,247,29,0.06)" : "#111",
                 }}>
                   {previewImg ? (
                     <div style={{ width: 72, height: 52, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
@@ -4729,10 +4729,19 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
                     )}
                     {unlocked && !claimed && lockedByPremium && (
                       <button onClick={() => onOpenSubscribe && onOpenSubscribe()} style={{
-                        padding: "8px 12px", borderRadius: 10, background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
-                        fontSize: 11, fontWeight: 900, border: "none", cursor: "pointer",
+                        padding: "10px 16px", borderRadius: 12, background: "linear-gradient(135deg, #FFB800, #FF8A00)", color: "#000",
+                        fontSize: 12, fontWeight: 900, border: "none", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 5,
+                        boxShadow: "0 2px 12px rgba(255,184,0,0.4)",
+                        animation: "chestPulse 2.5s ease infinite",
+                      }}><Lock size={12} /> DÉBLOQUER</button>
+                    )}
+                    {!unlocked && lockedByPremium && (
+                      <button onClick={() => onOpenSubscribe && onOpenSubscribe()} style={{
+                        padding: "6px 10px", borderRadius: 8, background: "rgba(255,184,0,0.12)", color: "#FFB800",
+                        fontSize: 10, fontWeight: 800, border: "1px solid rgba(255,184,0,0.25)", cursor: "pointer",
                         display: "flex", alignItems: "center", gap: 4,
-                      }}><Lock size={11} /> DÉBLOQUER</button>
+                      }}><Lock size={10} /></button>
                     )}
                     {unlocked && !claimed && !lockedByPremium && isChest && (
                       <button onClick={() => openChestAnim(tier)} style={{
@@ -5756,7 +5765,7 @@ function RankBadgeCompact({ points, onClick }) {
       )}
       <span style={{ color: rc, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", position: "relative", zIndex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%", textShadow: `0 0 8px rgba(${rgb},0.4), 0 1px 3px rgba(0,0,0,0.9)` }}>{rank.label}</span>
       <div style={{ width: "75%", height: 3, borderRadius: 2, background: "rgba(255,255,255,0.15)", overflow: "hidden", position: "relative", zIndex: 1 }}>
-        {rank.nextPts && <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rc, borderRadius: 2 }} />}
+        {rank.nextPts && <div style={{ width: `${Math.max(3, rank.progress * 100)}%`, height: "100%", background: rc, borderRadius: 2 }} />}
       </div>
     </button>
   );
@@ -11719,7 +11728,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px", letterSpacing: "-0.02em" }}>{rank.label}</p>
               <div className="flex items-center gap-2 px-8 w-full mt-1">
                 <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{ width: `${rank.progress * 100}%`, height: "100%", background: rank.color, borderRadius: 3, transition: "width 0.4s ease" }} />
+                  <div style={{ width: `${Math.max(3, rank.progress * 100)}%`, height: "100%", background: rank.color, borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
                 <span style={{ color: "#888", fontSize: "10px", fontWeight: 700 }}>{nextLabel}</span>
               </div>
