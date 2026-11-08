@@ -1852,7 +1852,64 @@ function cleanKnockoutSection(raw) {
   return stripped || raw;
 }
 
-function transformKnockoutSeriesMatch(km) {
+const FUURY_STREAM_URL = "https://www.twitch.tv/fuury";
+
+function normalizePlayerName(name) {
+  if (!name) return "";
+  return String(name).toLowerCase().trim().replace(/[^a-z]/g, "");
+}
+
+// Agrège wins/losses par joueur sur l'ensemble des matchs knockout (nights + playoffs
+// déjà joués). Sert à calculer un winrate 1v1 injecté comme odds dans les matchs à venir.
+function computeKnockoutPlayerStats(allKnockoutMatches) {
+  const stats = {};
+  for (const m of allKnockoutMatches || []) {
+    const n1 = m.opponents?.[0]?.opponent?.name;
+    const n2 = m.opponents?.[1]?.opponent?.name;
+    if (!n1 || !n2 || n1 === "TBD" || n2 === "TBD") continue;
+    const s1 = m.results?.[0]?.score;
+    const s2 = m.results?.[1]?.score;
+    if (!Number.isFinite(s1) || !Number.isFinite(s2)) continue;
+    if (s1 === 0 && s2 === 0) continue;
+    const k1 = normalizePlayerName(n1);
+    const k2 = normalizePlayerName(n2);
+    if (!stats[k1]) stats[k1] = { wins: 0, losses: 0, mapsWon: 0, mapsLost: 0 };
+    if (!stats[k2]) stats[k2] = { wins: 0, losses: 0, mapsWon: 0, mapsLost: 0 };
+    stats[k1].mapsWon += s1;
+    stats[k1].mapsLost += s2;
+    stats[k2].mapsWon += s2;
+    stats[k2].mapsLost += s1;
+    if (s1 > s2) { stats[k1].wins++; stats[k2].losses++; }
+    else if (s2 > s1) { stats[k2].wins++; stats[k1].losses++; }
+  }
+  return stats;
+}
+
+function knockoutOddsFor(n1, n2, stats) {
+  if (!stats) return null;
+  const k1 = normalizePlayerName(n1);
+  const k2 = normalizePlayerName(n2);
+  const s1 = stats[k1];
+  const s2 = stats[k2];
+  if (!s1 || !s2) return null;
+  // Winrate maps avec lissage bayésien (prior 2 games 50-50).
+  const PRIOR = 2;
+  const wr1 = (s1.mapsWon + PRIOR) / (s1.mapsWon + s1.mapsLost + PRIOR * 2);
+  const wr2 = (s2.mapsWon + PRIOR) / (s2.mapsWon + s2.mapsLost + PRIOR * 2);
+  const total = wr1 + wr2;
+  if (total <= 0) return null;
+  const p1 = wr1 / total;
+  let odds1 = Math.round(p1 * 100);
+  if (odds1 <= 0) odds1 = 1;
+  if (odds1 >= 100) odds1 = 99;
+  const odds2 = 100 - odds1;
+  const margin = 0.9;
+  const cote1 = odds1 > 0 ? Math.round((100 / odds1) * margin * 100) / 100 : null;
+  const cote2 = odds2 > 0 ? Math.round((100 / odds2) * margin * 100) / 100 : null;
+  return { odds1, odds2, cote1, cote2, insufficientData: false };
+}
+
+function transformKnockoutSeriesMatch(km, playerStats) {
   const n1 = km.opponents?.[0]?.opponent?.name || "TBD";
   const n2 = km.opponents?.[1]?.opponent?.name || "TBD";
   const beginRaw = km.begin_at || null;
@@ -1866,6 +1923,8 @@ function transformKnockoutSeriesMatch(km) {
   const cleanSection = cleanKnockoutSection(km.section || "");
   const phaseLabel = cleanSection ? ("FuuRy Knockout — " + cleanSection) : "FuuRy Knockout Series";
   const isRunning = status === "running";
+  const normalizedStatus = status === "upcoming" ? "not_started" : status;
+  const odds = knockoutOddsFor(n1, n2, playerStats);
   return {
     id: km.id,
     day: d ? isoDate(d) : null,
@@ -1881,17 +1940,22 @@ function transformKnockoutSeriesMatch(km) {
     team2Logo: knockoutPlayerLogo(n2),
     team1Region: null,
     team2Region: null,
-    status: status === "upcoming" ? "not_started" : status,
+    status: normalizedStatus,
     score1: hasScore ? s1raw : undefined,
     score2: hasScore ? s2raw : undefined,
     tier: "b",
     map_scores: !isRunning && games.length > 0 ? games.map(g => ({ map: null, score1: g.score1, score2: g.score2 })) : null,
     live_map_scores: isRunning && liveGames.length > 0 ? liveGames.map(g => ({ map: null, score1: g.score1 ?? 0, score2: g.score2 ?? 0 })) : null,
     number_of_games: 5,
-    streamUrl: null,
+    streamUrl: isRunning || normalizedStatus === "not_started" ? FUURY_STREAM_URL : null,
     isKnockoutSeries: true,
     knockoutSection: cleanSection || null,
     knockoutStage: km.stage || null,
+    odds1: odds?.odds1 ?? null,
+    odds2: odds?.odds2 ?? null,
+    cote1: odds?.cote1 ?? null,
+    cote2: odds?.cote2 ?? null,
+    insufficientData: odds ? false : true,
   };
 }
 
@@ -2387,6 +2451,9 @@ function computeMatchOddsElo(match, finishedMatches, eloData) {
 function attachComputedOdds(matches, finishedMatches, tierWeightFn = tierWeight) {
   const eloData = computeEloRatings(finishedMatches, tierWeightFn);
   return matches.map((m) => {
+    // Matchs Knockout 1v1 : odds déjà calculés à partir des stats joueur par
+    // transformKnockoutSeriesMatch, on ne les écrase pas avec l'Elo d'équipes.
+    if (m.isKnockoutSeries) return m;
     if (isTbd(m)) return { ...m, odds1: null, odds2: null, cote1: null, cote2: null, insufficientData: true };
     const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, finishedMatches, eloData);
     return { ...m, odds1, odds2, cote1, cote2, insufficientData };
@@ -15054,7 +15121,8 @@ export default function ClutchApp() {
         (rKo.playoffs || []).forEach(m => rKoAll.push(m));
         (rKo.other || []).forEach(m => rKoAll.push(m));
       }
-      const rKoT = rKoAll.map(transformKnockoutSeriesMatch).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+      const rKoStats = computeKnockoutPlayerStats(rKoAll);
+      const rKoT = rKoAll.map(m => transformKnockoutSeriesMatch(m, rKoStats)).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
       const rKoUp = rKoT.filter(m => m.status === "not_started" || m.status === "upcoming");
       const rKoLi = rKoT.filter(m => m.status === "running");
       const rKoFin = rKoT.filter(m => m.status === "finished");
@@ -15068,10 +15136,9 @@ export default function ClutchApp() {
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
         });
-        const koTagged = rKoFin.map(m => ({ ...m, insufficientData: true }));
         const seen = new Set();
         const combined = [];
-        for (const m of [...standard, ...koTagged]) {
+        for (const m of [...standard, ...rKoFin]) {
           const k = String(m.id);
           if (seen.has(k)) continue;
           seen.add(k);
@@ -15356,7 +15423,8 @@ export default function ClutchApp() {
           (knockout.playoffs || []).forEach((m) => koAll.push(m));
           (knockout.other || []).forEach((m) => koAll.push(m));
         }
-        const koTransformed = koAll.map(transformKnockoutSeriesMatch).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
+        const koPlayerStats = computeKnockoutPlayerStats(koAll);
+        const koTransformed = koAll.map(m => transformKnockoutSeriesMatch(m, koPlayerStats)).filter(m => m.team1Name && m.team2Name && m.team1Name !== "TBD" && m.team2Name !== "TBD");
         const koUpcoming = koTransformed.filter(m => m.status === "not_started" || m.status === "upcoming");
         const koLive = koTransformed.filter(m => m.status === "running");
         const koFinished = koTransformed.filter(m => m.status === "finished");
@@ -15398,8 +15466,7 @@ export default function ClutchApp() {
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
             });
-            const koFinishedTagged = koFinished.map(m => ({ ...m, insufficientData: true }));
-            return dedupeByIdRL([...standard, ...koFinishedTagged]).sort((a, b) => {
+            return dedupeByIdRL([...standard, ...koFinished]).sort((a, b) => {
               const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
               const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
               return tb - ta;

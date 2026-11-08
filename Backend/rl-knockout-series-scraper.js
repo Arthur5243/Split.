@@ -161,8 +161,38 @@ function getOpponentName(block, key) {
 
 function parseIsoDateTime(raw) {
   if (!raw) return null;
-  const m = /(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/.exec(raw);
-  if (m) return `${m[1]}T${m[2]}:00Z`;
+  // "YYYY-MM-DD HH:MM" éventuellement séparé par " - "
+  const m = /(\d{4})-(\d{2})-(\d{2})\s*(?:-\s*)?(\d{2}):(\d{2})/.exec(raw);
+  if (m) {
+    const y = parseInt(m[1], 10);
+    const mo = parseInt(m[2], 10);
+    const d = parseInt(m[3], 10);
+    const h = parseInt(m[4], 10);
+    const mm = parseInt(m[5], 10);
+    // Détection timezone. Liquipedia encode souvent "<abbr data-tz=\"+1:00\">CET</abbr>".
+    let offsetMin = null;
+    const tzOff = /data-tz=["']?([+-])(\d{1,2}):?(\d{2})?/i.exec(raw);
+    if (tzOff) {
+      const sign = tzOff[1] === "-" ? -1 : 1;
+      offsetMin = sign * (parseInt(tzOff[2], 10) * 60 + parseInt(tzOff[3] || "0", 10));
+    } else {
+      const tzRe = /(?:UTC|GMT)\s*([+-])(\d{1,2}):?(\d{2})?/i.exec(raw);
+      if (tzRe) {
+        const sign = tzRe[1] === "-" ? -1 : 1;
+        offsetMin = sign * (parseInt(tzRe[2], 10) * 60 + parseInt(tzRe[3] || "0", 10));
+      } else if (/CEST/i.test(raw)) offsetMin = 120;
+      else if (/CET/i.test(raw)) offsetMin = 60;
+      else if (/\bUTC\b|\bGMT\b|\bZ\b/i.test(raw)) offsetMin = 0;
+      else {
+        // Pas de TZ explicite → événement FuuRy, dates par défaut en heure Paris.
+        // DST Europe : CEST du dernier dim mars au dernier dim octobre, sinon CET.
+        const isSummerDst = (mo >= 4 && mo <= 9) || (mo === 3 && d >= 29) || (mo === 10 && d < 25);
+        offsetMin = isSummerDst ? 120 : 60;
+      }
+    }
+    const utcMs = Date.UTC(y, mo - 1, d, h, mm) - offsetMin * 60 * 1000;
+    return new Date(utcMs).toISOString();
+  }
   const m2 = /(\d{4})-(\d{2})-(\d{2})/.exec(raw);
   if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}T00:00:00Z`;
   return null;
