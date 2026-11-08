@@ -242,7 +242,12 @@ function parseMatchBlock(block, section) {
   const opp2 = getOpponentName(block, "opponent2");
   if (!opp1 || !opp2) return null;
 
-  const finished = getParam(block, "finished") === "true";
+  const finishedFlag = getParam(block, "finished") === "true";
+  const winnerParam = getParam(block, "winner");
+  const hasWinnerParam = winnerParam === "1" || winnerParam === "2";
+  // Certains blocs Liquipedia posent uniquement winner=1 sans finished=true :
+  // on traite ça comme un match terminé.
+  const finished = finishedFlag || hasWinnerParam;
   const date = getParam(block, "date");
   const begin_at = parseIsoDateTime(date);
 

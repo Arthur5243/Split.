@@ -9407,17 +9407,12 @@ function RlBracketPage({ onBack, T, predictions }) {
     }
     let playoffRounds;
     if (bySection.size <= 1 && playoffsRaw.length > 0) {
-      const sorted = [...playoffsRaw].sort((a, b) => {
-        const ta = a.begin_at ? new Date(a.begin_at).getTime() : 0;
-        const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
-        return ta - tb;
-      });
+      // On garde l'ordre d'apparition dans le wikitext Liquipedia = ordre
+      // du bracket seed (QF1 en haut, QF2 ensuite, etc.), pas l'heure de jeu.
       // On garde uniquement les 4 premiers comme QF, le reste est ignoré :
-      // SF et GF sont systématiquement dérivés des winners (plus fiable que les
-      // placeholders Liquipedia qui peuvent exister avant que les matchs soient
-      // réellement programmés).
+      // SF et GF sont systématiquement dérivés des winners.
       playoffRounds = [
-        { name: "Quarterfinals", matches: sorted.slice(0, 4) },
+        { name: "Quarterfinals", matches: playoffsRaw.slice(0, 4) },
         { name: "Semifinals", matches: [] },
         { name: "Grand Final", matches: [] },
       ];
@@ -9438,12 +9433,8 @@ function RlBracketPage({ onBack, T, predictions }) {
     const qfRound = findRound(/quarter/) || { name: "Quarterfinals", matches: [] };
     const sfRound = findRound(/semi/) || { name: "Semifinals", matches: [] };
     const gfRound = findRound(/grand\s*final|^final$/) || { name: "Grand Final", matches: [] };
-    // Tri QF par heure (seed bracket)
-    const qfSorted = [...(qfRound.matches || [])].sort((a, b) => {
-      const ta = a.begin_at ? new Date(a.begin_at).getTime() : 0;
-      const tb = b.begin_at ? new Date(b.begin_at).getTime() : 0;
-      return ta - tb;
-    });
+    // Ordre bracket = ordre d'apparition dans Liquipedia (pas begin_at).
+    const qfSorted = [...(qfRound.matches || [])];
     const winnerName = (m) => {
       if (!m || m.status !== "finished") return null;
       const s1 = m.results?.[0]?.score;
