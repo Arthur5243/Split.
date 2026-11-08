@@ -163,10 +163,8 @@ function watchAdOverlays() {
     const vw = window.innerWidth, vh = window.innerHeight;
     const box = findAdBox(overlay);
     const tabH = 36;
-    // Cadre portrait : largeur = 2/3 vw * 0.95 (très légère réduction),
-    // hauteur = largeur * 1.2 (ratio 1:1.2, hauteur 20% de plus que largeur).
-    let width = Math.round(vw * (2 / 3) * 0.95);
-    let height = Math.round(width * 1.2);
+    let width = Math.round(vw * 0.92);
+    let height = Math.round(width * 0.75);
     width = Math.max(120, Math.min(vw - 4, width));
     height = Math.max(60, Math.min(vh - tabH - 4, height));
     const left = Math.max(2, Math.round((vw - width) / 2));

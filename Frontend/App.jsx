@@ -5037,6 +5037,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
             {chestPhase === "idle" ? "Appuie pour ouvrir" : chestPhase === "spinning" ? "..." : "Récompense obtenue !"}
           </p>
 
+          {chestStrip.length > 0 && (
           <div style={{ position: "relative", width: "88%", maxWidth: 340, height: VIS_N * ITEM_H, overflow: "hidden", borderRadius: 18, border: "2px solid #222", background: "#0a0a0a" }}>
             <div style={{
               position: "absolute", left: 0, right: 0, top: "50%", transform: "translateY(-50%)",
@@ -5077,6 +5078,7 @@ function RewardsModal({ onClose, T, userPoints, userXp, predictions, upcomingMat
               })}
             </div>
           </div>
+          )}
 
           {chestPhase === "idle" && (
             <button onClick={triggerSpin} style={{
@@ -5412,25 +5414,39 @@ function SubscribeModal({ onClose, T, isSubscribed, userEmail, userId, onSubscri
         <div style={{ flex: 1, overflowY: "auto", padding: "18px 20px" }} className="no-scrollbar">
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
             {perks.map((p, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "#121212", borderRadius: 10, border: "1px solid #1e1e1e" }}>
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
+                background: isSubscribed ? "linear-gradient(135deg, rgba(204,247,29,0.06), rgba(204,247,29,0.02))" : "#121212",
+                border: isSubscribed ? "1px solid rgba(204,247,29,0.2)" : "1px solid #1e1e1e",
+              }}>
                 <span style={{ fontSize: 18 }}>{p.icon}</span>
-                <span style={{ color: "#ddd", fontSize: 12, fontWeight: 600 }}>{p.label}</span>
+                <span style={{ color: isSubscribed ? "#CCF71D" : "#ddd", fontSize: 12, fontWeight: 600, flex: 1 }}>{p.label}</span>
+                {isSubscribed && <span style={{ color: "#CCF71D", fontSize: 14, fontWeight: 900 }}>✓</span>}
               </div>
             ))}
           </div>
 
-          <div style={{ padding: "14px", background: "#121212", border: "1px solid #1e1e1e", borderRadius: 12, marginBottom: 14 }}>
+          <div style={{
+            padding: "14px", borderRadius: 12, marginBottom: 14,
+            background: isSubscribed ? "linear-gradient(135deg, rgba(204,247,29,0.06), rgba(204,247,29,0.02))" : "#121212",
+            border: isSubscribed ? "1px solid rgba(204,247,29,0.15)" : "1px solid #1e1e1e",
+          }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
               <span style={{ color: "#fff", fontSize: 14, fontWeight: 800 }}>Prix mensuel</span>
-              <span style={{ color: "#FFB800", fontSize: 22, fontWeight: 900 }}>11,99€</span>
+              <span style={{ color: isSubscribed ? "#CCF71D" : "#FFB800", fontSize: 22, fontWeight: 900 }}>11,99€</span>
             </div>
             <p style={{ color: "#666", fontSize: 10, lineHeight: 1.4 }}>Résiliable à tout moment. Pas d'engagement.</p>
           </div>
 
           {isSubscribed ? (
-            <div style={{ padding: "14px", background: "linear-gradient(135deg, rgba(204,247,29,0.08), rgba(204,247,29,0.02))", border: "1px solid rgba(204,247,29,0.3)", borderRadius: 12, textAlign: "center" }}>
-              <p style={{ color: "#CCF71D", fontSize: 13, fontWeight: 800, marginBottom: 4 }}>✓ Tu es abonné Split+</p>
-              <p style={{ color: "#888", fontSize: 11 }}>Toutes les récompenses premium sont débloquées.</p>
+            <div style={{
+              padding: "16px", borderRadius: 12, textAlign: "center",
+              background: "linear-gradient(135deg, rgba(204,247,29,0.12), rgba(204,247,29,0.03))",
+              border: "1.5px solid rgba(204,247,29,0.35)",
+              boxShadow: "0 0 20px rgba(204,247,29,0.08), inset 0 1px 0 rgba(204,247,29,0.1)",
+            }}>
+              <p style={{ color: "#CCF71D", fontSize: 15, fontWeight: 900, marginBottom: 4, letterSpacing: 0.3 }}>✓ Tu es abonné Split+</p>
+              <p style={{ color: "#999", fontSize: 11 }}>Toutes les récompenses premium sont débloquées.</p>
             </div>
           ) : waiting ? (
             <div style={{ padding: "18px 14px", borderRadius: 12, border: "1px solid #2a2a2a", background: "#121212", textAlign: "center" }}>
