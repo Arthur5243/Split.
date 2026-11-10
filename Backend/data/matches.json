@@ -1092,6 +1092,34 @@
     "match_id": 2631
   },
   {
+    "pandascore_id": 1800760,
+    "tournament_id": "PANDA_22424",
+    "tournament_name": "Playoffs",
+    "tier": "Asia Pacific Predator League",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Quarterfinal 3: Alter Ego x Kertanegara vs GAS",
+    "team1": "Alter Ego x Kertanegara",
+    "team2": "GAS Esports",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2632
+  },
+  {
+    "pandascore_id": 1800758,
+    "tournament_id": "PANDA_22424",
+    "tournament_name": "Playoffs",
+    "tier": "Asia Pacific Predator League",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Quarterfinal 1: BOOM vs RJL",
+    "team1": "BOOM Esports",
+    "team2": "Rojali",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2633
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
