@@ -1120,6 +1120,20 @@
     "match_id": 2633
   },
   {
+    "pandascore_id": 1802841,
+    "tournament_id": "PANDA_22427",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "3rd place match: PL vs xXxMasterProMegaTeamxXx",
+    "team1": "Pixel Lumina",
+    "team2": "xXxMasterProMegaTeamxXx",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2634
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
