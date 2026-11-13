@@ -243,10 +243,12 @@ function reinjectVignette() {
   (document.body || document.documentElement).appendChild(s);
 }
 function scheduleReinject() {
+  if (adsDisabled) return;
   adShownCount++;
   if (reinjectTimer) clearTimeout(reinjectTimer);
   const delay = nextDelayMs();
   reinjectTimer = setTimeout(() => {
+    if (adsDisabled) return;
     if (watchAdOverlays._isTracking && watchAdOverlays._isTracking()) {
       // Pub déjà à l'écran, on reporte sans incrémenter.
       adShownCount--;
@@ -256,10 +258,12 @@ function scheduleReinject() {
     reinjectVignette();
   }, delay);
 }
+let adsDisabled = false;
 // 1re pub : programmée à l'ouverture. Appelée depuis initAdMob().
 function scheduleFirstAd() {
-  if (reinjectTimer) return;
+  if (adsDisabled || reinjectTimer) return;
   reinjectTimer = setTimeout(() => {
+    if (adsDisabled) return;
     if (watchAdOverlays._isTracking && watchAdOverlays._isTracking()) return;
     reinjectVignette();
   }, AD_DELAYS_MS[0]);
@@ -271,10 +275,23 @@ function scheduleFirstAd() {
 // n'a plus à retarder le chargement du script côté client.
 function scheduleVignette() { /* no-op : voir index.html */ }
 
-function initAdMob() {
+// Désactive totalement les pubs — pour les abonnés Split+. On annule les
+// timers, on marque __splitVignetteManaged=true pour bloquer le fallback
+// 10min de index.html, et on neutralise les futures reinjections.
+function disableAds() {
+  adsDisabled = true;
+  try { window.__splitVignetteManaged = true; } catch {}
+  if (reinjectTimer) { clearTimeout(reinjectTimer); reinjectTimer = null; }
+}
+
+function initAdMob(isSubscribed = false) {
   // Marque qu'on gère nous-mêmes la vignette : empêche le fallback dans
   // index.html (planifié à 10 min au cas où admob.js ne tournerait pas).
   try { window.__splitVignetteManaged = true; } catch {}
+  if (isSubscribed) {
+    adsDisabled = true;
+    return;
+  }
   watchAdOverlays();
   scheduleFirstAd();
   scheduleVignette();
@@ -310,4 +327,4 @@ async function showInterstitial() {
   return false;
 }
 
-export { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID };
+export { initAdMob, disableAds, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID };

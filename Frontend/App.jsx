@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { initAdMob, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID } from "./admob.js";
+import { initAdMob, disableAds, showInterstitial, isNative, getAdSlotHtml, ADSENSE_PUB_ID } from "./admob.js";
 import cs2ManualResults from "./cs2-manual-results.json";
 import {
   Home,
@@ -14519,7 +14519,10 @@ export default function ClutchApp() {
     window.__splitTriggerAd = (reason) => triggerAd(reason || "event");
     return () => { delete window.__splitTriggerAd; };
   }, [triggerAd]);
-  useEffect(() => { initAdMob(); }, []);
+  useEffect(() => { initAdMob(isSubscribed); }, []);
+  // Si l'utilisateur devient abonné pendant la session (checkout Whop
+  // réussi, pull backend), on coupe toutes les pubs en cours.
+  useEffect(() => { if (isSubscribed) disableAds(); }, [isSubscribed]);
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
