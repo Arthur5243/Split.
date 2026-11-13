@@ -33,6 +33,7 @@ import { startSofascoreWorker } from "./sofascore-scores.js";
 import { startRlScraper } from "./liquipedia-rl-scraper.js";
 import { startRL1v1Worker } from "./rl-1v1-scraper.js";
 import { startRLKnockoutSeriesWorker } from "./rl-knockout-series-scraper.js";
+import { startRLLiquipediaMatchesWorker, getRLLiquipediaMatchesSnapshot, forceRLLiquipediaMatchesRefresh } from "./rl-liquipedia-matches-scraper.js";
 import authRouter from "./auth-routes.js";
 import socialRouter from "./social-routes.js";
 import postsRouter from "./posts-routes.js";
@@ -2297,6 +2298,7 @@ app.listen(PORT, () => {
   startRlScraper();
   startRL1v1Worker(); // Scrape Liquipedia pour les matchs RL 1v1 (PandaScore ne couvre pas)
   startRLKnockoutSeriesWorker(); // Scrape Liquipedia FuuRy/KNOCKOUT_SERIES (1v1 FR)
+  startRLLiquipediaMatchesWorker(); // Scrape Liquipedia saisons RLCS pour combler les trous PandaScore RL
   startPointsWorker(PORT); // points des joueurs calculés côté serveur, 24h/24
   // Reset automatique des matchs Valorant "abandon définitif" à chaque
   // démarrage. Maintenant que saveMapScoresFailure ne produit plus d'abandon

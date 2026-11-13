@@ -17,6 +17,7 @@ import {
 import { getRL_ScrapedScores } from "./liquipedia-rl-scraper.js";
 import { getRL1v1Snapshot, forceRL1v1Refresh } from "./rl-1v1-scraper.js";
 import { getRLKnockoutSeriesSnapshot, forceRLKnockoutSeriesRefresh } from "./rl-knockout-series-scraper.js";
+import { getRLLiquipediaMatchesSnapshot, forceRLLiquipediaMatchesRefresh } from "./rl-liquipedia-matches-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -128,6 +129,34 @@ function attachTeamRegions(m) {
   return m;
 }
 
+// Merge Liquipedia matches avec PandaScore sur une liste. Dédoublonne par
+// paire (team1, team2, date) pour éviter qu'un même match remonte 2x si
+// PandaScore ET Liquipedia le couvrent.
+function mergeWithLiquipedia(pandaList, liquipediaList) {
+  const seen = new Set();
+  const key = (m) => {
+    const t1 = (m.opponents?.[0]?.opponent?.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const t2 = (m.opponents?.[1]?.opponent?.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const d = m.begin_at ? m.begin_at.slice(0, 10) : "";
+    const pair = [t1, t2].sort().join("|");
+    return `${pair}@${d}`;
+  };
+  const out = [];
+  for (const m of pandaList) {
+    const k = key(m);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(m);
+  }
+  for (const m of liquipediaList) {
+    const k = key(m);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(m);
+  }
+  return out;
+}
+
 // --- /api/rl-upcoming ---
 router.get("/api/rl-upcoming", async (req, res) => {
   try {
@@ -151,7 +180,7 @@ router.get("/api/rl-upcoming", async (req, res) => {
       return true;
     });
     const now = Date.now();
-    const data = deduped
+    const pandaData = deduped
       .filter((m) => !isFullyUnknown(m) && isNotableTier(m))
       .filter((m) => {
         if (!m.begin_at) return true;
@@ -159,7 +188,16 @@ router.get("/api/rl-upcoming", async (req, res) => {
         return Number.isNaN(t) || t > now;
       })
       .map(attachTeamRegions);
-    res.json(data);
+
+    // Complète avec les matchs Liquipedia (saison RLCS en cours). Même filtre
+    // temporel (begin_at > now).
+    const lqpSnap = getRLLiquipediaMatchesSnapshot();
+    const lqpUpcoming = (lqpSnap.upcoming || []).filter((m) => {
+      if (!m.begin_at) return true;
+      const t = new Date(m.begin_at).getTime();
+      return Number.isNaN(t) || t > now;
+    }).map(attachTeamRegions);
+    res.json(mergeWithLiquipedia(pandaData, lqpUpcoming));
   } catch (e) {
     console.error("rl-upcoming error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs RL à venir." });
@@ -179,7 +217,7 @@ router.get("/api/rl-live", async (req, res) => {
       const beginAt = m.begin_at ? new Date(m.begin_at).getTime() : null;
       return !(beginAt && now - beginAt >= ABSOLUTE_HIDE_THRESHOLD_MS);
     });
-    res.json(visible.map((m) => {
+    const pandaLive = visible.map((m) => {
       const enriched = attachTeamRegions(m);
       if (m.status === "running") {
         const t1 = m.opponents?.[0]?.opponent?.name;
@@ -191,7 +229,10 @@ router.get("/api/rl-live", async (req, res) => {
         }
       }
       return enriched;
-    }));
+    });
+    const lqpSnap = getRLLiquipediaMatchesSnapshot();
+    const lqpLive = (lqpSnap.live || []).map(attachTeamRegions);
+    res.json(mergeWithLiquipedia(pandaLive, lqpLive));
   } catch (e) {
     console.error("rl-live error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les matchs RL en direct." });
@@ -239,8 +280,23 @@ router.get("/api/rl-results", async (req, res) => {
       m.game_scores = fallback || null;
     }
 
-    rlResultsCache = { data: enriched, at: Date.now() };
-    res.json(enriched);
+    // Complète avec les matchs Liquipedia terminés, avec leurs game scores
+    // (live_map_scores → game_scores) quand dispo.
+    const lqpSnap = getRLLiquipediaMatchesSnapshot();
+    const lqpPast = (lqpSnap.past || []).map((m) => {
+      const em = attachTeamRegions(m);
+      if (Array.isArray(m.live_map_scores) && m.live_map_scores.length > 0) {
+        em.game_scores = m.live_map_scores.map((g, i) => ({
+          game: "Game " + (i + 1),
+          score1: g.score1,
+          score2: g.score2,
+        }));
+      }
+      return em;
+    });
+    const merged = mergeWithLiquipedia(enriched, lqpPast);
+    rlResultsCache = { data: merged, at: Date.now() };
+    res.json(merged);
   } catch (e) {
     console.error("rl-results error:", e.message);
     res.status(502).json({ error: "Impossible de récupérer les résultats RL." });
@@ -325,6 +381,31 @@ router.get("/api/rl-knockout-series", async (req, res) => {
   } catch (e) {
     console.error("rl-knockout-series error:", e.message);
     res.status(500).json({ error: "Impossible de récupérer le tournoi Knockout Series." });
+  }
+});
+
+// --- /api/rl-liquipedia-matches : snapshot complet des matchs scrapes
+// depuis les pages RLCS Liquipedia (diag). Les endpoints upcoming/live/results
+// les merge déjà, cet endpoint sert à inspecter ce que le worker a trouvé.
+router.get("/api/rl-liquipedia-matches", async (req, res) => {
+  try {
+    res.json(getRLLiquipediaMatchesSnapshot());
+  } catch (e) {
+    console.error("rl-liquipedia-matches error:", e.message);
+    res.status(500).json({ error: "Impossible de récupérer le snapshot Liquipedia." });
+  }
+});
+
+router.post("/api/rl-liquipedia-matches-refresh", async (req, res) => {
+  const secret = req.headers["x-admin-secret"];
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: "forbidden" });
+  }
+  try {
+    const snap = await forceRLLiquipediaMatchesRefresh();
+    res.json({ ok: true, snap });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
