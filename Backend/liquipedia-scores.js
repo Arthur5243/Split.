@@ -43,6 +43,11 @@ const LIQUIPEDIA_BASE = "https://liquipedia.net/counterstrike/api.php";
 // Liquipedia bloque les User-Agent génériques ; celui-ci identifie le
 // projet comme demandé par leurs conditions d'utilisation.
 const LIQUIPEDIA_USER_AGENT = "SplitApp/1.0 (https://github.com/Arthur5243/Split.-main)";
+// Apify fallback : proxy résidentiel contourne le WAF Liquipedia qui 429
+// l'IP Railway. Identique au scraper RL knockout. Quand APIFY_TOKEN est set,
+// on tape via apify~web-fetch d'abord, direct en dernier recours.
+const APIFY_TOKEN = process.env.APIFY_TOKEN || "";
+const APIFY_WEB_FETCH_URL = "https://api.apify.com/v2/acts/apify~web-fetch/run-sync-get-dataset-items";
 
 const GENERAL_THROTTLE_MS = 2100; // un peu de marge sur le "1 req/2s" imposé
 const PARSE_THROTTLE_MS = 31000; // idem sur le "1 action=parse/30s"
@@ -65,11 +70,37 @@ async function throttleParse() {
   _lqt.lastGeneral = Date.now();
 }
 
+async function fetchViaApify(targetUrl) {
+  const apifyUrl = APIFY_WEB_FETCH_URL + "?token=" + encodeURIComponent(APIFY_TOKEN);
+  const res = await fetch(apifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl }),
+  });
+  if (!res.ok) throw new Error("liquipedia Apify HTTP " + res.status);
+  const items = await res.json();
+  if (!Array.isArray(items) || items.length === 0) throw new Error("Apify renvoie dataset vide");
+  const item = items[0];
+  const httpStatus = item?.fetch?.httpStatusCode;
+  if (httpStatus && httpStatus !== 200) throw new Error("Liquipedia via Apify HTTP " + httpStatus);
+  const textRaw = item?.text;
+  if (typeof textRaw !== "string") throw new Error("Apify renvoie pas de text");
+  try { return JSON.parse(textRaw); }
+  catch { throw new Error("Apify text pas du JSON Liquipedia"); }
+}
+
 async function liquipediaFetch(params, { isParse = false } = {}) {
   if (Date.now() < _lqt.rateLimitedUntil) throw new Error("liquipedia rate-limited (cooldown)");
   if (isParse) await throttleParse();
   else await throttleGeneral();
   const url = LIQUIPEDIA_BASE + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
+  if (APIFY_TOKEN) {
+    try {
+      return await fetchViaApify(url);
+    } catch (e) {
+      // Apify peut échouer (502, crédit épuisé). Fallback direct.
+    }
+  }
   const res = await fetch(url, { headers: { "User-Agent": LIQUIPEDIA_USER_AGENT } });
   if (res.status === 429) {
     _lqt.rateLimitedUntil = Date.now() + 30 * 60 * 1000;
