@@ -14519,10 +14519,8 @@ export default function ClutchApp() {
     window.__splitTriggerAd = (reason) => triggerAd(reason || "event");
     return () => { delete window.__splitTriggerAd; };
   }, [triggerAd]);
-  useEffect(() => { initAdMob(isSubscribed); }, []);
-  // Si l'utilisateur devient abonné pendant la session (checkout Whop
-  // réussi, pull backend), on coupe toutes les pubs en cours.
-  useEffect(() => { if (isSubscribed) disableAds(); }, [isSubscribed]);
+  // initAdMob est appelé dans un useEffect plus bas (après la déclaration
+  // de l'état isSubscribed) pour éviter une TDZ ReferenceError.
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
@@ -14980,6 +14978,21 @@ export default function ClutchApp() {
   });
   const [showSubscribeModal, setShowSubscribeModal] = useState(false);
   const [showNotifPrompt, setShowNotifPrompt] = useState(false);
+
+  // Pubs : init une fois au mount avec l'état d'abonnement initial, puis
+  // couper les pubs à la volée si l'utilisateur devient abonné en cours de
+  // session (checkout Whop réussi, pull /api/social/me).
+  // (Ces useEffect sont ICI et pas plus haut avec les autres pubs parce
+  // qu'ils référencent `isSubscribed` dans un deps array — accéder à
+  // `isSubscribed` avant son `useState` déclencherait une TDZ ReferenceError
+  // qui crash l'app en écran noir.)
+  const initAdMobCalledRef = useRef(false);
+  useEffect(() => {
+    if (initAdMobCalledRef.current) return;
+    initAdMobCalledRef.current = true;
+    initAdMob(isSubscribed);
+  }, [isSubscribed]);
+  useEffect(() => { if (isSubscribed) disableAds(); }, [isSubscribed]);
 
   // Garde-fou multi-appareils : tant que le pull depuis /api/social/me n'a pas
   // fini (profileHydratedRef.current = false), on bloque tout push automatique
