@@ -18,7 +18,7 @@ const PERSIST_PATH = join(DATA_DIR, "rl-knockout-series.json");
 
 const PAGE = "FuuRy/KNOCKOUT_SERIES";
 const API = "https://liquipedia.net/rocketleague/api.php";
-const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr; contact: arthur.pro.busi@gmail.com)";
+const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr)";
 // Apify : proxy résidentiel contourne le WAF Liquipedia qui 429 l'IP Railway.
 // Si APIFY_TOKEN est set, on fetch via leur actor apify/web-fetch au lieu de
 // taper direct. ~$0.00005 par requête → <$0.05/mois pour 1 fetch/h.

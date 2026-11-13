@@ -27,9 +27,9 @@ const PERSIST_PATH = join(DATA_DIR, "rl-1v1-matches.json");
 
 const WIKI = "rocketleague";
 const API = `https://liquipedia.net/${WIKI}/api.php`;
-const UA =
-  process.env.LIQUIPEDIA_USER_AGENT ||
-  "SplitApp/1.0 (contact: arthur.pro.busi@gmail.com)";
+const UA = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr)";
+const APIFY_TOKEN = process.env.APIFY_TOKEN || "";
+const APIFY_WEB_FETCH_URL = "https://api.apify.com/v2/acts/apify~web-fetch/run-sync-get-dataset-items";
 
 const HUB_PAGE = "1v1";
 
@@ -52,11 +52,37 @@ async function throttleParse() {
   T.lastGeneral = Date.now();
 }
 
+async function fetchViaApify(targetUrl) {
+  const apifyUrl = APIFY_WEB_FETCH_URL + "?token=" + encodeURIComponent(APIFY_TOKEN);
+  const res = await fetch(apifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl }),
+  });
+  if (!res.ok) throw new Error("rl-1v1 Apify HTTP " + res.status);
+  const items = await res.json();
+  if (!Array.isArray(items) || items.length === 0) throw new Error("Apify renvoie dataset vide");
+  const item = items[0];
+  const httpStatus = item?.fetch?.httpStatusCode;
+  if (httpStatus && httpStatus !== 200) throw new Error("Liquipedia via Apify HTTP " + httpStatus);
+  const textRaw = item?.text;
+  if (typeof textRaw !== "string") throw new Error("Apify renvoie pas de text");
+  try { return JSON.parse(textRaw); }
+  catch { throw new Error("Apify text pas du JSON Liquipedia"); }
+}
+
 async function liquiFetch(params, { parse = false } = {}) {
   if (Date.now() < T.rateLimitedUntil) throw new Error("rl-1v1 rate-limited");
   if (parse) await throttleParse();
   else await throttleGeneral();
   const url = API + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
+  if (APIFY_TOKEN) {
+    try {
+      return await fetchViaApify(url);
+    } catch (e) {
+      // Apify indispo → fallback direct
+    }
+  }
   const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Encoding": "gzip" } });
   if (res.status === 429) {
     T.rateLimitedUntil = Date.now() + 30 * 60 * 1000;

@@ -20,9 +20,7 @@ const PANDASCORE_API_KEY = process.env.PANDASCORE_API_KEY;
 const PANDASCORE_BASE = "https://api.pandascore.co";
 const WIKI = "rocketleague";
 const API_BASE = `https://liquipedia.net/${WIKI}/api.php`;
-const USER_AGENT =
-  process.env.LIQUIPEDIA_USER_AGENT ||
-  "SplitLiveScoresBot/1.0 (contact: arthur.pro.busi@gmail.com)";
+const USER_AGENT = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr)";
 
 const PERSISTED_SCORES_PATH = process.env.RL_SCRAPED_SCORES_PATH ||
   join(existsSync("/data") ? "/data" : __dirname, "rl-scraped-game-scores.json");

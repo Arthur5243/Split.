@@ -14,7 +14,9 @@
  */
 
 const LIQUIPEDIA_BASE = "https://liquipedia.net/rocketleague/api.php";
-const LIQUIPEDIA_USER_AGENT = "SplitApp/1.0 (https://github.com/Arthur5243/Split.-main)";
+const LIQUIPEDIA_USER_AGENT = process.env.LIQUIPEDIA_USER_AGENT || "SplitApp/1.0 (https://app.splitapp.fr)";
+const APIFY_TOKEN = process.env.APIFY_TOKEN || "";
+const APIFY_WEB_FETCH_URL = "https://api.apify.com/v2/acts/apify~web-fetch/run-sync-get-dataset-items";
 
 const GENERAL_THROTTLE_MS = 2100;
 const PARSE_THROTTLE_MS = 31000;
@@ -41,11 +43,37 @@ function isRateLimited() {
   return Date.now() < _lqt.rateLimitedUntil;
 }
 
+async function fetchViaApify(targetUrl) {
+  const apifyUrl = APIFY_WEB_FETCH_URL + "?token=" + encodeURIComponent(APIFY_TOKEN);
+  const res = await fetch(apifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: targetUrl }),
+  });
+  if (!res.ok) throw new Error("liquipedia-rl Apify HTTP " + res.status);
+  const items = await res.json();
+  if (!Array.isArray(items) || items.length === 0) throw new Error("Apify renvoie dataset vide");
+  const item = items[0];
+  const httpStatus = item?.fetch?.httpStatusCode;
+  if (httpStatus && httpStatus !== 200) throw new Error("Liquipedia via Apify HTTP " + httpStatus);
+  const textRaw = item?.text;
+  if (typeof textRaw !== "string") throw new Error("Apify renvoie pas de text");
+  try { return JSON.parse(textRaw); }
+  catch { throw new Error("Apify text pas du JSON Liquipedia"); }
+}
+
 async function liquipediaFetch(params, { isParse = false } = {}) {
   if (isRateLimited()) throw new Error("liquipedia-rl rate-limited (cooldown)");
   if (isParse) await throttleParse();
   else await throttleGeneral();
   const url = LIQUIPEDIA_BASE + "?" + new URLSearchParams({ ...params, format: "json" }).toString();
+  if (APIFY_TOKEN) {
+    try {
+      return await fetchViaApify(url);
+    } catch (e) {
+      // Apify peut échouer → fallback direct ci-dessous
+    }
+  }
   const res = await fetch(url, { headers: { "User-Agent": LIQUIPEDIA_USER_AGENT } });
   if (res.status === 429) {
     _lqt.rateLimitedUntil = Date.now() + 30 * 60 * 1000;
