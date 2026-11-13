@@ -71,6 +71,9 @@ import("./cito-api.js").then(({ startCitoApiWorker }) => startCitoApiWorker());
 // Endpoints admin de transfert DB (migration entre 2 backends Railway)
 import("./admin-db-transfer.js").then(({ mountAdminDbTransfer }) => mountAdminDbTransfer(app));
 
+// Endpoints export/import JSON one-shot (migration haute-niveau entre backends)
+import("./admin-migration.js").then(({ mountAdminMigration }) => mountAdminMigration(app));
+
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
