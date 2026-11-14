@@ -5837,8 +5837,21 @@ RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const im
 
 function getUserRank(points, allUsersPoints, forceMax, forceUnranked) {
   if (forceUnranked) {
-    const unranked = RANK_TIERS[0];
-    return { ...unranked, label: unranked.name, progress: 0, nextPts: RANK_TIERS[1]?.minPts || null };
+    const u = RANK_TIERS[0];
+    return {
+      name: u.name,
+      label: u.name,
+      color: u.color,
+      logo: u.logo,
+      bg: u.bg,
+      border: u.border,
+      bgImage: u.bgImage,
+      bgCrop: u.bgCrop,
+      minPts: u.minPts,
+      maxPct: u.maxPct,
+      progress: 0,
+      nextPts: RANK_TIERS[1]?.minPts || null,
+    };
   }
   if (forceMax) {
     const top = RANK_TIERS[RANK_TIERS.length - 1];
@@ -12553,14 +12566,25 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               {(() => {
                 const allPts = leaderboard.map(u => u.points);
                 const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
+                const isUnrankedTop = rank.name === "Unranked";
                 return (
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
+                  <div style={{
+                    position: "relative", overflow: "hidden",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                    backgroundColor: isUnrankedTop ? "#1c1c1c" : rank.bg,
+                    backgroundImage: rank.bgImage ? `url(${rank.bgImage})` : undefined,
+                    backgroundSize: rank.bgCrop?.size || "cover",
+                    backgroundPosition: rank.bgCrop?.position || "center center",
+                    backgroundRepeat: "no-repeat",
+                    border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px"
+                  }}>
+                    <div style={{ position: "absolute", inset: 0, background: isUnrankedTop ? "rgba(255,255,255,0.055)" : `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 100%)`, pointerEvents: "none" }} />
                     {rank.logo ? (
-                      <img src={rank.logo} alt={rank.name} style={{ width: 38, height: 38, objectFit: "contain", filter: rank.name === "#Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "none" }} />
+                      <img src={rank.logo} alt={rank.name} style={{ width: 38, height: 38, objectFit: "contain", position: "relative", zIndex: 1, filter: rank.name === "#Infinite" ? "drop-shadow(0 0 10px rgba(56,189,248,0.5))" : rank.name === "Global Elite" ? "drop-shadow(0 0 8px rgba(234,179,8,0.4))" : "drop-shadow(0 1px 3px rgba(0,0,0,0.6))" }} />
                     ) : (
-                      <Shield size={32} color="#666" />
+                      <Shield size={32} color="#666" style={{ position: "relative", zIndex: 1 }} />
                     )}
-                    <span style={{ color: rank.color, fontSize: 11, fontWeight: 800 }}>{rank.label}</span>
+                    <span style={{ color: rank.color, fontSize: 11, fontWeight: 800, position: "relative", zIndex: 1, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{rank.label}</span>
                   </div>
                 );
               })()}
