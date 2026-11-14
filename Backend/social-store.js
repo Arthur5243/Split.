@@ -83,6 +83,10 @@ try { db.exec(`ALTER TABLE users ADD COLUMN is_subscribed INTEGER DEFAULT 0`); }
 // Comptes masqués côté client : JSON array des userId bloqués. Sync pour
 // que le ban reste identique PC/mobile.
 try { db.exec(`ALTER TABLE users ADD COLUMN blocked_users TEXT`); } catch {}
+// Force display Unranked (sans toucher aux points). Set via env var
+// BOOTSTRAP_FORCE_UNRANKED ou admin endpoint. Le frontend lit ce flag
+// dans /api/auth/me et /api/social/leaderboard et surcharge le rang.
+try { db.exec(`ALTER TABLE users ADD COLUMN force_unranked INTEGER DEFAULT 0`); } catch {}
 // Migration: tous les users existants (avant l'ajout de profile_ready) sont
 // marqués ready. Sinon le leaderboard perd tout le monde. Ne concerne que
 // les users qui ont un signe de profil (avatar/bio/fav/points/xp) — pas

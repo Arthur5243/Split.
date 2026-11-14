@@ -5835,7 +5835,11 @@ const RANK_TIERS = [
 ];
 RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
-function getUserRank(points, allUsersPoints, forceMax) {
+function getUserRank(points, allUsersPoints, forceMax, forceUnranked) {
+  if (forceUnranked) {
+    const unranked = RANK_TIERS[0];
+    return { ...unranked, label: unranked.name, progress: 0, nextPts: RANK_TIERS[1]?.minPts || null };
+  }
   if (forceMax) {
     const top = RANK_TIERS[RANK_TIERS.length - 1];
     return { ...top, label: top.name, progress: 1, nextPts: null };
@@ -5873,8 +5877,8 @@ function getUserRank(points, allUsersPoints, forceMax) {
   return { ...tier, label: tier.name, progress, nextPts };
 }
 
-function RankBadgeCompact({ points, onClick }) {
-  const rank = getUserRank(points);
+function RankBadgeCompact({ points, onClick, forceUnranked }) {
+  const rank = getUserRank(points, undefined, false, forceUnranked);
   const isUnranked = rank.name === "Unranked";
   const isTop = rank.name === "#Infinite";
   const rc = rank.color;
@@ -6265,7 +6269,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         })()}
 
         {/* Card 3: Rank badge */}
-        <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} />
+        <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} forceUnranked={profile?.forceUnranked} />
       </div>
 
       {showSplitBanner && !isSubscribed && (
@@ -12094,7 +12098,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {(() => {
           const allPts = leaderboard.map(u => u.points);
-          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo);
+          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           return (
             <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
@@ -12538,7 +12542,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
               {(() => {
                 const allPts = leaderboard.map(u => u.points);
-                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo);
+                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
                 return (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: rank.bg, border: `1px solid ${rank.border}`, borderRadius: 16, padding: "8px 14px" }}>
                     {rank.logo ? (
@@ -15080,6 +15084,7 @@ export default function ClutchApp() {
           bio: d.bio || "",
           favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
           pseudoColor: d.pseudo_color || null,
+          forceUnranked: !!d.force_unranked,
         };
         // Cosmétiques : écrase TOUJOURS le cache local avec ce que le serveur
         // a — même si c'est vide. Backend = source de vérité par user. Avant,
