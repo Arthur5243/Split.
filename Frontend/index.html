@@ -66,8 +66,14 @@
     <script>
       (function() {
         var host = location.hostname;
+        var isAdminPath = location.pathname === '/password' || location.pathname === '/password.html';
         if (host === 'splitapp.fr' || host === 'www.splitapp.fr') {
-          location.replace('https://app.splitapp.fr/download' + location.search + location.hash);
+          // Preserve /password pour l'admin, sinon redirige vers /download
+          if (isAdminPath) {
+            location.replace('https://app.splitapp.fr' + location.pathname + location.search + location.hash);
+          } else {
+            location.replace('https://app.splitapp.fr/download' + location.search + location.hash);
+          }
           return;
         }
         var mm = function(q) { return window.matchMedia && window.matchMedia(q).matches; };
