@@ -12100,19 +12100,29 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
           const allPts = leaderboard.map(u => u.points);
           const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
+          const isUnrankedProfile = rank.name === "Unranked";
           return (
-            <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{ background: rank.bg, border: `1px solid ${rank.border}` }}>
+            <div className="rounded-2xl py-6 mb-5 flex flex-col items-center gap-1" style={{
+              position: "relative", overflow: "hidden",
+              backgroundColor: isUnrankedProfile ? "#1c1c1c" : rank.bg,
+              backgroundImage: rank.bgImage ? `url(${rank.bgImage})` : undefined,
+              backgroundSize: rank.bgCrop?.size || "cover",
+              backgroundPosition: rank.bgCrop?.position || "center center",
+              backgroundRepeat: "no-repeat",
+              border: `1px solid ${rank.border}`,
+            }}>
+              <div style={{ position: "absolute", inset: 0, background: isUnrankedProfile ? "rgba(255,255,255,0.055)" : `linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 100%)`, pointerEvents: "none" }} />
               {rank.logo ? (
-                <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", filter: rank.name === "#Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "none" }} />
+                <img src={rank.logo} alt={rank.name} style={{ width: 100, height: 100, objectFit: "contain", position: "relative", zIndex: 1, filter: rank.name === "#Infinite" ? "drop-shadow(0 0 20px rgba(56,189,248,0.6))" : rank.name === "Global Elite" ? "drop-shadow(0 0 16px rgba(234,179,8,0.5))" : "drop-shadow(0 1px 4px rgba(0,0,0,0.6))" }} />
               ) : (
-                <Shield size={80} color="#666" />
+                <Shield size={80} color="#666" style={{ position: "relative", zIndex: 1 }} />
               )}
-              <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px", letterSpacing: "-0.02em" }}>{rank.label}</p>
-              <div className="flex items-center gap-2 px-8 w-full mt-1">
-                <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
+              <p className="font-black mt-2" style={{ color: rank.color, fontSize: "22px", letterSpacing: "-0.02em", position: "relative", zIndex: 1, textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>{rank.label}</p>
+              <div className="flex items-center gap-2 px-8 w-full mt-1" style={{ position: "relative", zIndex: 1 }}>
+                <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.15)", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: `${Math.max(3, rank.progress * 100)}%`, height: "100%", background: rank.color, borderRadius: 3, transition: "width 0.4s ease" }} />
                 </div>
-                <span style={{ color: "#888", fontSize: "10px", fontWeight: 700 }}>{nextLabel}</span>
+                <span style={{ color: "#bbb", fontSize: "10px", fontWeight: 700, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>{nextLabel}</span>
               </div>
             </div>
           );
