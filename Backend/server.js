@@ -78,6 +78,9 @@ import("./admin-migration.js").then(({ mountAdminMigration }) => mountAdminMigra
 // sont setés, importe depuis l'ancien backend au 1er boot du nouveau.
 import("./bootstrap-import.js").then(({ maybeRunBootstrapImport }) => maybeRunBootstrapImport());
 
+// Bootstrap one-shot : applique des points à des users via env var BOOTSTRAP_POINTS.
+import("./bootstrap-points.js").then(({ maybeRunBootstrapPoints }) => maybeRunBootstrapPoints());
+
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
