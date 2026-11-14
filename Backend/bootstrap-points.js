@@ -47,15 +47,20 @@ export function maybeRunBootstrapPoints() {
       const findStmt = db.prepare(
         "SELECT id, pseudo, points FROM users WHERE pseudo_lower = ? OR pseudo_lower LIKE ? OR id = ? LIMIT 1"
       );
-      const updateStmt = db.prepare("UPDATE users SET points = ?, updated_at = datetime('now') WHERE id = ?");
+      const updateStmt = db.prepare("UPDATE users SET points = ?, points_valo = ?, points_cs2 = ?, points_rl = ?, bets_total = ?, bets_correct = ?, bets_exact = ?, updated_at = datetime('now') WHERE id = ?");
+      const wipeHistStmt = db.prepare("DELETE FROM user_match_points WHERE user_id = ?");
       const results = [];
       for (const [key, pts] of Object.entries(payload)) {
         const k = String(key).toLowerCase();
         const row = findStmt.get(k, k + "%", key);
         if (!row) { results.push({ key, status: "not_found" }); continue; }
         const points = Math.max(0, Math.floor(Number(pts) || 0));
-        const r = updateStmt.run(points, row.id);
-        results.push({ key, matchedPseudo: row.pseudo, oldPoints: row.points, newPoints: points, changed: r.changes });
+        // Si points = 0, on wipe aussi l'historique user_match_points pour
+        // eviter que le points-engine (MAX(prev, sum)) ne remonte le total.
+        if (points === 0) wipeHistStmt.run(row.id);
+        // On ecrase ALL les totaux pour que le "max" de l'engine passe par 0.
+        const r = updateStmt.run(points, 0, 0, 0, 0, 0, 0, row.id);
+        results.push({ key, matchedPseudo: row.pseudo, oldPoints: row.points, newPoints: points, changed: r.changes, historyWiped: points === 0 });
       }
       db.close();
       for (const r of results) console.log("[bootstrap-points]", JSON.stringify(r));
