@@ -82,11 +82,9 @@ export function maybeRunBootstrapImport() {
   // Attend 15s après boot pour laisser le serveur HTTP local répondre et
   // les DB s'initialiser (migrations ALTER TABLE etc).
   setTimeout(async () => {
-    if (!dbIsEmpty()) {
-      console.log("[bootstrap-import] DB déjà peuplée (users>0), skip");
-      try { fs.writeFileSync(SENTINEL, new Date().toISOString()); } catch {}
-      return;
-    }
+    // On ne vérifie plus dbIsEmpty : la DB peut déjà avoir quelques users
+    // de test (login Google pendant la mise en place), l'import est UPSERT
+    // donc idempotent. Le gate reste le sentinel : une seule exécution.
     try {
       await doImport(sourceUrl, sourceKey, targetKey);
       try { fs.writeFileSync(SENTINEL, new Date().toISOString() + " ok"); } catch {}
