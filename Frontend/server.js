@@ -50,9 +50,30 @@ const server = createServer(async (req, res) => {
     return sendFile(res, join(DIST, "download.html"));
   }
 
-  // Route /password → password.html (admin bracket builder standalone)
+  // Route /password → password.html (admin bracket builder standalone).
+  // Injecte window.__API_BASE__ depuis VITE_API_BASE / BACKEND_URL avant
+  // le script principal, car password.html n'est pas processe par Vite et
+  // location.origin pointe sur le frontend (qui ne proxy pas /api/*).
   if (url === "/password" || url === "/password/") {
-    return sendFile(res, join(DIST, "password.html"));
+    try {
+      const { readFile } = await import("node:fs/promises");
+      let html = await readFile(join(DIST, "password.html"), "utf8");
+      const apiBase = process.env.VITE_API_BASE || process.env.BACKEND_URL || process.env.PUBLIC_BACKEND_URL || "";
+      if (apiBase) {
+        html = html.replace(
+          /<script>\s*const API = location\.origin;/,
+          `<script>\nwindow.__API_BASE__ = ${JSON.stringify(apiBase)};\nconst API = window.__API_BASE__ || location.origin;`
+        );
+      }
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-cache",
+      });
+      res.end(html);
+      return;
+    } catch {
+      return sendFile(res, join(DIST, "password.html"));
+    }
   }
 
   // Page de confirmation après un paiement Whop. On accepte toutes les
