@@ -41,8 +41,30 @@ function dbIsEmpty() {
 // mais il a /api/admin/download-db qui stream le .db SQLite brut. On
 // download matches.db dans un fichier temp, on l'ouvre en read-only, on
 // construit un dump JSON compatible /api/admin/import-all, et on l'envoie.
+async function probeSource(base, sourceKey) {
+  // Verifie que l'ancien backend repond et a les endpoints necessaires.
+  const probes = [
+    { label: "root", url: `${base}/` },
+    { label: "api-health", url: `${base}/api/health` },
+    { label: "list-db", url: `${base}/api/admin/list-db?key=${encodeURIComponent(sourceKey)}` },
+    { label: "download-db", url: `${base}/api/admin/download-db?key=${encodeURIComponent(sourceKey)}&file=matches.db` },
+    { label: "export-summary", url: `${base}/api/admin/export-summary?key=${encodeURIComponent(sourceKey)}` },
+    { label: "users-backup-now", url: `${base}/api/admin/users-backup-now?key=${encodeURIComponent(sourceKey)}` },
+  ];
+  for (const p of probes) {
+    try {
+      const r = await fetch(p.url, { method: p.label === "users-backup-now" ? "POST" : "GET" });
+      const body = r.status < 400 ? (p.label === "list-db" ? await r.text() : "") : "";
+      console.log(`[bootstrap-import] probe ${p.label}: HTTP ${r.status}${body ? " body=" + body.slice(0, 200) : ""}`);
+    } catch (e) {
+      console.log(`[bootstrap-import] probe ${p.label}: ERR ${e.message}`);
+    }
+  }
+}
+
 async function doImport(sourceUrl, sourceKey, targetKey) {
   const base = sourceUrl.replace(/\/$/, "");
+  await probeSource(base, sourceKey);
   const url = `${base}/api/admin/download-db?key=${encodeURIComponent(sourceKey)}&file=matches.db`;
   console.log(`[bootstrap-import] GET ${url.replace(sourceKey, "***")}`);
   const res = await fetch(url);

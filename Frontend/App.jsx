@@ -14067,7 +14067,7 @@ function AuthScreen({ onAuth }) {
 
   const googleReadyRef = useRef(false);
   const googleTokenClientRef = useRef(null);
-  const googleBtnRef = useRef(null); // conservé pour compat, plus utilisé pour cliquer
+  const googleBtnRef = useRef(null);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   useEffect(() => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -14076,27 +14076,33 @@ function AuthScreen({ onAuth }) {
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
     s.onload = () => {
-      // Flux OAuth2 "token client" : requestAccessToken() ouvre une popup
-      // Google officielle, le user accepte, on reçoit un access_token qu'on
-      // envoie au backend qui vérifie via /oauth2/v3/userinfo. Plus fiable
-      // que le click sur bouton caché GIS (qui marchait 1 fois sur 15 à
-      // cause du pointer-events:none + iframe Google cross-origin).
       try {
+        // GIS avec FedCM : contourne le blocage des cookies tiers sur Safari/PWA.
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response) => { if (response?.credential) handleGoogle(response.credential, null); },
+          use_fedcm_for_prompt: true,
+          auto_select: false,
+          cancel_on_tap_outside: false,
+          ux_mode: "popup",
+        });
+        // Rend le VRAI bouton Google officiel directement visible.
+        if (googleBtnRef.current) {
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            type: "standard", theme: "filled_blue", size: "large",
+            text: "continue_with", shape: "pill", width: 320,
+            logo_alignment: "left",
+          });
+        }
+        // Fallback OAuth2 TokenClient pour les navigateurs où FedCM/GIS
+        // échoue (très rare). Déclenché par un lien "ou cliquer ici".
         googleTokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
           client_id: googleClientId,
           scope: "openid email profile",
           callback: async (resp) => {
-            if (resp?.access_token) {
-              await handleGoogle(null, resp.access_token);
-            } else if (resp?.error) {
-              setError("Google : " + resp.error);
-            }
+            if (resp?.access_token) await handleGoogle(null, resp.access_token);
           },
-          error_callback: (err) => {
-            // popup fermée, blocage navigateur, etc.
-            if (err?.type === "popup_closed") return;
-            setError("Google : " + (err?.message || err?.type || "erreur"));
-          },
+          error_callback: () => {},
         });
         googleReadyRef.current = true;
       } catch (e) {
@@ -14106,11 +14112,8 @@ function AuthScreen({ onAuth }) {
     document.head.appendChild(s);
     return () => { try { document.head.removeChild(s); } catch {} };
   }, []);
-  const triggerGoogleSignIn = () => {
-    if (!googleReadyRef.current || !googleTokenClientRef.current) {
-      setError("Google pas encore prêt, réessaie dans 2s");
-      return;
-    }
+  const triggerGoogleFallback = () => {
+    if (!googleTokenClientRef.current) return;
     try { googleTokenClientRef.current.requestAccessToken(); }
     catch (e) { setError("Google : " + e.message); }
   };
@@ -14187,28 +14190,20 @@ function AuthScreen({ onAuth }) {
 
         {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
           <>
-            {/* Bouton custom : ouvre la popup Google OAuth2 (initTokenClient) au clic. */}
-            <button onClick={triggerGoogleSignIn} disabled={loading} style={{
-              width: "100%", background: "#fff", color: "#1f1f1f",
-              border: "1px solid #dadce0", borderRadius: 12,
-              padding: "13px 16px", fontSize: 14, fontWeight: 600,
-              cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              marginBottom: 16, fontFamily: "'Roboto', system-ui, -apple-system, sans-serif",
-              transition: "background 0.15s, box-shadow 0.15s",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
-            }}>
-              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              <span>{mode === "login" ? (T.settingsGoogle || "Continuer avec Google") : "S'inscrire avec Google"}</span>
-            </button>
+            {/* Bouton officiel Google rendu visiblement par la lib GIS.
+                Gere popup/FedCM/redirect selon la plateforme automatiquement. */}
+            <div ref={googleBtnRef} style={{ display: "flex", justifyContent: "center", marginBottom: 10, minHeight: 44 }} />
+            {/* Fallback : si le bouton GIS deconne (bloqueur cookies tiers
+                sur certaines configs Safari), on peut tenter le flux OAuth2
+                TokenClient via un lien discret. */}
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <button onClick={triggerGoogleFallback} style={{ background: "none", border: "none", color: "#555", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>
+                Probleme avec le bouton ci-dessus ? Reessayer
+              </button>
+            </div>
           </>
         ) : (
-          <p style={{ color: "#555", fontSize: 10, textAlign: "center", marginBottom: 16, fontStyle: "italic" }}>Connexion Google momentanément indisponible</p>
+          <p style={{ color: "#555", fontSize: 10, textAlign: "center", marginBottom: 16, fontStyle: "italic" }}>Connexion Google momentanement indisponible</p>
         )}
 
         {(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && (
