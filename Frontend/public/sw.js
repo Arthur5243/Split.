@@ -1,16 +1,9 @@
-// Monetag (pub push) — même config que Frontend/sw.js. En try/catch : si le
-// script est bloqué ou injoignable, le service worker de l'app doit quand
-// même s'installer (PWA + page hors-ligne).
-self.options = {
-  "domain": "3nbf4.com",
-  "zoneId": 11935483
-};
-self.lary = "";
-try {
-  importScripts("https://3nbf4.com/act/files/service-worker.min.js?r=sw");
-} catch (e) {}
+// Monetag (pub push) DESACTIVE : plus de push notifications pub sur le tel.
+// Les push restent disponibles pour les vrais evenements de l'app (match
+// live, resultat prono) via la Notification API standard, sans Monetag.
+// L'importScripts a ete retire volontairement.
 
-const CACHE_NAME = "split-v60";
+const CACHE_NAME = "split-v61";
 
 const OFFLINE_PAGE = `<!DOCTYPE html>
 <html lang="fr">

@@ -6205,12 +6205,13 @@ function NotificationsPanel({ notifications, onClose, T }) {
         {notifications.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {notifications.map((n, i) => {
-              const icon = n.type === "friend" ? <UserPlus size={16} color="#3B82F6" /> : n.type === "match" ? <Zap size={16} color="#F59E0B" /> : <Bell size={16} color="#888" />;
-              const bg = n.type === "friend" ? "rgba(59,130,246,0.08)" : n.type === "match" ? "rgba(245,158,11,0.08)" : "#111";
+              const accent = n.type === "friend" ? "#3B82F6" : n.type === "match" ? "#F59E0B" : "#888";
+              const icon = n.type === "friend" ? <UserPlus size={14} color={accent} /> : n.type === "match" ? <Zap size={14} color={accent} /> : <Bell size={14} color={accent} />;
+              const bg = n.type === "friend" ? "rgba(59,130,246,0.06)" : n.type === "match" ? "rgba(245,158,11,0.06)" : "#111";
               return (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, background: bg, border: "1px solid #262626", borderRadius: 12, padding: "12px 14px" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1e1e1e", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
-                  <span style={{ color: "#ccc", fontSize: 12, fontWeight: 600 }}>{n.message}</span>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: bg, border: `1px solid ${accent}22`, borderLeft: `3px solid ${accent}`, borderRadius: 10, padding: "10px 12px" }}>
+                  {icon}
+                  <span style={{ color: "#ddd", fontSize: 12, fontWeight: 600, flex: 1 }}>{n.message}</span>
                 </div>
               );
             })}
