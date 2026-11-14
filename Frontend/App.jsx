@@ -6226,7 +6226,7 @@ function NotificationsPanel({ notifications, onClose, T }) {
   );
 }
 
-function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile, showSplitBanner, onOpenSubscribe, isSubscribed }) {
+function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, onOpenRlCalendar, T, predictions, streak, quests, onOpenQuests, onOpenRewards, onOpenStreakInfo, onOpenNotifs, userPoints, splashDone, userXp, profile, showSplitBanner, onOpenSubscribe, isSubscribed }) {
   const [rawLeaderboard, setRawLeaderboard] = useState([]);
   const [blockedIds, setBlockedIds] = useState(() => new Set((getBlockedUsers() || []).map((b) => b.id)));
   useEffect(() => {
@@ -6435,6 +6435,18 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
           <span className="text-left">
             <span className="block" style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{T.cs2CalendarCardTitle}</span>
             <span className="block" style={{ color: "#888", fontSize: "11px" }}>{T.cs2CalendarCardSub}</span>
+          </span>
+        </span>
+        <ChevronRight size={18} color="#666" />
+      </button>
+      <button onClick={onOpenRlCalendar} className="w-full flex items-center justify-between rounded-2xl px-4 py-4 mt-3" style={{ background: "#262626", border: "1px solid #3a3a3a" }}>
+        <span className="flex items-center gap-3">
+          <span className="rounded-full flex items-center justify-center" style={{ width: 40, height: 40, background: "#1c1c1c" }}>
+            <CalendarDays size={18} color="#4A90D9" />
+          </span>
+          <span className="text-left">
+            <span className="block" style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>Calendrier RLCS 2026</span>
+            <span className="block" style={{ color: "#888", fontSize: "11px" }}>Majors · Open Qualifiers · Worlds</span>
           </span>
         </span>
         <ChevronRight size={18} color="#666" />
@@ -13595,9 +13607,28 @@ function SettingsModal({ onClose, notifGames, setNotifGames, favoriteTeam, setFa
   );
 }
 
+// Hook partage : charge un calendrier custom depuis /api/calendar/:game et
+// retourne custom || fallback. Fallback = TIMELINE_I18N[lang] etc.
+function useCustomCalendar(game, fallback) {
+  const [custom, setCustom] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(API_BASE + "/api/calendar/" + game)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setCustom(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [game]);
+  return custom || fallback;
+}
+
 function CalendarModal({ onClose, T, lang }) {
   const [expanded, setExpanded] = useState({});
-  const timeline = TIMELINE_I18N[lang] || TIMELINE_I18N.fr;
+  const fallback = TIMELINE_I18N[lang] || TIMELINE_I18N.fr;
+  const timeline = useCustomCalendar("valorant", fallback);
   const todayISO = getTodayISO();
   return (
     <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
@@ -13766,7 +13797,8 @@ function cs2RegionLabel(key, T) {
 
 function Cs2CalendarModal({ onClose, T, lang }) {
   const [expanded, setExpanded] = useState({});
-  const timeline = CS2_TIMELINE_I18N[lang] || CS2_TIMELINE_I18N.fr;
+  const fallback = CS2_TIMELINE_I18N[lang] || CS2_TIMELINE_I18N.fr;
+  const timeline = useCustomCalendar("cs2", fallback);
   const todayISO = getTodayISO();
 
   return (
@@ -13834,6 +13866,67 @@ function Cs2CalendarModal({ onClose, T, lang }) {
               <p style={{ color: "#666", fontSize: "12px", fontStyle: "italic", marginTop: 4 }}>Le prochain calendrier arrive bientôt</p>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RlCalendarModal({ onClose, T }) {
+  const [expanded, setExpanded] = useState({});
+  const timeline = useCustomCalendar("rl", []);
+  const todayISO = getTodayISO();
+  return (
+    <div className="absolute z-50 flex items-end" style={{ top: 0, left: 0, right: 0, bottom: 56, background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full rounded-t-3xl overflow-hidden flex flex-col" style={{ background: "#1c1c1c", maxHeight: "88%" }}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-3" style={{ flexShrink: 0 }}>
+          <h2 className="font-black text-white" style={{ fontSize: "18px" }}>Calendrier RLCS 2026</h2>
+          <button onClick={onClose}><X size={20} color="#999" /></button>
+        </div>
+        <div className="overflow-y-auto no-scrollbar px-5 pb-5" style={{ flex: 1, minHeight: 0, WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", touchAction: "pan-y" }}>
+          {timeline.length === 0 && (
+            <p style={{ color: "#888", fontSize: 12, textAlign: "center", padding: 20 }}>Chargement…</p>
+          )}
+          {timeline.map((item, idx) => {
+            const status = computeStageStatus(item, todayISO);
+            const statusColor = status === "done" ? "#666" : status === "live" ? "#ff3b3b" : "#4A90D9";
+            const statusLabel = status === "done" ? (T.calendarDone || "Terminé") : status === "live" ? (T.calendarLive || "En cours") : (T.calendarSoon || "Bientôt");
+            return (
+              <div key={item.key} className="flex gap-3 pb-5">
+                <div className="flex flex-col items-center">
+                  <div className="rounded-full" style={{ width: 10, height: 10, background: status === "done" ? "#444" : statusColor, marginTop: 4 }} />
+                  {idx < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: "#262626", marginTop: 4 }} />}
+                </div>
+                <div className="flex-1 pb-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-white" style={{ fontSize: status === "live" ? "22px" : "14px" }}>{item.title}</span>
+                    <span style={{ fontSize: "9px", fontWeight: 700, color: statusColor, border: "1px solid " + statusColor + "55", borderRadius: "9999px", padding: "2px 8px", textTransform: "uppercase" }}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <p style={{ color: "#888", fontSize: "12px" }} className="mt-1">{item.range}</p>
+                  {Array.isArray(item.detail) && item.detail.length > 0 && (
+                    <>
+                      <button onClick={() => setExpanded((p) => ({ ...p, [item.key]: !p[item.key] }))} className="flex items-center gap-1 mt-2" style={{ color: "#4A90D9", fontSize: "11px", fontWeight: 700 }}>
+                        {expanded[item.key] ? (T.calendarHideDetail || "Masquer") : (T.calendarShowDetail || "Voir le détail")}
+                        <ChevronDown size={12} style={{ transform: expanded[item.key] ? "rotate(180deg)" : "rotate(0deg)" }} />
+                      </button>
+                      {expanded[item.key] && (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {item.detail.map((d, i) => (
+                            <div key={d.region + "_" + i} className="flex items-center justify-between rounded-lg px-3 py-1.5" style={{ background: "#252525" }}>
+                              <span style={{ color: "#4A90D9", fontSize: "11px", fontWeight: 700 }}>{d.region}</span>
+                              <span style={{ color: "#999", fontSize: "11px" }}>{d.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -14701,6 +14794,7 @@ export default function ClutchApp() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showCs2Calendar, setShowCs2Calendar] = useState(false);
+  const [showRlCalendar, setShowRlCalendar] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profileView, setProfileView] = useState(false);
   const [showFriendModal, setShowFriendModal] = useState(false);
@@ -16452,7 +16546,7 @@ export default function ClutchApp() {
         <div className="flex-1 relative" style={{ minHeight: 0, overflow: "hidden", background: "#000" }}>
         <div key={appResetKey} ref={scrollRef} onScroll={handleContentScroll} className="overflow-y-auto no-scrollbar relative" style={{ background: isLight ? "#EDEDED" : "#000", height: "100%", overscrollBehaviorY: "none" }}>
           <div style={{ display: activeTab === "home" ? "block" : "none" }}>
-            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} showSplitBanner={showHomeSplitBanner} onOpenSubscribe={() => setShowSubscribeModal(true)} isSubscribed={isSubscribed} />
+            <HomeTab setActiveTab={setActiveTab} onOpenCalendar={() => setShowCalendar(true)} onOpenCs2Calendar={() => setShowCs2Calendar(true)} onOpenRlCalendar={() => setShowRlCalendar(true)} T={T} predictions={predictions} streak={streak} quests={questState} onOpenQuests={() => setShowQuestModal(true)} onOpenRewards={() => setShowRewardsModal(true)} onOpenStreakInfo={() => setShowStreakInfo(true)} onOpenNotifs={() => setShowNotifs(true)} userPoints={userPoints} splashDone={splashDone} userXp={userXp} profile={profile} showSplitBanner={showHomeSplitBanner} onOpenSubscribe={() => setShowSubscribeModal(true)} isSubscribed={isSubscribed} />
           </div>
           <div style={{ display: activeTab === "valorant" ? "block" : "none" }}>
             <ValorantTab
@@ -16785,6 +16879,7 @@ export default function ClutchApp() {
             lang={currentLang}
           />
         )}
+        {showRlCalendar && <RlCalendarModal onClose={() => setShowRlCalendar(false)} T={T} />}
         {streakPopup && <StreakPopup streak={streakPopup} onClose={() => setStreakPopup(null)} T={T} />}
         {xpPopup && <XpPopup xp={xpPopup} onClose={() => setXpPopup(null)} T={T} />}
         {questPopupQueue.length > 0 && (
