@@ -99,29 +99,46 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
     const game = req.query.game;
     const q = (req.query.q || "").trim();
     if (!game) return res.json([]);
-    const db = new Database(DB_PATH, { readonly: true });
 
     const rows = [];
-    try {
-      // Valorant : table matches avec colonnes league + phase.
-      const vRows = db.prepare(
-        "SELECT league, phase, COUNT(*) as n FROM matches WHERE league IS NOT NULL GROUP BY league, phase"
-      ).all();
-      for (const r of vRows) {
-        const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
-        rows.push({ game: "valorant", name: full, league: r.league, phase: r.phase, count: r.n });
-      }
-    } catch {}
-    db.close();
 
-    // CS2/RL: pas de table dediee pour l'instant, on retourne juste les
-    // leagues trouvees cote Valorant pour l'instant. A completer ensuite.
+    // Choix de la DB en fonction du jeu (Valo + RL share matches.db, CS2 a
+    // sa propre DB cs2-matches.db).
+    const dbPath = game === "cs2"
+      ? (process.env.CS2_DB_PATH || path.join(__dirname, "cs2-matches.db"))
+      : (process.env.DB_PATH || path.join(__dirname, "matches.db"));
+
+    try {
+      const db = new Database(dbPath, { readonly: true });
+      const rowsDb = db.prepare(
+        `SELECT league, phase, COUNT(*) as n,
+                MAX(CASE WHEN status != 'finished' THEN 1 ELSE 0 END) as has_live
+         FROM matches
+         WHERE league IS NOT NULL
+         GROUP BY league, phase
+         ORDER BY has_live DESC, n DESC`
+      ).all();
+      for (const r of rowsDb) {
+        const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
+        rows.push({
+          game,
+          name: full,
+          league: r.league,
+          phase: r.phase,
+          count: r.n,
+          has_live: !!r.has_live,
+        });
+      }
+      db.close();
+    } catch (e) {
+      console.log(`[tournaments] echec lecture ${dbPath}:`, e.message);
+    }
 
     const filtered = q
       ? rows.map(r => ({ ...r, _score: similarity(q, r.name) }))
             .filter(r => r._score > 10)
             .sort((a, b) => b._score - a._score)
-      : rows.sort((a, b) => b.count - a.count);
+      : rows.sort((a, b) => (Number(!!b.has_live) - Number(!!a.has_live)) || (b.count - a.count));
 
     res.json(filtered.slice(0, 30));
   } catch (e) { res.status(500).json({ error: e.message }); }
