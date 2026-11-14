@@ -110,16 +110,24 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
 
     try {
       const db = new Database(dbPath, { readonly: true });
+      // Fenetre "actuel ou a venir" : on considere un match comme actif si
+      // status != finished ET si sa date est aujourd'hui/future (ou inconnue).
+      // Le day est stocke en "YYYY-MM-DD" (ou NULL).
+      const today = new Date().toISOString().slice(0, 10);
       const rowsDb = db.prepare(
         `SELECT league, phase,
                 COUNT(*) as n,
-                SUM(CASE WHEN status != 'finished' THEN 1 ELSE 0 END) as live_count
+                SUM(CASE
+                      WHEN status != 'finished'
+                       AND (day IS NULL OR day >= ?)
+                      THEN 1 ELSE 0
+                    END) as live_count
          FROM matches
          WHERE league IS NOT NULL
          GROUP BY league, phase
          HAVING live_count > 0
          ORDER BY live_count DESC, n DESC`
-      ).all();
+      ).all(today);
       for (const r of rowsDb) {
         const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
         rows.push({
