@@ -31,6 +31,7 @@ import {
   upsertCustomBracket,
   deleteCustomBracket,
 } from "./custom-brackets-store.js";
+import { parseBracketCode, validateParsedCode } from "./bracket-code-parser.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "matches.db");
@@ -171,6 +172,93 @@ router.get("/api/custom-brackets/auto-fill", (req, res) => {
     } catch {}
     db.close();
     res.json({ game, tournament, league, phase, matches: rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Resout un code bracket texte -> structure JSON enrichie avec les
+// matchIds reels de la DB Split (par nom equipes + tournoi + proximite date).
+function normTeam(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function teamsMatchDb(dbTeam, codeTeam) {
+  const a = normTeam(dbTeam);
+  const b = normTeam(codeTeam);
+  if (!a || !b) return 0;
+  if (a === b) return 100;
+  if (a.includes(b) || b.includes(a)) return 80;
+  return 0;
+}
+function pickDbPathForGame(game) {
+  if (game === "cs2") return process.env.CS2_DB_PATH || path.join(__dirname, "cs2-matches.db");
+  return process.env.DB_PATH || path.join(__dirname, "matches.db");
+}
+function resolveMatchInDb(db, team1, team2, league, phase) {
+  const rows = db.prepare(
+    `SELECT id, team1_name, team2_name, score1, score2, status, day, time, league, phase
+     FROM matches WHERE league IS NOT NULL ORDER BY day DESC, time DESC LIMIT 2000`
+  ).all();
+  let best = null; let bestScore = 0;
+  for (const r of rows) {
+    const sc1 = teamsMatchDb(r.team1_name, team1) + teamsMatchDb(r.team2_name, team2);
+    const sc2 = teamsMatchDb(r.team1_name, team2) + teamsMatchDb(r.team2_name, team1);
+    const dir = sc1 >= sc2 ? 1 : -1;
+    const base = Math.max(sc1, sc2);
+    if (base < 100) continue;
+    let s = base;
+    if (league && r.league === league) s += 50;
+    else if (league && r.league && r.league.toLowerCase().includes(league.toLowerCase())) s += 20;
+    if (phase && r.phase === phase) s += 30;
+    if (s > bestScore) { bestScore = s; best = { row: r, dir }; }
+  }
+  if (!best) return null;
+  const r = best.row;
+  return {
+    matchId: String(r.id),
+    team1_name: best.dir === 1 ? r.team1_name : r.team2_name,
+    team2_name: best.dir === 1 ? r.team2_name : r.team1_name,
+    score1: best.dir === 1 ? r.score1 : r.score2,
+    score2: best.dir === 1 ? r.score2 : r.score1,
+    status: r.status,
+    day: r.day,
+    time: r.time,
+    league: r.league,
+    phase: r.phase,
+  };
+}
+
+router.post("/api/custom-brackets/resolve-code", (req, res) => {
+  try {
+    const { game, tournament, code } = req.body || {};
+    if (!game || !code) return res.status(400).json({ error: "game et code requis" });
+    const parsed = parseBracketCode(code);
+    const validation = validateParsedCode(parsed);
+    if (!validation.ok) return res.status(400).json({ error: "parse_invalide", details: validation.errors });
+
+    const parts = String(tournament || "").split("·").map(p => p.trim()).filter(Boolean);
+    const league = parts[0] || null;
+    const phase = parts[1] || null;
+
+    const dbPath = pickDbPathForGame(game);
+    const db = new Database(dbPath, { readonly: true });
+    try {
+      for (const s of parsed.stages) {
+        for (const r of s.rounds) {
+          for (const m of r.matches) {
+            const hit = resolveMatchInDb(db, m.team1, m.team2, league, phase);
+            if (hit) {
+              m.matchId = hit.matchId;
+              m.resolved = hit;
+            } else {
+              m.matchId = null;
+              m.resolved = null;
+            }
+          }
+        }
+      }
+    } finally { db.close(); }
+
+    res.json({ parsed, league, phase });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
