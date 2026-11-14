@@ -75,9 +75,14 @@ export function maybeRunBootstrapImport() {
     // Pas configuré, skip silencieux.
     return;
   }
-  if (fs.existsSync(SENTINEL)) {
-    console.log(`[bootstrap-import] sentinel ${SENTINEL} présent, skip (déjà fait une fois)`);
+  const force = process.env.BOOTSTRAP_FORCE === "1";
+  if (fs.existsSync(SENTINEL) && !force) {
+    console.log(`[bootstrap-import] sentinel ${SENTINEL} présent, skip (déjà fait une fois). Set BOOTSTRAP_FORCE=1 pour forcer.`);
     return;
+  }
+  if (force) {
+    console.log("[bootstrap-import] BOOTSTRAP_FORCE=1 → bypass du sentinel, re-import");
+    try { fs.unlinkSync(SENTINEL); } catch {}
   }
   // Attend 15s après boot pour laisser le serveur HTTP local répondre et
   // les DB s'initialiser (migrations ALTER TABLE etc).
