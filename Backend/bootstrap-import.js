@@ -41,6 +41,43 @@ function dbIsEmpty() {
 // mais il a /api/admin/download-db qui stream le .db SQLite brut. On
 // download matches.db dans un fichier temp, on l'ouvre en read-only, on
 // construit un dump JSON compatible /api/admin/import-all, et on l'envoie.
+// Import depuis un fichier .db local (commité dans le repo).
+// Parse en read-only, extrait les tables user-centric, POST sur
+// /api/admin/import-all pour UPSERT.
+async function importFromLocalDb(dbPath, targetKey) {
+  if (!fs.existsSync(dbPath)) throw new Error(`fichier absent : ${dbPath}`);
+  const stat = fs.statSync(dbPath);
+  console.log(`[bootstrap-import] import local depuis ${dbPath} (${(stat.size / 1024).toFixed(1)} KB)`);
+  const srcDb = new Database(dbPath, { readonly: true, fileMustExist: true });
+  const dump = { exported_at: new Date().toISOString(), version: 1, main: { tables: {} } };
+  const TABLES = [
+    "users", "user_sync", "user_match_points", "follows", "oracle_uses",
+    "referrals", "profile_views", "posts", "post_likes", "post_comments",
+    "community_messages", "dm_messages", "user_keys", "conversations",
+  ];
+  for (const t of TABLES) {
+    try {
+      const rows = srcDb.prepare(`SELECT * FROM ${t}`).all();
+      dump.main.tables[t] = { rows, count: rows.length, columns: [] };
+    } catch { dump.main.tables[t] = { rows: [], count: 0, columns: [] }; }
+  }
+  srcDb.close();
+  const userCount = dump.main.tables.users?.count || 0;
+  console.log(`[bootstrap-import] dump extrait : users=${userCount}, user_sync=${dump.main.tables.user_sync?.count || 0}, user_match_points=${dump.main.tables.user_match_points?.count || 0}`);
+
+  const PORT = process.env.PORT || 3001;
+  const localUrl = `http://127.0.0.1:${PORT}/api/admin/import-all?key=${encodeURIComponent(targetKey)}`;
+  const imp = await fetch(localUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dump),
+  });
+  if (!imp.ok) throw new Error(`import HTTP ${imp.status}: ${await imp.text().catch(() => "")}`);
+  const result = await imp.json();
+  console.log(`[bootstrap-import] import local done:`, JSON.stringify(result.results?.map(r => `${r.table}:+${r.inserted}/~${r.updated}`).join(" ")));
+  return result;
+}
+
 async function probeSource(base, sourceKey) {
   // Verifie que l'ancien backend repond et a les endpoints necessaires.
   const probes = [
@@ -142,16 +179,28 @@ export function maybeRunBootstrapImport() {
   // Attend 15s après boot pour laisser le serveur HTTP local répondre et
   // les DB s'initialiser (migrations ALTER TABLE etc).
   setTimeout(async () => {
-    // On ne vérifie plus dbIsEmpty : la DB peut déjà avoir quelques users
-    // de test (login Google pendant la mise en place), l'import est UPSERT
-    // donc idempotent. Le gate reste le sentinel : une seule exécution.
+    // Essaie d'abord un fichier .db local (commité dans le repo), puis
+    // fallback sur HTTP si pas trouvé.
     try {
+      // Cherche le fichier dans Backend/data-backup/matches-migration.db
+      // ou data-backup/matches-migration.db (racine repo).
+      const candidates = [
+        path.join(path.dirname(new URL(import.meta.url).pathname), "data-backup", "matches-migration.db"),
+        path.join(path.dirname(new URL(import.meta.url).pathname), "..", "data-backup", "matches-migration.db"),
+      ];
+      const localDb = candidates.find(p => fs.existsSync(p));
+      if (localDb) {
+        await importFromLocalDb(localDb, targetKey);
+        try { fs.writeFileSync(SENTINEL, new Date().toISOString() + " ok (local)"); } catch {}
+        console.log("[bootstrap-import] ✅ migration one-shot terminée (source=local)");
+        return;
+      }
+      console.log("[bootstrap-import] pas de fichier local, essai HTTP…");
       await doImport(sourceUrl, sourceKey, targetKey);
-      try { fs.writeFileSync(SENTINEL, new Date().toISOString() + " ok"); } catch {}
-      console.log("[bootstrap-import] ✅ migration one-shot terminée");
+      try { fs.writeFileSync(SENTINEL, new Date().toISOString() + " ok (http)"); } catch {}
+      console.log("[bootstrap-import] ✅ migration one-shot terminée (source=http)");
     } catch (e) {
       console.error("[bootstrap-import] ❌ échec:", e.message);
-      // Pas de sentinel → nouvelle tentative au prochain redeploy.
     }
   }, 15000);
 }
