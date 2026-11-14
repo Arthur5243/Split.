@@ -19,6 +19,7 @@ import { getRL1v1Snapshot, forceRL1v1Refresh } from "./rl-1v1-scraper.js";
 import { getRLKnockoutSeriesSnapshot, forceRLKnockoutSeriesRefresh } from "./rl-knockout-series-scraper.js";
 import { getRLLiquipediaMatchesSnapshot, forceRLLiquipediaMatchesRefresh } from "./rl-liquipedia-matches-scraper.js";
 import { getOctaneRLGameScores } from "./rl-octane-scraper.js";
+import { getStartggRLGameScores, getStartggRLSnapshot, forceStartggRLRefresh } from "./rl-startgg-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -225,8 +226,8 @@ router.get("/api/rl-live", async (req, res) => {
         const t2 = m.opponents?.[1]?.opponent?.name;
         const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
         if (t1 && t2) {
-          const scraped = getRL_ScrapedScores(t1, t2, dateStr);
-          if (scraped) enriched.live_game_scores = scraped;
+          const live = getStartggRLGameScores(t1, t2, dateStr) || getRL_ScrapedScores(t1, t2, dateStr);
+          if (live) enriched.live_game_scores = live;
         }
       }
       return enriched;
@@ -275,7 +276,10 @@ router.get("/api/rl-results", async (req, res) => {
       const t2 = m.opponents?.[1]?.opponent?.name;
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
-      const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null;
+      // Priorite scores par game : start.gg (officiel) > scraper LP > Octane
+      // > JSON manuel > derivation fallback.
+      const startgg = t1 && t2 ? getStartggRLGameScores(t1, t2, dateStr) : null;
+      const scraped = startgg || (t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null);
       const octane = scraped || (t1 && t2 ? getOctaneRLGameScores(t1, t2, dateStr) : null);
       const manual = octane || findManualGameScores(t1, t2, dateStr);
       const fallback = manual || buildFallbackGameScores(m);
@@ -373,6 +377,19 @@ router.post("/api/rl-1v1-refresh", async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// --- Diagnostic start.gg : /api/rl-startgg-status ---
+router.get("/api/rl-startgg-status", async (req, res) => {
+  try { res.json(getStartggRLSnapshot()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post("/api/rl-startgg-refresh", async (req, res) => {
+  const secret = req.headers["x-admin-secret"];
+  if (!secret || secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: "forbidden" });
+  try { await forceStartggRLRefresh(); res.json(getStartggRLSnapshot()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // --- /api/rl-knockout-series : tournoi FuuRy KNOCKOUT SERIES (1v1 FR) ---
