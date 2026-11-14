@@ -76,7 +76,8 @@
           || document.referrer.indexOf('android-app://') === 0;
         var isDev = host === 'localhost' || host === '127.0.0.1';
         var isRecovery = /[#&]type=recovery(&|$)/.test(location.hash);
-        if (!isStandalone && !isDev && !isRecovery) {
+        var isAdmin = location.pathname === '/password' || location.pathname === '/password.html';
+        if (!isStandalone && !isDev && !isRecovery && !isAdmin) {
           location.replace('/download');
           return;
         }
