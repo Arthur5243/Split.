@@ -18,6 +18,7 @@ import { getRL_ScrapedScores } from "./liquipedia-rl-scraper.js";
 import { getRL1v1Snapshot, forceRL1v1Refresh } from "./rl-1v1-scraper.js";
 import { getRLKnockoutSeriesSnapshot, forceRLKnockoutSeriesRefresh } from "./rl-knockout-series-scraper.js";
 import { getRLLiquipediaMatchesSnapshot, forceRLLiquipediaMatchesRefresh } from "./rl-liquipedia-matches-scraper.js";
+import { getOctaneRLGameScores } from "./rl-octane-scraper.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -275,7 +276,8 @@ router.get("/api/rl-results", async (req, res) => {
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
       const scraped = t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null;
-      const manual = scraped || findManualGameScores(t1, t2, dateStr);
+      const octane = scraped || (t1 && t2 ? getOctaneRLGameScores(t1, t2, dateStr) : null);
+      const manual = octane || findManualGameScores(t1, t2, dateStr);
       const fallback = manual || buildFallbackGameScores(m);
       m.game_scores = fallback || null;
     }
