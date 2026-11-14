@@ -40,6 +40,7 @@ import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
 import whopRouter from "./whop-routes.js";
 import customBracketsRouter from "./custom-brackets-routes.js";
+import newsSlidesRouter from "./news-slides-routes.js";
 import { captureCardHtml, warmupBrowser } from "./capture.js";
 import { startPointsWorker } from "./points-engine.js";
 
@@ -62,6 +63,7 @@ app.use(postsRouter);
 app.use(messagesRouter);
 app.use(whopRouter);
 app.use(customBracketsRouter);
+app.use(newsSlidesRouter);
 
 // Endpoint /graphql + /graphiql (UI web pour tester les queries).
 // Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).

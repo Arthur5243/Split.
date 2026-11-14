@@ -5993,13 +5993,37 @@ function NewsCarousel({ T, splashDone }) {
   const [ready, setReady] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [imgErrors, setImgErrors] = useState([false, false, false]);
+  const [customSlides, setCustomSlides] = useState(null);
   const dragStartX = useRef(null);
   const timerRef = useRef(null);
   const slideCount = 3;
 
+  // Fetch news slides editables depuis /password (fallback aux T.* si vide)
   useEffect(() => {
     let cancelled = false;
-    const imgs = [NEWS_IMAGE, NEWS_EWC_IMAGE, NEWS_CS2_IMAGE];
+    fetch(API_BASE + "/api/news-slides")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (cancelled || !Array.isArray(data) || data.length === 0) return;
+        setCustomSlides(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  function slideField(idx, field, fallback) {
+    const s = customSlides?.find(x => x.idx === idx);
+    const v = s && s[field];
+    return (v && String(v).trim()) || fallback;
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    const imgs = [
+      slideField(0, "image_url", NEWS_IMAGE),
+      slideField(1, "image_url", NEWS_EWC_IMAGE),
+      slideField(2, "image_url", NEWS_CS2_IMAGE),
+    ];
     let loaded = 0;
     imgs.forEach((src, idx) => {
       const img = new Image();
@@ -6010,7 +6034,7 @@ function NewsCarousel({ T, splashDone }) {
       else if (img.complete) { loaded++; if (!cancelled) { setImgErrors(p => { const n = [...p]; n[idx] = true; return n; }); setImagesLoaded(loaded); } }
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [customSlides]);
 
   useEffect(() => {
     if (splashDone) return;
@@ -6080,42 +6104,70 @@ function NewsCarousel({ T, splashDone }) {
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", backgroundImage: !imgErrors[0] ? `url(${NEWS_IMAGE})` : undefined, backgroundColor: imgErrors[0] ? "#1a0a0f" : undefined, backgroundSize: "calc(100% + 6px) calc(100% + 6px)", backgroundPosition: "-3px -3px", backgroundRepeat: "no-repeat" }}>
-        {/* image hidden mais force fetch + onError pour fallback background gradient */}
-        <img src={NEWS_IMAGE} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} onError={() => setImgErrors(p => { const n = [...p]; n[0] = true; return n; })} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
-        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          {T.newsBadge}
-        </span>
-        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.newsTitle}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.newsSub}</p>
-        </div>
-      </div>
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
-        {!imgErrors[1] && <img src={NEWS_EWC_IMAGE} alt="" style={{ position: "absolute", top: -4, left: 0, right: -6, bottom: -4, width: "calc(100% + 6px)", height: "calc(100% + 8px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
-        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color: "#ff4655", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          {T.news2Badge}
-        </span>
-        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#ff4655", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{T.news2Title}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{T.news2Sub}</p>
-        </div>
-      </div>
+      {(() => {
+        const img = slideField(0, "image_url", NEWS_IMAGE);
+        const badge = slideField(0, "badge", T.newsBadge);
+        const title = slideField(0, "title", T.newsTitle);
+        const sub = slideField(0, "subtitle", T.newsSub);
+        const color = slideField(0, "accent_color", "#ff4655");
+        return (
+          <div className="absolute inset-0" style={{ opacity: activeSlide === 0 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 0 ? "auto" : "none", backgroundImage: !imgErrors[0] ? `url(${img})` : undefined, backgroundColor: imgErrors[0] ? "#1a0a0f" : undefined, backgroundSize: "calc(100% + 6px) calc(100% + 6px)", backgroundPosition: "-3px -3px", backgroundRepeat: "no-repeat" }}>
+            <img src={img} alt="" loading="eager" fetchpriority="high" decoding="sync" style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} onError={() => setImgErrors(p => { const n = [...p]; n[0] = true; return n; })} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
+            <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color, fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {badge}
+            </span>
+            <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+              <p style={{ color, fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{title}</p>
+              <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{sub}</p>
+            </div>
+          </div>
+        );
+      })()}
+      {(() => {
+        const img = slideField(1, "image_url", NEWS_EWC_IMAGE);
+        const badge = slideField(1, "badge", T.news2Badge);
+        const title = slideField(1, "title", T.news2Title);
+        const sub = slideField(1, "subtitle", T.news2Sub);
+        const color = slideField(1, "accent_color", "#ff4655");
+        return (
+          <div className="absolute inset-0" style={{ opacity: activeSlide === 1 && imagesLoaded >= 2 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 1 ? "auto" : "none", background: "linear-gradient(135deg, #1a1400 0%, #2d2200 50%, #1a1400 100%)" }}>
+            {!imgErrors[1] && <img src={img} alt="" style={{ position: "absolute", top: -4, left: 0, right: -6, bottom: -4, width: "calc(100% + 6px)", height: "calc(100% + 8px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[1] = true; return n; }); }} />}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
+            <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(255,70,85,0.3)", color, fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {badge}
+            </span>
+            <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+              <p style={{ color, fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{title}</p>
+              <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{sub}</p>
+            </div>
+          </div>
+        );
+      })()}
 
-      {/* Slide 3: Major CS2 */}
-      <div className="absolute inset-0" style={{ opacity: activeSlide === 2 && imagesLoaded >= 3 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 2 ? "auto" : "none", background: "linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)" }}>
-        {!imgErrors[2] && <img src={NEWS_CS2_IMAGE} alt="" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[2] = true; return n; }); }} />}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
-        <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(245,197,24,0.3)", color: "#F5C518", fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-          {T.news3Badge || "CS2"}
-        </span>
-        <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
-          <p style={{ color: "#F5C518", fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{daysToMajor > 0 ? `J-${daysToMajor} ${T.news3Title || "AVANT LES CHAMPIONS CS2"}` : "LES CHAMPIONS CS2 ONT COMMENCÉ"}</p>
-          <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{daysToMajor > 0 ? (T.news3Sub || "") : ""}</p>
-        </div>
-      </div>
+      {/* Slide 3: configurable */}
+      {(() => {
+        const img = slideField(2, "image_url", NEWS_CS2_IMAGE);
+        const badge = slideField(2, "badge", T.news3Badge || "CS2");
+        const titleOverride = slideField(2, "title", "");
+        const subOverride = slideField(2, "subtitle", "");
+        const color = slideField(2, "accent_color", "#F5C518");
+        const title = titleOverride || (daysToMajor > 0 ? `J-${daysToMajor} ${T.news3Title || "AVANT LES CHAMPIONS CS2"}` : "LES CHAMPIONS CS2 ONT COMMENCÉ");
+        const sub = subOverride || (daysToMajor > 0 ? (T.news3Sub || "") : "");
+        return (
+          <div className="absolute inset-0" style={{ opacity: activeSlide === 2 && imagesLoaded >= 3 ? 1 : 0, transition: ready ? "opacity 0.6s ease" : "none", pointerEvents: activeSlide === 2 ? "auto" : "none", background: "linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%)" }}>
+            {!imgErrors[2] && <img src={img} alt="" style={{ position: "absolute", top: -3, left: -3, right: -3, bottom: -3, width: "calc(100% + 6px)", height: "calc(100% + 6px)", objectFit: "fill" }} onError={(e) => { e.target.style.display = "none"; setImgErrors(p => { const n = [...p]; n[2] = true; return n; }); }} />}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 35%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.95) 100%)" }} />
+            <span className="absolute rounded-full" style={{ top: "10px", left: "10px", background: "rgba(245,197,24,0.3)", color, fontSize: "9px", fontWeight: 700, padding: "3px 9px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              {badge}
+            </span>
+            <div className="absolute" style={{ right: "16px", top: "50%", transform: "translateY(-50%)", width: "48%", textAlign: "right" }}>
+              <p style={{ color, fontSize: "16px", fontWeight: 900, lineHeight: 1.1, textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{title}</p>
+              <p style={{ color: "#eee", fontSize: "10.5px", marginTop: "6px", lineHeight: 1.35, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>{sub}</p>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="absolute flex items-center gap-1.5" style={{ bottom: "10px", left: "50%", transform: "translateX(-50%)" }}>
         {[0, 1, 2].map((i) => (
