@@ -110,9 +110,10 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
 
     try {
       const db = new Database(dbPath, { readonly: true });
-      // Fenetre "actuel ou a venir" : on considere un match comme actif si
-      // status != finished ET si sa date est aujourd'hui/future (ou inconnue).
-      // Le day est stocke en "YYYY-MM-DD" (ou NULL).
+      // Propose TOUS les tournois mais en marque ceux avec matchs a venir
+      // (bagde "LIVE") et on les trie en tete. Les archives restent
+      // visibles en-dessous pour qu'on puisse quand meme creer un bracket
+      // d'un tournoi passe (recap, bracket historique, etc.).
       const today = new Date().toISOString().slice(0, 10);
       const rowsDb = db.prepare(
         `SELECT league, phase,
@@ -121,12 +122,12 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
                       WHEN status != 'finished'
                        AND (day IS NULL OR day >= ?)
                       THEN 1 ELSE 0
-                    END) as live_count
+                    END) as live_count,
+                MAX(day) as last_day
          FROM matches
          WHERE league IS NOT NULL
          GROUP BY league, phase
-         HAVING live_count > 0
-         ORDER BY live_count DESC, n DESC`
+         ORDER BY live_count DESC, last_day DESC, n DESC`
       ).all(today);
       for (const r of rowsDb) {
         const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
@@ -136,8 +137,9 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
           league: r.league,
           phase: r.phase,
           count: r.n,
-          live_count: r.live_count,
-          has_live: r.live_count > 0,
+          live_count: r.live_count || 0,
+          has_live: (r.live_count || 0) > 0,
+          last_day: r.last_day || null,
         });
       }
       db.close();
