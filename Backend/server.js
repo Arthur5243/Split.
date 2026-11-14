@@ -85,6 +85,9 @@ import("./bootstrap-points.js").then(({ maybeRunBootstrapPoints }) => maybeRunBo
 // (pre-creation des rows pour que le login ne demande pas le pseudo).
 import("./bootstrap-supabase-seed.js").then(({ maybeRunBootstrapSupabaseSeed }) => maybeRunBootstrapSupabaseSeed());
 
+// Bootstrap one-shot : seed manuel via env var BOOTSTRAP_USERS_SEED (JSON array).
+import("./bootstrap-users-seed.js").then(({ maybeRunBootstrapUsersSeed }) => maybeRunBootstrapUsersSeed());
+
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
