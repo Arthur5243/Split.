@@ -6352,17 +6352,44 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, onOpenRlCale
         <button
           onClick={onOpenSubscribe}
           style={{
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "10px 14px", marginBottom: 16,
-            background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 12,
+            width: "100%", display: "flex", alignItems: "center", gap: 12,
+            padding: "12px 14px", marginBottom: 16,
+            background: "linear-gradient(135deg, #1a1407 0%, #2a1e0a 100%)",
+            border: "1px solid rgba(255,184,0,0.3)",
+            borderRadius: 14,
             cursor: "pointer",
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 14 }}>✨</span>
-            <span style={{ color: "#aaa", fontSize: 12, fontWeight: 600 }}>Passe à Split+ pour débloquer le contenu premium</span>
-          </span>
-          <ChevronRight size={14} color="#555" />
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "radial-gradient(circle at top right, rgba(255,184,0,0.12) 0%, transparent 60%)",
+            pointerEvents: "none",
+          }} />
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: "linear-gradient(135deg, #FFB800 0%, #FFD05C 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0, position: "relative", zIndex: 1,
+            boxShadow: "0 4px 12px rgba(255,184,0,0.3)",
+          }}>
+            <img src="/split-logo.png" alt="Split" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0)" }} />
+          </div>
+          <div style={{ flex: 1, textAlign: "left", position: "relative", zIndex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
+              <span style={{ color: "#FFB800", fontSize: 13, fontWeight: 900, letterSpacing: -0.2 }}>Split+</span>
+              <span style={{
+                fontSize: 8, fontWeight: 800, color: "#1a1407",
+                background: "#FFB800", padding: "1px 6px", borderRadius: 4,
+                letterSpacing: 0.4, textTransform: "uppercase",
+              }}>PREMIUM</span>
+            </div>
+            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 500 }}>
+              Sans pub · Scores live map · Paliers exclusifs
+            </span>
+          </div>
+          <ChevronRight size={16} color="#FFB800" style={{ position: "relative", zIndex: 1 }} />
         </button>
       )}
 
@@ -14968,26 +14995,11 @@ export default function ClutchApp() {
   }, []);
   useEffect(() => { refreshLeaderboard(); }, [refreshLeaderboard]);
 
-  useEffect(() => {
-    const notifs = [];
-    for (const m of liveMatches) {
-      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
-    }
-    for (const m of cs2LiveMatches) {
-      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
-    }
-    for (const m of rlLiveMatches) {
-      notifs.push({ type: "match", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} est en LIVE !` });
-    }
-    const upcoming = [...upcomingMatches.slice(0, 2), ...cs2UpcomingMatches.slice(0, 2), ...rlUpcomingMatches.slice(0, 1)];
-    for (const m of upcoming) {
-      notifs.push({ type: "info", message: `${m.team1Name || m.team1} vs ${m.team2Name || m.team2} commence bientôt` });
-    }
-    if (notifs.length === 0) {
-      notifs.push({ type: "info", message: "Aucun match en cours — reviens bientôt !" });
-    }
-    setNotifications(notifs);
-  }, [liveMatches, cs2LiveMatches, rlLiveMatches, upcomingMatches, cs2UpcomingMatches, rlUpcomingMatches]);
+  // Les notifications ne sont PLUS generees automatiquement a chaque load
+  // des matchs (ca spammait l'inbox avec 4-5 notifs des l'ouverture). L'inbox
+  // reste vide par defaut ; les push notifications arrivent via SW uniquement
+  // sur evenements reels (match live demarre, resultat d'un prono, etc).
+  // Les ajouts se font maintenant via pushNotif(n) ponctuellement.
 
   // Synchro des pronos entre appareils d'un même compte (/api/sync). Chaque
   // prono porte un horodatage de dernière modif (split_predictions_ts) : à la
