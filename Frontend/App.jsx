@@ -14031,14 +14031,23 @@ function AuthScreen({ onAuth }) {
     setInfo("Si un compte existe pour cet email, tu vas recevoir un lien pour changer ton mot de passe.");
   };
 
-  const handleGoogle = async (credential) => {
+  // handleGoogle accepte soit un id_token (ancien flux GIS), soit un access_token
+  // (nouveau flux OAuth2 TokenClient). Le backend accepte les deux.
+  const handleGoogle = async (credential, accessToken) => {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(API + "/api/auth/google", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ credential, pseudo: googlePseudo || undefined }) });
+      const body = { pseudo: googlePseudo || undefined };
+      if (credential) body.credential = credential;
+      if (accessToken) body.access_token = accessToken;
+      const res = await fetch(API + "/api/auth/google", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) {
-        if (data.needsPseudo) { setGoogleCred(credential); setLoading(false); return; }
+        if (data.needsPseudo) {
+          setGoogleCred(credential || accessToken);
+          setLoading(false);
+          return;
+        }
         setError(data.error || "Erreur"); setLoading(false); return;
       }
       localStorage.setItem("split_token", data.token);
@@ -14050,11 +14059,15 @@ function AuthScreen({ onAuth }) {
 
   const submitGooglePseudo = async () => {
     if (!googlePseudo || googlePseudo.length < 2) { setError("Pseudo requis (2 caractères min)"); return; }
-    await handleGoogle(googleCred);
+    // Si googleCred est un id_token JWT (contient 2 points, format eyJ...), on l'envoie comme credential.
+    // Sinon c'est un access_token (ya29...), on l'envoie comme access_token.
+    const looksLikeIdToken = typeof googleCred === "string" && googleCred.split(".").length === 3 && googleCred.startsWith("eyJ");
+    await handleGoogle(looksLikeIdToken ? googleCred : null, looksLikeIdToken ? null : googleCred);
   };
 
   const googleReadyRef = useRef(false);
-  const googleBtnRef = useRef(null);
+  const googleTokenClientRef = useRef(null);
+  const googleBtnRef = useRef(null); // conservé pour compat, plus utilisé pour cliquer
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   useEffect(() => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -14063,23 +14076,43 @@ function AuthScreen({ onAuth }) {
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
     s.onload = () => {
-      window.google?.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: (response) => handleGoogle(response.credential),
-      });
-      googleReadyRef.current = true;
-      // Rendu invisible du bouton officiel Google (requis pour la lib) ; on
-      // affiche à la place notre propre bouton stylé qui clique dessus.
-      if (googleBtnRef.current) {
-        window.google.accounts.id.renderButton(googleBtnRef.current, { type: "standard", theme: "filled_black", size: "large", text: "continue_with", width: 320 });
+      // Flux OAuth2 "token client" : requestAccessToken() ouvre une popup
+      // Google officielle, le user accepte, on reçoit un access_token qu'on
+      // envoie au backend qui vérifie via /oauth2/v3/userinfo. Plus fiable
+      // que le click sur bouton caché GIS (qui marchait 1 fois sur 15 à
+      // cause du pointer-events:none + iframe Google cross-origin).
+      try {
+        googleTokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: "openid email profile",
+          callback: async (resp) => {
+            if (resp?.access_token) {
+              await handleGoogle(null, resp.access_token);
+            } else if (resp?.error) {
+              setError("Google : " + resp.error);
+            }
+          },
+          error_callback: (err) => {
+            // popup fermée, blocage navigateur, etc.
+            if (err?.type === "popup_closed") return;
+            setError("Google : " + (err?.message || err?.type || "erreur"));
+          },
+        });
+        googleReadyRef.current = true;
+      } catch (e) {
+        console.error("[auth] Google init failed:", e);
       }
     };
     document.head.appendChild(s);
     return () => { try { document.head.removeChild(s); } catch {} };
   }, []);
   const triggerGoogleSignIn = () => {
-    if (!googleReadyRef.current) return;
-    if (googleBtnRef.current) googleBtnRef.current.querySelector("[role=button]")?.click();
+    if (!googleReadyRef.current || !googleTokenClientRef.current) {
+      setError("Google pas encore prêt, réessaie dans 2s");
+      return;
+    }
+    try { googleTokenClientRef.current.requestAccessToken(); }
+    catch (e) { setError("Google : " + e.message); }
   };
 
   if (googleCred || pendingSupabase) {
@@ -14154,10 +14187,7 @@ function AuthScreen({ onAuth }) {
 
         {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
           <>
-            {/* Bouton officiel Google rendu dans un iframe caché. Requis pour que
-                le flux credentials fonctionne, mais invisible à l'utilisateur. */}
-            <div ref={googleBtnRef} style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 1, height: 1, overflow: "hidden" }} />
-            {/* Bouton custom aligné sur le reste du design Split. */}
+            {/* Bouton custom : ouvre la popup Google OAuth2 (initTokenClient) au clic. */}
             <button onClick={triggerGoogleSignIn} disabled={loading} style={{
               width: "100%", background: "#fff", color: "#1f1f1f",
               border: "1px solid #dadce0", borderRadius: 12,

@@ -143,16 +143,32 @@ router.post("/api/auth/supabase", async (req, res) => {
 
 router.post("/api/auth/google", async (req, res) => {
   try {
-    const { credential, pseudo } = req.body;
-    if (!credential) return res.status(400).json({ error: "Token Google manquant" });
+    const { credential, access_token, pseudo } = req.body;
+    if (!credential && !access_token) return res.status(400).json({ error: "Token Google manquant" });
 
-    const gRes = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + credential);
-    if (!gRes.ok) return res.status(401).json({ error: "Token Google invalide" });
-    const gData = await gRes.json();
-    const allowedAud = [process.env.GOOGLE_CLIENT_ID, "623522920430-hsuokum2g502peet9q65vdm561indi1t.apps.googleusercontent.com"].filter(Boolean);
-    if (!allowedAud.includes(gData.aud)) return res.status(401).json({ error: "Token Google invalide" });
-    if (gData.email_verified === false || gData.email_verified === "false") return res.status(401).json({ error: "Email Google non vérifié" });
-    const email = gData.email;
+    let email, email_verified;
+    if (access_token) {
+      // Flux OAuth2 TokenClient (nouveau front) : on vérifie l'access_token
+      // via /oauth2/v3/userinfo. Google ne renvoie l'email que si notre
+      // client_id est autorisé.
+      const uRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: "Bearer " + access_token },
+      });
+      if (!uRes.ok) return res.status(401).json({ error: "Access token Google invalide" });
+      const u = await uRes.json();
+      email = u.email;
+      email_verified = u.email_verified;
+    } else {
+      // Flux id_token (ancien front GIS).
+      const gRes = await fetch("https://oauth2.googleapis.com/tokeninfo?id_token=" + credential);
+      if (!gRes.ok) return res.status(401).json({ error: "Token Google invalide" });
+      const gData = await gRes.json();
+      const allowedAud = [process.env.GOOGLE_CLIENT_ID, "623522920430-hsuokum2g502peet9q65vdm561indi1t.apps.googleusercontent.com"].filter(Boolean);
+      if (!allowedAud.includes(gData.aud)) return res.status(401).json({ error: "Token Google invalide" });
+      email = gData.email;
+      email_verified = gData.email_verified;
+    }
+    if (email_verified === false || email_verified === "false") return res.status(401).json({ error: "Email Google non vérifié" });
     if (!email) return res.status(401).json({ error: "Pas d'email dans le token Google" });
 
     let user = getUserByEmail(email.toLowerCase());
