@@ -81,6 +81,10 @@ import("./bootstrap-import.js").then(({ maybeRunBootstrapImport }) => maybeRunBo
 // Bootstrap one-shot : applique des points à des users via env var BOOTSTRAP_POINTS.
 import("./bootstrap-points.js").then(({ maybeRunBootstrapPoints }) => maybeRunBootstrapPoints());
 
+// Bootstrap one-shot : seed la DB locale avec tous les users Supabase
+// (pre-creation des rows pour que le login ne demande pas le pseudo).
+import("./bootstrap-supabase-seed.js").then(({ maybeRunBootstrapSupabaseSeed }) => maybeRunBootstrapSupabaseSeed());
+
 // Endpoints admin de reset user state (xp, points, palier, equipped) — UPDATE only
 import("./admin-reset-state.js").then(({ mountAdminResetEndpoints }) => mountAdminResetEndpoints(app));
 
