@@ -37,29 +37,62 @@ function dbIsEmpty() {
   } catch { return true; }
 }
 
+// L'ancien backend n'a PAS les nouveaux endpoints /api/admin/export-all,
+// mais il a /api/admin/download-db qui stream le .db SQLite brut. On
+// download matches.db dans un fichier temp, on l'ouvre en read-only, on
+// construit un dump JSON compatible /api/admin/import-all, et on l'envoie.
 async function doImport(sourceUrl, sourceKey, targetKey) {
-  const url = `${sourceUrl.replace(/\/$/, "")}/api/admin/export-all?key=${encodeURIComponent(sourceKey)}&gz=1`;
+  const base = sourceUrl.replace(/\/$/, "");
+  const url = `${base}/api/admin/download-db?key=${encodeURIComponent(sourceKey)}&file=matches.db`;
   console.log(`[bootstrap-import] GET ${url.replace(sourceKey, "***")}`);
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`export HTTP ${res.status}`);
+  if (!res.ok) throw new Error(`download-db HTTP ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
-  const isGzip = buf[0] === 0x1f && buf[1] === 0x8b;
-  const jsonStr = (isGzip ? zlib.gunzipSync(buf) : buf).toString("utf8");
-  const dump = JSON.parse(jsonStr);
-  const userCount = dump?.summary?.users ?? dump?.main?.tables?.users?.count ?? 0;
-  console.log(`[bootstrap-import] dump récupéré (${(buf.length / 1024).toFixed(1)} KB, users=${userCount})`);
-  // Appelle notre propre /api/admin/import-all en local pour profiter du
-  // parsing + upsert existants.
+  console.log(`[bootstrap-import] .db récupéré : ${(buf.length / 1024).toFixed(1)} KB`);
+
+  const tmpDir = path.join(DATA_DIR, ".bootstrap-tmp");
+  try { fs.mkdirSync(tmpDir, { recursive: true }); } catch {}
+  const tmpPath = path.join(tmpDir, "source-matches.db");
+  fs.writeFileSync(tmpPath, buf);
+
+  // Ouvre en read-only et extrait les tables user-centric
+  const srcDb = new Database(tmpPath, { readonly: true, fileMustExist: true });
+  const dump = { exported_at: new Date().toISOString(), version: 1, main: { tables: {} } };
+  const TABLES = [
+    "users", "user_sync", "user_match_points", "follows", "oracle_uses",
+    "referrals", "profile_views", "posts", "post_likes", "post_comments",
+    "community_messages", "dm_messages", "user_keys", "conversations",
+  ];
+  for (const t of TABLES) {
+    try {
+      const rows = srcDb.prepare(`SELECT * FROM ${t}`).all();
+      dump.main.tables[t] = { rows, count: rows.length, columns: [] };
+    } catch (e) {
+      // Table peut ne pas exister dans l'ancien schéma
+      dump.main.tables[t] = { rows: [], count: 0, columns: [] };
+    }
+  }
+  srcDb.close();
+  const userCount = dump.main.tables.users?.count || 0;
+  const pronoCount = dump.main.tables.user_sync?.count || 0;
+  console.log(`[bootstrap-import] dump extrait : users=${userCount}, user_sync=${pronoCount}, posts=${dump.main.tables.posts?.count || 0}`);
+
+  // Appelle /api/admin/import-all en local (UPSERT atomique)
   const PORT = process.env.PORT || 3001;
   const localUrl = `http://127.0.0.1:${PORT}/api/admin/import-all?key=${encodeURIComponent(targetKey)}`;
+  const jsonStr = JSON.stringify(dump);
   const imp = await fetch(localUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/octet-stream" },
-    body: Buffer.from(jsonStr, "utf8"),
+    headers: { "Content-Type": "application/json" },
+    body: jsonStr,
   });
   if (!imp.ok) throw new Error(`import HTTP ${imp.status}: ${await imp.text().catch(() => "")}`);
   const result = await imp.json();
   console.log(`[bootstrap-import] import done:`, JSON.stringify(result.results?.map(r => `${r.table}:+${r.inserted}/~${r.updated}`).join(" ")));
+
+  // Nettoyage du tmp
+  try { fs.unlinkSync(tmpPath); } catch {}
+  try { fs.rmdirSync(tmpDir); } catch {}
   return result;
 }
 
