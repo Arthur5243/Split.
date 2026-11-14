@@ -80,6 +80,10 @@ import("./admin-migration.js").then(({ mountAdminMigration }) => mountAdminMigra
 // sont setés, importe depuis l'ancien backend au 1er boot du nouveau.
 import("./bootstrap-import.js").then(({ maybeRunBootstrapImport }) => maybeRunBootstrapImport());
 
+// Bootstrap one-shot : copie la table `matches` (historique scraping +
+// map_scores) depuis Backend/data-backup/*-migration.db vers /data/*.db.
+import("./bootstrap-matches-import.js").then(({ maybeRunBootstrapMatchesImport }) => maybeRunBootstrapMatchesImport());
+
 // Bootstrap one-shot : applique des points à des users via env var BOOTSTRAP_POINTS.
 import("./bootstrap-points.js").then(({ maybeRunBootstrapPoints }) => maybeRunBootstrapPoints());
 
