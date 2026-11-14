@@ -5835,7 +5835,7 @@ const RANK_TIERS = [
 ];
 RANK_TIERS.forEach(r => [r.logo, r.bgImage].forEach(src => { if (src) { const img = new Image(); img.decoding = "async"; img.src = src; } }));
 
-function getUserRank(points, allUsersPoints, forceMax, forceUnranked) {
+function getUserRank(points, allUsersPoints, forceMax, forceUnranked, forceTierLevel) {
   if (forceUnranked) {
     const u = RANK_TIERS[0];
     return {
@@ -5851,6 +5851,17 @@ function getUserRank(points, allUsersPoints, forceMax, forceUnranked) {
       maxPct: u.maxPct,
       progress: 0,
       nextPts: RANK_TIERS[1]?.minPts || null,
+    };
+  }
+  if (forceTierLevel != null && Number.isInteger(forceTierLevel) && forceTierLevel >= 0 && forceTierLevel < RANK_TIERS.length) {
+    const u = RANK_TIERS[forceTierLevel];
+    const next = RANK_TIERS[forceTierLevel + 1];
+    return {
+      name: u.name, label: u.name, color: u.color, logo: u.logo,
+      bg: u.bg, border: u.border, bgImage: u.bgImage, bgCrop: u.bgCrop,
+      minPts: u.minPts, maxPct: u.maxPct,
+      progress: next ? 0 : 1,
+      nextPts: next ? next.minPts : null,
     };
   }
   if (forceMax) {
@@ -5890,8 +5901,8 @@ function getUserRank(points, allUsersPoints, forceMax, forceUnranked) {
   return { ...tier, label: tier.name, progress, nextPts };
 }
 
-function RankBadgeCompact({ points, onClick, forceUnranked }) {
-  const rank = getUserRank(points, undefined, false, forceUnranked);
+function RankBadgeCompact({ points, onClick, forceUnranked, forceTierLevel }) {
+  const rank = getUserRank(points, undefined, false, forceUnranked, forceTierLevel);
   const isUnranked = rank.name === "Unranked";
   const isTop = rank.name === "#Infinite";
   const rc = rank.color;
@@ -6334,7 +6345,7 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, T, predictio
         })()}
 
         {/* Card 3: Rank badge */}
-        <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} forceUnranked={profile?.forceUnranked} />
+        <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} forceUnranked={profile?.forceUnranked} forceTierLevel={profile?.forceTierLevel} />
       </div>
 
       {showSplitBanner && !isSubscribed && (
@@ -12163,7 +12174,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
 
         {(() => {
           const allPts = leaderboard.map(u => u.points);
-          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
+          const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked, profile?.forceTierLevel);
           const nextLabel = rank.nextPts ? `${rank.nextPts} pts` : "MAX";
           const isUnrankedProfile = rank.name === "Unranked";
           return (
@@ -12617,7 +12628,7 @@ function ClassementTab({ T, scoreCats, toggleScoreCat, userPoints, pointsPerGame
               <h1 className="font-black text-white" style={{ fontSize: "26px", letterSpacing: "-0.02em" }}>{T.classementTitle}</h1>
               {(() => {
                 const allPts = leaderboard.map(u => u.points);
-                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked);
+                const rank = getUserRank(userPoints || 0, allPts.length >= 50 ? allPts : undefined, isCaffioraDemo, profile?.forceUnranked, profile?.forceTierLevel);
                 const isUnrankedTop = rank.name === "Unranked";
                 return (
                   <div style={{
@@ -15171,6 +15182,7 @@ export default function ClutchApp() {
           favTeams: { valo: d.fav_valo || null, cs2: d.fav_cs2 || null, rl: d.fav_rl || null },
           pseudoColor: d.pseudo_color || null,
           forceUnranked: !!d.force_unranked,
+          forceTierLevel: (d.force_tier_level ?? null),
         };
         // Cosmétiques : écrase TOUJOURS le cache local avec ce que le serveur
         // a — même si c'est vide. Backend = source de vérité par user. Avant,
