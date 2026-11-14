@@ -111,12 +111,14 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
     try {
       const db = new Database(dbPath, { readonly: true });
       const rowsDb = db.prepare(
-        `SELECT league, phase, COUNT(*) as n,
-                MAX(CASE WHEN status != 'finished' THEN 1 ELSE 0 END) as has_live
+        `SELECT league, phase,
+                COUNT(*) as n,
+                SUM(CASE WHEN status != 'finished' THEN 1 ELSE 0 END) as live_count
          FROM matches
          WHERE league IS NOT NULL
          GROUP BY league, phase
-         ORDER BY has_live DESC, n DESC`
+         HAVING live_count > 0
+         ORDER BY live_count DESC, n DESC`
       ).all();
       for (const r of rowsDb) {
         const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
@@ -126,7 +128,8 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
           league: r.league,
           phase: r.phase,
           count: r.n,
-          has_live: !!r.has_live,
+          live_count: r.live_count,
+          has_live: r.live_count > 0,
         });
       }
       db.close();
