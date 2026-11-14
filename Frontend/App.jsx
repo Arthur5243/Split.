@@ -15269,11 +15269,10 @@ export default function ClutchApp() {
     resetAppState();
     const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
-      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, rKo, lb] = await Promise.all([
+      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
         fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
         fj("/api/cs2-upcoming"), fj("/api/cs2-live"), fj("/api/cs2-results"), fj("/api/cs2-match-history").catch(() => null),
         fj("/api/rl-upcoming"), fj("/api/rl-live"), fj("/api/rl-results"), fj("/api/rl-match-history").catch(() => null),
-        fj("/api/rl-knockout-series").catch(() => null),
         fj("/api/social/leaderboard").catch(() => null),
       ]);
       const vUpT = Array.isArray(vUp) ? vUp.map(transformMatch).filter(m => m.region) : [];
@@ -15313,36 +15312,16 @@ export default function ClutchApp() {
       const rPaT = Array.isArray(rPa) ? rPa.map(transformMatchRL) : [];
       const rHistT = Array.isArray(rHist) ? rHist.map(transformMatchRL) : [];
       const rFinished = rHistT.length > rPaT.length ? rHistT : rPaT;
-      const rKoAll = [];
-      if (rKo && (Array.isArray(rKo.nights) || Array.isArray(rKo.playoffs))) {
-        (rKo.nights || []).forEach(n => (n.matches || []).forEach(m => rKoAll.push(m)));
-        (rKo.playoffs || []).forEach(m => rKoAll.push(m));
-        (rKo.other || []).forEach(m => rKoAll.push(m));
-      }
-      const rKoStats = computeKnockoutPlayerStats(rKoAll);
-      const rKoT = rKoAll.map(m => transformKnockoutSeriesMatch(m, rKoStats)).filter(m => isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
-      const rKoUp = rKoT.filter(m => m.status === "not_started" || m.status === "upcoming");
-      const rKoLi = rKoT.filter(m => m.status === "running");
-      const rKoFin = rKoT.filter(m => m.status === "finished");
-      const rUpFut = [...rUpT, ...rKoUp].filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      const rUpFut = rUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
       setRlUpcomingMatches(attachComputedOdds(rUpFut, rFinished, tierWeightRL));
-      setRlLiveMatches(attachComputedOdds([...rLiT, ...rKoLi], rFinished, tierWeightRL));
+      setRlLiveMatches(attachComputedOdds(rLiT, rFinished, tierWeightRL));
       setRlResultsMatches((() => {
         const elo = computeEloRatings(rFinished, tierWeightRL);
-        const standard = rPaT.map(m => {
+        return rPaT.map(m => {
           const h = rFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
-        });
-        const seen = new Set();
-        const combined = [];
-        for (const m of [...standard, ...rKoFin]) {
-          const k = String(m.id);
-          if (seen.has(k)) continue;
-          seen.add(k);
-          combined.push(m);
-        }
-        return combined.sort((a, b) => {
+        }).sort((a, b) => {
           const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
           const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
           return tb - ta;
@@ -15602,12 +15581,11 @@ export default function ClutchApp() {
     }
     async function loadRL() {
       try {
-        const [up, li, pa, history, knockout] = await Promise.all([
+        const [up, li, pa, history] = await Promise.all([
           fetchJson("/api/rl-upcoming"),
           fetchJson("/api/rl-live"),
           fetchJson("/api/rl-results"),
           fetchJson("/api/rl-match-history").catch(() => null),
-          fetchJson("/api/rl-knockout-series").catch(() => null),
         ]);
         if (cancelled) return;
         setRlDataError(false);
@@ -15615,56 +15593,30 @@ export default function ClutchApp() {
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
 
-        const koAll = [];
-        if (knockout && (Array.isArray(knockout.nights) || Array.isArray(knockout.playoffs))) {
-          (knockout.nights || []).forEach((n) => (n.matches || []).forEach((m) => koAll.push(m)));
-          (knockout.playoffs || []).forEach((m) => koAll.push(m));
-          (knockout.other || []).forEach((m) => koAll.push(m));
-        }
-        const koPlayerStats = computeKnockoutPlayerStats(koAll);
-        const koTransformed = koAll.map(m => transformKnockoutSeriesMatch(m, koPlayerStats)).filter(m => isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
-        const koUpcoming = koTransformed.filter(m => m.status === "not_started" || m.status === "upcoming");
-        const koLive = koTransformed.filter(m => m.status === "running");
-        const koFinished = koTransformed.filter(m => m.status === "finished");
-        try { if (koTransformed.length) window.__splitKnockoutMatches = koTransformed; } catch {}
-
-        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0 && koTransformed.length === 0) return;
+        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
         rlLoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchRL) : [];
         const finishedMatchesRL = historyT.length > paT.length ? historyT : paT;
 
-        function dedupeByIdRL(list) {
-          const seen = new Set();
-          const out = [];
-          for (const m of list) {
-            const key = String(m.id);
-            if (seen.has(key)) continue;
-            seen.add(key);
-            out.push(m);
-          }
-          return out;
-        }
         const now = Date.now();
-        const upFuture = dedupeByIdRL([...upT, ...koUpcoming]).filter((m) => {
+        const upFuture = upT.filter((m) => {
           if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false;
           if (m.status === "finished" || m.status === "canceled") return false;
           if (!m.beginAt) return true;
           const t = new Date(m.beginAt).getTime();
           return Number.isNaN(t) || t > now;
         });
-        const liDeduped = dedupeByIdRL([...liT, ...koLive]);
 
         setRlUpcomingMatches(attachComputedOdds(upFuture, finishedMatchesRL, tierWeightRL));
-        setRlLiveMatches(attachComputedOdds(liDeduped, finishedMatchesRL, tierWeightRL));
+        setRlLiveMatches(attachComputedOdds(liT, finishedMatchesRL, tierWeightRL));
         setRlResultsMatches(
           (() => {
             const eloDataRLResults = computeEloRatings(finishedMatchesRL, tierWeightRL);
-            const standard = paT.map((m) => {
+            return paT.map((m) => {
               const historyWithoutSelf = finishedMatchesRL.filter((h) => String(h.id) !== String(m.id));
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
-            });
-            return dedupeByIdRL([...standard, ...koFinished]).sort((a, b) => {
+            }).sort((a, b) => {
               const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
               const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
               return tb - ta;
