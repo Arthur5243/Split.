@@ -5826,7 +5826,7 @@ function getStreakColor(s) {
 // (haut/bas/gauche/droite) dépasse de ~7,5% du cadre. Les bords transparents
 // des PNG sortent du cadre, le focal point (perso/glow) reste au milieu.
 const RANK_TIERS = [
-  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/unranked-back-new.webp", bgCrop: { size: "calc(100% + 40px) calc(100% + 80px)", position: "-20px -40px" } },
+  { name: "Unranked",      minPts: 0,    color: "#9CA3AF",  logo: "/unranked-new-sm.png", bg: "rgba(156,163,175,0.15)",  border: "rgba(156,163,175,0.25)", maxPct: 1,    bgImage: "/unranked-back-new.webp", bgCrop: { size: "calc(100% + 40px) calc(100% + 80px)", position: "-10px -40px" } },
   { name: "Override",      minPts: 50,   color: "#CD7F32", logo: "/logos/bronze-sm.png",  bg: "rgba(205,127,50,0.32)",  border: "rgba(205,127,50,0.3)",  maxPct: 0.20, bgImage: "/bronze-back-fit.png",   bgCrop: { size: "cover", position: "center center" } },
   { name: "Champion",      minPts: 300,  color: "#A855F7", logo: "/champion-sm.png",     bg: "rgba(168,85,247,0.32)",  border: "rgba(168,85,247,0.3)",  maxPct: 0.25, bgImage: "/champion-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
   { name: "Immortal",      minPts: 1000, color: "#EF4444", logo: "/immortal-sm.png",     bg: "rgba(239,68,68,0.32)",   border: "rgba(239,68,68,0.3)",   maxPct: 0.30, bgImage: "/immortal-back-fit.png", bgCrop: { size: "cover", position: "center center" } },
