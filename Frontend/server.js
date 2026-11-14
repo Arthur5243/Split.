@@ -50,6 +50,11 @@ const server = createServer(async (req, res) => {
     return sendFile(res, join(DIST, "download.html"));
   }
 
+  // Route /password → password.html (admin bracket builder standalone)
+  if (url === "/password" || url === "/password/") {
+    return sendFile(res, join(DIST, "password.html"));
+  }
+
   // Page de confirmation après un paiement Whop. On accepte toutes les
   // variantes orthographiques (accent, pas d'accent, trailing slash, URL
   // encodée côté navigateur, "/success" en fallback générique).
