@@ -206,18 +206,36 @@ export function mountAdminMigration(app) {
 
   // POST /api/admin/import-all
   // Body = JSON (optionnellement gzippé avec Content-Encoding: gzip).
+  // On accepte les 3 cas : raw Buffer, string, ou deja parse en object par
+  // le middleware global express.json().
   app.post("/api/admin/import-all",
-    express.raw({ limit: "200mb", type: () => true }),
+    express.raw({ limit: "200mb", type: (req) => {
+      const ct = String(req.headers["content-type"] || "").toLowerCase();
+      return ct.includes("octet-stream") || ct.includes("gzip");
+    } }),
     (req, res) => {
       if (!checkAuth(req, res)) return;
       try {
-        let bodyBuf = req.body;
-        if (!bodyBuf || bodyBuf.length === 0) return res.status(400).json({ error: "empty body" });
-        // Détecte gzip (magic bytes 1f 8b) ou header
-        const enc = String(req.headers["content-encoding"] || "").toLowerCase();
-        const isGzip = enc === "gzip" || (bodyBuf[0] === 0x1f && bodyBuf[1] === 0x8b);
-        if (isGzip) bodyBuf = zlib.gunzipSync(bodyBuf);
-        const dump = JSON.parse(bodyBuf.toString("utf8"));
+        let dump;
+        const body = req.body;
+        if (!body) return res.status(400).json({ error: "empty body" });
+
+        if (Buffer.isBuffer(body)) {
+          let buf = body;
+          const enc = String(req.headers["content-encoding"] || "").toLowerCase();
+          const isGzip = enc === "gzip" || (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b);
+          if (isGzip) buf = zlib.gunzipSync(buf);
+          dump = JSON.parse(buf.toString("utf8"));
+        } else if (typeof body === "string") {
+          dump = JSON.parse(body);
+        } else if (typeof body === "object") {
+          // Deja parse par express.json()
+          dump = body;
+        } else {
+          return res.status(400).json({ error: "unsupported body type: " + typeof body });
+        }
+
+        if (!dump || typeof dump !== "object") return res.status(400).json({ error: "dump invalide" });
         const dry = req.query.dry === "1";
         const result = applyImport(dump, { dryRun: dry });
         res.json(result);
