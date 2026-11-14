@@ -71,49 +71,106 @@ router.get("/api/custom-brackets/search", (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Autocomplete : retourne les noms de tournois presents dans la base
-// (tables de matchs de chaque jeu). L'UI admin l'utilise pour verifier
-// que le tournoi existe avant de laisser creer un bracket.
+// Helper : scorer de similarite texte (gere typos legers + sous-chaine).
+// 100 = match exact, 0 = aucun lien.
+function similarity(needle, hay) {
+  if (!needle || !hay) return 0;
+  const a = needle.toLowerCase();
+  const b = hay.toLowerCase();
+  if (b === a) return 100;
+  if (b.includes(a)) return 90 - (b.length - a.length) * 0.1;
+  const tokens = a.split(/\s+/).filter(Boolean);
+  if (tokens.every(t => b.includes(t))) return 70;
+  let hits = 0;
+  for (const t of tokens) if (b.includes(t)) hits++;
+  if (hits > 0) return 40 + hits * 10;
+  // Prefix match character par character (tolere typos legers)
+  let matched = 0;
+  for (const ch of a) if (b.includes(ch)) matched++;
+  return Math.max(0, (matched / a.length) * 20);
+}
+
+// Autocomplete tournois : retourne {name, league, phase, count} avec
+// score de similarite et tri. Query vide = liste tout. Supporte typos
+// legers via ranking multi-token.
 router.get("/api/custom-brackets/tournaments", (req, res) => {
   try {
     const game = req.query.game;
-    const q = (req.query.q || "").toLowerCase().trim();
+    const q = (req.query.q || "").trim();
     if (!game) return res.json([]);
     const db = new Database(DB_PATH, { readonly: true });
-    // Les matchs scrapes sont dans matches.db dans la table "matches" (pour
-    // valorant) ou "cs2_matches" / "rl_matches" selon l'implementation.
-    // La table "matches" contient tous les matchs Valo scrapes. CS2/RL sont
-    // dans des fichiers data/matches-*.json (historique profond) mais pas
-    // directement en DB. Pour l'autocomplete on utilise les noms de league
-    // des matchs stockes.
-    let rows = [];
+
+    const rows = [];
     try {
-      rows = db.prepare(
-        "SELECT DISTINCT league_name as name FROM matches WHERE league_name IS NOT NULL AND lower(league_name) LIKE ? ORDER BY league_name LIMIT 30"
-      ).all("%" + q + "%");
-    } catch { rows = []; }
+      // Valorant : table matches avec colonnes league + phase.
+      const vRows = db.prepare(
+        "SELECT league, phase, COUNT(*) as n FROM matches WHERE league IS NOT NULL GROUP BY league, phase"
+      ).all();
+      for (const r of vRows) {
+        const full = r.phase ? `${r.league} · ${r.phase}` : r.league;
+        rows.push({ game: "valorant", name: full, league: r.league, phase: r.phase, count: r.n });
+      }
+    } catch {}
     db.close();
-    res.json(rows.map(r => r.name));
+
+    // CS2/RL: pas de table dediee pour l'instant, on retourne juste les
+    // leagues trouvees cote Valorant pour l'instant. A completer ensuite.
+
+    const filtered = q
+      ? rows.map(r => ({ ...r, _score: similarity(q, r.name) }))
+            .filter(r => r._score > 10)
+            .sort((a, b) => b._score - a._score)
+      : rows.sort((a, b) => b.count - a.count);
+
+    res.json(filtered.slice(0, 30));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Recherche matchs individuels (pour associer manuellement a une case).
 router.get("/api/custom-brackets/match-search", (req, res) => {
   try {
-    const game = req.query.game;
     const q = (req.query.q || "").toLowerCase().trim();
-    if (!game || !q) return res.json([]);
+    if (!q) return res.json([]);
     const db = new Database(DB_PATH, { readonly: true });
     let rows = [];
     try {
       rows = db.prepare(
-        `SELECT match_id as id, team1_name, team2_name, league_name, begin_at
+        `SELECT id, team1_name, team2_name, league, phase, day, time, score1, score2, status
          FROM matches
-         WHERE lower(team1_name) LIKE ? OR lower(team2_name) LIKE ? OR lower(league_name) LIKE ?
-         ORDER BY begin_at DESC LIMIT 30`
+         WHERE lower(team1_name) LIKE ? OR lower(team2_name) LIKE ? OR lower(league) LIKE ?
+         ORDER BY day DESC, time DESC LIMIT 50`
       ).all("%" + q + "%", "%" + q + "%", "%" + q + "%");
-    } catch { rows = []; }
+    } catch {}
     db.close();
     res.json(rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Auto-fill : renvoie TOUS les matchs d'un tournoi pour pre-remplir les
+// cases du bracket. L'UI admin les repartit ensuite par round selon la
+// structure definie (4-2-1 pour un bracket SF-F-GF, etc.).
+router.get("/api/custom-brackets/auto-fill", (req, res) => {
+  try {
+    const game = req.query.game;
+    const tournament = (req.query.tournament || "").trim();
+    if (!game || !tournament) return res.json([]);
+    // Parse "League · Phase" ou juste "League".
+    const parts = tournament.split("·").map(p => p.trim()).filter(Boolean);
+    const league = parts[0];
+    const phase = parts[1] || null;
+
+    const db = new Database(DB_PATH, { readonly: true });
+    let rows = [];
+    try {
+      let sql = `SELECT id, team1_name, team2_name, score1, score2, status, day, time, league, phase
+                 FROM matches WHERE league = ?`;
+      const params = [league];
+      if (phase) { sql += " AND phase = ?"; params.push(phase); }
+      sql += " ORDER BY day ASC, time ASC";
+      rows = db.prepare(sql).all(...params);
+    } catch {}
+    db.close();
+    res.json({ game, tournament, league, phase, matches: rows });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
