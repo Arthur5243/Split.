@@ -102,6 +102,37 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
 
     const rows = [];
 
+    // AJOUT : inclure les tournois des matchs CUSTOM (saisis via /password)
+    // et les custom brackets qui existent deja — meme si la compet n'a
+    // aucun match reel scrape, l'admin peut quand meme construire un bracket.
+    try {
+      const mainDb = new Database(process.env.DB_PATH || path.join(__dirname, "matches.db"), { readonly: true });
+      try {
+        const cmRows = mainDb.prepare(
+          "SELECT league, phase, COUNT(*) as n FROM custom_matches WHERE game = ? AND league IS NOT NULL GROUP BY league, phase"
+        ).all(game);
+        for (const r of cmRows) {
+          rows.push({
+            game, name: r.phase ? `${r.league} · ${r.phase}` : r.league,
+            league: r.league, phase: r.phase, count: r.n, live_count: r.n, has_live: true,
+            source: "custom-match",
+          });
+        }
+      } catch {}
+      try {
+        const cbRows = mainDb.prepare(
+          "SELECT tournament_name FROM custom_brackets WHERE game = ?"
+        ).all(game);
+        for (const r of cbRows) {
+          rows.push({
+            game, name: r.tournament_name, league: r.tournament_name, phase: null,
+            count: 0, live_count: 0, has_live: false, source: "custom-bracket",
+          });
+        }
+      } catch {}
+      mainDb.close();
+    } catch {}
+
     // Choix de la DB en fonction du jeu (Valo + RL share matches.db, CS2 a
     // sa propre DB cs2-matches.db).
     const dbPath = game === "cs2"
@@ -147,13 +178,27 @@ router.get("/api/custom-brackets/tournaments", (req, res) => {
       console.log(`[tournaments] echec lecture ${dbPath}:`, e.message);
     }
 
+    // Dedoublonnage par name pour eviter doublons custom + reel
+    const dedup = new Map();
+    for (const r of rows) {
+      const k = r.name.toLowerCase();
+      const prev = dedup.get(k);
+      if (!prev) dedup.set(k, r);
+      else {
+        // Fusionne : prend le count max, has_live true si une source dit true
+        prev.count = Math.max(prev.count || 0, r.count || 0);
+        prev.has_live = prev.has_live || r.has_live;
+      }
+    }
+    const merged = [...dedup.values()];
+
     const filtered = q
-      ? rows.map(r => ({ ...r, _score: similarity(q, r.name) }))
+      ? merged.map(r => ({ ...r, _score: similarity(q, r.name) }))
             .filter(r => r._score > 10)
             .sort((a, b) => b._score - a._score)
-      : rows.sort((a, b) => (Number(!!b.has_live) - Number(!!a.has_live)) || (b.count - a.count));
+      : merged.sort((a, b) => (Number(!!b.has_live) - Number(!!a.has_live)) || (b.count - a.count));
 
-    res.json(filtered.slice(0, 30));
+    res.json(filtered.slice(0, 50));
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

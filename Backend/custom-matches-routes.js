@@ -55,9 +55,14 @@ router.get("/api/admin/custom-matches/:id", (req, res) => {
 router.post("/api/admin/custom-matches", (req, res) => {
   if (!checkPwd(req, res)) return;
   try {
-    const r = upsertCustomMatch(req.body || {});
+    const body = req.body || {};
+    console.log(`[custom-matches] POST id=${body.id || "new"} game=${body.game} t1=${body.team1_name} t2=${body.team2_name}`);
+    const r = upsertCustomMatch(body);
     res.json({ ok: true, id: r.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[custom-matches] POST error:", e.message);
+    res.status(400).json({ error: e.message });
+  }
 });
 
 router.post("/api/admin/custom-matches/bulk", (req, res) => {

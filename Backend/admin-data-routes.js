@@ -48,6 +48,19 @@ router.get("/api/admin/teams/resolve", (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Endpoint public leger : resolve logo depuis nom d'equipe.
+router.get("/api/team-logo-resolve", (req, res) => {
+  try {
+    const t = resolveTeam(req.query.name || "");
+    res.json({
+      resolved: !!t,
+      canonical: t?.canonical || null,
+      logo_url: t?.logo_url || null,
+      liquipedia: t?.liquipedia || null,
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.post("/api/admin/teams", (req, res) => {
   if (!checkPwd(req, res)) return;
   try {

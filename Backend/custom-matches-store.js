@@ -236,7 +236,9 @@ export function parseBulkMatchesCode(text, game) {
   const out = [];
   for (const line of lines) {
     if (line.startsWith("#") || line.startsWith("//")) continue;
-    const parts = line.split("|").map(p => p.trim());
+    // Accepte "/" ou "|" comme separateur (le user prefere /, plus naturel
+    // sans shift).
+    const parts = line.split(/\s*[\/|]\s*/).map(p => p.trim()).filter(Boolean);
     if (parts.length < 2) continue;
     const vsPart = parts[parts.length - 1];
     const m = vsPart.match(/^(.+?)\s+vs\.?\s+(.+?)$/i);
