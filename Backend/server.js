@@ -40,9 +40,11 @@ import postsRouter from "./posts-routes.js";
 import messagesRouter from "./messages-routes.js";
 import whopRouter from "./whop-routes.js";
 import customBracketsRouter from "./custom-brackets-routes.js";
+import { getManualMapScores as getManualMapScoresDb } from "./manual-map-scores-store.js";
 import newsSlidesRouter from "./news-slides-routes.js";
 import adminBoostUserRouter from "./admin-boost-user.js";
 import calendarRouter from "./calendar-routes.js";
+import adminDataRouter from "./admin-data-routes.js";
 import { captureCardHtml, warmupBrowser } from "./capture.js";
 import { startPointsWorker } from "./points-engine.js";
 
@@ -68,6 +70,7 @@ app.use(customBracketsRouter);
 app.use(newsSlidesRouter);
 app.use(adminBoostUserRouter);
 app.use(calendarRouter);
+app.use(adminDataRouter);
 
 // Endpoint /graphql + /graphiql (UI web pour tester les queries).
 // Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).
@@ -516,6 +519,14 @@ function applyStoredMapScores(finished) {
     const t1 = m.opponents?.[0]?.opponent?.name;
     const t2 = m.opponents?.[1]?.opponent?.name;
     const date = (m.begin_at || "").slice(0, 10);
+
+    // PRIORITE 1 : saisie manuelle admin (via /password). Ecrase tout ce que
+    // les scrapers ont pu trouver si l'admin a fourni une valeur a la main.
+    const manualAdmin = getManualMapScoresDb("ps-" + m.id);
+    if (manualAdmin && Array.isArray(manualAdmin) && manualAdmin.length > 0) {
+      m.map_scores = manualAdmin;
+      continue;
+    }
 
     const scraped = t1 && t2 ? getScrapedScores(t1, t2) : null;
     if (scraped && scraped.length > 0) {

@@ -49,6 +49,7 @@ import { getHltvScrapedScores } from "./hltv-live-scraper.js";
 import { startHltvTracker, HLTV_API_BASE } from "./hltv-scores.js";
 import { registerKickChannels, getKickScoresForMatch } from "./kick-live-scraper.js";
 import { getTwitchScoresForMatch, registerTwitchChannels } from "./twitch-live-scraper.js";
+import { getManualMapScores as getManualMapScoresDb } from "./manual-map-scores-store.js";
 import { getCitoApiMatch, setCitoHasLiveMatches, bulkImportCitoFinished, getAllCachedFinished, fetchOneMatchOnDemand } from "./cito-api.js";
 import { findMapScoresViaGoogle } from "./google-scores.js";
 
@@ -536,6 +537,12 @@ function toHistoryRow(m) {
 function applyStoredMapScores(finished) {
   const stillUnknown = [];
   for (const m of finished) {
+    // PRIORITE 1 : saisie manuelle admin (ecrase tout le reste).
+    const manualAdmin = getManualMapScoresDb("cs2-" + m.id);
+    if (manualAdmin && Array.isArray(manualAdmin) && manualAdmin.length > 0) {
+      m.map_scores = manualAdmin;
+      continue;
+    }
     if (Array.isArray(m.map_scores) && m.map_scores.length > 0) {
       const expected = getExpectedMapCount(m);
       const [s1, s2] = getSeriesScores(m);

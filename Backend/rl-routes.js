@@ -20,6 +20,7 @@ import { getRLKnockoutSeriesSnapshot, forceRLKnockoutSeriesRefresh } from "./rl-
 import { getRLLiquipediaMatchesSnapshot, forceRLLiquipediaMatchesRefresh } from "./rl-liquipedia-matches-scraper.js";
 import { getOctaneRLGameScores } from "./rl-octane-scraper.js";
 import { getStartggRLGameScores, getStartggRLSnapshot, forceStartggRLRefresh } from "./rl-startgg-scraper.js";
+import { getManualMapScores as getManualMapScoresDb } from "./manual-map-scores-store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RL_SLUG = "rl";
@@ -276,14 +277,19 @@ router.get("/api/rl-results", async (req, res) => {
       const t2 = m.opponents?.[1]?.opponent?.name;
       const dateStr = m.begin_at ? m.begin_at.slice(0, 10) : null;
 
-      // Priorite scores par game : start.gg (officiel) > scraper LP > Octane
-      // > JSON manuel > derivation fallback.
-      const startgg = t1 && t2 ? getStartggRLGameScores(t1, t2, dateStr) : null;
-      const scraped = startgg || (t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null);
-      const octane = scraped || (t1 && t2 ? getOctaneRLGameScores(t1, t2, dateStr) : null);
-      const manual = octane || findManualGameScores(t1, t2, dateStr);
-      const fallback = manual || buildFallbackGameScores(m);
-      m.game_scores = fallback || null;
+      // PRIORITE 1 : saisie manuelle admin via /password (ecrase tout).
+      // Format stocke : {map, score1, score2} -> on convertit en game format.
+      const manualAdmin = getManualMapScoresDb("rl-" + m.id);
+      if (Array.isArray(manualAdmin) && manualAdmin.length > 0) {
+        m.game_scores = manualAdmin.map((g, i) => ({ game: g.map || ("Game " + (i + 1)), score1: g.score1, score2: g.score2 }));
+      } else {
+        const startgg = t1 && t2 ? getStartggRLGameScores(t1, t2, dateStr) : null;
+        const scraped = startgg || (t1 && t2 ? getRL_ScrapedScores(t1, t2, dateStr) : null);
+        const octane = scraped || (t1 && t2 ? getOctaneRLGameScores(t1, t2, dateStr) : null);
+        const manual = octane || findManualGameScores(t1, t2, dateStr);
+        const fallback = manual || buildFallbackGameScores(m);
+        m.game_scores = fallback || null;
+      }
     }
 
     // Complète avec les matchs Liquipedia terminés, avec leurs game scores
