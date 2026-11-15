@@ -181,7 +181,13 @@ router.post("/api/auth/google", async (req, res) => {
 
     const existingPseudo = getUserByPseudo(pseudo);
     if (existingPseudo) {
-      if (!existingPseudo.email) {
+      // SECURITE : ne JAMAIS fusionner silencieusement avec un compte qui a
+      // deja un historique (points, xp, user_match_points). Avant on faisait
+      // linkGoogleToUser des que email etait null, mais ca permettait a
+      // n'importe qui qui connait un pseudo libre d'adresse mail de recuperer
+      // les points d'un ancien compte -> cas "TEST recupere 734 pts".
+      const hasHistory = (existingPseudo.points || 0) > 0 || (existingPseudo.xp || 0) > 0;
+      if (!existingPseudo.email && !hasHistory) {
         linkGoogleToUser(existingPseudo.id, email.toLowerCase());
         const token = signToken(existingPseudo.id);
         return res.json({ token, user: { id: existingPseudo.id, pseudo: existingPseudo.pseudo, email: email.toLowerCase() } });

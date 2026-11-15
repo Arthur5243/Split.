@@ -114,15 +114,17 @@ async function gqlQuery(query, variables) {
   } finally { clearTimeout(t); }
 }
 
-// GraphQL : chope les tournois RL dans la fenetre -90j / +60j
+// GraphQL : chope les tournois RL dans la fenetre -90j / +60j.
+// $videogameIds est [ID] (liste), pas ID! : start.gg refuse le "wrap" dans
+// un array d'un ID! scalaire via la syntaxe [$videogameId].
 const TOURNAMENTS_QUERY = `
-  query ($videogameId: ID!, $afterDate: Timestamp!, $beforeDate: Timestamp!, $page: Int!, $perPage: Int!) {
+  query ($videogameIds: [ID!]!, $afterDate: Timestamp!, $beforeDate: Timestamp!, $page: Int!, $perPage: Int!) {
     tournaments(query: {
       page: $page,
       perPage: $perPage,
       sortBy: "startAt asc",
       filter: {
-        videogameIds: [$videogameId],
+        videogameIds: $videogameIds,
         afterDate: $afterDate,
         beforeDate: $beforeDate
       }
@@ -132,10 +134,11 @@ const TOURNAMENTS_QUERY = `
         name
         startAt
         endAt
-        events(filter: { videogameId: $videogameId }) {
+        events {
           id
           name
           startAt
+          videogame { id }
         }
       }
     }
@@ -212,14 +215,17 @@ async function refreshAll() {
       let page = 1;
       while (page <= 5) {
         const data = await gqlQuery(TOURNAMENTS_QUERY, {
-          videogameId: RL_VIDEOGAME_ID,
+          videogameIds: [String(RL_VIDEOGAME_ID)],
           afterDate, beforeDate,
           page, perPage: TOURNAMENTS_PER_PAGE,
         });
         const tournaments = data?.tournaments?.nodes || [];
         if (!tournaments.length) break;
         for (const t of tournaments) {
-          const events = t.events || [];
+          // Filtre manuel : on garde uniquement les events RL (videogame id =
+          // 14647). On ne peut plus filtrer avec `events(filter: ...)` car le
+          // schema actuel ne le supporte pas sur ce champ.
+          const events = (t.events || []).filter(ev => !ev.videogame || String(ev.videogame.id) === String(RL_VIDEOGAME_ID));
           for (const ev of events) {
             try {
               let setsPage = 1;

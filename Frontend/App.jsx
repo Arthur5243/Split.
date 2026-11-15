@@ -6349,50 +6349,8 @@ function HomeTab({ setActiveTab, onOpenCalendar, onOpenCs2Calendar, onOpenRlCale
         <RankBadgeCompact points={userPoints || 0} onClick={() => setActiveTab("classement")} forceUnranked={profile?.forceUnranked} forceTierLevel={profile?.forceTierLevel} />
       </div>
 
-      {showSplitBanner && !isSubscribed && (
-        <button
-          onClick={onOpenSubscribe}
-          style={{
-            width: "100%", display: "flex", alignItems: "center", gap: 12,
-            padding: "12px 14px", marginBottom: 16,
-            background: "linear-gradient(135deg, #1a1407 0%, #2a1e0a 100%)",
-            border: "1px solid rgba(255,184,0,0.3)",
-            borderRadius: 14,
-            cursor: "pointer",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "radial-gradient(circle at top right, rgba(255,184,0,0.12) 0%, transparent 60%)",
-            pointerEvents: "none",
-          }} />
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: "linear-gradient(135deg, #FFB800 0%, #FFD05C 100%)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, position: "relative", zIndex: 1,
-            boxShadow: "0 4px 12px rgba(255,184,0,0.3)",
-          }}>
-            <img src="/split-logo.png" alt="Split" style={{ width: 22, height: 22, objectFit: "contain", filter: "brightness(0)" }} />
-          </div>
-          <div style={{ flex: 1, textAlign: "left", position: "relative", zIndex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-              <span style={{ color: "#FFB800", fontSize: 13, fontWeight: 900, letterSpacing: -0.2 }}>Split+</span>
-              <span style={{
-                fontSize: 8, fontWeight: 800, color: "#1a1407",
-                background: "#FFB800", padding: "1px 6px", borderRadius: 4,
-                letterSpacing: 0.4, textTransform: "uppercase",
-              }}>PREMIUM</span>
-            </div>
-            <span style={{ color: "#ccc", fontSize: 11, fontWeight: 500 }}>
-              Sans pub · Scores live map · Paliers exclusifs
-            </span>
-          </div>
-          <ChevronRight size={16} color="#FFB800" style={{ position: "relative", zIndex: 1 }} />
-        </button>
-      )}
+      {/* Banner Split+ retire (trop de place sur la Home). L'acces a
+          l'abonnement reste dans Settings. */}
 
       <div className="flex items-center justify-between mb-3">
         <p style={{ color: "#666", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{T.classementLabel}</p>
@@ -15440,10 +15398,11 @@ export default function ClutchApp() {
     resetAppState();
     const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
-      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, lb] = await Promise.all([
+      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, rKo, lb] = await Promise.all([
         fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
         fj("/api/cs2-upcoming"), fj("/api/cs2-live"), fj("/api/cs2-results"), fj("/api/cs2-match-history").catch(() => null),
         fj("/api/rl-upcoming"), fj("/api/rl-live"), fj("/api/rl-results"), fj("/api/rl-match-history").catch(() => null),
+        fj("/api/rl-knockout-series").catch(() => null),
         fj("/api/social/leaderboard").catch(() => null),
       ]);
       const vUpT = Array.isArray(vUp) ? vUp.map(transformMatch).filter(m => m.region) : [];
@@ -15486,13 +15445,35 @@ export default function ClutchApp() {
       const rUpFut = rUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
       setRlUpcomingMatches(attachComputedOdds(rUpFut, rFinished, tierWeightRL));
       setRlLiveMatches(attachComputedOdds(rLiT, rFinished, tierWeightRL));
+      // Les matchs knockout 1v1 doivent rester dans "Matchs termines" RL
+      // (mais pas dans upcoming / live, deja retires auparavant).
+      const rKoAllFin = [];
+      if (rKo && (Array.isArray(rKo.nights) || Array.isArray(rKo.playoffs))) {
+        (rKo.nights || []).forEach(n => (n.matches || []).forEach(m => rKoAllFin.push(m)));
+        (rKo.playoffs || []).forEach(m => rKoAllFin.push(m));
+        (rKo.other || []).forEach(m => rKoAllFin.push(m));
+      }
+      const rKoStatsFin = computeKnockoutPlayerStats(rKoAllFin);
+      const rKoFinished = rKoAllFin
+        .map(m => transformKnockoutSeriesMatch(m, rKoStatsFin))
+        .filter(m => m.status === "finished" && isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
+
       setRlResultsMatches((() => {
         const elo = computeEloRatings(rFinished, tierWeightRL);
-        return rPaT.map(m => {
+        const standard = rPaT.map(m => {
           const h = rFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
-        }).sort((a, b) => {
+        });
+        const seen = new Set();
+        const combined = [];
+        for (const m of [...standard, ...rKoFinished]) {
+          const k = String(m.id);
+          if (seen.has(k)) continue;
+          seen.add(k);
+          combined.push(m);
+        }
+        return combined.sort((a, b) => {
           const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
           const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
           return tb - ta;
@@ -15752,11 +15733,12 @@ export default function ClutchApp() {
     }
     async function loadRL() {
       try {
-        const [up, li, pa, history] = await Promise.all([
+        const [up, li, pa, history, knockout] = await Promise.all([
           fetchJson("/api/rl-upcoming"),
           fetchJson("/api/rl-live"),
           fetchJson("/api/rl-results"),
           fetchJson("/api/rl-match-history").catch(() => null),
+          fetchJson("/api/rl-knockout-series").catch(() => null),
         ]);
         if (cancelled) return;
         setRlDataError(false);
@@ -15764,7 +15746,20 @@ export default function ClutchApp() {
         const liT = Array.isArray(li) ? li.map(transformMatchRL) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchRL) : [];
 
-        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
+        // Knockout 1v1 : on garde UNIQUEMENT les matchs finished pour
+        // "Matchs termines" (plus ni live ni upcoming cote flux normal).
+        const koAll = [];
+        if (knockout && (Array.isArray(knockout.nights) || Array.isArray(knockout.playoffs))) {
+          (knockout.nights || []).forEach((n) => (n.matches || []).forEach((m) => koAll.push(m)));
+          (knockout.playoffs || []).forEach((m) => koAll.push(m));
+          (knockout.other || []).forEach((m) => koAll.push(m));
+        }
+        const koStats = computeKnockoutPlayerStats(koAll);
+        const koFinished = koAll
+          .map((m) => transformKnockoutSeriesMatch(m, koStats))
+          .filter((m) => m.status === "finished" && isRealKnockoutPlayer(m.team1Name) && isRealKnockoutPlayer(m.team2Name));
+
+        if (rlLoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0 && koFinished.length === 0) return;
         rlLoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchRL) : [];
         const finishedMatchesRL = historyT.length > paT.length ? historyT : paT;
@@ -15783,11 +15778,20 @@ export default function ClutchApp() {
         setRlResultsMatches(
           (() => {
             const eloDataRLResults = computeEloRatings(finishedMatchesRL, tierWeightRL);
-            return paT.map((m) => {
+            const standard = paT.map((m) => {
               const historyWithoutSelf = finishedMatchesRL.filter((h) => String(h.id) !== String(m.id));
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
-            }).sort((a, b) => {
+            });
+            const seen = new Set();
+            const combined = [];
+            for (const m of [...standard, ...koFinished]) {
+              const k = String(m.id);
+              if (seen.has(k)) continue;
+              seen.add(k);
+              combined.push(m);
+            }
+            return combined.sort((a, b) => {
               const ta = a.beginAt ? new Date(a.beginAt).getTime() : 0;
               const tb = b.beginAt ? new Date(b.beginAt).getTime() : 0;
               return tb - ta;
