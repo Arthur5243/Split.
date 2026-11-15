@@ -47,9 +47,10 @@ router.post("/api/admin/boost-user", (req, res) => {
   try {
     ensureColumn(db);
 
+    // MATCH EXACT (le LIKE prefixe matchait "testagain" en cherchant "test").
     const row = db.prepare(
-      "SELECT id, pseudo, points, force_tier_level FROM users WHERE pseudo_lower = ? OR pseudo_lower LIKE ? OR id = ? LIMIT 1"
-    ).get(pseudo, pseudo + "%", pseudo);
+      "SELECT id, pseudo, points, force_tier_level FROM users WHERE pseudo_lower = ? OR id = ? LIMIT 1"
+    ).get(pseudo, pseudo);
     if (!row) { db.close(); return res.status(404).json({ error: "user introuvable" }); }
 
     const before = { points: row.points, force_tier_level: row.force_tier_level };

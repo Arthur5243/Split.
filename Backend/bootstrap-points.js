@@ -44,15 +44,18 @@ export function maybeRunBootstrapPoints() {
     try {
       if (!fs.existsSync(MAIN_DB)) { console.log("[bootstrap-points] DB absente, skip"); return; }
       const db = new Database(MAIN_DB);
+      // MATCH EXACT uniquement : le LIKE "test%" matchait aussi "testagain"
+      // et pouvait reset les mauvais users. Depuis maintenant, "test" match
+      // UNIQUEMENT l'user dont pseudo_lower = "test" exactement (ou id).
       const findStmt = db.prepare(
-        "SELECT id, pseudo, points FROM users WHERE pseudo_lower = ? OR pseudo_lower LIKE ? OR id = ? LIMIT 1"
+        "SELECT id, pseudo, points FROM users WHERE pseudo_lower = ? OR id = ? LIMIT 1"
       );
       const updateStmt = db.prepare("UPDATE users SET points = ?, points_valo = ?, points_cs2 = ?, points_rl = ?, bets_total = ?, bets_correct = ?, bets_exact = ?, updated_at = datetime('now') WHERE id = ?");
       const wipeHistStmt = db.prepare("DELETE FROM user_match_points WHERE user_id = ?");
       const results = [];
       for (const [key, pts] of Object.entries(payload)) {
         const k = String(key).toLowerCase();
-        const row = findStmt.get(k, k + "%", key);
+        const row = findStmt.get(k, key);
         if (!row) { results.push({ key, status: "not_found" }); continue; }
         const points = Math.max(0, Math.floor(Number(pts) || 0));
         // Si points = 0, on wipe aussi l'historique user_match_points pour

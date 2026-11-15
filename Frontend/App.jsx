@@ -15699,17 +15699,22 @@ export default function ClutchApp() {
 
     async function loadCS2() {
       try {
-        const [up, li, pa, history] = await Promise.all([
+        const [up, li, pa, history, custom] = await Promise.all([
           fetchJson("/api/cs2-upcoming"),
           fetchJson("/api/cs2-live"),
           fetchJson("/api/cs2-results"),
           fetchJson("/api/cs2-match-history").catch(() => null),
+          fetchJson("/api/custom-matches/cs2").catch(() => null),
         ]);
         if (cancelled) return;
         setCs2DataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatchCS2) : [];
         const liT = Array.isArray(li) ? li.map(transformMatchCS2) : [];
         const paT = Array.isArray(pa) ? pa.map(transformMatchCS2) : [];
+        const customT = Array.isArray(custom) ? custom.map(m => transformCustomMatch(m, "cs2")) : [];
+        const customUp = customT.filter(m => m.status === "not_started");
+        const customLive = customT.filter(m => m.status === "running");
+        const customFin = customT.filter(m => m.status === "finished");
         if (cs2LoadedRef.current && upT.length === 0 && liT.length === 0 && paT.length === 0) return;
         cs2LoadedRef.current = true;
         const historyT = Array.isArray(history) ? history.map(transformMatchCS2) : [];
@@ -15743,13 +15748,14 @@ export default function ClutchApp() {
         });
         const liDeduped = dedupeByIdCS2(liT);
 
-        setCs2UpcomingMatches(attachComputedOdds(upFuture, finishedMatchesCS2, tierWeightCS2));
-        setCs2LiveMatches(attachComputedOdds(liDeduped, finishedMatchesCS2, tierWeightCS2));
+        const allFinishedCS2 = [...finishedMatchesCS2, ...customFin];
+        setCs2UpcomingMatches(attachComputedOdds([...upFuture, ...customUp], allFinishedCS2, tierWeightCS2));
+        setCs2LiveMatches(attachComputedOdds([...liDeduped, ...customLive], allFinishedCS2, tierWeightCS2));
         setCs2ResultsMatches(
           (() => {
-            const eloDataCS2Results = computeEloRatings(finishedMatchesCS2, tierWeightCS2);
-            return paT.map((m) => {
-              const historyWithoutSelf = finishedMatchesCS2.filter((h) => String(h.id) !== String(m.id));
+            const eloDataCS2Results = computeEloRatings(allFinishedCS2, tierWeightCS2);
+            return [...paT, ...customFin].map((m) => {
+              const historyWithoutSelf = allFinishedCS2.filter((h) => String(h.id) !== String(m.id));
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataCS2Results);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
             });
@@ -15780,13 +15786,18 @@ export default function ClutchApp() {
     }
     async function loadRL() {
       try {
-        const [up, li, pa, history, knockout] = await Promise.all([
+        const [up, li, pa, history, knockout, custom] = await Promise.all([
           fetchJson("/api/rl-upcoming"),
           fetchJson("/api/rl-live"),
           fetchJson("/api/rl-results"),
           fetchJson("/api/rl-match-history").catch(() => null),
           fetchJson("/api/rl-knockout-series").catch(() => null),
+          fetchJson("/api/custom-matches/rl").catch(() => null),
         ]);
+        const customT = Array.isArray(custom) ? custom.map(m => transformCustomMatch(m, "rl")) : [];
+        const customUp = customT.filter(m => m.status === "not_started");
+        const customLive = customT.filter(m => m.status === "running");
+        const customFin = customT.filter(m => m.status === "finished");
         if (cancelled) return;
         setRlDataError(false);
         const upT = Array.isArray(up) ? up.map(transformMatchRL) : [];
@@ -15820,13 +15831,14 @@ export default function ClutchApp() {
           return Number.isNaN(t) || t > now;
         });
 
-        setRlUpcomingMatches(attachComputedOdds(upFuture, finishedMatchesRL, tierWeightRL));
-        setRlLiveMatches(attachComputedOdds(liT, finishedMatchesRL, tierWeightRL));
+        setRlUpcomingMatches(attachComputedOdds([...upFuture, ...customUp], [...finishedMatchesRL, ...customFin], tierWeightRL));
+        setRlLiveMatches(attachComputedOdds([...liT, ...customLive], [...finishedMatchesRL, ...customFin], tierWeightRL));
         setRlResultsMatches(
           (() => {
-            const eloDataRLResults = computeEloRatings(finishedMatchesRL, tierWeightRL);
-            const standard = paT.map((m) => {
-              const historyWithoutSelf = finishedMatchesRL.filter((h) => String(h.id) !== String(m.id));
+            const allFinished = [...finishedMatchesRL, ...customFin];
+            const eloDataRLResults = computeEloRatings(allFinished, tierWeightRL);
+            const standard = [...paT, ...customFin].map((m) => {
+              const historyWithoutSelf = allFinished.filter((h) => String(h.id) !== String(m.id));
               const { odds1, odds2, cote1, cote2, insufficientData } = computeMatchOddsElo(m, historyWithoutSelf, eloDataRLResults);
               return { ...m, odds1, odds2, cote1, cote2, insufficientData };
             });

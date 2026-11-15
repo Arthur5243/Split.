@@ -45,14 +45,15 @@ export function maybeRunBootstrapForceUnranked() {
         const r = db.prepare("UPDATE users SET force_unranked = 0").run();
         console.log(`[bootstrap-force-unranked] reset: ${r.changes} users remis a 0`);
       }
+      // MATCH EXACT (le LIKE prefixe matchait "testagain" en cherchant "test").
       const findStmt = db.prepare(
-        "SELECT id, pseudo FROM users WHERE pseudo_lower = ? OR pseudo_lower LIKE ? OR id = ? LIMIT 1"
+        "SELECT id, pseudo FROM users WHERE pseudo_lower = ? OR id = ? LIMIT 1"
       );
       const updateStmt = db.prepare("UPDATE users SET force_unranked = 1, updated_at = datetime('now') WHERE id = ?");
       const results = [];
       for (const key of keys) {
         const k = key.toLowerCase();
-        const row = findStmt.get(k, k + "%", key);
+        const row = findStmt.get(k, key);
         if (!row) { results.push({ key, status: "not_found" }); continue; }
         const r = updateStmt.run(row.id);
         results.push({ key, matched: row.pseudo, changed: r.changes });
