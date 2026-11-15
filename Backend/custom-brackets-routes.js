@@ -32,6 +32,7 @@ import {
   deleteCustomBracket,
 } from "./custom-brackets-store.js";
 import { parseBracketCode, validateParsedCode } from "./bracket-code-parser.js";
+import { resolveTeam as resolveTeamAlias } from "./team-aliases-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "matches.db");
@@ -268,11 +269,13 @@ function pickDbPathForGame(game) {
   if (game === "cs2") return process.env.CS2_DB_PATH || path.join(__dirname, "cs2-matches.db");
   return process.env.DB_PATH || path.join(__dirname, "matches.db");
 }
-function resolveMatchInDb(db, team1, team2, league, phase) {
+function resolveMatchInDb(db, team1, team2, league, phase, startDate) {
+  // startDate : YYYY-MM-DD ; si fourni, exclut tout match avant cette date.
   const rows = db.prepare(
     `SELECT id, team1_name, team2_name, score1, score2, status, day, time, league, phase
-     FROM matches WHERE league IS NOT NULL ORDER BY day DESC, time DESC LIMIT 2000`
-  ).all();
+     FROM matches WHERE league IS NOT NULL ${startDate ? "AND (day IS NULL OR day >= ?)" : ""}
+     ORDER BY day DESC, time DESC LIMIT 2000`
+  ).all(...(startDate ? [startDate] : []));
   let best = null; let bestScore = 0;
   for (const r of rows) {
     const sc1 = teamsMatchDb(r.team1_name, team1) + teamsMatchDb(r.team2_name, team2);
@@ -302,9 +305,57 @@ function resolveMatchInDb(db, team1, team2, league, phase) {
   };
 }
 
+// Mode debug : si un match n'est pas trouve, essaie jusqu'a 20 variantes de
+// noms (alias de team_aliases, acronymes connus, "Team X" <-> "X", casse,
+// variantes de ponctuation) et renvoie les hits potentiels avec le score.
+function debugSearchMatch(db, team1, team2, league, startDate) {
+  const variants1 = generateNameVariants(team1);
+  const variants2 = generateNameVariants(team2);
+  const attempts = [];
+  let hit = null;
+  outer:
+  for (const v1 of variants1.slice(0, 20)) {
+    for (const v2 of variants2.slice(0, 20)) {
+      const r = resolveMatchInDb(db, v1, v2, league, null, startDate);
+      attempts.push({ try1: v1, try2: v2, found: !!r });
+      if (r) { hit = { ...r, resolved_with: { team1: v1, team2: v2 } }; break outer; }
+    }
+  }
+  return { hit, attempts: attempts.slice(0, 20) };
+}
+
+function generateNameVariants(name) {
+  const n = String(name || "").trim();
+  if (!n) return [];
+  const out = new Set([n]);
+  // Enleve "Team " / "The " au debut
+  out.add(n.replace(/^(team|the|le|les)\s+/i, ""));
+  out.add("Team " + n);
+  // Casse
+  out.add(n.toUpperCase());
+  out.add(n.toLowerCase());
+  // Ponctuation
+  out.add(n.replace(/[^a-zA-Z0-9\s]/g, ""));
+  out.add(n.replace(/\s+/g, ""));
+  // Acronyme (lettres majuscules de chaque mot)
+  const acr = n.split(/\s+/).map(w => w[0] || "").join("").toUpperCase();
+  if (acr.length >= 2 && acr.length <= 5) out.add(acr);
+  // 1er mot / dernier mot
+  const parts = n.split(/\s+/);
+  if (parts[0]) out.add(parts[0]);
+  if (parts.length > 1) out.add(parts[parts.length - 1]);
+  // Alias connus (team_aliases)
+  try {
+    const t = resolveTeamAlias(n);
+    if (t && Array.isArray(t.aliases)) for (const a of t.aliases) out.add(a);
+    if (t && t.canonical) out.add(t.canonical);
+  } catch {}
+  return [...out];
+}
+
 router.post("/api/custom-brackets/resolve-code", (req, res) => {
   try {
-    const { game, tournament, code } = req.body || {};
+    const { game, tournament, code, start_date, debug } = req.body || {};
     if (!game || !code) return res.status(400).json({ error: "game et code requis" });
     const parsed = parseBracketCode(code);
     const validation = validateParsedCode(parsed);
@@ -320,20 +371,26 @@ router.post("/api/custom-brackets/resolve-code", (req, res) => {
       for (const s of parsed.stages) {
         for (const r of s.rounds) {
           for (const m of r.matches) {
-            const hit = resolveMatchInDb(db, m.team1, m.team2, league, phase);
+            const hit = resolveMatchInDb(db, m.team1, m.team2, league, phase, start_date || null);
             if (hit) {
               m.matchId = hit.matchId;
               m.resolved = hit;
             } else {
               m.matchId = null;
               m.resolved = null;
+              // Si debug : tente 20 variantes et joint les tentatives
+              if (debug) {
+                const dbg = debugSearchMatch(db, m.team1, m.team2, league, start_date || null);
+                m.debug = dbg;
+                if (dbg.hit) { m.matchId = dbg.hit.matchId; m.resolved = dbg.hit; }
+              }
             }
           }
         }
       }
     } finally { db.close(); }
 
-    res.json({ parsed, league, phase });
+    res.json({ parsed, league, phase, start_date: start_date || null });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

@@ -53,6 +53,8 @@ function ensureInit() {
       game TEXT NOT NULL,
       team1_name TEXT,
       team2_name TEXT,
+      team1_short TEXT,
+      team2_short TEXT,
       team1_logo TEXT,
       team2_logo TEXT,
       begin_at TEXT,
@@ -74,6 +76,9 @@ function ensureInit() {
     CREATE INDEX IF NOT EXISTS idx_custom_matches_game ON custom_matches(game);
     CREATE INDEX IF NOT EXISTS idx_custom_matches_begin ON custom_matches(begin_at);
   `);
+  // Migration : ajoute team1_short/team2_short pour anciennes rows
+  try { db.exec("ALTER TABLE custom_matches ADD COLUMN team1_short TEXT"); } catch {}
+  try { db.exec("ALTER TABLE custom_matches ADD COLUMN team2_short TEXT"); } catch {}
   db.close();
   initDone = true;
 }
@@ -115,6 +120,8 @@ function rowToMatch(r) {
     game: r.game,
     team1_name: r.team1_name,
     team2_name: r.team2_name,
+    team1_short: r.team1_short,
+    team2_short: r.team2_short,
     team1_logo: r.team1_logo,
     team2_logo: r.team2_logo,
     begin_at: r.begin_at,
@@ -175,6 +182,8 @@ export function upsertCustomMatch(data) {
       id, game,
       team1_name: data.team1_name || null,
       team2_name: data.team2_name || null,
+      team1_short: data.team1_short || null,
+      team2_short: data.team2_short || null,
       team1_logo: data.team1_logo || null,
       team2_logo: data.team2_logo || null,
       begin_at: data.begin_at || null,
@@ -194,6 +203,7 @@ export function upsertCustomMatch(data) {
     if (exists) {
       db.prepare(`UPDATE custom_matches SET
         game=@game, team1_name=@team1_name, team2_name=@team2_name,
+        team1_short=@team1_short, team2_short=@team2_short,
         team1_logo=@team1_logo, team2_logo=@team2_logo,
         begin_at=@begin_at, end_at=@end_at, region=@region,
         league=@league, phase=@phase, format=@format,
@@ -203,10 +213,12 @@ export function upsertCustomMatch(data) {
         WHERE id=@id`).run(payload);
     } else {
       db.prepare(`INSERT INTO custom_matches
-        (id, game, team1_name, team2_name, team1_logo, team2_logo, begin_at, end_at,
+        (id, game, team1_name, team2_name, team1_short, team2_short,
+         team1_logo, team2_logo, begin_at, end_at,
          region, league, phase, format, accent_color, stream_url, score1, score2,
          status_override, map_scores, created_by, created_at, updated_at)
-        VALUES (@id, @game, @team1_name, @team2_name, @team1_logo, @team2_logo,
+        VALUES (@id, @game, @team1_name, @team2_name, @team1_short, @team2_short,
+                @team1_logo, @team2_logo,
                 @begin_at, @end_at, @region, @league, @phase, @format,
                 @accent_color, @stream_url, @score1, @score2,
                 @status_override, @map_scores, @created_by, datetime('now'), datetime('now'))`).run(payload);

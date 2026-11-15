@@ -45,12 +45,15 @@ function getDb() {
       tournament_name TEXT NOT NULL,
       tournament_name_lower TEXT NOT NULL,
       structure TEXT NOT NULL,
+      start_date TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_cb_game ON custom_brackets(game);
     CREATE INDEX IF NOT EXISTS idx_cb_tname ON custom_brackets(tournament_name_lower);
   `);
+  // Migration : ajoute start_date si pas la (anciennes rows)
+  try { _db.exec(`ALTER TABLE custom_brackets ADD COLUMN start_date TEXT`); } catch {}
   return _db;
 }
 
@@ -83,7 +86,7 @@ export function findCustomBracketsByTournament(game, query) {
   ).all(game, "%" + q + "%");
 }
 
-export function upsertCustomBracket({ id, game, tournament_name, structure }) {
+export function upsertCustomBracket({ id, game, tournament_name, structure, start_date }) {
   if (!game || !tournament_name || !structure) throw new Error("game, tournament_name, structure required");
   if (!["valorant", "cs2", "rl"].includes(game)) throw new Error("invalid game");
   const db = getDb();
@@ -96,15 +99,15 @@ export function upsertCustomBracket({ id, game, tournament_name, structure }) {
     const existing = db.prepare("SELECT id FROM custom_brackets WHERE id = ?").get(id);
     if (existing) {
       db.prepare(
-        "UPDATE custom_brackets SET game = ?, tournament_name = ?, tournament_name_lower = ?, structure = ?, updated_at = datetime('now') WHERE id = ?"
-      ).run(game, tournament_name, tnl, structureJson, id);
+        "UPDATE custom_brackets SET game = ?, tournament_name = ?, tournament_name_lower = ?, structure = ?, start_date = ?, updated_at = datetime('now') WHERE id = ?"
+      ).run(game, tournament_name, tnl, structureJson, start_date || null, id);
       return getCustomBracket(id);
     }
   }
   const newId = id || genId();
   db.prepare(
-    "INSERT INTO custom_brackets (id, game, tournament_name, tournament_name_lower, structure) VALUES (?, ?, ?, ?, ?)"
-  ).run(newId, game, tournament_name, tnl, structureJson);
+    "INSERT INTO custom_brackets (id, game, tournament_name, tournament_name_lower, structure, start_date) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(newId, game, tournament_name, tnl, structureJson, start_date || null);
   return getCustomBracket(newId);
 }
 
