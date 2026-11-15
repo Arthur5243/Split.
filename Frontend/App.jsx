@@ -14461,6 +14461,60 @@ function isUserBlocked(id) {
   return getBlockedUsers().some((x) => x.id === id);
 }
 
+function BanScreen({ profile, onLogout }) {
+  const [msg, setMsg] = useState("");
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const token = (() => { try { return localStorage.getItem("split_token"); } catch { return null; } })();
+  async function sendAppeal() {
+    if (!msg.trim() || msg.trim().length < 5) return;
+    setSending(true);
+    try {
+      const r = await fetch(API_BASE + "/api/me/ban-appeal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ message: msg.trim() }),
+      });
+      if (r.ok) setSent(true);
+    } catch {}
+    setSending(false);
+  }
+  const untilDate = profile?.banUntil ? new Date(profile.banUntil) : null;
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "linear-gradient(180deg, #1a0000 0%, #0a0000 100%)", padding: "40px 20px", overflowY: "auto" }}>
+      <div style={{ maxWidth: 440, margin: "0 auto", textAlign: "center" }}>
+        <div style={{ fontSize: 72, marginBottom: 12 }}>🚫</div>
+        <h1 style={{ color: "#ff4655", fontSize: 28, fontWeight: 900, margin: "0 0 8px" }}>Compte suspendu</h1>
+        <p style={{ color: "#aaa", fontSize: 14, marginBottom: 20 }}>Ton accès à Split a été restreint par l'administrateur.</p>
+        <div style={{ background: "rgba(255,70,85,0.08)", border: "1px solid rgba(255,70,85,0.3)", borderRadius: 12, padding: "16px 18px", textAlign: "left", marginBottom: 20 }}>
+          <p style={{ color: "#ff8080", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>Raison</p>
+          <p style={{ color: "#fff", fontSize: 13, margin: "0 0 12px", whiteSpace: "pre-wrap" }}>{profile?.banReason || "Non précisée."}</p>
+          {untilDate && (
+            <>
+              <p style={{ color: "#ff8080", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, margin: "0 0 4px" }}>Jusqu'au</p>
+              <p style={{ color: "#fff", fontSize: 13, margin: 0 }}>{untilDate.toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" })}</p>
+            </>
+          )}
+        </div>
+        {sent ? (
+          <div style={{ background: "rgba(80,220,120,0.08)", border: "1px solid rgba(80,220,120,0.3)", borderRadius: 12, padding: 16, color: "#80e0a0", fontSize: 13 }}>
+            ✓ Ton message a été envoyé à l'administration. Si ton appel est accepté, ton compte sera réactivé automatiquement.
+          </div>
+        ) : (
+          <>
+            <p style={{ color: "#888", fontSize: 12, marginBottom: 8, textAlign: "left" }}>Explique pourquoi tu penses que ce ban est injustifié :</p>
+            <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="Ex: je n'ai rien fait, ou je comprends mais je m'engage à..." style={{ width: "100%", minHeight: 120, background: "#1a1a1a", border: "1px solid #333", borderRadius: 10, padding: 10, color: "#fff", fontSize: 13, fontFamily: "inherit" }} />
+            <button disabled={sending || msg.trim().length < 5} onClick={sendAppeal} style={{ width: "100%", background: "#CCF71D", color: "#000", border: "none", borderRadius: 10, padding: "12px 0", fontSize: 14, fontWeight: 900, cursor: sending ? "wait" : "pointer", marginTop: 10, opacity: (sending || msg.trim().length < 5) ? 0.5 : 1 }}>
+              {sending ? "Envoi…" : "Envoyer un appel à l'administration"}
+            </button>
+          </>
+        )}
+        <button onClick={onLogout} style={{ marginTop: 20, background: "transparent", color: "#777", border: "1px solid #333", borderRadius: 8, padding: "8px 16px", fontSize: 12, cursor: "pointer" }}>Se déconnecter</button>
+      </div>
+    </div>
+  );
+}
+
 export default function ClutchApp() {
   const [recoveryToken, setRecoveryToken] = useState(readRecoveryToken);
   const [activeTab, setActiveTab] = useState("home");
@@ -15280,6 +15334,9 @@ export default function ClutchApp() {
           pseudoColor: d.pseudo_color || null,
           forceUnranked: !!d.force_unranked,
           forceTierLevel: (d.force_tier_level ?? null),
+          banned: !!d.banned,
+          banUntil: d.ban_until || null,
+          banReason: d.ban_reason || null,
         };
         // Cosmétiques : écrase TOUJOURS le cache local avec ce que le serveur
         // a — même si c'est vide. Backend = source de vérité par user. Avant,
@@ -16471,6 +16528,15 @@ export default function ClutchApp() {
   // (geres dans ClassementCommunityTab).
   const isInCommunity = false;
   const navItems = mainNavItems;
+
+  // Ecran ban : si le user authentifie est banni, on affiche UNIQUEMENT
+  // l'ecran ban (plus rien d'autre). Il peut envoyer un appel ou logout.
+  if (profile?.banned) {
+    return <BanScreen profile={profile} onLogout={() => {
+      try { localStorage.removeItem("split_token"); localStorage.removeItem("split_auth_user"); } catch {}
+      window.location.reload();
+    }} />;
+  }
 
   return (
     <div className="flex items-center justify-center" style={{ background: "#000", minHeight: "100dvh" }}>

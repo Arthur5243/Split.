@@ -61,15 +61,40 @@ router.post("/api/admin/boost-user", (req, res) => {
 
     if (hasPoints) {
       const pts = Number(req.body.points);
-      if (!Number.isFinite(pts) || pts < 0) { db.close(); return res.status(400).json({ error: "points invalide" }); }
+      if (!Number.isFinite(pts)) { db.close(); return res.status(400).json({ error: "points invalide" }); }
+      // Delta (ex: -100 pour penalite) ou absolu selon `delta=true`
+      const applyDelta = req.body.delta === true || req.body.delta === 1 || req.body.delta === "1";
+      let finalPoints = applyDelta ? ((row.points || 0) + pts) : pts;
       if (req.body.wipe_history) {
         db.prepare("DELETE FROM user_match_points WHERE user_id = ?").run(row.id);
         changes.history_wiped = true;
       }
       db.prepare(
         `UPDATE users SET points = ?, updated_at = datetime('now') WHERE id = ?`
-      ).run(pts, row.id);
-      changes.points = pts;
+      ).run(finalPoints, row.id);
+      changes.points = finalPoints;
+      changes.applied_delta = applyDelta ? pts : null;
+
+      // Message optionnel (penalite affichee au user). Stocke dans
+      // admin_notifications (table creee si pas existante).
+      const reason = (req.body.reason || "").trim();
+      if (reason) {
+        try {
+          db.exec(`CREATE TABLE IF NOT EXISTS admin_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            type TEXT,
+            message TEXT,
+            delta_points INTEGER,
+            seen INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+          )`);
+          db.prepare(
+            "INSERT INTO admin_notifications (user_id, type, message, delta_points) VALUES (?, ?, ?, ?)"
+          ).run(row.id, applyDelta ? "penalty" : "adjustment", reason, applyDelta ? pts : null);
+          changes.notification_sent = true;
+        } catch (e) { console.log("[boost] admin_notifications echec:", e.message); }
+      }
     }
 
     if (hasTier) {

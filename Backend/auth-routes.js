@@ -213,7 +213,9 @@ router.get("/api/auth/me", (req, res) => {
   if (!payload) return res.status(401).json({ error: "Token invalide" });
   const user = getUser(payload.sub);
   if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
-  res.json({ id: user.id, pseudo: user.pseudo, email: user.email, avatar: user.avatar, provider: user.provider, wipe_at: user.wipe_at || null, xp: user.xp || 0, points: user.points || 0, force_unranked: user.force_unranked ? 1 : 0, force_tier_level: user.force_tier_level ?? null, created_at: user.created_at || null });
+  const banUntilTs = user.ban_until ? new Date(user.ban_until).getTime() : null;
+  const banActive = banUntilTs && banUntilTs > Date.now();
+  res.json({ id: user.id, pseudo: user.pseudo, email: user.email, avatar: user.avatar, provider: user.provider, wipe_at: user.wipe_at || null, xp: user.xp || 0, points: user.points || 0, force_unranked: user.force_unranked ? 1 : 0, force_tier_level: user.force_tier_level ?? null, banned: !!banActive, ban_until: banActive ? user.ban_until : null, ban_reason: banActive ? user.ban_reason : null, created_at: user.created_at || null });
 });
 
 router.patch("/api/auth/pseudo", authMiddleware, (req, res) => {
