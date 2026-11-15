@@ -1655,6 +1655,38 @@ function bumpFinalScoresIfFinished(mapScores, status, seriesScore1, seriesScore2
   });
 }
 
+// Convertit un custom_match (saisi via /password) au format MatchCard.
+// Les matchs custom sont mergés dans upcoming/live/results de chaque jeu.
+function transformCustomMatch(m, game) {
+  const d = m.begin_at ? new Date(m.begin_at) : null;
+  const bo = m.format === "BO5" ? 5 : m.format === "BO1" ? 1 : 3;
+  const prefix = game === "cs2" ? "cs2custom-" : game === "rl" ? "rlcustom-" : "custom-";
+  return {
+    id: prefix + m.id,
+    day: d ? isoDate(d) : null,
+    time: d ? pad2(d.getHours()) + ":" + pad2(d.getMinutes()) : "",
+    beginAt: m.begin_at || null,
+    league: m.league || "Custom",
+    phase: m.phase || "",
+    team1: (m.team1_name || "T1").slice(0, 3).toUpperCase(),
+    team2: (m.team2_name || "T2").slice(0, 3).toUpperCase(),
+    team1Name: m.team1_name,
+    team2Name: m.team2_name,
+    team1Logo: m.team1_logo,
+    team2Logo: m.team2_logo,
+    region: m.region || null,
+    status: m.status || "not_started",
+    score1: m.score1,
+    score2: m.score2,
+    tier: m.league,
+    accentColor: m.accent_color || null,
+    map_scores: Array.isArray(m.map_scores) ? m.map_scores : null,
+    number_of_games: bo,
+    streamUrl: m.stream_url || null,
+    _isCustom: true,
+  };
+}
+
 function transformMatch(m) {
   const opponents = m.opponents || [];
   const t1 = opponents[0] && opponents[0].opponent;
@@ -15398,23 +15430,38 @@ export default function ClutchApp() {
     resetAppState();
     const el = scrollRef.current; if (el) el.scrollTop = 0;
     try {
-      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, rKo, lb] = await Promise.all([
+      const [vUp, vLi, vPa, vHist, cUp, cLi, cPa, cHist, rUp, rLi, rPa, rHist, rKo, lb, vCu, cCu, rCu] = await Promise.all([
         fj("/api/valorant-upcoming"), fj("/api/valorant-live"), fj("/api/valorant-results"), fj("/api/match-history").catch(() => null),
         fj("/api/cs2-upcoming"), fj("/api/cs2-live"), fj("/api/cs2-results"), fj("/api/cs2-match-history").catch(() => null),
         fj("/api/rl-upcoming"), fj("/api/rl-live"), fj("/api/rl-results"), fj("/api/rl-match-history").catch(() => null),
         fj("/api/rl-knockout-series").catch(() => null),
         fj("/api/social/leaderboard").catch(() => null),
+        fj("/api/custom-matches/valorant").catch(() => null),
+        fj("/api/custom-matches/cs2").catch(() => null),
+        fj("/api/custom-matches/rl").catch(() => null),
       ]);
+      // Dispatch custom matches par status
+      function splitCustom(list, game) {
+        const t = Array.isArray(list) ? list.map(m => transformCustomMatch(m, game)) : [];
+        return {
+          upcoming: t.filter(m => m.status === "not_started"),
+          live: t.filter(m => m.status === "running"),
+          finished: t.filter(m => m.status === "finished"),
+        };
+      }
+      const vCuSplit = splitCustom(vCu, "valorant");
+      const cCuSplit = splitCustom(cCu, "cs2");
+      const rCuSplit = splitCustom(rCu, "rl");
       const vUpT = Array.isArray(vUp) ? vUp.map(transformMatch).filter(m => m.region) : [];
       const vLiT = Array.isArray(vLi) ? vLi.map(transformMatch).filter(m => m.region) : [];
       const vPaT = Array.isArray(vPa) ? vPa.map(transformMatch).filter(m => m.region) : [];
       const vHistT = Array.isArray(vHist) ? vHist.map(transformMatch).filter(m => m.region) : [];
-      const vFinished = vHistT.length > vPaT.length ? vHistT : vPaT;
-      setUpcomingMatches(attachComputedOdds(vUpT, vFinished));
-      setLiveMatches(attachComputedOdds(vLiT, vFinished));
+      const vFinished = [...(vHistT.length > vPaT.length ? vHistT : vPaT), ...vCuSplit.finished];
+      setUpcomingMatches(attachComputedOdds([...vUpT, ...vCuSplit.upcoming], vFinished));
+      setLiveMatches(attachComputedOdds([...vLiT, ...vCuSplit.live], vFinished));
       setResultsMatches((() => {
         const elo = computeEloRatings(vFinished, tierWeight);
-        return vPaT.map(m => {
+        return [...vPaT, ...vCuSplit.finished].map(m => {
           const h = vFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
@@ -15424,14 +15471,14 @@ export default function ClutchApp() {
       const cLiT = Array.isArray(cLi) ? cLi.map(transformMatchCS2) : [];
       const cPaT = Array.isArray(cPa) ? cPa.map(transformMatchCS2) : [];
       const cHistT = Array.isArray(cHist) ? cHist.map(transformMatchCS2) : [];
-      const cFinished = cHistT.length > cPaT.length ? cHistT : cPaT;
+      const cFinished = [...(cHistT.length > cPaT.length ? cHistT : cPaT), ...cCuSplit.finished];
       const now = Date.now();
-      const cUpFut = cUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      const cUpFut = [...cUpT, ...cCuSplit.upcoming].filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
       setCs2UpcomingMatches(attachComputedOdds(cUpFut, cFinished, tierWeightCS2));
-      setCs2LiveMatches(attachComputedOdds(cLiT, cFinished, tierWeightCS2));
+      setCs2LiveMatches(attachComputedOdds([...cLiT, ...cCuSplit.live], cFinished, tierWeightCS2));
       setCs2ResultsMatches((() => {
         const elo = computeEloRatings(cFinished, tierWeightCS2);
-        return cPaT.map(m => {
+        return [...cPaT, ...cCuSplit.finished].map(m => {
           const h = cFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };
@@ -15441,10 +15488,10 @@ export default function ClutchApp() {
       const rLiT = Array.isArray(rLi) ? rLi.map(transformMatchRL) : [];
       const rPaT = Array.isArray(rPa) ? rPa.map(transformMatchRL) : [];
       const rHistT = Array.isArray(rHist) ? rHist.map(transformMatchRL) : [];
-      const rFinished = rHistT.length > rPaT.length ? rHistT : rPaT;
-      const rUpFut = rUpT.filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
+      const rFinished = [...(rHistT.length > rPaT.length ? rHistT : rPaT), ...rCuSplit.finished];
+      const rUpFut = [...rUpT, ...rCuSplit.upcoming].filter(m => { if (m.score1 != null && m.score2 != null && (m.score1 > 0 || m.score2 > 0)) return false; if (m.status === "finished" || m.status === "canceled") return false; if (!m.beginAt) return true; const t = new Date(m.beginAt).getTime(); return Number.isNaN(t) || t > now; });
       setRlUpcomingMatches(attachComputedOdds(rUpFut, rFinished, tierWeightRL));
-      setRlLiveMatches(attachComputedOdds(rLiT, rFinished, tierWeightRL));
+      setRlLiveMatches(attachComputedOdds([...rLiT, ...rCuSplit.live], rFinished, tierWeightRL));
       // Les matchs knockout 1v1 doivent rester dans "Matchs termines" RL
       // (mais pas dans upcoming / live, deja retires auparavant).
       const rKoAllFin = [];
@@ -15460,7 +15507,7 @@ export default function ClutchApp() {
 
       setRlResultsMatches((() => {
         const elo = computeEloRatings(rFinished, tierWeightRL);
-        const standard = rPaT.map(m => {
+        const standard = [...rPaT, ...rCuSplit.finished].map(m => {
           const h = rFinished.filter(x => String(x.id) !== String(m.id));
           const o = computeMatchOddsElo(m, h, elo);
           return { ...m, ...o };

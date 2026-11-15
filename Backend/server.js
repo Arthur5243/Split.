@@ -45,6 +45,7 @@ import newsSlidesRouter from "./news-slides-routes.js";
 import adminBoostUserRouter from "./admin-boost-user.js";
 import calendarRouter from "./calendar-routes.js";
 import adminDataRouter from "./admin-data-routes.js";
+import customMatchesRouter from "./custom-matches-routes.js";
 import { captureCardHtml, warmupBrowser } from "./capture.js";
 import { startPointsWorker } from "./points-engine.js";
 
@@ -71,6 +72,7 @@ app.use(newsSlidesRouter);
 app.use(adminBoostUserRouter);
 app.use(calendarRouter);
 app.use(adminDataRouter);
+app.use(customMatchesRouter);
 
 // Endpoint /graphql + /graphiql (UI web pour tester les queries).
 // Expose les data CS2 live au format GraphQL (wrapper autour des scrapers).
