@@ -1134,6 +1134,20 @@
     "match_id": 2634
   },
   {
+    "pandascore_id": 1792384,
+    "tournament_id": "PANDA_22393",
+    "tournament_name": "Group A",
+    "tier": "Spike Series",
+    "region": "AUTO",
+    "date": null,
+    "stage": "HK vs Frankfurt Bahnhofsviertel",
+    "team1": "HooK Esport",
+    "team2": "Frankfurt Bahnhofsviertel",
+    "score": "0-0",
+    "winner": "HooK Esport",
+    "match_id": 2635
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
