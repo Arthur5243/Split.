@@ -1204,6 +1204,34 @@
     "match_id": 2639
   },
   {
+    "pandascore_id": 1831875,
+    "tournament_id": "PANDA_22505",
+    "tournament_name": "Group Stage",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Round 3: TME vs FNY",
+    "team1": "TRAMITE",
+    "team2": "Fracasados ny",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2640
+  },
+  {
+    "pandascore_id": 1831874,
+    "tournament_id": "PANDA_22505",
+    "tournament_name": "Group Stage",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Round 3: 9z vs ARG.MIX",
+    "team1": "9z Team",
+    "team2": "ARG.MIX",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2641
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
