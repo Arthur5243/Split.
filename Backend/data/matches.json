@@ -1232,6 +1232,48 @@
     "match_id": 2641
   },
   {
+    "pandascore_id": 1841667,
+    "tournament_id": "PANDA_22546",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Semifinal 2: XE vs MFT",
+    "team1": "Xipto Esports",
+    "team2": " MF TEAM",
+    "score": "2-0",
+    "winner": "Xipto Esports",
+    "match_id": 2642
+  },
+  {
+    "pandascore_id": 1841666,
+    "tournament_id": "PANDA_22546",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Upper Bracket Semifinal 1: Fourdaboy vs GODX",
+    "team1": "Fourdaboy",
+    "team2": "GODX",
+    "score": "0-2",
+    "winner": "GODX",
+    "match_id": 2643
+  },
+  {
+    "pandascore_id": 1833629,
+    "tournament_id": "PANDA_22522",
+    "tournament_name": "Playoffs",
+    "tier": "VCT",
+    "region": "AUTO",
+    "date": null,
+    "stage": "Lower Bracket Final: GLE vs KRY",
+    "team1": "GodLike Esports",
+    "team2": "Kryon Esports",
+    "score": "0-0",
+    "winner": null,
+    "match_id": 2644
+  },
+  {
     "match_id": 1,
     "pandascore_id": 1269898,
     "tournament_id": "PANDA_18093",
